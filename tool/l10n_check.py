@@ -86,9 +86,18 @@ def check_cheers_file(path):
                 errors.append(f"{name}: mood {mood_id} stage {stage} needs a non-empty list")
                 continue
             for phrase in phrases:
-                if not isinstance(phrase, str) or not phrase:
+                if isinstance(phrase, dict):
+                    text = phrase.get("t")
+                    base = phrase.get("b")
+                    if not isinstance(text, str) or not text or not isinstance(base, str) or not base:
+                        errors.append(f"{name}: mood {mood_id} stage {stage} has an invalid phrase object")
+                        continue
+                elif isinstance(phrase, str) and phrase:
+                    text = phrase
+                else:
                     errors.append(f"{name}: mood {mood_id} stage {stage} has a non-string phrase")
-                elif len(phrase) > PHRASE_LIMIT:
+                    continue
+                if len(text) > PHRASE_LIMIT:
                     warnings.append(
                         f"{name}: mood {mood_id} stage {stage} phrase longer than {PHRASE_LIMIT} characters"
                     )
