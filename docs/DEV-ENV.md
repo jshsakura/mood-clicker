@@ -38,6 +38,7 @@ tool/test.sh      # 테스트 전부
 | `tool/test.sh` | 테스트 전부. push 전에 돌리는 것과 같습니다 |
 | `tool/fl <flutter 인자>` | 도커 안에서 `flutter` 를 돌립니다 |
 | `tool/fl_dart <dart 인자>` | 도커 안에서 `dart` 를 돌립니다 |
+| `tool/shots.sh` | 화면을 그림(PNG)으로 뽑아 `build/shots/` 에 냅니다. `--check` 는 골든과 비교 |
 | `python3 tool/gen_tokens.py` | 디자인 토큰에서 다트 파일을 만듭니다 |
 | `python3 tool/subset_fonts.py` | 앱에 넣을 가벼운 글꼴을 만듭니다 |
 | `python3 tool/privacy_scan.py` | 개인정보 검사. 훅과 CI 가 부릅니다 |
@@ -146,13 +147,38 @@ design/fonts/*.otf (원본, 각 1.5MB)  →  python3 tool/subset_fonts.py  →  
 - 굵기를 더하려면 원본을 `design/fonts/` 에 넣고 스크립트를 돌린 뒤 `pubspec.yaml` 의 `fonts` 에 적습니다. 글꼴 이름은 `design/tokens/core.json` 의 `font.family` 와 같아야 합니다.
 - 글꼴 라이선스는 `licenses/Pretendard-OFL.txt` 와 `THIRD_PARTY_NOTICES.md` 에 있습니다.
 
+## 화면 그림으로 확인하기
+
+기기나 에뮬레이터 없이 화면을 PNG 로 뽑아 눈으로 확인합니다. 디자이너와 에이전트가 같은 그림을 봅니다.
+
+```bash
+tool/shots.sh            # 그림을 새로 뽑습니다 → build/shots/*.png (커밋하지 않습니다)
+tool/shots.sh --check    # 커밋된 골든과 비교합니다. 다르면 실패하고 차이 그림이 test/goldens/failures/ 에 생깁니다
+tool/shots.sh --update   # 의도한 변경이면 골든을 새 그림으로 바꿉니다
+```
+
+디자이너가 토큰을 바꾼 뒤의 순서는 이렇습니다.
+
+1. `design/tokens/` 를 고치고 `python3 tool/gen_tokens.py` 를 돕니다.
+2. `tool/shots.sh` 를 돌립니다. 10초쯤 걸립니다.
+3. `build/shots/` 의 그림을 엽니다. 파일 이름은 `<화면>_<테마>_<기기>.png` 입니다. 예: `token_preview_pink_iphone.png`
+4. 바뀐 모습이 의도한 것이면 `tool/shots.sh --update` 로 골든을 바꾸고, 바뀐 그림을 열어 확인한 뒤 코드와 함께 커밋합니다.
+5. 의도하지 않은 변화가 있으면 `tool/shots.sh --check` 가 어느 그림이 달라졌는지 알려 줍니다. 차이 그림은 `*_masterImage`(기존), `*_testImage`(지금), `*_isolatedDiff`(다른 곳만)입니다.
+
+- 그림은 지금 테마 3개(라이트, 다크, 핑크) × 기기 2개(아이폰 390x844 @3x, 안드로이드 412x915 @2.625)로 뽑힙니다. 화면 한 장은 기기 화면 크기만큼만 담기므로, 스크롤로 넘어가는 아랫부분은 그림에 없습니다.
+- 글자는 앱의 진짜 글꼴(Pretendard, Baloo2)로 그려집니다. 아이콘과 이모지는 도커 이미지 안의 Flutter SDK 글꼴(Material 아이콘, Noto Color Emoji)을 씁니다. 이모지 모양은 이 그림용이고 실제 기기에서는 기기의 이모지가 나옵니다.
+- 화면을 새로 만들면 `test/goldens/harness.dart` 의 `goldenScreens` 목록에 한 줄을 더합니다. 테마와 기기는 같은 파일의 `goldenThemes`, `goldenDevices` 입니다.
+- **골든 비교는 도커에서만 맞습니다.** 골든은 리눅스 도커 이미지에서 뽑았고, 맥이나 다른 환경에서는 같은 화면도 픽셀이 조금 다르게 그려집니다. 그래서 비교는 `tool/shots.sh` 와 CI(같은 이미지를 씁니다)에서만 합니다. 맥에서 `flutter test` 를 직접 돌릴 때는 `--exclude-tags golden` 을 붙입니다.
+- 허용 오차는 두지 않았습니다. 같은 이미지에서 두 번 돌려 바이트까지 같은 그림이 나왔습니다. CI 가 로컬과 다르게 나오는 일이 실제로 생기면 그때 근거와 함께 아주 작게 둡니다.
+- CI 에서 비교가 실패하면 차이 그림이 `golden-diffs` 이름의 산출물로 올라갑니다.
+
 ## CI
 
 `.github/workflows/ci.yml` 이 PR 과 main 으로의 push 마다 돕니다. 결과가 초록이어야 합칩니다.
 
 | 작업 | 환경 | 하는 일 |
 |---|---|---|
-| `check` | 리눅스, Flutter 이미지 | PR 의 커밋 개인정보 검사, 파이썬 테스트, `pub get`, 토큰 일치, 다트 형식, `analyze`, `flutter test`, 안드로이드 디버그 빌드 |
+| `check` | 리눅스, Flutter 이미지 | PR 의 커밋 개인정보 검사, 파이썬 테스트, `pub get`, 토큰 일치, 다트 형식, `analyze`, `flutter test`, 화면 그림 비교(골든), 안드로이드 디버그 빌드 |
 | `apple` | macOS, `check` 가 통과한 뒤 | 아이폰 디버그 빌드(서명 없이), 맥 디버그 빌드 |
 
 개인정보 검사는 GitHub 가 만든 병합 커밋이 아니라 PR 에 실제로 들어 있는 커밋만 봅니다. 로컬 `tool/test.sh` 가 통과하면 `check` 의 대부분은 통과합니다.
