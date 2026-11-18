@@ -196,7 +196,7 @@ class StartScript(TmuxCase):
         # A pane reports its start folder only once its shell is up, so give a slow profile time.
         for _ in range(100):
             by_name = {p[0]: p for p in self.panes()}
-            if len(by_name) == 3 and by_name["ui"][1] == str(self.root / "proj-ui"):
+            if len(by_name) == 3 and all(by_name[n][1] == str(self.root / f"proj-{n}") for n in ("ui", "api")):
                 break
             time.sleep(0.1)
         self.assertEqual({"leader", "ui", "api"}, set(by_name))
@@ -261,10 +261,11 @@ class StartScript(TmuxCase):
 
     def test_running_it_again_creates_nothing_twice(self):
         self.start("-s", "team", "cat", "ui")
-        before = self.panes()
+        # Compare names only: a pane's folder and command change while its shell is still starting.
+        before = sorted(p[0] for p in self.panes())
         done = self.start("-s", "team", "cat", "ui")
         self.assertEqual(0, done.returncode, done.stderr)
-        self.assertEqual(sorted(before), sorted(self.panes()))
+        self.assertEqual(before, sorted(p[0] for p in self.panes()))
         self.assertIn("already", done.stdout)
 
     def test_a_new_worker_is_added_to_a_running_team(self):
