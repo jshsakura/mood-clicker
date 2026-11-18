@@ -19,6 +19,9 @@ enum SoundPack {
   /// The cleansing sound lives in the pentatonic pack, so it plays whatever pack is chosen.
   static const String cleanseSoundId = 'cleanse';
 
+  /// The short chord of the hold reward. It lives in the pentatonic pack too.
+  static const String holdSoundId = 'chime';
+
   String? get tapSoundId => this == pentatonic ? 'kalimba' : null;
 }
 

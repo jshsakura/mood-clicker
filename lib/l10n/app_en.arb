@@ -185,5 +185,14 @@
   "release_settleAngry": "That was plenty of tapping. Shall we take a moment to breathe?",
   "release_settleSad": "You made it this far. It's okay as you are right now.",
   "release_settleAnxious": "It's okay to rest a little. You can follow the breath, or not.",
-  "release_breathingRing": "A circle that helps you pace your breath. Breathe in as it grows and out as it shrinks, or ignore it."
+  "release_breathingRing": "A circle that helps you pace your breath. Breathe in as it grows and out as it shrinks, or ignore it.",
+  "howTo_label": "How to play",
+  "howTo_title": "How to play",
+  "howTo_fill": "Tap and the water rises.",
+  "howTo_rest": "Rest a moment and it sinks little by little.",
+  "howTo_tilt": "Tilt the phone and the water spills, so the number on screen goes down.",
+  "howTo_spark": "Now and then a sparkling special phrase appears.",
+  "howTo_hold": "Stay between 95 and 100 percent for a few seconds for a special reward.",
+  "howTo_finish": "Fill it up and a finish that fits your mood plays.",
+  "howTo_bubble": "How to play"
 }

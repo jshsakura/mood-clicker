@@ -142,6 +142,16 @@ void main() {
       expect(picker.snapshotJson()['recent'], hasLength(3));
     });
 
+    test('drawRare always gives a rare phrase of the rare bundle', () {
+      final book = bookOf(10);
+      final picker = CheerPicker(Random(4));
+      for (var i = 0; i < 20; i++) {
+        final draw = picker.drawRare(book, Mood.happy);
+        expect(draw.kind, CheerKind.rare);
+        expect(book.bundle(Mood.happy, CheerStage.rare), contains(draw.phrase));
+      }
+    });
+
     test('complete and rare use the same way', () {
       final book = variantBook(40);
       final picker = CheerPicker(Random(9));

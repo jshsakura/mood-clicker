@@ -599,4 +599,31 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get release_breathingRing =>
       '息を整えるための円です。大きくなるときに吸い、小さくなるときに吐いてもよく、合わせなくてもかまいません。';
+
+  @override
+  String get howTo_label => '遊び方';
+
+  @override
+  String get howTo_title => '遊び方';
+
+  @override
+  String get howTo_fill => 'タップすると水が増えていきます。';
+
+  @override
+  String get howTo_rest => '少し休むと、水が少しずつ減っていきます。';
+
+  @override
+  String get howTo_tilt => 'スマホを傾けると水があふれて、画面の数字が減ります。';
+
+  @override
+  String get howTo_spark => 'ときどき、きらきら光る特別な言葉が出ます。';
+
+  @override
+  String get howTo_hold => '95パーセントから100パーセントの間を数秒保つと、特別なごほうびがあります。';
+
+  @override
+  String get howTo_finish => 'いっぱいにすると、気分に合った締めくくりが始まります。';
+
+  @override
+  String get howTo_bubble => '遊び方';
 }

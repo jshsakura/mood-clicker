@@ -4,13 +4,15 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mood_clicker/design/parts/help_button.dart';
+import 'package:mood_clicker/design/parts/how_to_button.dart';
 import 'package:mood_clicker/design/parts/water_painter.dart';
 import 'package:mood_clicker/domain/day_key.dart';
 import 'package:mood_clicker/domain/feel_settings.dart';
-import 'package:mood_clicker/domain/tuning.dart';
+import 'package:mood_clicker/design/tokens.g.dart';
 import 'package:mood_clicker/domain/mood.dart';
+import 'package:mood_clicker/domain/tuning.dart';
 import 'package:mood_clicker/screens/tap/tap_screen.dart';
+import 'package:mood_clicker/feedback/feedback_settings.dart';
 
 import 'fake_app.dart';
 
@@ -42,10 +44,41 @@ Future<void> settle(WidgetTester tester) async {
   }
 }
 
+/// The number the tap screen shows, which a spill lowers and the saved count keeps.
+int shownCount(WidgetTester tester) {
+  final finder = find.byWidgetPredicate(
+    (w) => w is Text && w.style?.fontSize == TypeScale.count.fontSize,
+  );
+  return int.parse(tester.widget<Text>(finder).data!);
+}
+
 int todayCount(TestApp app) =>
     app.journal.journal.dayOf(DayKey.of(app.clock)).countOf(Mood.happy);
 
+final _lastBeat = Expando<DateTime>('last hold beat');
+
+/// Keeps the gauge in the hold band by one tap every 1.2 seconds of the app clock, which is just
+/// enough to stay in the band without filling it.
+Future<void> holdBand(WidgetTester tester, TestApp app, int seconds) async {
+  const beat = Duration(milliseconds: 1200);
+  for (var ms = 0; ms < seconds * 1000; ms += 100) {
+    final last = _lastBeat[app] ?? app.clock;
+    if (app.clock.difference(last) >= beat) {
+      await tester.tapAt(const Offset(200, 500));
+      _lastBeat[app] = app.clock;
+    } else {
+      _lastBeat[app] ??= app.clock;
+    }
+    app.advance(const Duration(milliseconds: 100));
+    await tester.pump(const Duration(milliseconds: 100));
+  }
+}
+
+int chimes(TestApp app) =>
+    app.sound.played.where((p) => p.cue.id == SoundPack.holdSoundId).length;
+
 void main() {
+  holdRewardTests();
   edgeAndAccessTests();
   leavingTests();
   touchDownTests();
@@ -72,19 +105,44 @@ void main() {
     await gesture.up();
   });
 
-  testWidgets('the help button opens the crisis sheet', (tester) async {
-    tester.platformDispatcher.localesTestValue = [const Locale('ko', 'KR')];
-    tester.platformDispatcher.localeTestValue = const Locale('ko', 'KR');
-    addTearDown(tester.platformDispatcher.clearAllTestValues);
-    final app = TestApp();
-    await tester.pumpWidget(
-      app.wrap(TapScreen(mood: Mood.happy, launchPhone: (url) async => true)),
-    );
-    await tester.pump(const Duration(milliseconds: 16));
-    expect(find.byType(HelpButton), findsOneWidget);
-    await tester.tap(find.bySemanticsLabel(ko.settings_mindCareHelp));
+  testWidgets('the how-to button opens the sheet with the six lines', (
+    tester,
+  ) async {
+    await openTap(tester);
+    expect(find.byType(HowToButton), findsOneWidget);
+    // Let the first-visit bubble go, so only the button carries the label.
+    await tester.pump(HowToTuning.bubbleDuration + const Duration(seconds: 1));
+    await tester.tap(find.bySemanticsLabel(ko.howTo_label));
     await settle(tester);
-    expect(find.text(ko.settings_mindCareTitle), findsOneWidget);
+    for (final line in [
+      ko.howTo_fill,
+      ko.howTo_rest,
+      ko.howTo_tilt,
+      ko.howTo_spark,
+      ko.howTo_hold,
+      ko.howTo_finish,
+    ]) {
+      expect(find.text(line), findsOneWidget);
+    }
+    // The crisis contacts are not on this screen.
+    expect(find.text(ko.settings_mindCareTitle), findsNothing);
+    expect(find.bySemanticsLabel(ko.settings_mindCareHelp), findsNothing);
+  });
+
+  testWidgets('the bubble beside the button shows on the first visit only', (
+    tester,
+  ) async {
+    final app = TestApp();
+    await tester.pumpWidget(app.wrap(const TapScreen(mood: Mood.happy)));
+    await tester.pump(const Duration(milliseconds: 16));
+    expect(find.text(ko.howTo_bubble), findsOneWidget);
+    await tester.pump(HowToTuning.bubbleDuration + const Duration(seconds: 1));
+    expect(find.text(ko.howTo_bubble), findsNothing);
+    // Back again: the hint was used up.
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpWidget(app.wrap(const TapScreen(mood: Mood.happy)));
+    await tester.pump(const Duration(milliseconds: 16));
+    expect(find.text(ko.howTo_bubble), findsNothing);
   });
 
   testWidgets('a tap on the back button is not a tap on the screen', (
@@ -228,7 +286,7 @@ void main() {
     expect(record.note, ko.note_presetProud);
   });
 
-  testWidgets('a tilted phone spills water and takes taps away', (
+  testWidgets('a tilted phone lowers the number on screen, not the record', (
     tester,
   ) async {
     final app = await openTap(tester);
@@ -241,7 +299,11 @@ void main() {
       app.advance(const Duration(milliseconds: 16));
       await tester.pump(const Duration(milliseconds: 16));
     }
-    expect(todayCount(app), lessThan(before));
+    // The saved count of the day stays whole; only the shown number went down.
+    expect(SpillTuning.takesFromRecord, isFalse);
+    expect(todayCount(app), before);
+    expect(find.text('$before'), findsNothing);
+    expect(shownCount(tester), lessThan(before));
   });
 
   testWidgets('no spill when tilt spill is off', (tester) async {
@@ -288,8 +350,8 @@ void main() {
       app.advance(const Duration(milliseconds: 16));
       await tester.pump(const Duration(milliseconds: 16));
     }
-    final spilled = before - todayCount(app);
-    expect(spilled, greaterThan(40));
+    expect(todayCount(app), before);
+    expect(before - shownCount(tester), greaterThan(40));
     final painter = tester
         .widgetList<CustomPaint>(find.byType(CustomPaint))
         .map((c) => c.painter)
@@ -576,4 +638,67 @@ void touchDownTests() {
       await tester.pump(const Duration(milliseconds: 50));
     },
   );
+}
+
+void holdRewardTests() {
+  Future<TestApp> nearFull(WidgetTester tester) async {
+    final app = await openTap(tester);
+    for (var i = 0; i < 58; i++) {
+      await tapOnce(tester, app, const Offset(200, 500));
+    }
+    return app;
+  }
+
+  testWidgets('staying near full for three seconds pays once, with the chime', (
+    tester,
+  ) async {
+    final app = await nearFull(tester);
+    expect(chimes(app), 0);
+    await holdBand(tester, app, 2);
+    expect(chimes(app), 0);
+    await holdBand(tester, app, 3);
+    expect(chimes(app), 1);
+    // Still in the band: no second reward on the same gauge.
+    await holdBand(tester, app, 6);
+    expect(chimes(app), 1);
+  });
+
+  testWidgets('the reward is rearmed after the level falls below 85 percent', (
+    tester,
+  ) async {
+    final app = await nearFull(tester);
+    await holdBand(tester, app, 5);
+    expect(chimes(app), 1);
+    // Let it drain to empty, then climb back to the band.
+    for (var i = 0; i < 200; i++) {
+      app.advance(const Duration(milliseconds: 100));
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    for (var i = 0; i < 58; i++) {
+      await tapOnce(tester, app, const Offset(200, 500));
+    }
+    _lastBeat[app] = app.clock;
+    await holdBand(tester, app, 5);
+    expect(chimes(app), 2);
+  });
+
+  testWidgets('filling the gauge before three seconds is no hold reward', (
+    tester,
+  ) async {
+    final app = await nearFull(tester);
+    for (var i = 0; i < 3; i++) {
+      await tapOnce(tester, app, const Offset(200, 500), gapMs: 100);
+    }
+    await holdBand(tester, app, 4);
+    expect(chimes(app), 0);
+  });
+
+  testWidgets('the reward stays silent with sound off, like every cue', (
+    tester,
+  ) async {
+    final app = await nearFull(tester);
+    app.services.feedback.settings = const FeedbackSettings(soundOn: false);
+    await holdBand(tester, app, 5);
+    expect(chimes(app), 0);
+  });
 }

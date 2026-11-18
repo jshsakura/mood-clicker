@@ -89,7 +89,7 @@ void main() {
 
   group('sound files', () {
     test(
-      'every sound id has a file in the basic pack, the cleanse in the pentatonic one',
+      'every sound id has a file in the basic pack, the cleanse and the chime in the pentatonic one',
       () {
         final ids = {
           for (final kind in FeedbackKind.values)
@@ -97,7 +97,10 @@ void main() {
               ?FeedbackTable.of(kind, mood).soundId,
         };
         for (final id in ids) {
-          final pack = id == SoundPack.cleanseSoundId ? 'pentatonic' : 'basic';
+          final pack =
+              id == SoundPack.cleanseSoundId || id == SoundPack.holdSoundId
+              ? 'pentatonic'
+              : 'basic';
           final exists = [
             'ogg',
             'wav',

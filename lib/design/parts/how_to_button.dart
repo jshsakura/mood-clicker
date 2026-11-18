@@ -4,12 +4,10 @@ import '../../l10n/app_localizations.g.dart';
 import 'line_icon.dart';
 import 'pressable_surface.dart';
 
-/// The one help button of the headers: one tap opens the crisis sheet from
-/// any screen (docs/EVIDENCE.md, the crisis sheet section).
-///
-/// PressableSurface brings the button semantics and keyboard focus with it.
-class HelpButton extends StatelessWidget {
-  const HelpButton({super.key, this.onTap});
+/// The how-to-play button of the headers: a question mark that opens the sheet that explains the
+/// game. PressableSurface brings the button semantics and keyboard focus with it.
+class HowToButton extends StatelessWidget {
+  const HowToButton({super.key, this.onTap});
 
   /// Null turns the button off, like the other header buttons.
   final VoidCallback? onTap;
@@ -18,7 +16,7 @@ class HelpButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return PressableSurface.icon(
       icon: LineIcons.help,
-      semanticLabel: AppLocalizations.of(context).settings_mindCareHelp,
+      semanticLabel: AppLocalizations.of(context).howTo_label,
       onTap: onTap,
     );
   }

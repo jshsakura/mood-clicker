@@ -1173,6 +1173,60 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'숨 고르기를 돕는 원입니다. 커질 때 들이쉬고 작아질 때 내쉬어도 좋고, 따라 하지 않아도 됩니다.'**
   String get release_breathingRing;
+
+  /// 두드리기와 기분 고르기 머리글의 물음표 단추 이름입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'놀이 방법'**
+  String get howTo_label;
+
+  /// 놀이 방법 시트의 제목입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'놀이 방법'**
+  String get howTo_title;
+
+  /// 놀이 방법 첫 줄입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'두드리면 물이 차오릅니다.'**
+  String get howTo_fill;
+
+  /// 놀이 방법 둘째 줄입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'잠시 쉬면 물이 조금씩 내려갑니다.'**
+  String get howTo_rest;
+
+  /// 놀이 방법 셋째 줄입니다. 기울이면 화면의 숫자만 줄고 저장된 기록은 그대로입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'폰을 기울이면 물이 넘쳐 화면의 숫자가 줄어듭니다.'**
+  String get howTo_tilt;
+
+  /// 놀이 방법 넷째 줄입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'가끔 반짝이는 특별한 말이 나옵니다.'**
+  String get howTo_spark;
+
+  /// 놀이 방법 다섯째 줄입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'95퍼센트에서 100퍼센트 사이를 몇 초 버티면 특별한 보상이 있습니다.'**
+  String get howTo_hold;
+
+  /// 놀이 방법 여섯째 줄입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'가득 채우면 기분에 맞는 마무리가 펼쳐집니다.'**
+  String get howTo_finish;
+
+  /// 두드리기 화면에 처음 들어올 때 물음표 단추 옆에 잠깐 뜨는 말풍선입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'놀이 방법'**
+  String get howTo_bubble;
 }
 
 class _AppLocalizationsDelegate

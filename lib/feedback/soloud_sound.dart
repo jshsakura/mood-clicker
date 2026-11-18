@@ -86,6 +86,7 @@ class SoloudSound implements SoundPort {
       if (tapId != null) {
         yield SoundCue(pack, tapId);
         yield SoundCue(pack, SoundPack.cleanseSoundId);
+        yield SoundCue(pack, SoundPack.holdSoundId);
       }
       // A pack with one tap sound still falls back to the basic pack for its other cues.
       if (tapId != null) continue;

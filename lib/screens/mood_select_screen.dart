@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../app/app_services.dart';
 import '../design/app_theme.dart';
-import '../design/parts/help_button.dart';
+import '../design/parts/how_to_button.dart';
 import '../design/parts/line_icon.dart';
 import '../design/parts/mood_banner.dart';
 import '../design/parts/pressable_surface.dart';
@@ -14,7 +14,7 @@ import '../l10n/app_localizations.g.dart';
 import '../l10n/date_labels.dart';
 import '../map/map_rules.dart';
 import '../map/map_screen.dart';
-import '../settings/crisis_sheet.dart';
+import 'how_to_play_sheet.dart';
 import 'calendar_screen.dart';
 import 'mood_labels.dart';
 import 'tap/tap_screen.dart';
@@ -74,8 +74,7 @@ class MoodSelectScreen extends StatelessWidget {
                           ],
                         ),
                       ),
-                      // Help stays one tap away from the first screen.
-                      HelpButton(onTap: () => showCrisisSheet(context)),
+                      HowToButton(onTap: () => showHowToPlaySheet(context)),
                       if (services.mapView.value) ...[
                         PressableSurface.icon(
                           icon: LineIcons.map,

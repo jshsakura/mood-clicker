@@ -9,7 +9,8 @@ import '../../app/app_services.dart';
 import '../../design/app_theme.dart';
 import '../../design/parts/breathing_ring.dart';
 import '../../design/parts/dawn_wash.dart';
-import '../../design/parts/help_button.dart';
+import '../../design/parts/hint_bubble.dart';
+import '../../design/parts/how_to_button.dart';
 import '../../design/parts/line_icon.dart';
 import '../../design/parts/mood_face.dart';
 import '../../design/parts/pressable_surface.dart';
@@ -26,10 +27,11 @@ import '../../domain/mood.dart';
 import '../../domain/release_flow.dart';
 import '../../domain/save_policy.dart';
 import '../../domain/spill.dart';
+import '../../domain/hold_reward.dart';
 import '../../domain/tuning.dart';
 import '../../feedback/feedback_kind.dart';
 import '../../l10n/app_localizations.g.dart';
-import '../../settings/crisis_sheet.dart';
+import '../how_to_play_sheet.dart';
 import '../mood_labels.dart';
 import 'cheer_overlay.dart';
 import 'note_sheet.dart';
@@ -38,20 +40,12 @@ import 'note_sheet.dart';
 /// tap counts the instant a finger lands. Water rises with the taps, phrases pop up where the
 /// finger was, and tilting the phone sloshes the water and can spill it.
 class TapScreen extends StatefulWidget {
-  const TapScreen({
-    super.key,
-    required this.mood,
-    this.random,
-    this.launchPhone = launchPhoneCall,
-  });
+  const TapScreen({super.key, required this.mood, this.random});
 
   final Mood mood;
 
   /// The source of chance for the water. Tests give a seeded one.
   final Random? random;
-
-  /// Opens tel: and sms: links. The help button uses it.
-  final Future<bool> Function(String url) launchPhone;
 
   @override
   State<TapScreen> createState() => _TapScreenState();
@@ -78,6 +72,15 @@ class _TapScreenState extends State<TapScreen>
   bool _leaving = false;
   bool _started = false;
 
+  /// What one tap shows again when the reward fires: where the last finger landed.
+  Offset? _lastTapAt;
+  HoldReward _hold = const HoldReward();
+
+  /// Water spilled this visit, in taps. The number on screen drops by it.
+  int _spilledTaps = 0;
+  bool _showBubble = false;
+  Timer? _bubbleTimer;
+
   /// The release flow of a heavy mood (angry, sad, anxious); the other moods never use it.
   late final bool _hasRelease = hasRelease(widget.mood);
   ReleaseFlow _flow = const ReleaseFlow.start();
@@ -97,6 +100,7 @@ class _TapScreenState extends State<TapScreen>
     if (_started) return;
     _started = true;
     _services = AppScope.of(context);
+    _maybeShowBubble();
     _services.feel.addListener(_onFeelChanged);
     _onFeelChanged();
     final code = Localizations.localeOf(context).languageCode;
@@ -123,6 +127,7 @@ class _TapScreenState extends State<TapScreen>
       ..settled = false;
     _services.feel.removeListener(_onFeelChanged);
     _tiltSubscription?.cancel();
+    _bubbleTimer?.cancel();
     _ticker.dispose();
     _sim.dispose();
     super.dispose();
@@ -151,6 +156,20 @@ class _TapScreenState extends State<TapScreen>
 
   /// The header starts this far from the top edge, as in the canvas (it includes the status bar).
 
+  /// The first visit only: the bubble beside the how-to button stays a moment, then never again.
+  void _maybeShowBubble() {
+    if (_services.hints.seen(HowToTuning.bubbleHintId)) return;
+    unawaited(_services.hints.markSeen(HowToTuning.bubbleHintId));
+    _showBubble = true;
+    _bubbleTimer = Timer(HowToTuning.bubbleDuration, _dismissBubble);
+  }
+
+  void _dismissBubble() {
+    _bubbleTimer?.cancel();
+    if (!_showBubble || !mounted) return;
+    setState(() => _showBubble = false);
+  }
+
   // --- each frame -------------------------------------------------------------------------
 
   void _onFrame(Duration elapsed) {
@@ -165,6 +184,7 @@ class _TapScreenState extends State<TapScreen>
     var level = _gauge.valueAt(now);
     level -= _spillFrame(now, seconds, level);
     if (_hasRelease) _followRelease(now, level);
+    _followHold(now, level);
     final follow =
         1 - exp(-seconds / (GaugeTuning.displayFollow.inMicroseconds / 1e6));
     final before = _sim.level;
@@ -194,6 +214,23 @@ class _TapScreenState extends State<TapScreen>
       ..settled = frame.phase == ReleasePhase.settle;
   }
 
+  /// Pays the hold reward once when the level has stayed just below full long enough: a rare
+  /// phrase with its stars and rays, and the short chord.
+  void _followHold(DateTime now, double level) {
+    final (next, earned) = _hold.update(level, now);
+    _hold = next;
+    if (!earned) return;
+    _services.feedback.trigger(FeedbackKind.hold, widget.mood.id);
+    if (!_feel.cheerPhrases) return;
+    _showCheer(
+      _lastTapAt ?? _size.center(Offset.zero),
+      now,
+      false,
+      forceRare: true,
+    );
+    setState(() {});
+  }
+
   /// Water running out of a tilted phone. Returns the level that was spilled this frame.
   double _spillFrame(DateTime now, double seconds, double level) {
     if (!_feel.tiltSpill) return 0;
@@ -211,7 +248,11 @@ class _TapScreenState extends State<TapScreen>
     final (ledger, lost) = _ledger.add(spilled);
     _ledger = ledger;
     if (lost > 0) {
-      _services.journal.removeTaps(DayKey.of(now), widget.mood, lost);
+      _spilledTaps += lost;
+      setState(() {});
+      if (SpillTuning.takesFromRecord) {
+        _services.journal.removeTaps(DayKey.of(now), widget.mood, lost);
+      }
     }
     return spilled;
   }
@@ -268,6 +309,7 @@ class _TapScreenState extends State<TapScreen>
     final now = _services.now();
     // The cleanse locks the touch, so the next gauge cannot start by mistake.
     if (_hasRelease && _flow.frameAt(now).touchLocked) return;
+    _lastTapAt = at;
     final wasFull = _gauge.isFullAt(now);
     _gauge = _gauge.tap(now);
     _services.journal.recordTap(widget.mood, now);
@@ -308,11 +350,18 @@ class _TapScreenState extends State<TapScreen>
     }
   }
 
-  void _showCheer(Offset at, DateTime now, bool filled) {
+  void _showCheer(
+    Offset at,
+    DateTime now,
+    bool filled, {
+    bool forceRare = false,
+  }) {
     final book = _book;
     if (book == null) return;
     final stage = CheerStage.of(_gauge, now);
-    final draw = _services.cheerPicker.draw(book, widget.mood, stage);
+    final draw = forceRare
+        ? _services.cheerPicker.drawRare(book, widget.mood)
+        : _services.cheerPicker.draw(book, widget.mood, stage);
     final fontSize = CheerLayout.fontSizeFor(
       level: _gauge.valueAt(now),
       kind: draw.kind,
@@ -545,19 +594,32 @@ class _TapScreenState extends State<TapScreen>
                               ),
                             ),
                           ],
-                          // One tap to help from the tapping screen too.
                           const SizedBox(width: Space.md),
-                          HelpButton(
-                            onTap: () => showCrisisSheet(
-                              context,
-                              launchPhone: widget.launchPhone,
-                            ),
+                          HowToButton(
+                            onTap: () {
+                              _dismissBubble();
+                              showHowToPlaySheet(context);
+                            },
                           ),
                         ],
                       ),
                     ),
                   ),
                 ),
+                if (_showBubble)
+                  Positioned(
+                    top: 0,
+                    right: 0,
+                    child: SafeArea(
+                      child: Padding(
+                        padding: const EdgeInsets.only(
+                          top: Space.lg + PressableSurface.iconSize + Space.xs,
+                          right: Space.lg,
+                        ),
+                        child: HintBubble(text: l10n.howTo_bubble),
+                      ),
+                    ),
+                  ),
                 Positioned.fill(
                   child: IgnorePointer(
                     child: ListenableBuilder(
@@ -593,11 +655,12 @@ class _TapScreenState extends State<TapScreen>
                         final count = _services.journal.journal
                             .dayOf(DayKey.of(_services.now()))
                             .countOf(widget.mood);
+                        final shown = max(0, count - _spilledTaps);
                         return Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              '$count',
+                              '$shown',
                               style: TypeScale.count.copyWith(color: p.ink),
                             ),
                             const SizedBox(height: Space.xs),
