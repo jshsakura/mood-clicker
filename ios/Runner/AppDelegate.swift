@@ -66,7 +66,7 @@ import UIKit
         )
       }
       let pattern = try CHHapticPattern(events: events, parameters: [])
-      let player = try hapticEngine?.makePlayer(withPattern: pattern)
+      let player = try hapticEngine?.makePlayer(with: pattern)
       try player?.start(atTime: CHHapticTimeImmediate)
       return true
     } catch {
