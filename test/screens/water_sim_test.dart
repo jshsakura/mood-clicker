@@ -91,8 +91,8 @@ void main() {
       () {
         final s = sim();
         for (var i = 0; i < 50; i++) {
-          expect(s.dropletCount(complete: false), inInclusiveRange(2, 5));
-          expect(s.dropletCount(complete: true), inInclusiveRange(4, 10));
+          expect(s.dropletCount(power: 1), inInclusiveRange(2, 5));
+          expect(s.dropletCount(power: 2.2), inInclusiveRange(4, 10));
         }
       },
     );

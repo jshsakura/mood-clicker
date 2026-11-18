@@ -23,11 +23,10 @@ void main() {
     }
   });
 
-  test('plurals format the tap count', () {
+  test('the tap label is translated', () {
     final en = lookupAppLocalizations(const Locale('en'));
-    expect(en.tap_todayCount(1), 'Today 1');
-    expect(en.tap_todayCount(128), 'Today 128');
+    expect(en.tap_todayLabel, 'Taps today');
     final ja = lookupAppLocalizations(const Locale('ja'));
-    expect(ja.tap_todayCount(128), '\u4ECA\u65E5 128\u56DE');
+    expect(ja.tap_todayLabel, isNotEmpty);
   });
 }

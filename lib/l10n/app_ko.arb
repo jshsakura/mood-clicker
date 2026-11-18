@@ -56,14 +56,9 @@
   "@moodSelect_moodAnxious": {
     "description": "기분 이름입니다. 기분 고르기 배너와 두드리기 화면 제목에 씁니다. 슬픔 쪽입니다."
   },
-  "tap_todayCount": "{count, plural, other {오늘 {count}}}",
-  "@tap_todayCount": {
-    "description": "두드리기 화면 아래에 오늘 누적 수를 보여 주는 문구입니다. 숫자는 자리표시자 count 로 들어갑니다.",
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
+  "tap_todayLabel": "오늘 두드린 수",
+  "@tap_todayLabel": {
+    "description": "두드리기 화면 아래, 오늘 누적 수 숫자 밑에 붙는 작은 설명입니다."
   },
   "calendar_prevMonth": "지난달",
   "@calendar_prevMonth": {

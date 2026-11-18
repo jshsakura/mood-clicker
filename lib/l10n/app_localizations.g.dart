@@ -184,11 +184,11 @@ abstract class AppLocalizations {
   /// **'불안해요'**
   String get moodSelect_moodAnxious;
 
-  /// 두드리기 화면 아래에 오늘 누적 수를 보여 주는 문구입니다. 숫자는 자리표시자 count 로 들어갑니다.
+  /// 두드리기 화면 아래, 오늘 누적 수 숫자 밑에 붙는 작은 설명입니다.
   ///
   /// In ko, this message translates to:
-  /// **'{count, plural, other {오늘 {count}}}'**
-  String tap_todayCount(int count);
+  /// **'오늘 두드린 수'**
+  String get tap_todayLabel;
 
   /// 달력에서 한 달 뒤로 가는 버튼의 숨김 이름(접근성)입니다.
   ///

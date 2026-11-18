@@ -34,7 +34,8 @@ void main() {
     expect(FillTuning.dropletReach, 220);
     expect(FillTuning.dropletsMin, 2);
     expect(FillTuning.dropletsMax, 5);
-    expect(FillTuning.dropletsWhenComplete, 2);
+    expect(FillTuning.dropletsPowerCap, 2);
+    expect(FillTuning.dropletUpPowerCap, 1.6);
     expect(FillTuning.dropletsLimit, 40);
     expect(FillTuning.dropletUpMin, 220);
     expect(FillTuning.dropletUpMax, 500);

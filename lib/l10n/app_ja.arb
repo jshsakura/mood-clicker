@@ -14,7 +14,7 @@
   "moodSelect_moodAngry": "イライラ",
   "moodSelect_moodSad": "悲しい",
   "moodSelect_moodAnxious": "不安",
-  "tap_todayCount": "{count, plural, other {今日 {count}回}}",
+  "tap_todayLabel": "今日押した回数",
   "calendar_prevMonth": "前の月",
   "calendar_nextMonth": "次の月",
   "dayDetail_happySide": "幸せ側",

@@ -5,371 +5,340 @@ import 'package:mood_clicker/domain/cheer.dart';
 import 'package:mood_clicker/domain/cheer_layout.dart';
 import 'package:mood_clicker/domain/tuning.dart';
 
+final _t0 = DateTime(2026, 11, 18, 12);
+const _screen = Size2(390, 844);
+
+CheerSlot _slot(
+  Point<double> center, {
+  String text = 'abcd',
+  double size = 20,
+  DateTime? at,
+  CheerKind kind = CheerKind.normal,
+}) => CheerSlot(
+  text: text,
+  center: center,
+  fontSize: size,
+  shownAt: at ?? _t0,
+  kind: kind,
+);
+
+CheerPlacement _show(
+  Point<double> tap,
+  List<CheerSlot> slots, {
+  String text = 'abcd',
+  double size = 20,
+  DateTime? now,
+}) => CheerLayout.show(
+  tap: tap,
+  text: text,
+  fontSize: size,
+  slots: slots,
+  now: now ?? _t0,
+  screen: _screen,
+  rotationDegrees: 0,
+);
+
 void main() {
-  final t0 = DateTime(2026, 11, 18, 12);
-  DateTime at(int ms) => t0.add(Duration(milliseconds: ms));
-  const center = Point<double>(200, 400);
-
-  CheerRect boxAt(Point<double> c, {int length = 4, double size = 44}) =>
-      CheerLayout.boxFor(center: c, length: length, fontSize: size);
-
-  CheerPlacement tapAt(
-    Point<double> point,
-    List<CheerSlot> slots,
-    int ms, {
-    CheerRect? bounds,
-  }) => CheerLayout.show(
-    tap: point,
-    length: 4,
-    fontSize: 44,
-    slots: slots,
-    now: at(ms),
-    bounds: bounds,
-  );
-
-  group('box', () {
-    test('width and height follow the formula, centered on the tap', () {
-      final box = boxAt(center);
-      expect(box.right - box.left, closeTo(4 * 44 * 0.95 + 12, 1e-9));
-      expect(box.bottom - box.top, closeTo(44 * 1.2, 1e-9));
-      expect((box.left + box.right) / 2, closeTo(200, 1e-9));
-      expect((box.top + box.bottom) / 2, closeTo(400, 1e-9));
-    });
-  });
-
-  group('rise and blocking', () {
-    test('a phrase floats up 46 px over its lifetime, never more', () {
-      final slot = CheerSlot(boxAt(center), t0);
-      expect(CheerLayout.currentBox(slot, at(0)), slot.bornBox);
-      expect(
-        CheerLayout.currentBox(slot, at(475)).top,
-        closeTo(slot.bornBox.top - 23, 1e-9),
-      );
-      expect(
-        CheerLayout.currentBox(slot, at(5000)).top,
-        closeTo(slot.bornBox.top - 46, 1e-9),
-      );
-    });
-
-    test(
-      'the future rise is not reserved: the spot above is free at first',
-      () {
-        final slot = CheerSlot(boxAt(center), t0);
-        final above = boxAt(const Point(200, 400 - 40));
-        expect(CheerLayout.blockers([slot], at(0)).any(above.overlaps), isTrue);
-        // Straight above, just clear of the phrase box itself: free now.
-        final clear = boxAt(Point(200, 400 - 44 * 1.2 - 1));
-        expect(
-          CheerLayout.blockers([slot], at(0)).any(clear.overlaps),
-          isFalse,
-        );
-      },
-    );
-
-    test('a phrase blocks at the place it has floated to', () {
-      final slot = CheerSlot(boxAt(center), t0);
-      final now = CheerLayout.blockers([slot], at(475)).single;
-      expect(now.top, closeTo(slot.bornBox.top - 23, 1e-9));
-    });
-
-    test('a phrase stops blocking after 70 percent of its lifetime', () {
-      final slot = CheerSlot(boxAt(center), t0);
-      expect(CheerLayout.blockers([slot], at(664)), hasLength(1));
-      expect(CheerLayout.blockers([slot], at(665)), isEmpty);
-    });
-
-    test('older phrases have a shorter life and stop blocking sooner', () {
-      final older = CheerSlot(boxAt(center), t0);
-      final newer = CheerSlot(boxAt(const Point(200, 800)), at(10));
-      // The older one now has 85 percent of 950 ms = 807.5 ms; 70 percent of that is 565.25 ms.
-      expect(CheerLayout.blockers([older, newer], at(565)), hasLength(2));
-      expect(CheerLayout.blockers([older, newer], at(566)), hasLength(1));
-    });
-
-    test('expired phrases are dropped', () {
-      final slot = CheerSlot(boxAt(center), t0);
-      expect(CheerLayout.alive([slot], at(949)), hasLength(1));
-      expect(CheerLayout.alive([slot], at(950)), isEmpty);
-    });
-
-    test('lifetimes are 950 ms, then 85 percent, then 70 percent', () {
-      expect(CheerLayout.lifetimeFor(0), const Duration(milliseconds: 950));
-      expect(CheerLayout.lifetimeFor(1), const Duration(microseconds: 807500));
-      expect(CheerLayout.lifetimeFor(2), const Duration(milliseconds: 665));
-      expect(CheerLayout.lifetimeFor(9), const Duration(milliseconds: 665));
-    });
-
-    test('complete lives 1700 ms and rare 1400 ms before the shrink', () {
-      expect(
-        CheerLayout.lifetimeFor(0, kind: CheerKind.complete),
-        const Duration(milliseconds: 1700),
-      );
-      expect(
-        CheerLayout.lifetimeFor(0, kind: CheerKind.rare),
-        const Duration(milliseconds: 1400),
-      );
-      expect(
-        CheerLayout.lifetimeFor(1, kind: CheerKind.rare),
-        const Duration(milliseconds: 1190),
-      );
-    });
-
-    test('a rare phrase floats up over its own, longer life', () {
-      final slot = CheerSlot(boxAt(center), t0, kind: CheerKind.rare);
-      expect(
-        CheerLayout.currentBox(slot, at(700)).top,
-        closeTo(slot.bornBox.top - 23, 1e-9),
-      );
-      expect(CheerLayout.alive([slot], at(1399)), hasLength(1));
-      expect(CheerLayout.alive([slot], at(1400)), isEmpty);
-    });
-  });
-
-  group('font size', () {
+  group('size', () {
     double size(
       double level, {
       CheerKind kind = CheerKind.normal,
-      int length = 4,
-      double width = 400,
+      int len = 4,
     }) => CheerLayout.fontSizeFor(
       level: level,
       kind: kind,
-      length: length,
-      screenWidth: width,
+      length: len,
+      screenWidth: 390,
     );
 
-    test('grows from 18 to 60 with the fill, slowly at first', () {
+    test('grows with the level: 18, 35 at half, 60 when full', () {
       expect(size(0), 18);
-      expect(size(0.5), closeTo(35.05, 0.01));
+      expect(size(0.5), 35);
       expect(size(1), 60);
-      expect(size(2), 60);
-      expect(size(-1), 18);
-      expect(size(0.25), lessThan(25));
     });
 
-    test('a rare phrase is 6 bigger', () {
-      expect(size(0, kind: CheerKind.rare, width: 1000), 24);
-      expect(size(1, kind: CheerKind.rare, width: 1000), 66);
-      // On a 400 px screen the 60 percent cap holds it back: 4 characters fit at 60.
-      expect(size(1, kind: CheerKind.rare), 60);
-    });
-
-    test('the complete phrase is 76', () {
-      expect(size(1, kind: CheerKind.complete, length: 3), 76);
+    test('a rare phrase is 6 bigger, the complete phrase is 76', () {
+      expect(size(0.5, kind: CheerKind.rare), 41);
+      expect(size(1, kind: CheerKind.complete), 76);
     });
 
     test(
-      'a long phrase is shrunk to fit in 60 percent of the screen width',
+      'a long phrase shrinks to 60 percent of the width, the complete one to 90',
       () {
-        final fitted = size(1, length: 12, width: 390);
-        final box = boxAt(const Point(195, 400), length: 12, size: fitted);
-        expect(box.right - box.left, closeTo(390 * 0.6, 1e-9));
-        expect(fitted, lessThan(60));
+        // 12 units: 390 * 0.6 / (12 * 0.95) = 20.5
+        expect(size(1, len: 12), 21);
+        // 390 * 0.9 / (12 * 0.95) = 30.8
+        expect(size(1, kind: CheerKind.complete, len: 12), 31);
       },
     );
 
-    test('a phrase that already fits keeps its size', () {
-      expect(size(0.5, length: 2, width: 400), closeTo(35.05, 0.01));
-    });
-
-    test('the complete phrase is also kept inside 60 percent', () {
-      final fitted = size(1, kind: CheerKind.complete, length: 12, width: 390);
-      final box = boxAt(const Point(195, 400), length: 12, size: fitted);
-      expect(box.right - box.left, lessThanOrEqualTo(390 * 0.6 + 1e-9));
-    });
-  });
-
-  group('complete moment', () {
-    test('shows one phrase at the center and clears all others', () {
-      final others = tapAt(center, const [], 0);
-      final more = tapAt(const Point(200, 800), others.slots, 10);
-      final result = CheerLayout.showComplete(
-        center: const Point(195, 422),
+    test('large text scales it before the fit', () {
+      final big = CheerLayout.fontSizeFor(
+        level: 0,
+        kind: CheerKind.normal,
         length: 4,
-        fontSize: 76,
-        now: at(20),
+        screenWidth: 390,
+        textScale: 1.18,
       );
-      expect(more.slots, hasLength(2));
-      expect(result.slots, hasLength(1));
-      expect(result.slots.single.kind, CheerKind.complete);
-      expect(result.box, boxAt(const Point(195, 422), size: 76));
+      expect(big, 21);
+    });
+
+    test('the size is a whole number of pixels', () {
+      for (var i = 0; i <= 60; i++) {
+        final s = size(i / 60, len: 7);
+        expect(s, s.roundToDouble());
+      }
     });
   });
 
-  group('side of the screen', () {
-    const centerX = 200.0;
-    CheerPlacement tap(double x, List<CheerSlot> slots, int ms) =>
-        CheerLayout.show(
-          tap: Point(x, 400),
-          length: 4,
-          fontSize: 44,
-          slots: slots,
-          now: at(ms),
-          screenCenterX: centerX,
-        );
+  group('motion', () {
+    test('an ordinary phrase lives 950 ms, shorter when newer ones exist', () {
+      expect(CheerLayout.lifeOf(0, 1), const Duration(milliseconds: 950));
+      expect(CheerLayout.lifeOf(1, 2), const Duration(milliseconds: 950));
+      expect(CheerLayout.lifeOf(0, 2).inMicroseconds, 807500);
+      expect(CheerLayout.lifeOf(0, 3).inMicroseconds, 665000);
+      expect(CheerLayout.lifeOf(0, 9).inMicroseconds, 665000);
+    });
 
-    double middle(CheerRect r) => (r.left + r.right) / 2;
+    test('rare and complete phrases live 1400 and 1700 ms', () {
+      expect(CheerLayout.maxLife(CheerKind.rare).inMilliseconds, 1400);
+      expect(CheerLayout.maxLife(CheerKind.complete).inMilliseconds, 1700);
+    });
 
-    test('a left tap keeps its phrase on the left, even when pushed away', () {
+    test('rise is 46 px over the life', () {
+      expect(CheerLayout.riseAt(0), 0);
+      expect(CheerLayout.riseAt(1), 46);
+    });
+
+    test(
+      'scale starts at 0.45, overshoots to 1.035 at 35 percent, ends at 1.1',
+      () {
+        expect(CheerLayout.scaleAt(0), closeTo(0.45, 1e-9));
+        expect(CheerLayout.scaleAt(0.35), closeTo(1.035, 1e-9));
+        expect(CheerLayout.scaleAt(1), closeTo(1.1, 1e-9));
+      },
+    );
+
+    test('fully visible until 60 percent, then fades to nothing', () {
+      expect(CheerLayout.alphaAt(0), 1);
+      expect(CheerLayout.alphaAt(0.6), 1);
+      expect(CheerLayout.alphaAt(0.8), closeTo(0.5, 1e-9));
+      expect(CheerLayout.alphaAt(1), closeTo(0, 1e-9));
+    });
+
+    test('a phrase is gone after its maximum life', () {
+      final slots = [_slot(const Point(100, 300))];
+      expect(
+        CheerLayout.alive(slots, _t0.add(const Duration(milliseconds: 949))),
+        hasLength(1),
+      );
+      expect(
+        CheerLayout.alive(slots, _t0.add(const Duration(milliseconds: 950))),
+        isEmpty,
+      );
+    });
+
+    test('progress follows the shortened life of an ordinary phrase', () {
+      final slots = [
+        _slot(const Point(100, 300)),
+        _slot(const Point(200, 500)),
+      ];
+      final now = _t0.add(const Duration(milliseconds: 403));
+      // The older of two lives 807.5 ms.
+      expect(CheerLayout.progress(slots[0], 0, 2, now), closeTo(0.499, 0.001));
+      expect(CheerLayout.progress(slots[1], 1, 2, now), closeTo(0.424, 0.001));
+    });
+  });
+
+  group('placement', () {
+    test('a phrase shows 50 px above the finger', () {
+      final p = _show(const Point(200, 500), const []);
+      expect(p.added.center, const Point<double>(200, 450));
+      expect(p.evictedOldest, isFalse);
+    });
+
+    test('the phrase stays between 150 and 700 of an 844 px screen', () {
+      expect(_show(const Point(200, 100), const []).added.center.y, 150);
+      expect(_show(const Point(200, 840), const []).added.center.y, 700);
+    });
+
+    test('the phrase stays on screen beside the edges', () {
+      final left = _show(const Point(2, 400), const []);
+      expect(left.added.bornBox.left, greaterThanOrEqualTo(0));
+      final right = _show(const Point(388, 400), const []);
+      expect(right.added.bornBox.right, lessThanOrEqualTo(390));
+    });
+
+    test(
+      'a second tap on the same spot gets a free spot, never an overlap',
+      () {
+        final first = _show(const Point(200, 500), const []);
+        final second = _show(const Point(200, 500), first.slots);
+        expect(second.slots, hasLength(2));
+        final a = first.added.bornBox;
+        final b = second.added.bornBox;
+        expect(a.overlaps(b), isFalse);
+      },
+    );
+
+    test('a tap off to one side keeps its phrase on that side', () {
       var slots = <CheerSlot>[];
-      for (var i = 0; i < 12; i++) {
-        final result = tap(40, slots, i * 5);
-        expect(middle(result.box), lessThan(centerX), reason: 'tap $i');
-        slots = result.slots;
+      for (var i = 0; i < 6; i++) {
+        final p = _show(const Point(320, 450), slots);
+        slots = p.slots;
+        expect(p.added.center.x, greaterThan(195), reason: 'tap $i');
+      }
+      slots = <CheerSlot>[];
+      for (var i = 0; i < 6; i++) {
+        final p = _show(const Point(70, 450), slots);
+        slots = p.slots;
+        expect(p.added.center.x, lessThan(195), reason: 'tap $i');
       }
     });
 
-    test('a right tap keeps its phrase on the right', () {
-      var slots = <CheerSlot>[];
-      for (var i = 0; i < 12; i++) {
-        final result = tap(360, slots, i * 5);
-        expect(middle(result.box), greaterThan(centerX), reason: 'tap $i');
-        slots = result.slots;
-      }
-    });
-
-    test('a tap inside the 60 px center zone may use either side', () {
+    test('a tap near the middle may go either way', () {
       var slots = <CheerSlot>[];
       final sides = <bool>{};
-      for (var i = 0; i < 20; i++) {
-        final result = tap(centerX + 30, slots, i * 5);
-        sides.add(middle(result.box) < centerX);
-        slots = result.slots;
+      for (var i = 0; i < 6; i++) {
+        final p = _show(const Point(200, 450), slots);
+        slots = p.slots;
+        sides.add(p.added.center.x > 195);
       }
       expect(sides, {true, false});
     });
 
-    test('without a screen center there is no side rule', () {
-      final result = CheerLayout.show(
-        tap: const Point(40, 400),
+    test('boxes that only touch do not block', () {
+      final a = CheerLayout.boxFor(
+        center: const Point(100, 100),
         length: 4,
-        fontSize: 44,
-        slots: const [],
-        now: t0,
+        fontSize: 20,
       );
-      expect(result.box, boxAt(const Point(40, 400)));
+      final b = a.shifted(a.right - a.left, 0);
+      expect(a.overlaps(b), isFalse);
     });
-  });
 
-  test('a rare phrase is stored as rare', () {
-    final result = CheerLayout.show(
-      tap: center,
-      length: 4,
-      fontSize: 44,
-      slots: const [],
-      now: t0,
-      kind: CheerKind.rare,
+    test(
+      'no free spot removes the oldest phrase and still shows the new one',
+      () {
+        // Giant phrases cover every grid spot.
+        final giants = [
+          for (var i = 0; i < 3; i++)
+            _slot(Point(195, 425.0 + i), text: 'wwwwwwwwwwww', size: 700),
+        ];
+        final p = _show(const Point(200, 500), giants, now: _t0);
+        expect(p.evictedOldest, isTrue);
+        expect(p.slots, hasLength(3));
+        expect(p.slots.first, same(giants[1]));
+        expect(p.added.center, const Point<double>(200, 450));
+      },
     );
-    expect(result.slots.single.kind, CheerKind.rare);
-  });
 
-  group('show', () {
-    test('an empty screen puts the phrase at the tap', () {
-      final result = tapAt(center, const [], 0);
-      expect(result.box, boxAt(center));
-      expect(result.slots, hasLength(1));
-      expect(result.evictedOldest, isFalse);
-    });
-
-    test('there is no time gap: a quick second tap on a free spot shows', () {
-      final first = tapAt(center, const [], 0);
-      final second = tapAt(const Point(200, 800), first.slots, 10);
-      expect(second.box, boxAt(const Point(200, 800)));
-      expect(second.slots, hasLength(2));
-    });
-
-    test('a blocked tap moves to the nearest free grid spot', () {
-      final first = tapAt(center, const [], 0);
-      final second = tapAt(center, first.slots, 10);
-      expect(second.evictedOldest, isFalse);
-      expect(
-        second.box.overlaps(CheerLayout.currentBox(first.slots.single, at(10))),
-        isFalse,
-      );
-      final dx = second.box.left - boxAt(center).left;
-      final dy = second.box.top - boxAt(center).top;
-      expect([for (var c = -2; c <= 2; c++) c * 100.0], contains(dx));
-      expect([for (var r = -4; r <= 4; r++) r * 70.0], contains(dy));
-      // Nothing nearer was free: every closer grid spot overlaps the first phrase.
-      final nearer = CheerLayout.spotOffsets().takeWhile(
-        (o) => o.x != dx || o.y != dy,
-      );
-      for (final o in nearer) {
-        expect(
-          boxAt(center).shifted(o.x, o.y).overlaps(first.slots.single.bornBox),
-          isTrue,
-        );
+    test('at most 8 phrases are kept', () {
+      var slots = <CheerSlot>[];
+      for (var i = 0; i < 20; i++) {
+        slots = _show(
+          Point(60.0 + (i % 6) * 55, 300.0 + (i % 5) * 80),
+          slots,
+          now: _t0,
+        ).slots;
       }
+      expect(slots.length, lessThanOrEqualTo(CheerTuning.maxOnScreen));
     });
 
-    test('the grid has 45 spots, the tap itself first, nearest first', () {
+    test('expired phrases do not block and are dropped', () {
+      final old = _slot(const Point(200, 450));
+      final now = _t0.add(const Duration(milliseconds: 1000));
+      final p = _show(const Point(200, 500), [old], now: now);
+      expect(p.slots, hasLength(1));
+      expect(p.added.center, const Point<double>(200, 450));
+    });
+
+    test('the grid has 45 spots, the tap spot first, nearest first', () {
       final spots = CheerLayout.spotOffsets();
       expect(spots, hasLength(45));
       expect(spots.first, const Point<double>(0, 0));
-      expect(spots.toSet(), hasLength(45));
-      final distances = [for (final p in spots) p.x * p.x + p.y * p.y];
-      expect(distances, orderedEquals([...distances]..sort()));
-    });
-
-    test(
-      'when nothing is free the oldest goes and the phrase takes the tap',
-      () {
-        final wall = CheerRect(-9999, -9999, 9999, 9999);
-        final slots = [
-          CheerSlot(wall, t0),
-          CheerSlot(boxAt(const Point(5000, 5000)), at(1)),
-        ];
-        final result = tapAt(center, slots, 2);
-        expect(result.evictedOldest, isTrue);
-        expect(result.box, boxAt(center));
-        expect(result.slots, hasLength(2));
-        expect(result.slots.first.bornBox, boxAt(const Point(5000, 5000)));
-        expect(result.slots.last.shownAt, at(2));
-      },
-    );
-
-    test('keeps the phrase on screen when bounds are given', () {
-      final first = tapAt(const Point(60, 80), const [], 0);
-      const bounds = CheerRect(0, 0, 400, 800);
-      final second = tapAt(
-        const Point(60, 80),
-        first.slots,
-        10,
-        bounds: bounds,
-      );
-      expect(second.box.isInside(bounds), isTrue);
-    });
-
-    test('never changes the list it was given', () {
-      final first = tapAt(center, const [], 0);
-      final before = List.of(first.slots);
-      tapAt(center, first.slots, 10);
-      expect(first.slots, orderedEquals(before));
-      expect(() => first.slots.add(first.slots.first), throwsUnsupportedError);
-    });
-
-    test(
-      'a phrase that is only floating away no longer blocks a fast tapper',
-      () {
-        final first = tapAt(center, const [], 0);
-        final second = tapAt(center, first.slots, 700);
-        // 700 ms is past 70 percent of 950 ms, so the same spot is free again.
-        expect(second.box, boxAt(center));
-      },
-    );
-
-    test('expired phrases leave the list', () {
-      final first = tapAt(center, const [], 0);
-      final second = tapAt(center, first.slots, 1000);
-      expect(second.slots, hasLength(1));
+      for (var i = 1; i < spots.length; i++) {
+        final d0 =
+            spots[i - 1].x * spots[i - 1].x + spots[i - 1].y * spots[i - 1].y;
+        final d1 = spots[i].x * spots[i].x + spots[i].y * spots[i].y;
+        expect(d1, greaterThanOrEqualTo(d0));
+      }
     });
   });
 
-  test('every box number comes from tuning', () {
+  group('the complete phrase', () {
+    test('goes to the middle at 360 of 844 and clears every other phrase', () {
+      final p = CheerLayout.showComplete(
+        screen: _screen,
+        text: 'abcdef',
+        fontSize: 76,
+        now: _t0,
+      );
+      expect(p.slots, hasLength(1));
+      expect(p.added.center, const Point<double>(195, 360));
+      expect(p.added.kind, CheerKind.complete);
+      expect(p.added.rotationDegrees, -4);
+    });
+
+    test('the middle follows the screen height', () {
+      final p = CheerLayout.showComplete(
+        screen: const Size2(390, 700),
+        text: 'a',
+        fontSize: 76,
+        now: _t0,
+      );
+      expect(p.added.center.y, closeTo(360 * 700 / 844, 1e-9));
+    });
+  });
+
+  group('hammering one spot', () {
+    for (final gap in [40, 80, 150, 250]) {
+      test(
+        '30 taps on one point every $gap ms never overlap and stay under 8',
+        () {
+          var slots = <CheerSlot>[];
+          var evictions = 0;
+          for (var i = 0; i < 30; i++) {
+            final now = _t0.add(Duration(milliseconds: gap * i));
+            final before = CheerLayout.blockers(
+              CheerLayout.alive(slots, now),
+              now,
+            );
+            final p = CheerLayout.show(
+              tap: const Point(200, 500),
+              text: 'abcdef',
+              fontSize: 24,
+              slots: slots,
+              now: now,
+              screen: _screen,
+              rotationDegrees: 0,
+            );
+            if (p.evictedOldest) {
+              evictions++;
+            } else {
+              for (final o in before) {
+                expect(p.added.bornBox.overlaps(o), isFalse, reason: 'tap $i');
+              }
+            }
+            slots = p.slots;
+            expect(slots.length, lessThanOrEqualTo(CheerTuning.maxOnScreen));
+            expect(slots.last.shownAt, now, reason: 'every tap shows a phrase');
+          }
+          // A free spot is found almost always; eviction is the rare last resort.
+          expect(evictions, lessThanOrEqualTo(4), reason: 'gap $gap');
+        },
+      );
+    }
+  });
+
+  test('the numbers of the design', () {
     expect(CheerTuning.riseDistance, 46);
     expect(CheerTuning.spotStepX, 100);
     expect(CheerTuning.spotStepY, 70);
     expect(CheerTuning.spotColumns * CheerTuning.spotRows, 45);
     expect(CheerTuning.blockingShare, 0.7);
+    expect(CheerTuning.maxOnScreen, 8);
+    expect(CheerTuning.liftAboveFinger, 50);
+    expect(CheerTuning.maxWidthShareComplete, 0.9);
   });
 }

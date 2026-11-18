@@ -14,7 +14,7 @@
   "moodSelect_moodAngry": "Angry",
   "moodSelect_moodSad": "Sad",
   "moodSelect_moodAnxious": "Anxious",
-  "tap_todayCount": "{count, plural, =1{Today 1} other{Today {count}}}",
+  "tap_todayLabel": "Taps today",
   "calendar_prevMonth": "Previous month",
   "calendar_nextMonth": "Next month",
   "dayDetail_happySide": "Happy side",
