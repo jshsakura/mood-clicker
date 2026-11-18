@@ -20,7 +20,7 @@ DEFAULT_MIN_COUNTS = {"low": 50, "high": 50, "full": 30, "complete": 20, "rare":
 DEFAULT_MIN_BASES_PER_MOOD = 150
 DEFAULT_MIN_TOTAL = 5000
 MAX_GROUP_SIZE = 4  # 1 base + up to 3 text-play variations
-LENGTH_BOUNDS = {"ko": (2, 14), "en": (2, 20)}
+LENGTH_BOUNDS = {"ko": (2, 14), "en": (2, 20), "ja": (2, 14)}
 DEFAULT_RULES_PATH = Path(__file__).resolve().parent / "cheers_rules.json"
 
 DASH_RE = re.compile(r"[\u2013\u2014]")
@@ -33,6 +33,7 @@ KAOMOJI_RE = re.compile(
 )
 KO_LAUGH_RE = re.compile(r"[\u314b\u314e]{2,}")
 EN_LAUGH_RE = re.compile(r"\b(ha(?:ha)+|he(?:he)+|hi(?:hi)+|lol+|lmao+)\b", re.I)
+JA_LAUGH_RE = re.compile(r"(?:\u7b11|\u3075\u3075|\u3042\u306f\u306f|w{2,})")
 
 # Korean forbidden roots encoded as unicode escapes to keep Python source ASCII-clean.
 KO_BANNED = (
@@ -270,7 +271,9 @@ def check_bundle(
                 if not allow_kaomoji and KAOMOJI_RE.search(item):
                     errors.append(f"{loc}: kaomoji not allowed in {mood} ({item!r})")
                 if not allow_laughter and (
-                    KO_LAUGH_RE.search(item) or EN_LAUGH_RE.search(item)
+                    KO_LAUGH_RE.search(item)
+                    or EN_LAUGH_RE.search(item)
+                    or (lang == "ja" and JA_LAUGH_RE.search(item))
                 ):
                     errors.append(f"{loc}: laughter not allowed in {mood} ({item!r})")
                 if allowed_emoji_set is not None:
@@ -290,8 +293,8 @@ def check_bundle(
                     errors.append(f"{loc}: contains curly quote ({item!r})")
 
                 clean_text = _strip_punct_spaces(item)
-                if lang == "ko":
-                    if any(bad in item or bad in clean_text for bad in KO_BANNED):
+                if lang in ("ko", "ja"):
+                    if lang == "ko" and any(bad in item or bad in clean_text for bad in KO_BANNED):
                         errors.append(f"{loc}: contains forbidden word ({item!r})")
                     if any(bad in item or bad in clean_text for bad in global_banned):
                         errors.append(f"{loc}: contains global-banned word ({item!r})")
@@ -347,7 +350,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--langs",
         nargs="+",
-        default=["ko", "en"],
+        default=["ko", "en", "ja"],
         help="Languages to validate",
     )
     parser.add_argument(
