@@ -658,6 +658,15 @@ class Contrast(unittest.TestCase):
                 with self.subTest(theme=theme, name=name):
                     self.assertGreaterEqual(contrast(self.argb(theme, name), self.argb(theme, "surface")), 3.0)
 
+    def test_information_colors_are_black_and_gray_in_light_and_dark(self):
+        """Design rule: accent, fill and their text colors are single-tone black or gray; color is for the mood faces only."""
+        for theme in ("light", "dark"):
+            for name in ("accent", "onAccent", "fill", "onFill", "mapLine"):
+                with self.subTest(theme=theme, name=name):
+                    argb = self.argb(theme, name)
+                    r, g, b = (int(argb[i:i + 2], 16) for i in (2, 4, 6))
+                    self.assertLessEqual(max(r, g, b) - min(r, g, b), 8, f"{theme}.{name} is not a gray")
+
     def test_the_new_colors_are_required(self):
         self.assertIn("onFill", REQUIRED_COLORS)
         self.assertIn("onError", REQUIRED_COLORS)
