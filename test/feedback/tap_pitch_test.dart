@@ -183,6 +183,56 @@ void main() {
     });
   });
 
+  group('the release flow in the controller', () {
+    late FakeHaptics haptics;
+    late FakeSound sound;
+    late FeedbackController controller;
+
+    setUp(() {
+      haptics = FakeHaptics();
+      sound = FakeSound();
+      controller = FeedbackController(
+        haptics: haptics,
+        sound: sound,
+        settings: const FeedbackSettings(soundPack: SoundPack.basic),
+        clock: () => Duration.zero,
+        random: Random(2),
+      );
+    });
+
+    test('the cleanse plays the pentatonic cleansing sound in any pack', () {
+      controller.trigger(FeedbackKind.cleanse, 'angry');
+      expect(sound.played.single.cue.pack, SoundPack.pentatonic);
+      expect(sound.played.single.cue.id, SoundPack.cleanseSoundId);
+      expect(sound.played.single.limited, isFalse);
+    });
+
+    test('the ease scales the tap haptic and clamps to 0 to 1', () {
+      controller.trigger(FeedbackKind.tap, 'angry');
+      controller.hapticEase = 0.5;
+      controller.trigger(FeedbackKind.tap, 'angry');
+      expect(haptics.played, hasLength(1));
+      expect(controller.hapticEase, 0.5);
+      controller.hapticEase = 7;
+      expect(controller.hapticEase, 1.0);
+      controller.hapticEase = -1;
+      expect(controller.hapticEase, 0.0);
+    });
+
+    test('settled swaps the heavy mood to the climbing kalimba', () {
+      controller.settled = true;
+      for (var i = 0; i < 3; i++) {
+        controller.trigger(FeedbackKind.tap, 'angry');
+      }
+      expect(sound.played.map((p) => p.cue.id), everyElement('kalimba'));
+      expect(
+        sound.played.map((p) => p.cue.pack),
+        everyElement(SoundPack.pentatonic),
+      );
+      expect(sound.played.map((p) => p.pitch), [1.0, 1.122, 1.260]);
+    });
+  });
+
   group('the cap of ringing voices', () {
     test('a sixth sound fades the oldest one out', () {
       final cut = <int>[];

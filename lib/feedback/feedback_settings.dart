@@ -16,6 +16,9 @@ enum SoundPack {
   ];
 
   /// The sound id of every tap in this pack, or null when the pack has one sound per cue.
+  /// The cleansing sound lives in the pentatonic pack, so it plays whatever pack is chosen.
+  static const String cleanseSoundId = 'cleanse';
+
   String? get tapSoundId => this == pentatonic ? 'kalimba' : null;
 }
 

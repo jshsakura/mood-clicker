@@ -43,6 +43,10 @@ class WaterSim extends ChangeNotifier {
   /// The level being shown, 0 to 1. It follows the real level smoothly.
   double level = 0;
 
+  /// How much the water gathers to the middle, 0 to 1. The release flow raises it while the gauge
+  /// approaches full: taps land nearer the middle and droplets drift toward it.
+  double gather = 0;
+
   /// The tilt of the surface in radians. Positive leans the right edge down.
   double tiltRadians = 0;
 
@@ -111,6 +115,9 @@ class WaterSim extends ChangeNotifier {
   /// A tap that lands on the water at [x]: it pushes the water up where it hits, and sloshes the
   /// whole surface toward the other side. [scale] makes a harder hit (the moment of a full gauge).
   void hit(double x, {required bool insideWater, double scale = 1}) {
+    if (gather > 0 && size.width > 0) {
+      x += (size.width / 2 - x) * gather * ReleaseTuning.gatherPull;
+    }
     kick(x, (insideWater ? 1 : -1) * FillTuning.kick * scale);
     final side = size.width <= 0 ? 0.0 : (x / size.width - 0.5) * 2;
     _lean(-side * FillTuning.slosh * scale);
@@ -212,6 +219,13 @@ class WaterSim extends ChangeNotifier {
   void _moveDroplets(double dt) {
     droplets.removeWhere((d) {
       d.vy += FillTuning.dropletGravity * dt;
+      if (gather > 0) {
+        d.vx +=
+            (size.width / 2 - d.x).sign *
+            ReleaseTuning.gatherDrift *
+            gather *
+            dt;
+      }
       d.x += d.vx * dt;
       d.y += d.vy * dt;
       if (d.x < 0 || d.x > size.width || d.y > size.height) return true;

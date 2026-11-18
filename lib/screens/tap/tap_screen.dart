@@ -7,10 +7,13 @@ import 'package:flutter/services.dart';
 
 import '../../app/app_services.dart';
 import '../../design/app_theme.dart';
+import '../../design/parts/breathing_ring.dart';
+import '../../design/parts/dawn_wash.dart';
 import '../../design/parts/help_button.dart';
 import '../../design/parts/line_icon.dart';
 import '../../design/parts/mood_face.dart';
 import '../../design/parts/pressable_surface.dart';
+import '../../design/parts/settle_line.dart';
 import '../../design/parts/water_painter.dart';
 import '../../design/parts/water_sim.dart';
 import '../../design/tokens.g.dart';
@@ -20,6 +23,7 @@ import '../../domain/day_key.dart';
 import '../../domain/feel_settings.dart';
 import '../../domain/fill_gauge.dart';
 import '../../domain/mood.dart';
+import '../../domain/release_flow.dart';
 import '../../domain/save_policy.dart';
 import '../../domain/spill.dart';
 import '../../domain/tuning.dart';
@@ -74,6 +78,10 @@ class _TapScreenState extends State<TapScreen>
   bool _leaving = false;
   bool _started = false;
 
+  /// The release flow of a heavy mood (angry, sad, anxious); the other moods never use it.
+  late final bool _hasRelease = hasRelease(widget.mood);
+  ReleaseFlow _flow = const ReleaseFlow.start();
+
   /// When the full-gauge shake began, by the app clock. Null when not shaking.
   DateTime? _shakeStart;
 
@@ -110,6 +118,9 @@ class _TapScreenState extends State<TapScreen>
     // Closed some way other than the back button (a widget link replaced this screen): the taps
     // still must not wait for the next timer.
     unawaited(_services.journal.save(SaveTrigger.leaveScreen));
+    _services.feedback
+      ..hapticEase = 1
+      ..settled = false;
     _services.feel.removeListener(_onFeelChanged);
     _tiltSubscription?.cancel();
     _ticker.dispose();
@@ -153,6 +164,7 @@ class _TapScreenState extends State<TapScreen>
 
     var level = _gauge.valueAt(now);
     level -= _spillFrame(now, seconds, level);
+    if (_hasRelease) _followRelease(now, level);
     final follow =
         1 - exp(-seconds / (GaugeTuning.displayFollow.inMicroseconds / 1e6));
     final before = _sim.level;
@@ -167,6 +179,19 @@ class _TapScreenState extends State<TapScreen>
     _wasAboveZero = level > 0;
 
     unawaited(_services.journal.save(SaveTrigger.tick));
+  }
+
+  /// Brings the release flow to [level] at [now] and hands what it says to the water and the
+  /// feedback: the water gathers and the haptic softens on the approach, and after the cleanse the
+  /// taps sound as the calm kalimba.
+  void _followRelease(DateTime now, double level) {
+    _flow = _flow.withLevel(level, now);
+    final frame = _flow.frameAt(now);
+    _sim.gather = frame.approach;
+    _services.feedback
+      ..hapticEase =
+          1 - (1 - ReleaseTuning.approachHapticFloor) * frame.approach
+      ..settled = frame.phase == ReleasePhase.settle;
   }
 
   /// Water running out of a tilted phone. Returns the level that was spilled this frame.
@@ -241,18 +266,27 @@ class _TapScreenState extends State<TapScreen>
   void _registerTap(Offset at) {
     if (_size.isEmpty || _leaving) return;
     final now = _services.now();
+    // The cleanse locks the touch, so the next gauge cannot start by mistake.
+    if (_hasRelease && _flow.frameAt(now).touchLocked) return;
     final wasFull = _gauge.isFullAt(now);
     _gauge = _gauge.tap(now);
     _services.journal.recordTap(widget.mood, now);
     final filled = _gauge.justFilled;
     _filledThisVisit |= filled;
+    final releases = _hasRelease && filled;
     _services.feedback.trigger(
-      filled ? FeedbackKind.full : FeedbackKind.tap,
+      releases
+          ? FeedbackKind.cleanse
+          : filled
+          ? FeedbackKind.full
+          : FeedbackKind.tap,
       widget.mood.id,
     );
     _hitWater(at, filled, wasFull: wasFull);
-    if (_feel.cheerPhrases) _showCheer(at, now, filled);
-    if (filled && _feel.screenShake) _shakeStart = now;
+    // A heavy mood does not celebrate a full gauge: no complete phrase, no shake.
+    if (_feel.cheerPhrases && !releases) _showCheer(at, now, filled);
+    if (filled && _feel.screenShake && !releases) _shakeStart = now;
+    if (_hasRelease) _followRelease(now, _gauge.valueAt(now));
     setState(() {});
   }
 
@@ -368,6 +402,51 @@ class _TapScreenState extends State<TapScreen>
     return Offset(sin(t * 14 * pi) * CompleteTuning.shakeAmplitude * fade, 0);
   }
 
+  /// The water. In the cleanse of a heavy mood the dawn wash takes its place; in the settle the
+  /// wash dissolves over the water.
+  List<Widget> _releaseLayers(AppPalette p, AppLocalizations l10n) {
+    final water = CustomPaint(
+      painter: WaterPainter(
+        sim: _sim,
+        palette: p,
+        bleed: CompleteTuning.shakeAmplitude,
+      ),
+    );
+    if (!_hasRelease) return [water];
+    final frame = _flow.frameAt(_services.now());
+    return switch (frame.phase) {
+      ReleasePhase.release => [water],
+      ReleasePhase.cleanse => [DawnWash(progress: frame.cleanse)],
+      ReleasePhase.settle => [
+        water,
+        Opacity(opacity: 1 - frame.blend, child: const DawnWash(progress: 1)),
+      ],
+    };
+  }
+
+  /// The breathing ring and the one line, once the quiet beat of the settle is over.
+  List<Widget> _settleLayers(AppLocalizations l10n) {
+    if (!_hasRelease) return const [];
+    final frame = _flow.frameAt(_services.now());
+    if (frame.phase != ReleasePhase.settle || frame.quiet) return const [];
+    final line = settleLineFor(l10n, widget.mood);
+    return [
+      Center(
+        child: BreathingRing(
+          diameter: _size.shortestSide * ReleaseTuning.ringShare,
+        ),
+      ),
+      if (line != null)
+        Align(
+          alignment: const Alignment(0, 0.6),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: Space.xl),
+            child: SettleLine(text: line),
+          ),
+        ),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
@@ -408,17 +487,12 @@ class _TapScreenState extends State<TapScreen>
                               child: Stack(
                                 fit: StackFit.expand,
                                 children: [
-                                  CustomPaint(
-                                    painter: WaterPainter(
-                                      sim: _sim,
-                                      palette: p,
-                                      bleed: CompleteTuning.shakeAmplitude,
-                                    ),
-                                  ),
+                                  ..._releaseLayers(p, l10n),
                                   CheerOverlay(
                                     phrases: _phrases,
                                     now: _services.now,
                                   ),
+                                  ..._settleLayers(l10n),
                                 ],
                               ),
                             ),

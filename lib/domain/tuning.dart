@@ -309,4 +309,16 @@ abstract final class ReleaseTuning {
 
   /// How long the one line after the settle stays on screen.
   static const Duration settleLineHold = Duration(seconds: 4);
+
+  /// The tap haptic gets weaker from the start of the approach until the gauge is full. This is the
+  /// share of its strength that is left at a full gauge.
+  static const double approachHapticFloor = 0.4;
+
+  /// While the gauge approaches full, waves and droplets gather to the middle of the water: a tap
+  /// lands this share of the way to the middle, and droplets drift toward it at this speed (px/s^2).
+  static const double gatherPull = 0.6;
+  static const double gatherDrift = 120;
+
+  /// The breathing ring is this share of the shorter side of the screen when full.
+  static const double ringShare = 0.45;
 }

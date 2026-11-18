@@ -6,6 +6,10 @@ enum FeedbackKind {
   /// Played when the fill gauge reaches full.
   full,
 
+  /// Played instead of [full] when the gauge of a heavy mood fills: one soft cleansing sound and
+  /// two slow, gentle vibrations.
+  cleanse,
+
   /// Played when a mood banner is selected.
   select,
 
