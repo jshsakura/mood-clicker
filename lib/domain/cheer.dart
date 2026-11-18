@@ -44,11 +44,10 @@ enum CheerStage {
 
 /// Cheer phrases for one language: a bundle per mood and stage.
 class CheerBook {
-  CheerBook._(this._bundles, this._bases, this._fingerprints);
+  CheerBook._(this._bundles, this._bases);
 
   final Map<(Mood, CheerStage), List<String>> _bundles;
   final Map<(Mood, CheerStage), List<String?>> _bases;
-  final Map<(Mood, CheerStage), String> _fingerprints;
 
   /// The stage whose bundle is really used. `complete` falls back to `full` and `rare` to `high`
   /// when this mood has no such bundle.
@@ -65,11 +64,6 @@ class CheerBook {
   /// avoid showing two variants of the same base one after another.
   List<String?> bases(Mood mood, CheerStage stage) =>
       _bases[(mood, effectiveStage(mood, stage))] ?? const [];
-
-  /// A short value that changes whenever the phrases of this bundle change. A saved deck is only
-  /// reused while it still matches.
-  String fingerprint(Mood mood, CheerStage stage) =>
-      _fingerprints[(mood, effectiveStage(mood, stage))] ?? '';
 
   /// Parses `{"version":1,"moods":{"happy":{"low":[...],"high":[...],"full":[...],"complete":[...],"rare":[...]}}}`.
   /// `complete` and `rare` are optional. Throws [FormatException] for a file over [CheerTuning.maxFileBytes],
@@ -94,7 +88,6 @@ class CheerBook {
     }
     final bundles = <(Mood, CheerStage), List<String>>{};
     final bases = <(Mood, CheerStage), List<String?>>{};
-    final fingerprints = <(Mood, CheerStage), String>{};
     final warnings = <String>[];
     for (final mood in Mood.values) {
       final entry = moods[mood.id];
@@ -111,13 +104,9 @@ class CheerBook {
         bases[(mood, stage)] = List.unmodifiable([
           for (final item in items) item.base,
         ]);
-        fingerprints[(mood, stage)] = _fingerprintOf(phrases);
       }
     }
-    return CheerParse(
-      CheerBook._(bundles, bases, fingerprints),
-      List.unmodifiable(warnings),
-    );
+    return CheerParse(CheerBook._(bundles, bases), List.unmodifiable(warnings));
   }
 
   /// Parses on another isolate so a large file does not block the first frames.
@@ -140,18 +129,6 @@ class CheerBook {
         yield '$where: "$phrase" is repeated';
       }
     }
-  }
-
-  /// FNV-1a over the phrases, plus the count.
-  static String _fingerprintOf(List<String> phrases) {
-    var hash = 0x811c9dc5;
-    for (final phrase in phrases) {
-      for (final unit in phrase.codeUnits) {
-        hash = ((hash ^ unit) * 0x01000193) & 0xffffffff;
-      }
-      hash = ((hash ^ 0x0a) * 0x01000193) & 0xffffffff;
-    }
-    return '${phrases.length}:${hash.toRadixString(16)}';
   }
 
   /// An entry is a plain string, or `{"t": "text", "b": "base id"}` where `b` is optional.

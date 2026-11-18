@@ -11,7 +11,7 @@
 |---|---|---|
 | `lib/feedback/shake_detector.dart:7,18` (`SloshSignal`, `ShakeDetector`) | 어느 `lib/` 파일도 가져오지 않습니다. 테스트 1개(`test/feedback/shake_detector_test.dart`)만 씁니다. 실제 앱의 기울이기는 `bootstrap.dart` 의 `sensors_plus` 로 처리합니다 | 중간. 지우면 테스트도 지웁니다 |
 | `lib/feedback/platform_haptics.dart:9` (`PlatformHaptics`) | `lib/` 가져오기 0. 테스트 1개만 씁니다. 앱은 `system_haptics.dart` 를 씁니다 | 중간 |
-| `lib/l10n/locale_choice_prefs.dart:6` (`SharedPreferencesLocaleChoiceStore`) | `lib/` 가져오기 0, 테스트 1개. 언어 선택은 설정 저장소(`settings.language`)가 저장하고 `AppServices.language` 도 부트스트랩에서 채워집니다. 이 옛 저장소는 대체된 것입니다 | 지워도 됩니다(확신 높음). 테스트 `test/l10n/locale_choice_test.dart` 도 함께 지웁니다 |
+| `lib/l10n/locale_choice_prefs.dart:6` (`SharedPreferencesLocaleChoiceStore`) | `lib/` 가져오기 0, 테스트 1개. 언어 선택은 설정 저장소(`settings.language`)가 저장하고 `AppServices.language` 도 부트스트랩에서 채워집니다. 이 옛 저장소는 대체된 것입니다 | 지워도 됩니다(확신 높음). 테스트 `test/l10n/locale_choice_test.dart` 도 함께 지웁니다 **지움** (파일과 그 테스트 묶음을 지웠습니다) |
 | `lib/design/token_preview.dart` | `lib/` 가져오기 0. 골든과 테스트(`test/goldens/harness.dart:116`, `test/design/token_preview_test.dart`)만 씁니다. 화면 문구가 한글로 박혀 있습니다(36행 근처 8줄, `slop-ok`) | 중간. 릴리스 빌드에 들어가므로 `test/` 로 옮기는 것이 맞습니다 |
 
 ## 2. 안 쓰는 함수와 상수
@@ -20,8 +20,8 @@
 
 | 위치 | 이름 | 근거 | 확신 |
 |---|---|---|---|
-| `lib/domain/cheer.dart:71` | `CheerBook.fingerprint` | 참조 0, 테스트 참조도 0 | 높음 |
-| `lib/settings/settings.dart:73` | `Settings.fromFeel` | 참조 0, 테스트 참조도 0 | 높음 |
+| `lib/domain/cheer.dart:71` | `CheerBook.fingerprint` | 참조 0, 테스트 참조도 0 | 높음 **지움** (`fingerprint` 와 그것만 쓰던 지문 계산을 지웠습니다) |
+| `lib/settings/settings.dart:73` | `Settings.fromFeel` | 참조 0, 테스트 참조도 0 | 높음 **지움** (지웠습니다) |
 | `lib/l10n/asset_paths.dart:16` | `stampAssetPath` | 참조 0, 테스트 5 | 중간(도장 그림이 아직 없어 앞으로 쓸 자리일 수 있음) |
 | `lib/l10n/date_labels.dart:34` | `monthTitle` | 참조 0, 테스트 6. 달력이 연도와 월을 따로 그립니다 | 중간 |
 | `lib/domain/fill_gauge.dart:69` | `FillGauge.emptiesAt` | 참조 0, 테스트 3 | 중간 |
@@ -39,12 +39,12 @@
 
 | 줄 | 키 | 테스트 참조 | 확신 |
 |---|---|---|---|
-| 15, 19 | `common_on`, `common_off` | 0 | 높음 |
-| 35 | `moodSelect_today` | 0 | 높음(제목은 `moodSelect_title` 로 바뀜) |
+| 15, 19 | `common_on`, `common_off` | 0 | 높음 **지움** (세 언어에서 지웠습니다) |
+| 35 | `moodSelect_today` | 0 | 높음(제목은 `moodSelect_title` 로 바뀜) **지움** (세 언어에서 지웠습니다) |
 | 100, 104, 108, 120, 129, 139, 143, 147 | `review_thisWeek`, `review_thisMonth`, `review_ratioLine`, `review_topMood`, `review_mostTappedDay`, `review_trendUp`, `review_trendDown`, `review_trendSame` | 0 | 중간(돌아보기 화면이 아직 없어 앞으로 쓸 문구일 수 있음) |
 | 151, 155, 167 | `map_title`, `map_legendLine`, `map_permissionReason` | 0 | 중간(지도 화면 문구 정리 때 함께 확인) |
-| 227, 235, 356 | `settings_vibrationStrength`, `settings_soundPack`, `settings_cheersSize` | 0 | 높음 |
-| 243 | `settings_reminderTime` | 2 | 높음(화면은 다른 키를 씀. 테스트 2곳은 같이 고침) |
+| 227, 235, 356 | `settings_vibrationStrength`, `settings_soundPack`, `settings_cheersSize` | 0 | 높음 **지움** (세 언어에서 지웠습니다) |
+| 243 | `settings_reminderTime` | 2 | 높음(화면은 다른 키를 씀. 테스트 2곳은 같이 고침) **지움** (세 언어에서 지우고 테스트의 해당 검사 줄도 지웠습니다) |
 | 299 | `dayDetail_note` | 0 | 중간(상세 화면 개편이 끝나면 확인) |
 | 400, 404 | `settings_mindCarePolice`, `settings_mindCareMedical` | 0 | 중간(위기 연락처는 `crisis_contacts.dart` 가 따로 가집니다. 안전에 관한 문구라 지우기 전에 사람이 봅니다) |
 
