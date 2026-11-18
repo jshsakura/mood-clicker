@@ -12,7 +12,7 @@ from pathlib import Path
 import l10n_check
 
 KO_HELLO = "\ud589\ubcf5\ud574\uc694"  # three Hangul syllables, "happy" in Korean
-LONG_KO = "\uc624\ub298\ub3c4 \uc218\ub9cc\uc73c\uc168\uc5b4\uc694"  # nine syllables, over the old limit when doubled
+LONG_KO = "\uc624\ub298\ub3c4 \uc218\ub9cc\uc73c\uc168\uc5b4\uc694"  # nine syllables
 
 
 def write(root, name, text):
@@ -131,13 +131,56 @@ class CheersFiles(unittest.TestCase):
         errors, _ = l10n_check.check_cheers_file(path)
         self.assertTrue(any("version" in e for e in errors), errors)
 
-    def test_long_phrase_only_warns(self):
+    def test_phrase_length_is_not_judged_here(self):
+        # The layout shrinks any phrase to fit, and tool/cheers_check.py owns the per-language bounds.
         data = cheers()
-        data["moods"]["happy"]["low"] = [LONG_KO * 2]
+        data["moods"]["happy"]["low"] = [LONG_KO * 2, "a" * 30]
         path = self.write_cheers(data)
         errors, warnings = l10n_check.check_cheers_file(path)
-        self.assertEqual([], errors)
-        self.assertTrue(any("longer than" in w for w in warnings), warnings)
+        self.assertEqual(([], []), (errors, warnings))
+
+    def test_the_real_cheers_produce_no_warnings(self):
+        errors, warnings = l10n_check.check_tree()
+        self.assertEqual([], warnings)
+
+
+class WarningSummary(unittest.TestCase):
+    WARNINGS = [("long phrase", "ko.json: happy low"), ("long phrase", "ko.json: sad low"),
+                ("odd stage", "en.json: sad x")]
+
+    def test_a_flood_becomes_one_line_per_kind(self):
+        lines = l10n_check.summarize_warnings(self.WARNINGS, verbose=False)
+        self.assertEqual(2, len(lines), lines)
+        self.assertIn("2", lines[0])
+        self.assertIn("long phrase", lines[0])
+        self.assertIn("--verbose", lines[0])
+        self.assertIn("1", lines[1])
+        self.assertNotIn("happy low", " ".join(lines))
+
+    def test_verbose_lists_every_warning(self):
+        lines = l10n_check.summarize_warnings(self.WARNINGS, verbose=True)
+        self.assertEqual(3, len(lines))
+        self.assertIn("ko.json: happy low", lines[0])
+
+    def test_no_warnings_print_nothing(self):
+        self.assertEqual([], l10n_check.summarize_warnings([], verbose=False))
+
+    def test_errors_are_always_listed_in_full(self):
+        import contextlib
+        import io
+        errors = [f"f.arb: missing key k{i}" for i in range(30)]
+        original = l10n_check.check_tree
+        l10n_check.check_tree = lambda: (errors, self.WARNINGS * 50)
+        try:
+            err = io.StringIO()
+            with contextlib.redirect_stderr(err):
+                self.assertEqual(1, l10n_check.main([]))
+        finally:
+            l10n_check.check_tree = original
+        text = err.getvalue()
+        for error in errors:
+            self.assertIn(error, text)
+        self.assertLess(text.count("warning:"), 5)
 
 
 class ValueLanguage(unittest.TestCase):
@@ -229,4 +272,4 @@ class RepositoryTree(unittest.TestCase):
         self.assertEqual([], errors)
 
     def test_ci_command_exits_zero(self):
-        self.assertEqual(0, l10n_check.main())
+        self.assertEqual(0, l10n_check.main([]))
