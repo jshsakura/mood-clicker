@@ -14,7 +14,7 @@ class MoodClickerApp extends StatefulWidget {
 }
 
 class _MoodClickerAppState extends State<MoodClickerApp> {
-  ThemeChoice _choice = ThemeChoice.system;
+  ThemeChoice _choice = ThemeChoice.light;
 
   @override
   Widget build(BuildContext context) {

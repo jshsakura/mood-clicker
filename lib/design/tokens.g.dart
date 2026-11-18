@@ -120,9 +120,9 @@ const AppPalette darkPalette = AppPalette(
 const AppPalette lightPalette = AppPalette(
   name: 'light',
   brightness: Brightness.light,
-  ground: Color(0xFFF6F6F8),
-  surface: Color(0xFFFFFFFF),
-  line: Color(0xFFE2E2E8),
+  ground: Color(0xFFFFFFFF),
+  surface: Color(0xFFF5F5F7),
+  line: Color(0xFFE8E8EC),
   ink: Color(0xFF16161A),
   inkMuted: Color(0xFF62626C),
   accent: Color(0xFFFFC23D),
@@ -130,7 +130,7 @@ const AppPalette lightPalette = AppPalette(
   happy: Color(0xFFF2A900),
   sad: Color(0xFF4C6FE0),
   fill: Color(0xFFFFC23D),
-  mapGround: Color(0xFFF6F6F8),
+  mapGround: Color(0xFFFFFFFF),
   mapLine: Color(0xFFD4D4DC),
   error: Color(0xFFD9473B),
 );
@@ -177,6 +177,7 @@ abstract final class TypeScale {
   static const TextStyle body = TextStyle(fontFamily: 'Pretendard', fontSize: 16, fontWeight: FontWeight.w400, height: 1.5);
   static const TextStyle label = TextStyle(fontFamily: 'Pretendard', fontSize: 13, fontWeight: FontWeight.w400, height: 1.4);
   static const TextStyle count = TextStyle(fontFamily: 'Pretendard', fontSize: 56, fontWeight: FontWeight.w700, height: 1);
+  static const TextStyle wordmark = TextStyle(fontFamily: 'Baloo2', fontSize: 40, fontWeight: FontWeight.w800, height: 1.1);
 }
 
 abstract final class Motion {

@@ -47,6 +47,11 @@
     "family": {
       "$type": "fontFamily",
       "$value": "Pretendard"
+    },
+    "brand": {
+      "$type": "fontFamily",
+      "$value": "Baloo2",
+      "$description": "앱 이름 글자. 라틴 문자만 있다"
     }
   },
   "type": {
@@ -93,6 +98,15 @@
         "fontSize": "56px",
         "fontWeight": "700",
         "lineHeight": "1.0"
+      }
+    },
+    "wordmark": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "{font.brand}",
+        "fontSize": "40px",
+        "fontWeight": "800",
+        "lineHeight": "1.1"
       }
     }
   },

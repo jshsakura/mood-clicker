@@ -7,15 +7,15 @@
   "color": {
     "ground": {
       "$type": "color",
-      "$value": "#F6F6F8"
+      "$value": "#FFFFFF"
     },
     "surface": {
       "$type": "color",
-      "$value": "#FFFFFF"
+      "$value": "#F5F5F7"
     },
     "line": {
       "$type": "color",
-      "$value": "#E2E2E8"
+      "$value": "#E8E8EC"
     },
     "ink": {
       "$type": "color",
@@ -47,7 +47,7 @@
     },
     "mapGround": {
       "$type": "color",
-      "$value": "#F6F6F8"
+      "$value": "#FFFFFF"
     },
     "mapLine": {
       "$type": "color",

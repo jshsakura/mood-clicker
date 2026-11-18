@@ -19,8 +19,9 @@ Tokens Studio 설정에서 토큰 형식을 W3C DTCG 로 두고 이 폴더를 �
 |---|---|
 | `space` | 간격 단계 (4px, 8px, 12px, 16px, 24px, 32px, 48px) |
 | `radius` | 카드, 버튼, 알약 모양의 둥글기 |
-| `font.family` | 글꼴 이름. 지금은 Pretendard 입니다 |
-| `type` | 글자 단계 (display, title, body, label, count). 글꼴은 `{font.family}` 참조로 씁니다 |
+| `font.family` | 본문 글꼴. Pretendard 입니다 |
+| `font.brand` | 앱 이름 글꼴. 쿠킹호일과 같은 Baloo 2 ExtraBold 이고 라틴 문자만 있습니다 |
+| `type` | 글자 단계 (display, title, body, label, count, wordmark). 글꼴은 `{font.family}`, `{font.brand}` 참조로 씁니다 |
 | `motion` | 눌림, 채움, 화면 전환 시간 |
 
 고친 뒤에는 이렇게 합니다.

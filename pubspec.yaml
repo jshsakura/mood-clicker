@@ -57,13 +57,17 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
-  # 글꼴 이름은 design/tokens.json 의 font.family 와 같아야 한다.
+  # 글꼴 이름은 design/tokens/core.json 의 font.family, font.brand 와 같아야 한다.
   fonts:
     - family: Pretendard
       fonts:
         - asset: assets/fonts/Pretendard-Regular.otf
         - asset: assets/fonts/Pretendard-Bold.otf
           weight: 700
+    - family: Baloo2
+      fonts:
+        - asset: assets/fonts/Baloo2-ExtraBold.ttf
+          weight: 800
 
   # To add assets to your application, add an assets section, like this:
   # assets:

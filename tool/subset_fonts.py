@@ -35,7 +35,7 @@ def codepoints():
 def main():
     cps = codepoints()
     OUT.mkdir(parents=True, exist_ok=True)
-    for src in sorted(SRC.glob("*.otf")):
+    for src in sorted([*SRC.glob("*.otf"), *SRC.glob("*.ttf")]):
         opts = subset.Options()
         opts.layout_closure = False  # 자모 조합 규칙이 빠진 글자를 다시 끌어오지 않게 한다
         opts.name_IDs = ["*"]

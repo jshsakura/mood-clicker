@@ -16,7 +16,7 @@ if [ -n "$DART" ]; then
   echo "▶ dart format, flutter analyze"
   # shellcheck disable=SC2086
   tool/fl_dart format --output=none --set-exit-if-changed $DART \
-    || { echo "형식이 맞지 않습니다. tool/fl_dart format lib test 를 돌린 뒤 다시 스테이징합니다." >&2; exit 1; }
+    || { echo "형식이 맞지 않습니다. tool/format.sh 를 돌린 뒤 다시 스테이징합니다." >&2; exit 1; }
   tool/fl analyze --no-pub
 fi
 echo "✓ pre-commit 통과"

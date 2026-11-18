@@ -23,7 +23,7 @@ tool/setup.sh                                   # 클론 뒤 한 번. git 훅을
 tool/test.sh                                    # 테스트 전부. push 전에 이것을 먼저 돌린다
 tool/fl test                                    # 위젯, 단위 테스트
 tool/fl analyze
-tool/fl_dart format lib test
+tool/format.sh                                  # 포맷. 생성 파일 *.g.dart 는 건드리지 않는다
 python3 -m unittest discover -s tool -p 'test_*.py'
 tool/fl build apk --debug
 ```
