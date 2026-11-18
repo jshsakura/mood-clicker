@@ -60,6 +60,7 @@ Future<AppServices> createServices({WidgetBuilder? settingsBuilder}) async {
   final feel = ValueNotifier(settings.feelSettings);
   final theme = ValueNotifier(settings.themeChoice);
   final language = ValueNotifier(settings.language);
+  final mapView = ValueNotifier(settings.mapView);
 
   final notifications = FlutterLocalNotificationsPort();
   await notifications.initialize();
@@ -88,6 +89,7 @@ Future<AppServices> createServices({WidgetBuilder? settingsBuilder}) async {
         feel: feel,
         theme: theme,
         language: language,
+        mapView: mapView,
         reminder: reminder,
         records: records,
         appVersion: info.version,
@@ -107,6 +109,7 @@ Future<AppServices> createServices({WidgetBuilder? settingsBuilder}) async {
     tilt: phoneTilt,
     theme: theme,
     language: language,
+    mapView: mapView,
     settingsStore: settingsStore,
     reminder: reminder,
     records: records,

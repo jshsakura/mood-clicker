@@ -34,9 +34,13 @@ class Settings {
     this.shakeOnFull = true,
     this.tiltToPour = true,
     this.reminder = const ReminderSettings(),
+    this.mapView = mapViewDefault,
     this.mapContribute = false,
     this.mapComment = false,
   });
+
+  /// Whether the map entry shows up. On: the map is a core feature.
+  static const bool mapViewDefault = true;
 
   /// The name of the chosen palette, or `system` to follow the device.
   final String theme;
@@ -50,6 +54,7 @@ class Settings {
   final bool shakeOnFull;
   final bool tiltToPour;
   final ReminderSettings reminder;
+  final bool mapView;
   final bool mapContribute;
   final bool mapComment;
 
@@ -86,6 +91,7 @@ class Settings {
     bool? shakeOnFull,
     bool? tiltToPour,
     ReminderSettings? reminder,
+    bool? mapView,
     bool? mapContribute,
     bool? mapComment,
   }) {
@@ -101,6 +107,7 @@ class Settings {
       shakeOnFull: shakeOnFull ?? this.shakeOnFull,
       tiltToPour: tiltToPour ?? this.tiltToPour,
       reminder: reminder ?? this.reminder,
+      mapView: mapView ?? this.mapView,
       mapContribute: mapContribute ?? this.mapContribute,
       mapComment: mapComment ?? this.mapComment,
     );
@@ -117,5 +124,5 @@ class Settings {
   String toString() =>
       'Settings($theme, $language, $hapticsOn, $hapticStrength, $soundOn, '
       '$soundPack, $cheersOn, $cheerSize, $shakeOnFull, $tiltToPour, '
-      '$reminder, $mapContribute, $mapComment)';
+      '$reminder, $mapView, $mapContribute, $mapComment)';
 }

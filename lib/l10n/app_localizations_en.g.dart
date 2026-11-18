@@ -413,4 +413,82 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settings_mindCareYorisoiJapan => 'Yorisoi Hotline (Japan)';
+
+  @override
+  String get map_openLabel => 'Open map';
+
+  @override
+  String get map_nearby => 'Within 3 km of me';
+
+  @override
+  String get map_pickedPlace => 'Picked place';
+
+  @override
+  String get map_explain =>
+      'Each word is a line people picked, and its size is how much that place tapped. Places are grouped by about 1 km, and places with fewer than five people stay hidden.';
+
+  @override
+  String get map_rangeToday => 'Today';
+
+  @override
+  String get map_rangeWeek => 'This week';
+
+  @override
+  String get map_you => 'My spot';
+
+  @override
+  String map_tapsLine(int count) {
+    return 'Tapped $count times';
+  }
+
+  @override
+  String map_peopleLine(int count) {
+    return '$count people left a mood';
+  }
+
+  @override
+  String map_happySide(int percent) {
+    return '$percent% on the happy side';
+  }
+
+  @override
+  String map_sadSide(int percent) {
+    return '$percent% on the sad side';
+  }
+
+  @override
+  String map_spotLabel(String word, int count) {
+    return '$word, tapped $count times';
+  }
+
+  @override
+  String get map_wordSmiled => 'I smiled today';
+
+  @override
+  String get map_wordRest => 'I want a little rest';
+
+  @override
+  String get map_wordAteWell => 'I ate something good';
+
+  @override
+  String get map_wordBetterThanExpected => 'Better than I thought';
+
+  @override
+  String get map_wordTomorrowToo => 'Same again tomorrow';
+
+  @override
+  String get map_wordThankful => 'Someone I\'m thankful for';
+
+  @override
+  String get settings_mapView => 'Show map';
+
+  @override
+  String get settings_mapViewDesc =>
+      'Shows a map button on the mood screen. Off hides it';
+
+  @override
+  String get map_togetherSad => 'You are not the only one feeling low today';
+
+  @override
+  String get map_togetherHappy => 'Many people nearby feel good today';
 }
