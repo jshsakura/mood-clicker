@@ -8,7 +8,7 @@ cd "$ROOT"
 echo "> privacy and secret file scan"
 python3 tool/privacy_scan.py --staged
 
-echo "> slop scan (dashes, curly quotes, AI phrases, debug prints, Hangul in code)"
+echo "> slop scan (dashes, curly quotes, AI phrases, debug prints, flat style, Hangul in code)"
 python3 tool/slop_scan.py --staged
 
 echo "> design tokens match generated files"

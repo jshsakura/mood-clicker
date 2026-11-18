@@ -92,6 +92,57 @@ class ClosesThirdReview(unittest.TestCase):
         self.assertEqual(1, r.returncode, r.stderr)
 
 
+class KeepsTheStyleFlat(unittest.TestCase):
+    """Design rule: no gradients, blurred shadows or glows. Banned names are built from pieces so this file stays clean."""
+
+    def flat(self, line, kind="dart"):
+        return "flat style" in findings_in_line(line, kind)
+
+    def test_flags_gradients(self):
+        for name in ("Linear", "Radial", "Sweep"):
+            self.assertTrue(self.flat(f"  gradient: const {name}Gradient(colors: c),"), name)
+        self.assertTrue(self.flat("final g = Gra" + "dient(colors: c);"))
+
+    def test_flags_shadows_and_blurs(self):
+        self.assertTrue(self.flat("boxShadow: [Box" + "Shadow(blurRadius: 4)],"))
+        self.assertTrue(self.flat("shadows: [const Sha" + "dow(blurRadius: 8)],"))
+        self.assertTrue(self.flat("ImageFilter" + ".blur(sigmaX: 2, sigmaY: 2)"))
+        self.assertTrue(self.flat("child: Backdrop" + "Filter(filter: f),"))
+        self.assertTrue(self.flat("MaskFilter" + ".blur(BlurStyle.normal, 3)"))
+
+    def test_flags_nonzero_elevation_only(self):
+        self.assertTrue(self.flat("elevation: 4,"))
+        self.assertTrue(self.flat("Card(elevation: e)"))
+        self.assertFalse(self.flat("elevation: 0,"))
+        self.assertFalse(self.flat("Card(elevation: 0.0)"))
+        self.assertFalse(self.flat("scrolledUnderElevation: 0,"))
+
+    def test_checks_tests_too(self):
+        self.assertTrue(self.flat("final g = Linear" + "Gradient(colors: c);", "dart-test"))
+
+    def test_skips_comments_and_test_names(self):
+        self.assertFalse(self.flat("// no Linear" + "Gradient here"))
+        self.assertFalse(self.flat("/// Never use Box" + "Shadow."))
+        self.assertFalse(self.flat("final x = 1; // was Box" + "Shadow"))
+        self.assertFalse(self.flat("  test('has no Linear" + "Gradient', () {", "dart-test"))
+        self.assertFalse(self.flat("testWidgets(\"no Backdrop" + "Filter\", (t) async {", "dart-test"))
+        self.assertFalse(self.flat("group('no Box" + "Shadow', () {", "dart-test"))
+
+    def test_test_name_exemption_does_not_hide_code_after_it(self):
+        self.assertTrue(self.flat("test('x', () => Box" + "Shadow());", "dart-test"))
+
+    def test_marker_skips_line(self):
+        self.assertFalse(self.flat("elevation: 4,  slop-ok"))
+
+    def test_other_languages_are_not_checked(self):
+        self.assertFalse(self.flat("elevation: 4", "code"))
+        self.assertFalse(self.flat("Linear" + "Gradient", "md"))
+
+    def test_reports_path_and_line(self):
+        diff = "+++ b/lib/a.dart\n@@ -0,0 +3 @@\n+  elevation: 2,\n"
+        self.assertEqual(["lib/a.dart:3 flat style"], scan_diff(diff))
+
+
 class AllowsNormalText(unittest.TestCase):
     def test_allows_plain_korean_and_hyphens(self):
         self.assertEqual([], findings_in_line("\uc2e4\ud589 \uc911\uc778 \uc791\uc5c5\uc744 \ub05d\ub0b4\uace0 \uc178\uc744 \uc0c8\ub85c \uc5fd\ub2c8\ub2e4. well-known", "md"))

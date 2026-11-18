@@ -89,7 +89,7 @@ REQUIRED_CORE = {
     "font": ("family",),
 }
 REQUIRED_COLORS = (
-    "accent", "error", "fill", "ground", "happy", "ink", "inkMuted",
+    "accent", "error", "fill", "fillEdge", "ground", "happy", "ink", "inkMuted",
     "line", "mapLine", "onAccent", "onError", "onFill", "sad", "surface",
 )
 
