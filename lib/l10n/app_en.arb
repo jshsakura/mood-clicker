@@ -46,5 +46,20 @@
   "settings_vibrationStrength": "Vibration strength",
   "settings_sound": "Sound",
   "settings_soundPack": "Sound pack",
-  "settings_mapContribute": "Share my mood on the map"
+  "settings_mapContribute": "Share my mood on the map",
+  "moodSelect_openCalendar": "View calendar",
+  "note_title": "Note for today",
+  "note_hint": "Leave one line",
+  "note_skip": "Skip",
+  "note_save": "Save",
+  "note_presetLabel": "Or pick one",
+  "note_presetProud": "I felt proud today",
+  "note_presetCalm": "I felt calm",
+  "note_presetThanks": "Something made me grateful",
+  "note_presetHard": "It was hard, but I got through",
+  "note_presetTired": "I was very tired",
+  "note_presetRest": "I just want to rest",
+  "dayDetail_note": "Note",
+  "dayDetail_empty": "Nothing recorded this day",
+  "calendar_openDay": "View {date}"
 }

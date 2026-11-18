@@ -173,4 +173,51 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get settings_mapContribute => '地図に自分の気分を足す';
+
+  @override
+  String get moodSelect_openCalendar => 'カレンダーを見る';
+
+  @override
+  String get note_title => '今日のひとこと';
+
+  @override
+  String get note_hint => 'ひとことで残してみましょう';
+
+  @override
+  String get note_skip => 'スキップ';
+
+  @override
+  String get note_save => '残す';
+
+  @override
+  String get note_presetLabel => 'こんな言葉はどう？';
+
+  @override
+  String get note_presetProud => '誇らしい一日でした';
+
+  @override
+  String get note_presetCalm => '心が穏やかでした';
+
+  @override
+  String get note_presetThanks => 'ありがたいことがありました';
+
+  @override
+  String get note_presetHard => 'つらかったけど乗り越えました';
+
+  @override
+  String get note_presetTired => 'とても疲れました';
+
+  @override
+  String get note_presetRest => 'ゆっくり休みたいです';
+
+  @override
+  String get dayDetail_note => 'ひとこと';
+
+  @override
+  String get dayDetail_empty => 'この日は記録がありません';
+
+  @override
+  String calendar_openDay(String date) {
+    return '$dateを見る';
+  }
 }

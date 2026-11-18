@@ -381,6 +381,96 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'지도에 내 기분 보태기'**
   String get settings_mapContribute;
+
+  /// 기분 고르기 화면의 달력 버튼 숨김 이름(접근성)입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'달력 보기'**
+  String get moodSelect_openCalendar;
+
+  /// 끝까지 채운 날 두드리기 화면을 나갈 때 뜨는 한마디 창의 제목입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'오늘 한마디'**
+  String get note_title;
+
+  /// 한마디 입력칸의 안내 문구입니다. 40자까지 쓸 수 있습니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'한 줄로 남겨 보세요'**
+  String get note_hint;
+
+  /// 한마디를 남기지 않고 닫는 버튼입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'건너뛰기'**
+  String get note_skip;
+
+  /// 한마디를 저장하고 닫는 버튼입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'남기기'**
+  String get note_save;
+
+  /// 준비된 문장 목록 위의 작은 제목입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'이런 말은 어때요'**
+  String get note_presetLabel;
+
+  /// 준비된 한마디 문장입니다. 고른 문장의 id 만 나중에 지도로 보낼 수 있습니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'뿌듯한 하루였어요'**
+  String get note_presetProud;
+
+  /// 준비된 한마디 문장입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'마음이 차분했어요'**
+  String get note_presetCalm;
+
+  /// 준비된 한마디 문장입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'고마운 일이 있었어요'**
+  String get note_presetThanks;
+
+  /// 준비된 한마디 문장입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'힘들었지만 버텼어요'**
+  String get note_presetHard;
+
+  /// 준비된 한마디 문장입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'많이 피곤했어요'**
+  String get note_presetTired;
+
+  /// 준비된 한마디 문장입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'푹 쉬고 싶어요'**
+  String get note_presetRest;
+
+  /// 하루 상세 화면에서 그날 남긴 한마디 위의 작은 제목입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'한마디'**
+  String get dayDetail_note;
+
+  /// 기록이 없는 날을 눌렀을 때 하루 상세 화면에 보이는 문구입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'이날은 기록이 없습니다'**
+  String get dayDetail_empty;
+
+  /// 달력의 날짜 칸 숨김 이름(접근성)입니다. {date} 는 이미 현지 형식으로 만든 날짜입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'{date} 보기'**
+  String calendar_openDay(String date);
 }
 
 class _AppLocalizationsDelegate

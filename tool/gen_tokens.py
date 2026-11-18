@@ -87,8 +87,8 @@ PALETTE_RESERVED = DART_WORDS | OBJECT_MEMBERS | frozenset(
 REQUIRED_CORE = {
     "space": ("sm", "md", "lg", "xl", "xxl", "xxxl"),
     "radius": ("card", "button", "pill"),
-    "type": ("display", "title", "body", "label", "count"),
-    "motion": ("fillRise", "tap"),
+    "type": ("display", "title", "body", "label", "count", "wordmark"),
+    "motion": ("fillRise", "tap", "page"),
     "font": ("family",),
 }
 REQUIRED_COLORS = (

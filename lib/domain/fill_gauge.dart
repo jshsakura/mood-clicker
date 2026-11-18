@@ -41,6 +41,14 @@ class FillGauge {
     return FillGauge._(level, at, justFilled: filled);
   }
 
+  /// The gauge after [amount] of water spilled out of the phone. Only the level drops: the time
+  /// of the last tap stays, so the grace time and the decay carry on as before.
+  FillGauge spilled(double amount) {
+    if (amount <= 0) return this;
+    final next = _level - amount;
+    return FillGauge._(next < 0 ? 0 : next, _lastTapAt);
+  }
+
   static bool _isFull(double level) => level >= 1 - _epsilon;
 
   /// When the level reaches 0 if the taps stop now. Null when already empty.
