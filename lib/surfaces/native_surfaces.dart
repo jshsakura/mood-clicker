@@ -1,10 +1,13 @@
 import 'dart:async';
 
+import '../domain/day_key.dart';
 import '../domain/day_record.dart';
 import '../domain/mood.dart';
+import '../domain/mood_journal.dart';
 import '../l10n/app_localizations.g.dart';
 import 'mood_label.dart';
 import 'mood_links.dart';
+import 'shortcut_order.dart';
 import 'surfaces_ports.dart';
 import 'widget_snapshot.dart';
 
@@ -49,9 +52,15 @@ class NativeSurfaces {
     _lastPublished = snapshot;
   }
 
-  /// Sets the long press shortcuts in the language of [l]. Call again when the language changes.
-  Future<void> registerShortcuts(AppLocalizations l) => shortcuts.register([
-    for (final mood in Mood.values)
+  /// Sets the long press shortcuts in the language of [l]: the four moods picked most in the last
+  /// 14 days (see [shortcutOrder]). Call it every time the app opens and when the language changes,
+  /// so the menu follows what the user picks.
+  Future<void> registerShortcuts(
+    AppLocalizations l,
+    MoodJournal journal,
+    DateTime now,
+  ) => shortcuts.register([
+    for (final mood in shortcutOrder(journal, DayKey.of(now)))
       ShortcutEntry(type: shortcutTypeFor(mood), title: moodLabel(l, mood)),
   ]);
 
