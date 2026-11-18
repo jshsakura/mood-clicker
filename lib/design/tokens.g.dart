@@ -203,12 +203,18 @@ abstract final class Space {
   static const double xl = 24;
   static const double xxl = 32;
   static const double xxxl = 48;
+  static const double snug = 10;
+  static const double row = 14;
+  static const double inset = 18;
 }
 
 abstract final class Radii {
   static const double card = 24;
   static const double button = 16;
   static const double pill = 999;
+  static const double panel = 20;
+  static const double field = 14;
+  static const double chip = 10;
 }
 
 abstract final class TypeScale {

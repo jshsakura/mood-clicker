@@ -101,14 +101,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(
-            Space.md,
-            Space.md,
-            Space.md,
-            Space.xl,
+            Space.lg,
+            Space.sm,
+            Space.lg,
+            Space.xxxl,
           ),
           children: [
             _Header(title: l10n.settings_title),
-            const SizedBox(height: Space.lg),
+            const SizedBox(height: Space.sm),
             _Section(
               label: l10n.settings_theme,
               card: [
@@ -411,7 +411,7 @@ class _Section extends StatelessWidget {
           const SizedBox(height: Space.sm),
           Material(
             color: palette.surface,
-            borderRadius: BorderRadius.circular(Radii.card),
+            borderRadius: BorderRadius.circular(Radii.panel),
             child: Column(
               children: [
                 for (var i = 0; i < card.length; i++) ...[
@@ -435,7 +435,12 @@ class _CardNote extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(Space.xl, 0, Space.xl, Space.md),
+      padding: const EdgeInsets.fromLTRB(
+        Space.inset,
+        0,
+        Space.inset,
+        Space.row,
+      ),
       child: Text(
         text,
         style: TypeScale.label.copyWith(color: context.palette.inkMuted),
@@ -469,7 +474,7 @@ class _ToggleBlock<T> extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: Space.xl),
+          padding: const EdgeInsets.symmetric(horizontal: Space.inset),
           // The whole row toggles, like the pill itself.
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
@@ -480,7 +485,7 @@ class _ToggleBlock<T> extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const SizedBox(height: Space.md),
+                      const SizedBox(height: Space.row),
                       Text(
                         label,
                         style: TypeScale.body.copyWith(
@@ -493,7 +498,7 @@ class _ToggleBlock<T> extends StatelessWidget {
                           color: context.palette.inkMuted,
                         ),
                       ),
-                      const SizedBox(height: Space.md),
+                      const SizedBox(height: Space.row),
                     ],
                   ),
                 ),
@@ -504,7 +509,12 @@ class _ToggleBlock<T> extends StatelessWidget {
         ),
         if (value && details.isNotEmpty && onPickDetail != null)
           Padding(
-            padding: const EdgeInsets.fromLTRB(Space.xl, 0, Space.xl, Space.md),
+            padding: const EdgeInsets.fromLTRB(
+              Space.inset,
+              0,
+              Space.inset,
+              Space.row,
+            ),
             child: _SegmentBar(
               options: details,
               selected: selectedDetail as T,
@@ -593,10 +603,10 @@ class _SegmentBar<T> extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = context.palette;
     return Container(
-      padding: const EdgeInsets.all(4),
+      padding: const EdgeInsets.all(Space.xs),
       decoration: BoxDecoration(
         color: palette.ground,
-        borderRadius: BorderRadius.circular(Radii.button),
+        borderRadius: BorderRadius.circular(Radii.field),
       ),
       child: Row(
         children: [
@@ -637,7 +647,7 @@ class _SegmentOption extends StatelessWidget {
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: selected ? palette.ink : null,
-          borderRadius: BorderRadius.circular(Radii.button - 4),
+          borderRadius: BorderRadius.circular(Radii.chip),
         ),
         child: Text(
           label,
@@ -673,10 +683,10 @@ class _ThemeGrid extends StatelessWidget {
       child: LayoutBuilder(
         builder: (context, constraints) {
           // The canvas lays the four cards out in two columns.
-          final width = (constraints.maxWidth - Space.sm) / 2;
+          final width = (constraints.maxWidth - Space.snug) / 2;
           return Wrap(
-            spacing: Space.sm,
-            runSpacing: Space.sm,
+            spacing: Space.snug,
+            runSpacing: Space.snug,
             children: [
               for (final (choice, label) in choices)
                 SizedBox(
@@ -720,7 +730,7 @@ class _ThemeCard extends StatelessWidget {
         children: [
           Container(
             height: 104,
-            padding: const EdgeInsets.all(Space.sm),
+            padding: const EdgeInsets.all(Space.md),
             decoration: BoxDecoration(
               color: preview.ground,
               borderRadius: BorderRadius.circular(Radii.button),
@@ -729,32 +739,40 @@ class _ThemeCard extends StatelessWidget {
                 width: selected ? 2 : 1,
               ),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  AppLocalizations.of(context).moodSelect_title,
-                  style: TypeScale.body.copyWith(
-                    color: preview.ink,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                  ),
+            // Clipped like the design: the preview never grows the card.
+            child: ClipRect(
+              child: OverflowBox(
+                alignment: Alignment.topLeft,
+                maxHeight: double.infinity,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      AppLocalizations.of(context).moodSelect_title,
+                      style: TypeScale.body.copyWith(
+                        color: preview.ink,
+                        fontSize: 15,
+                        height: 1.2,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: Space.xs),
+                    _MiniRow(
+                      mood: Mood.happy,
+                      color: preview.happy,
+                      line: preview.line,
+                      surface: preview.surface,
+                    ),
+                    const SizedBox(height: Space.xs),
+                    _MiniRow(
+                      mood: Mood.sad,
+                      color: preview.sad,
+                      line: preview.line,
+                      surface: preview.surface,
+                    ),
+                  ],
                 ),
-                const SizedBox(height: Space.xs),
-                _MiniRow(
-                  mood: Mood.happy,
-                  color: preview.happy,
-                  line: preview.line,
-                  surface: preview.surface,
-                ),
-                const SizedBox(height: Space.xs),
-                _MiniRow(
-                  mood: Mood.sad,
-                  color: preview.sad,
-                  line: preview.line,
-                  surface: preview.surface,
-                ),
-              ],
+              ),
             ),
           ),
           const SizedBox(height: Space.sm),
@@ -848,7 +866,7 @@ class _LinkRow extends StatelessWidget {
         InkWell(
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: Space.xl),
+            padding: const EdgeInsets.symmetric(horizontal: Space.inset),
             child: Row(
               children: [
                 Expanded(
