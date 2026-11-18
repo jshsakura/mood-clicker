@@ -61,7 +61,19 @@
         "平均より",
         "他の人は"
       ]
-    }
+    },
+    "min_bases_per_tier": {
+      "low": 330,
+      "high": 300,
+      "full": 200,
+      "complete": 85,
+      "rare": 85
+    },
+    "min_bases_tier_moods": [
+      "angry",
+      "sad",
+      "anxious"
+    ]
   },
   "moods": {
     "happy": {
