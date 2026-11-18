@@ -210,6 +210,10 @@ class AllowsNormalText(unittest.TestCase):
         self.assertEqual([], scan_diff(f"+++ b/assets/fonts/x.svg\n@@ -0,0 +1 @@\n+{EM}\n"))
         self.assertEqual([], scan_diff(f"+++ b/THIRD_PARTY_NOTICES.md\n@@ -0,0 +1 @@\n+{EM}\n"))
 
+    def test_skips_verbatim_prompt_records_but_not_other_docs(self):
+        self.assertEqual([], scan_diff(f"+++ b/docs/prompts/log.md\n@@ -0,0 +1 @@\n+a {EM} b\n"))
+        self.assertTrue(scan_diff(f"+++ b/docs/HARNESS.md\n@@ -0,0 +1 @@\n+a {EM} b\n"))
+
 
 if __name__ == "__main__":
     unittest.main()

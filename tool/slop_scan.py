@@ -19,6 +19,8 @@ JUDGED = re.compile(r"\.(md|txt|dart|py|sh|ya?ml|json)$|(^|/)\.githooks/[^/]+$")
 NOT_JUDGED = re.compile(
     r"(^|/)(LICENSE|NOTICE|COPYING|THIRD_PARTY_NOTICES)[^/]*$|^licenses/|\.g\.dart$|\.lock$"
     r"|^tool/(slop_scan|test_slop_scan)\.py$"
+    # Verbatim records of what people and agents wrote. The privacy scan still reads them.
+    r"|^docs/prompts/"
 )
 
 # An en dash between digits is a numeric range (3\u20135), not a sentence connector.
