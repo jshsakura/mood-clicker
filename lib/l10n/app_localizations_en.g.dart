@@ -298,7 +298,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settings_mindCareSuicide => 'Suicide prevention line (Korea)';
 
   @override
-  String get settings_mindCareKakao => 'KakaoTalk counseling Madellan (Korea)';
+  String get settings_mindCareKakao => 'Madeullaen (KakaoTalk)';
 
   @override
   String get settings_mindCarePolice => 'Police';
