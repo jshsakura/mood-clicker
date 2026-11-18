@@ -1,14 +1,14 @@
-# 개발 환경 안내
+# 일상 개발 환경 안내
 
-이 저장소를 처음 받는 사람이 클론부터 테스트까지 돌릴 수 있게 쓴 문서입니다.
-적힌 명령은 모두 새 작업 트리에서 실제로 돌려 본 것입니다. 확인한 환경은 맨 아래에 있습니다.
+이 저장소에서 테스트, 포맷, 토큰 생성, 화면 그림 비교, 커밋·푸시를 하는 일상 작업 안내입니다.
+빈 맥에서 처음 개발 환경을 꾸리는 순서는 [SETUP.md](SETUP.md) 를 봅니다.
 
 ## 먼저 알아 둘 것
 
-- 컴퓨터에 Flutter 를 깔지 않습니다. Flutter SDK 는 도커 이미지 안에 있고, 아래 스크립트가 그 안에서 명령을 돌립니다.
-- 필요한 것은 git, 도커, 파이썬 3, bash 입니다. 도커는 `sudo` 없이 돌아가야 합니다.
-- 아이폰과 맥 앱은 이 방식으로 만들 수 없습니다. 맥에서 직접 하거나 CI 에 맡깁니다(아래 CI 절).
-- 색, 간격 같은 디자인 값은 `design/tokens/` 에서 고치고, 코드가 아니라 값으로 다룹니다. 흐름은 디자인 토큰 절에 있습니다.
+- `tool/fl` 과 `tool/fl_dart` 는 로컬에 지정 버전(Flutter `3.44.0`)이 있으면 로컬 명령을 쓰고, 없으면 도커(`ghcr.io/cirruslabs/flutter:3.44.0`)에서 돌립니다. 로컬 Flutter 가 있더라도 `FL_DOCKER=1` 을 주면 도커로 강제합니다.
+- 도커 모드를 쓰려면 git, 도커(`sudo` 없이 실행), 파이썬 3, bash 가 필요합니다.
+- 아이폰과 맥 앱은 맥의 로컬 Flutter 또는 GitHub Actions 의 macOS 러너에서 빌드합니다(아래 CI 절).
+- 색, 간격 같은 디자인 값은 `design/tokens.json` 한 파일에서 고치고, 코드가 아니라 값으로 다룹니다. 흐름은 디자인 토큰 절에 있습니다.
 
 ## 클론부터 테스트까지
 
@@ -27,8 +27,8 @@ tool/test.sh      # 테스트 전부
 
 끝나면 `준비 끝. 훅: .githooks` 가 나옵니다. 이미지가 이미 있는 컴퓨터에서는 2초 안팎으로 끝납니다.
 
-`tool/test.sh` 는 파이썬 도구 테스트 23개와 Flutter 테스트 10개를 차례로 돌리고, 이미지가 있는 상태에서 8초쯤 걸립니다.
-마지막에 `All tests passed!` 가 나오면 환경이 제대로 된 것입니다.
+`tool/test.sh` 는 파이썬 도구 테스트(162개)와 Flutter 테스트(비골든 210개 + 골든)를 차례로 돌립니다.
+로컬에 Flutter 가 없는 환경이나 골든 제외 확인만 필요할 때는 `tool/fl test --exclude-tags golden` 으로 단위·위젯 테스트를 빠르게 돌릴 수 있습니다.
 
 ## 도구 한눈에 보기
 
@@ -36,8 +36,8 @@ tool/test.sh      # 테스트 전부
 |---|---|
 | `tool/setup.sh` | 클론 뒤 한 번. 훅, 이미지, 패키지 |
 | `tool/test.sh` | 테스트 전부. push 전에 돌리는 것과 같습니다 |
-| `tool/fl <flutter 인자>` | 도커 안에서 `flutter` 를 돌립니다 |
-| `tool/fl_dart <dart 인자>` | 도커 안에서 `dart` 를 돌립니다 |
+| `tool/fl <flutter 인자>` | 로컬 Flutter `3.44.0` 또는 도커 안에서 `flutter` 를 돌립니다 (`FL_DOCKER=1` 로 도커 강제) |
+| `tool/fl_dart <dart 인자>` | 로컬 Dart 또는 도커 안에서 `dart` 를 돌립니다 (`FL_DOCKER=1` 로 도커 강제) |
 | `tool/shots.sh` | 화면을 그림(PNG)으로 뽑아 `build/shots/` 에 냅니다. `--check` 는 골든과 비교 |
 | `python3 tool/gen_tokens.py` | 디자인 토큰에서 다트 파일을 만듭니다 |
 | `python3 tool/subset_fonts.py` | 앱에 넣을 가벼운 글꼴을 만듭니다 |
@@ -116,10 +116,10 @@ python3 tool/privacy_scan.py --range origin/main..HEAD   # 커밋 범위
 ## 디자인 토큰 흐름
 
 ```
-design/tokens/*.json  →  python3 tool/gen_tokens.py  →  lib/design/tokens.g.dart  →  화면 코드
+design/tokens.json  →  python3 tool/gen_tokens.py  →  lib/design/tokens.g.dart  →  화면 코드
 ```
 
-- 디자이너가 고치는 곳은 `design/tokens/` 의 JSON 입니다. 구성과 형식은 [DESIGN.md](DESIGN.md) 에 있습니다.
+- 디자이너가 고치는 곳은 `design/tokens.json` 한 파일입니다. 구성과 형식은 [DESIGN.md](DESIGN.md) 에 있습니다.
 - `lib/design/tokens.g.dart` 는 생성 파일이라 손으로 고치지 않습니다. 고쳤다면 훅과 CI 가 막습니다.
 - 화면 코드는 `context.palette`, `Space`, `Radii`, `TypeScale`, `Motion` 만 씁니다. 색이나 숫자를 위젯에 직접 쓰지 않습니다.
 - 값을 고친 뒤에는 생성기를 돌리고 테스트합니다. 생성 파일과 토큰 파일을 같은 커밋에 올립니다.
@@ -144,7 +144,7 @@ design/fonts/*.otf (원본, 각 1.5MB)  →  python3 tool/subset_fonts.py  →  
 
 - 남기는 글자는 KS X 1001 한글 2,350자, 한글 자모, 영문과 숫자, 라틴 기본 기호, 일반 문장부호 등입니다. 빠진 드문 글자는 기기의 시스템 글꼴로 그려집니다.
 - 이 스크립트만 파이썬 패키지 `fonttools` 가 필요합니다. 없으면 `pip install fonttools` 로 깝니다. 같은 입력이면 같은 결과가 나오며, 지금 저장소의 결과물과 바이트까지 같은 것을 확인했습니다.
-- 굵기를 더하려면 원본을 `design/fonts/` 에 넣고 스크립트를 돌린 뒤 `pubspec.yaml` 의 `fonts` 에 적습니다. 글꼴 이름은 `design/tokens/core.json` 의 `font.family` 와 같아야 합니다.
+- 굵기를 더하려면 원본을 `design/fonts/` 에 넣고 스크립트를 돌린 뒤 `pubspec.yaml` 의 `fonts` 에 적습니다. 글꼴 이름은 `design/tokens.json` 의 `font.family` 와 같아야 합니다.
 - 글꼴 라이선스는 `licenses/Pretendard-OFL.txt` 와 `THIRD_PARTY_NOTICES.md` 에 있습니다.
 
 ## 화면 그림으로 확인하기
@@ -159,7 +159,7 @@ tool/shots.sh --update   # 의도한 변경이면 골든을 새 그림으로 바
 
 디자이너가 토큰을 바꾼 뒤의 순서는 이렇습니다.
 
-1. `design/tokens/` 를 고치고 `python3 tool/gen_tokens.py` 를 돕니다.
+1. `design/tokens.json` 을 고치고 `python3 tool/gen_tokens.py` 를 돕니다.
 2. `tool/shots.sh` 를 돌립니다. 10초쯤 걸립니다.
 3. `build/shots/` 의 그림을 엽니다. 파일 이름은 `<화면>_<테마>_<기기>.png` 입니다. 예: `token_preview_pink_iphone.png`
 4. 바뀐 모습이 의도한 것이면 `tool/shots.sh --update` 로 골든을 바꾸고, 바뀐 그림을 열어 확인한 뒤 코드와 함께 커밋합니다.
@@ -217,6 +217,8 @@ tool/shots.sh --update   # 의도한 변경이면 골든을 새 그림으로 바
 ## 확인한 환경
 
 - 확인일: 2026-11-18
-- Linux, 도커 29, 파이썬 3.14, Flutter 3.44.0, Dart 3.12.0
-- macOS 에서는 확인하지 못했습니다. 스크립트는 bash 와 도커만 쓰지만 같은 결과가 나오는지는 직접 확인한 적이 없습니다.
-- 위 명령은 새 작업 트리에서 모두 통과했고, 개인정보 검사와 훅이 막는 경우는 일부러 어긴 입력으로 막히는 것까지 확인했습니다.
+- Linux, 파이썬 3.14, Flutter 3.44.0 (도커 이미지)
+- `python3 -m unittest discover -s tool -p 'test_*.py'`: 162개 통과
+- `tool/fl test test/feedback`: 61개 통과
+- `tool/fl test --exclude-tags golden`: 210개 통과, 6개 건너뜀 (기존 `integrate/poc` 기준 비골든 1건 실패 포함)
+- macOS 로컬 Flutter 자동 선택(`FL_DOCKER=1` 미지정)은 맥이 없어 직접 확인하지 못했습니다.
