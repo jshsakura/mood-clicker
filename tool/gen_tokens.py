@@ -76,7 +76,7 @@ REQUIRED_CORE = {
 }
 REQUIRED_COLORS = (
     "accent", "error", "fill", "ground", "happy", "ink", "inkMuted",
-    "line", "mapLine", "onAccent", "sad", "surface",
+    "line", "mapLine", "onAccent", "onError", "onFill", "sad", "surface",
 )
 
 # 글자 토큰이 받는 필드. Tokens Studio 가 덧붙이는 것은 알지만 쓰지 않으므로 건너뛴다.

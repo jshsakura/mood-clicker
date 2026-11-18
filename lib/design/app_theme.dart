@@ -12,7 +12,7 @@ ThemeData buildTheme(AppPalette p) {
     secondary: p.accent,
     onSecondary: p.onAccent,
     error: p.error,
-    onError: p.onAccent,
+    onError: p.onError,
     surface: p.surface,
     onSurface: p.ink,
     outline: p.line,

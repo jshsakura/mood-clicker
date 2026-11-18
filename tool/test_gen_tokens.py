@@ -632,6 +632,36 @@ class DurationLimits(RefusesWith):
                 self.assertIn("tap = Duration(milliseconds: 0)", render(t))
 
 
+def contrast(a, b):
+    from gen_tokens import luminance
+    hi, lo = sorted((luminance(a), luminance(b)), reverse=True)
+    return (hi + 0.05) / (lo + 0.05)
+
+
+class Contrast(unittest.TestCase):
+    """색을 바꾸다 글자가 안 읽히게 되는 것을 막는다. Dart 쪽 palette_test 와 같은 기준(WCAG)이다."""
+
+    def argb(self, theme, name):
+        from gen_tokens import color_argb
+        return color_argb(BASE[theme]["color"][name], f"{theme}.color.{name}")
+
+    def test_text_on_fill_accent_and_error_is_readable(self):
+        for theme in THEMES:
+            for text, ground in (("onFill", "fill"), ("onAccent", "accent"), ("onError", "error")):
+                with self.subTest(theme=theme, pair=f"{text}/{ground}"):
+                    self.assertGreaterEqual(contrast(self.argb(theme, text), self.argb(theme, ground)), 4.5)
+
+    def test_mood_colors_stand_out_on_the_card_surface(self):
+        for theme in THEMES:
+            for name in ("happy", "sad"):
+                with self.subTest(theme=theme, name=name):
+                    self.assertGreaterEqual(contrast(self.argb(theme, name), self.argb(theme, "surface")), 3.0)
+
+    def test_the_new_colors_are_required(self):
+        self.assertIn("onFill", REQUIRED_COLORS)
+        self.assertIn("onError", REQUIRED_COLORS)
+
+
 class Output(unittest.TestCase):
     def test_header_points_at_the_single_token_file(self):
         out = render(BASE)
