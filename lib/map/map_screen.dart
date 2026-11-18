@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../app/app_services.dart';
 import '../design/app_theme.dart';
+import '../design/parts/line_icon.dart';
 import '../design/parts/pressable_surface.dart';
 import '../design/tokens.g.dart';
 import '../l10n/app_localizations.g.dart';
@@ -121,7 +122,7 @@ class _MapScreenState extends State<MapScreen> {
                   child: Row(
                     children: [
                       PressableSurface.icon(
-                        icon: Icons.arrow_back_ios_new,
+                        icon: LineIcons.back,
                         semanticLabel: MaterialLocalizations.of(
                           context,
                         ).backButtonTooltip,

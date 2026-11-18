@@ -482,5 +482,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get map_togetherHappy => 'Many people nearby feel good today';
 
   @override
+  String get moodSelect_title => 'How are you feeling today?';
+
+  @override
+  String get loading_message => 'Loading your records';
+
+  @override
   String get tap_hint => 'Tap anywhere';
+
+  @override
+  String tap_todayCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Today $count',
+      one: 'Today 1',
+    );
+    return '$_temp0';
+  }
 }

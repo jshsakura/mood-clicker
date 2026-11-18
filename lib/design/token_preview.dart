@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'app_theme.dart';
 import 'parts/character_slot.dart';
 import 'parts/fill_gauge.dart';
+import '../domain/mood.dart';
 import 'parts/mood_banner.dart';
 import 'theme_choice.dart';
 import 'tokens.g.dart';
@@ -65,15 +66,15 @@ class TokenPreview extends StatelessWidget {
             MoodBanner(
               label:
                   '행복해요', // slop-ok: shown on screen to check the Korean font
-              emoji: '😊',
-              todayCount: 128,
+              mood: Mood.happy,
+              countLabel: '128',
               onTap: () {},
             ),
             const SizedBox(height: Space.md),
             MoodBanner(
               label: '슬퍼요', // slop-ok: shown on screen to check the Korean font
-              emoji: '😢',
-              todayCount: 12,
+              mood: Mood.sad,
+              countLabel: '12',
               onTap: () {},
             ),
             const _Heading(

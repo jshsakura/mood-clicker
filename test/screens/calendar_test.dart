@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mood_clicker/design/parts/mood_face.dart';
 import 'package:mood_clicker/design/parts/pressable_surface.dart';
 import 'package:mood_clicker/design/tokens.g.dart';
 import 'package:mood_clicker/domain/mood.dart';
 import 'package:mood_clicker/domain/mood_journal.dart';
 import 'package:mood_clicker/screens/calendar_screen.dart';
 import 'package:mood_clicker/screens/day_detail_screen.dart';
-import 'package:mood_clicker/screens/mood_labels.dart';
 
 import 'fake_app.dart';
 
@@ -63,7 +63,7 @@ void main() {
     app.journal.load(journal);
     await tester.pumpWidget(app.wrap(const CalendarScreen()));
     for (final mood in Mood.values) {
-      expect(find.text(moodEmoji(mood)), findsNothing);
+      expect(find.byType(MoodFace), findsNothing);
       final color = shadeOf(tester, '${3 + mood.index}')!;
       final hsl = HSLColor.fromColor(color);
       expect(
@@ -92,9 +92,7 @@ void main() {
   testWidgets('a day without taps stays empty', (tester) async {
     final app = TestApp();
     await tester.pumpWidget(app.wrap(const CalendarScreen()));
-    for (final mood in Mood.values) {
-      expect(find.text(moodEmoji(mood)), findsNothing);
-    }
+    expect(find.byType(MoodFace), findsNothing);
     expect(shadeOf(tester, '10'), lightPalette.ground);
   });
 
@@ -147,7 +145,7 @@ void main() {
     expect(find.text(ko.dayDetail_happySide), findsOneWidget);
     expect(find.text(ko.dayDetail_sadSide), findsOneWidget);
     expect(find.text('a note'), findsOneWidget);
-    expect(find.text(moodEmoji(Mood.happy)), findsWidgets);
+    expect(find.byType(MoodFace), findsWidgets);
     expect(find.text(ko.dayDetail_note), findsOneWidget);
   });
 

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../app/app_services.dart';
 import '../design/app_theme.dart';
+import '../design/parts/line_icon.dart';
+import '../design/parts/mood_face.dart';
 import '../design/parts/pressable_surface.dart';
 import '../design/tokens.g.dart';
 import '../domain/day_key.dart';
@@ -41,7 +43,7 @@ class DayDetailScreen extends StatelessWidget {
                 Row(
                   children: [
                     PressableSurface.icon(
-                      icon: Icons.arrow_back,
+                      icon: LineIcons.backHeavy,
                       semanticLabel: l10n.common_back,
                       onTap: () => Navigator.of(context).pop(),
                     ),
@@ -140,7 +142,7 @@ class _FaceCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Text(moodEmoji(mood), style: const TextStyle(fontSize: 44)),
+              MoodFace(mood: mood, size: 44),
               const SizedBox(width: Space.md),
               Expanded(
                 child: Text(
@@ -217,7 +219,7 @@ class _MoodBar extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: Space.md),
       child: Row(
         children: [
-          Text(moodEmoji(mood), style: const TextStyle(fontSize: 26)),
+          MoodFace(mood: mood, size: 26),
           const SizedBox(width: Space.md),
           Expanded(
             child: Column(

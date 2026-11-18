@@ -143,5 +143,8 @@
   "settings_mapViewDesc": "オンにすると気分を選ぶ画面に地図ボタンが出ます。オフでは表示されません",
   "map_togetherSad": "今日、心が沈んでいるのはあなただけではありません",
   "map_togetherHappy": "今日は近くに気分のいい人がたくさんいます",
-  "tap_hint": "画面のどこでもタップします"
+  "moodSelect_title": "今日の気分は",
+  "loading_message": "記録を読み込んでいます",
+  "tap_hint": "画面のどこでもタップします",
+  "tap_todayCount": "{count, plural, other {今日 {count}回}}"
 }

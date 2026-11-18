@@ -474,5 +474,21 @@ class AppLocalizationsKo extends AppLocalizations {
   String get map_togetherHappy => '오늘 기분이 좋은 사람이 가까이에 많습니다';
 
   @override
+  String get moodSelect_title => '오늘 기분은';
+
+  @override
+  String get loading_message => '기록을 불러오는 중입니다';
+
+  @override
   String get tap_hint => '화면 어디든 두드립니다';
+
+  @override
+  String tap_todayCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '오늘 $count',
+    );
+    return '$_temp0';
+  }
 }

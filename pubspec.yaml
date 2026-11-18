@@ -55,6 +55,7 @@ dependencies:
   share_plus: ^13.3.1
   package_info_plus: ^10.2.2
   url_launcher: ^6.3.3
+  flutter_svg: ^2.4.0
 
 dev_dependencies:
   flutter_test:
@@ -88,6 +89,7 @@ flutter:
     - assets/cheers/en.json
     - assets/cheers/ja.json
     - assets/sounds/basic/
+    - assets/icons/
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in

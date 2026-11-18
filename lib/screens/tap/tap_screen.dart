@@ -6,7 +6,8 @@ import 'package:flutter/scheduler.dart';
 
 import '../../app/app_services.dart';
 import '../../design/app_theme.dart';
-import '../../design/parts/line_icons.dart';
+import '../../design/parts/line_icon.dart';
+import '../../design/parts/mood_face.dart';
 import '../../design/parts/pressable_surface.dart';
 import '../../design/parts/water_painter.dart';
 import '../../design/parts/water_sim.dart';
@@ -127,7 +128,6 @@ class _TapScreenState extends State<TapScreen>
   static const double _hintAlignY = 0.3;
 
   /// The header starts this far from the top edge, as in the canvas (it includes the status bar).
-  static const double _headerTop = 56;
 
   // --- each frame -------------------------------------------------------------------------
 
@@ -335,32 +335,47 @@ class _TapScreenState extends State<TapScreen>
                   top: 0,
                   left: 0,
                   right: 0,
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(
-                      Space.lg,
-                      max(
-                        _headerTop,
-                        MediaQuery.paddingOf(context).top + Space.sm,
-                      ),
-                      Space.lg,
-                      0,
-                    ),
-                    child: Row(
-                      children: [
-                        PressableSurface(
-                          kind: PressableKind.icon,
-                          semanticLabel: l10n.common_back,
-                          onTap: _leave,
-                          child: const Center(child: ChevronLeftIcon()),
-                        ),
-                        const SizedBox(width: Space.sm),
-                        Expanded(
-                          child: Text(
-                            moodName(context, widget.mood),
-                            style: TypeScale.title.copyWith(color: p.ink),
+                  child: SafeArea(
+                    child: Padding(
+                      padding: const EdgeInsets.all(Space.lg),
+                      child: Row(
+                        children: [
+                          PressableSurface.icon(
+                            icon: LineIcons.back,
+                            semanticLabel: l10n.common_back,
+                            onTap: _leave,
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: Space.md),
+                          Expanded(
+                            child: Row(
+                              children: [
+                                MoodFace(mood: widget.mood, size: 28),
+                                const SizedBox(width: Space.sm),
+                                Flexible(
+                                  child: Text(
+                                    moodName(context, widget.mood),
+                                    style: TypeScale.title.copyWith(
+                                      color: p.ink,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (_services.settingsBuilder != null) ...[
+                            const SizedBox(width: Space.md),
+                            PressableSurface.icon(
+                              icon: LineIcons.settings,
+                              semanticLabel: l10n.settings_title,
+                              onTap: () => Navigator.of(context).push(
+                                MaterialPageRoute<void>(
+                                  builder: _services.settingsBuilder!,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
                     ),
                   ),
                 ),

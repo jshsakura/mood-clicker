@@ -473,5 +473,21 @@ class AppLocalizationsJa extends AppLocalizations {
   String get map_togetherHappy => '今日は近くに気分のいい人がたくさんいます';
 
   @override
+  String get moodSelect_title => '今日の気分は';
+
+  @override
+  String get loading_message => '記録を読み込んでいます';
+
+  @override
   String get tap_hint => '画面のどこでもタップします';
+
+  @override
+  String tap_todayCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '今日 $count回',
+    );
+    return '$_temp0';
+  }
 }
