@@ -969,6 +969,78 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'기록을 불러오는 중입니다'**
   String get loading_message;
+
+  /// 달력 위 요약의 기록 일수 라벨입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'기록'**
+  String get calendar_recordedDays;
+
+  /// 달력 위 요약의 도장 횟수 라벨입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'도장'**
+  String get calendar_stamps;
+
+  /// 달력 기록 일수 단위입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'일'**
+  String get calendar_daysUnit;
+
+  /// 달력 도장 횟수 단위입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'번'**
+  String get calendar_stampsUnit;
+
+  /// 달력 아래 월간 막대그래프 제목입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'이달의 흐름'**
+  String get calendar_monthFlow;
+
+  /// 달력 월간 막대그래프 오른쪽 보조 라벨입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'두드린 수'**
+  String get calendar_tapsAxis;
+
+  /// 달력 아래 고른 날 카드의 두드린 수 문구입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'{count}번 두드렸습니다'**
+  String calendar_tappedTimes(int count);
+
+  /// 달력 도장 첫째 줄입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'참 잘'**
+  String get calendar_stampLine1;
+
+  /// 달력 도장 둘째 줄입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'했어요'**
+  String get calendar_stampLine2;
+
+  /// 그날 상세 위 카드의 작은 제목입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'이날의 기분'**
+  String get dayDetail_moodHeading;
+
+  /// 그날 상세 위 카드의 부제입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'가장 많이 두드린 기분입니다'**
+  String get dayDetail_dominantCaption;
+
+  /// 그날 상세 아래 주간 막대그래프 제목입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'이번 주 돌아보기'**
+  String get dayDetail_weekReview;
 }
 
 class _AppLocalizationsDelegate

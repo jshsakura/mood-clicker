@@ -494,4 +494,42 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get loading_message => 'Loading your records';
+
+  @override
+  String get calendar_recordedDays => 'Recorded';
+
+  @override
+  String get calendar_stamps => 'Stamps';
+
+  @override
+  String get calendar_daysUnit => 'd';
+
+  @override
+  String get calendar_stampsUnit => '';
+
+  @override
+  String get calendar_monthFlow => 'Monthly flow';
+
+  @override
+  String get calendar_tapsAxis => 'Taps';
+
+  @override
+  String calendar_tappedTimes(int count) {
+    return '$count taps';
+  }
+
+  @override
+  String get calendar_stampLine1 => 'Well';
+
+  @override
+  String get calendar_stampLine2 => 'done';
+
+  @override
+  String get dayDetail_moodHeading => 'Mood of the day';
+
+  @override
+  String get dayDetail_dominantCaption => 'Most tapped mood';
+
+  @override
+  String get dayDetail_weekReview => 'This week';
 }

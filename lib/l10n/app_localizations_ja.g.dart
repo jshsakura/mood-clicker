@@ -484,4 +484,42 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get loading_message => '記録を読み込んでいます';
+
+  @override
+  String get calendar_recordedDays => '記録';
+
+  @override
+  String get calendar_stamps => 'スタンプ';
+
+  @override
+  String get calendar_daysUnit => '日';
+
+  @override
+  String get calendar_stampsUnit => '回';
+
+  @override
+  String get calendar_monthFlow => '今月の流れ';
+
+  @override
+  String get calendar_tapsAxis => 'タップ数';
+
+  @override
+  String calendar_tappedTimes(int count) {
+    return '$count回タップしました';
+  }
+
+  @override
+  String get calendar_stampLine1 => 'よくでき';
+
+  @override
+  String get calendar_stampLine2 => 'ました';
+
+  @override
+  String get dayDetail_moodHeading => 'この日の気分';
+
+  @override
+  String get dayDetail_dominantCaption => '一番多くタップした気分です';
+
+  @override
+  String get dayDetail_weekReview => '今週のふり返り';
 }

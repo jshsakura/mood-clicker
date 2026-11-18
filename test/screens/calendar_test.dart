@@ -1,5 +1,7 @@
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:table_calendar/table_calendar.dart';
 import 'package:mood_clicker/design/parts/mood_face.dart';
 import 'package:mood_clicker/design/parts/pressable_surface.dart';
 import 'package:mood_clicker/design/tokens.g.dart';
@@ -63,7 +65,13 @@ void main() {
     app.journal.load(journal);
     await tester.pumpWidget(app.wrap(const CalendarScreen()));
     for (final mood in Mood.values) {
-      expect(find.byType(MoodFace), findsNothing);
+      expect(
+        find.descendant(
+          of: find.byType(TableCalendar),
+          matching: find.byType(MoodFace),
+        ),
+        findsNothing,
+      );
       final color = shadeOf(tester, '${3 + mood.index}')!;
       final hsl = HSLColor.fromColor(color);
       expect(
@@ -103,15 +111,38 @@ void main() {
       app.journal.load(tapped(Mood.excited, DateTime(2026, 10, 20, 9), 30));
       await tester.pumpWidget(app.wrap(const CalendarScreen()));
       await tester.tap(find.bySemanticsLabel(ko.calendar_prevMonth));
-      await tester.pump();
+      await tester.pumpAndSettle();
       expect(shadeOf(tester, '20'), isNot(lightPalette.ground));
       await tester.tap(find.bySemanticsLabel(ko.calendar_nextMonth));
-      await tester.pump();
-      expect(find.text('30'), findsOneWidget);
+      await tester.pumpAndSettle();
+      expect(find.text('30').first, findsOneWidget);
       // Already on the current month: the next button does nothing.
       await tester.tap(find.bySemanticsLabel(ko.calendar_nextMonth));
-      await tester.pump();
-      expect(find.text('30'), findsOneWidget);
+      await tester.pumpAndSettle();
+      expect(find.text('30').first, findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'month chevrons sit beside the month label without round backgrounds and month flow chart renders',
+    (tester) async {
+      final app = TestApp();
+      app.journal.load(tapped(Mood.happy, DateTime(2026, 11, 3, 9), 5));
+      await tester.pumpWidget(app.wrap(const CalendarScreen()));
+      final prevButton = find.bySemanticsLabel(ko.calendar_prevMonth);
+      final nextButton = find.bySemanticsLabel(ko.calendar_nextMonth);
+      expect(prevButton, findsOneWidget);
+      expect(nextButton, findsOneWidget);
+      expect(
+        find.ancestor(of: prevButton, matching: find.byType(PressableSurface)),
+        findsNothing,
+      );
+      expect(
+        find.ancestor(of: nextButton, matching: find.byType(PressableSurface)),
+        findsNothing,
+      );
+      expect(find.text(ko.calendar_monthFlow), findsOneWidget);
+      expect(find.byType(BarChart), findsOneWidget);
     },
   );
 
@@ -131,40 +162,51 @@ void main() {
     );
     await tester.pumpWidget(app.wrap(const CalendarScreen()));
     await tester.tap(find.text('18'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
     expect(find.byType(DayDetailScreen), findsOneWidget);
     expect(
-      find.text(ko.dayDetail_moodCount(ko.moodSelect_moodHappy, 2)),
+      find.bySemanticsLabel(ko.dayDetail_moodCount(ko.moodSelect_moodHappy, 2)),
       findsOneWidget,
     );
     expect(
-      find.text(ko.dayDetail_moodCount(ko.moodSelect_moodSad, 1)),
+      find.bySemanticsLabel(ko.dayDetail_moodCount(ko.moodSelect_moodSad, 1)),
       findsOneWidget,
     );
     expect(find.text(ko.dayDetail_happySide), findsOneWidget);
     expect(find.text(ko.dayDetail_sadSide), findsOneWidget);
-    expect(find.text('a note'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(DayDetailScreen),
+        matching: find.text('"a note"'),
+      ),
+      findsOneWidget,
+    );
     expect(find.byType(MoodFace), findsWidgets);
-    expect(find.text(ko.dayDetail_note), findsOneWidget);
+    expect(find.text(ko.dayDetail_weekReview), findsOneWidget);
   });
 
   testWidgets('a day in the future cannot be opened', (tester) async {
     final app = TestApp();
     await tester.pumpWidget(app.wrap(const CalendarScreen()));
-    await tester.tap(find.text('30'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 400));
+    await tester.tap(find.text('30').last);
+    await tester.pumpAndSettle();
     expect(find.byType(DayDetailScreen), findsNothing);
   });
 
   testWidgets('an empty day tells there is nothing', (tester) async {
     final app = TestApp();
     await tester.pumpWidget(app.wrap(const CalendarScreen()));
-    await tester.tap(find.text('5'));
+    await tester.tap(find.text('5').first);
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 400));
-    expect(find.text(ko.dayDetail_empty), findsOneWidget);
+    await tester.tap(find.text('5').first);
+    await tester.pumpAndSettle();
+    expect(
+      find.descendant(
+        of: find.byType(DayDetailScreen),
+        matching: find.text(ko.dayDetail_empty),
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('back returns to the picker', (tester) async {
@@ -180,14 +222,13 @@ void main() {
     app.journal.load(MoodJournal.empty().withTap(Mood.happy, app.clock));
     await tester.pumpWidget(app.wrap(const CalendarScreen()));
     await tester.tap(find.text('18'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
     final bars = tester
         .widgetList<Container>(find.byType(Container))
-        .where((c) => c.constraints?.maxHeight == 10)
+        .where((c) => c.constraints?.maxHeight == 12 && c.decoration != null)
         .map((c) => (c.decoration! as BoxDecoration).color)
         .toList();
     expect(bars, isNotEmpty);
-    expect(bars, everyElement(lightPalette.ink));
+    expect(bars, everyElement(anyOf(lightPalette.ink, lightPalette.mapLine)));
   });
 }

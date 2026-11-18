@@ -105,13 +105,28 @@ class _MapScreenState extends State<MapScreen> {
                   label: l10n.map_you,
                   child: FractionalTranslation(
                     translation: const Offset(-0.5, -0.5),
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: p.ink,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: p.mapGround, width: Space.xs),
-                      ),
-                      child: const SizedBox.square(dimension: Space.xl),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: p.ink.withValues(alpha: 0.08),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const SizedBox.square(dimension: Space.xxxl),
+                        ),
+                        DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: p.ink,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: p.mapGround,
+                              width: Space.xs,
+                            ),
+                          ),
+                          child: const SizedBox.square(dimension: Space.xl),
+                        ),
+                      ],
                     ),
                   ),
                 ),

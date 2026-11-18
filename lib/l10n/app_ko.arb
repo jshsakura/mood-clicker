@@ -652,5 +652,32 @@
   "loading_message": "기록을 불러오는 중입니다",
   "@loading_message": {
     "description": "첫 화면에서 기록을 읽는 동안 로고 아래에 보이는 문구입니다."
-  }
+  },
+  "calendar_recordedDays": "기록",
+  "@calendar_recordedDays": { "description": "달력 위 요약의 기록 일수 라벨입니다." },
+  "calendar_stamps": "도장",
+  "@calendar_stamps": { "description": "달력 위 요약의 도장 횟수 라벨입니다." },
+  "calendar_daysUnit": "일",
+  "@calendar_daysUnit": { "description": "달력 기록 일수 단위입니다." },
+  "calendar_stampsUnit": "번",
+  "@calendar_stampsUnit": { "description": "달력 도장 횟수 단위입니다." },
+  "calendar_monthFlow": "이달의 흐름",
+  "@calendar_monthFlow": { "description": "달력 아래 월간 막대그래프 제목입니다." },
+  "calendar_tapsAxis": "두드린 수",
+  "@calendar_tapsAxis": { "description": "달력 월간 막대그래프 오른쪽 보조 라벨입니다." },
+  "calendar_tappedTimes": "{count}번 두드렸습니다",
+  "@calendar_tappedTimes": {
+    "description": "달력 아래 고른 날 카드의 두드린 수 문구입니다.",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "calendar_stampLine1": "참 잘",
+  "@calendar_stampLine1": { "description": "달력 도장 첫째 줄입니다." },
+  "calendar_stampLine2": "했어요",
+  "@calendar_stampLine2": { "description": "달력 도장 둘째 줄입니다." },
+  "dayDetail_moodHeading": "이날의 기분",
+  "@dayDetail_moodHeading": { "description": "그날 상세 위 카드의 작은 제목입니다." },
+  "dayDetail_dominantCaption": "가장 많이 두드린 기분입니다",
+  "@dayDetail_dominantCaption": { "description": "그날 상세 위 카드의 부제입니다." },
+  "dayDetail_weekReview": "이번 주 돌아보기",
+  "@dayDetail_weekReview": { "description": "그날 상세 아래 주간 막대그래프 제목입니다." }
 }
