@@ -184,9 +184,14 @@ expect_log " -v mood-clicker-android-sdk:/opt/android-sdk-linux/ndk "
 expect_no_log ":/opt/android-sdk-linux "
 expect_log " bash /app/tool/fl_container.sh build apk"
 
+new_case "CMake is a second shared volume next to the NDK one"
+run fl build apk
+expect_log " -v mood-clicker-android-sdk-cmake:/opt/android-sdk-linux/cmake "
+
 new_case "FL_ANDROID_SDK_VOLUME overrides the SDK volume and an empty one is ignored"
 FL_ANDROID_SDK_VOLUME=my-sdk run fl build apk
 expect_log " -v my-sdk:/opt/android-sdk-linux/ndk "
+expect_log " -v my-sdk-cmake:/opt/android-sdk-linux/cmake "
 : > "$LOG"
 FL_ANDROID_SDK_VOLUME= run fl build apk
 expect_log " -v mood-clicker-android-sdk:/opt/android-sdk-linux/ndk "
@@ -218,14 +223,16 @@ SH
 #!/bin/sh
 echo "sdkmanager $*" >> "$FAKE_LOG"
 [ -n "${FAKE_SDK_SLEEP:-}" ] && sleep "$FAKE_SDK_SLEEP"
-n=$(grep -c '^sdkmanager' "$FAKE_LOG")
+for last; do pkg="$last"; done
+n=$(grep -c "^sdkmanager .*$pkg\$" "$FAKE_LOG")
 if [ "$n" -le "${FAKE_SDK_FAILS:-0}" ]; then exit 1; fi
-mkdir -p "$SDK_ROOT/ndk/$NDK_VERSION"
-echo "Pkg.Revision=$NDK_VERSION" > "$SDK_ROOT/ndk/$NDK_VERSION/source.properties"
+folder="${pkg%%;*}"; version="${pkg#*;}"
+mkdir -p "$SDK_ROOT/$folder/$version"
+echo "Pkg.Revision=$version" > "$SDK_ROOT/$folder/$version/source.properties"
 SH
   chmod +x "$CASE/bin/flutter" "$CASE/sdkmanager"
-  mkdir -p "$CASE/sdk/ndk"
-  FAKE_LOG="$LOG" SDK_ROOT="$CASE/sdk" NDK_VERSION=1.2.3 SDKMANAGER="$CASE/sdkmanager" APP_DIR="$CASE/app" \
+  mkdir -p "$CASE/sdk/ndk" "$CASE/sdk/cmake"
+  FAKE_LOG="$LOG" SDK_ROOT="$CASE/sdk" NDK_VERSION=1.2.3 CMAKE_VERSION=4.5.6 SDKMANAGER="$CASE/sdkmanager" APP_DIR="$CASE/app" \
     PATH="$CASE/bin:/usr/bin:/bin:$BASH_DIR" bash "$ROOT/tool/fl_container.sh" "$@" > "$CASE/stdout" 2> "$CASE/stderr"
   RC=$?
 }
@@ -236,9 +243,14 @@ expect_rc 0
 expect_log "^sdkmanager .*ndk;1.2.3"
 expect_log "^flutter build apk"
 
-new_case "container: an installed NDK is not downloaded again"
-mkdir -p "$CASE/sdk/ndk/1.2.3"
+new_case "container: a build installs the missing CMake as well"
+container build apk
+expect_log "^sdkmanager .*cmake;4.5.6"
+
+new_case "container: an installed NDK and CMake are not downloaded again"
+mkdir -p "$CASE/sdk/ndk/1.2.3" "$CASE/sdk/cmake/4.5.6"
 echo "Pkg.Revision=1.2.3" > "$CASE/sdk/ndk/1.2.3/source.properties"
+echo "Pkg.Revision=4.5.6" > "$CASE/sdk/cmake/4.5.6/source.properties"
 container build apk
 expect_no_log "^sdkmanager"
 expect_log "^flutter build apk"
@@ -250,13 +262,14 @@ expect_log "^flutter test"
 
 new_case "container: a failed download is tried again"
 FAKE_SDK_FAILS=2 container build apk
-if [ "$(grep -c '^sdkmanager' "$LOG")" -eq 3 ]; then pass; else fail "wanted 3 sdkmanager calls"; fi
+if [ "$(grep -c '^sdkmanager.*ndk;' "$LOG")" -eq 3 ]; then pass; else fail "wanted 3 NDK downloads"; fi
 expect_log "^flutter build apk"
 
 new_case "container: a download that keeps failing does not stop the build"
 FAKE_SDK_FAILS=9 container build apk
 expect_log "^flutter build apk"
 expect_stderr "could not install the NDK"
+expect_stderr "could not install the CMake"
 
 new_case "container: the exit code of flutter is passed on"
 FAKE_FLUTTER_RC=7 container test
@@ -265,7 +278,7 @@ expect_rc 7
 if command -v flock > /dev/null 2>&1; then
   new_case "container: two builds at once install the NDK only once"
   mkdir -p "$CASE/sdk/ndk"
-  export_env() { FAKE_LOG="$LOG" SDK_ROOT="$CASE/sdk" NDK_VERSION=1.2.3 SDKMANAGER="$CASE/sdkmanager" APP_DIR="$CASE/app" PATH="$CASE/bin:/usr/bin:/bin:$BASH_DIR" FAKE_SDK_SLEEP=1 "$@"; }
+  export_env() { FAKE_LOG="$LOG" SDK_ROOT="$CASE/sdk" NDK_VERSION=1.2.3 CMAKE_VERSION=4.5.6 SDKMANAGER="$CASE/sdkmanager" APP_DIR="$CASE/app" PATH="$CASE/bin:/usr/bin:/bin:$BASH_DIR" FAKE_SDK_SLEEP=1 "$@"; }
   container true > /dev/null 2>&1
   rm -rf "$CASE/sdk/ndk/1.2.3"
   : > "$LOG"
@@ -275,7 +288,8 @@ if command -v flock > /dev/null 2>&1; then
   PID2=$!
   wait $PID1
   wait $PID2
-  if [ "$(grep -c '^sdkmanager' "$LOG")" -eq 1 ]; then pass; else fail "sdkmanager ran $(grep -c '^sdkmanager' "$LOG") times"; fi
+  if [ "$(grep -c '^sdkmanager.*ndk;' "$LOG")" -eq 1 ]; then pass; else fail "NDK installed $(grep -c '^sdkmanager.*ndk;' "$LOG") times"; fi
+  if [ "$(grep -c '^sdkmanager.*cmake;' "$LOG")" -eq 1 ]; then pass; else fail "CMake installed $(grep -c '^sdkmanager.*cmake;' "$LOG") times"; fi
   if [ "$(grep -c '^flutter build' "$LOG")" -eq 2 ]; then pass; else fail "both builds should run"; fi
 fi
 
