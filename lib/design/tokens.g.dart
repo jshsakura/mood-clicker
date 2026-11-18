@@ -19,6 +19,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     required this.sad,
     required this.fill,
     required this.onFill,
+    required this.fillEdge,
     required this.mapGround,
     required this.mapLine,
     required this.error,
@@ -38,6 +39,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
   final Color sad;
   final Color fill;
   final Color onFill;
+  final Color fillEdge;
   final Color mapGround;
   final Color mapLine;
   final Color error;
@@ -58,6 +60,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     Color? sad,
     Color? fill,
     Color? onFill,
+    Color? fillEdge,
     Color? mapGround,
     Color? mapLine,
     Color? error,
@@ -77,6 +80,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
       sad: sad ?? this.sad,
       fill: fill ?? this.fill,
       onFill: onFill ?? this.onFill,
+      fillEdge: fillEdge ?? this.fillEdge,
       mapGround: mapGround ?? this.mapGround,
       mapLine: mapLine ?? this.mapLine,
       error: error ?? this.error,
@@ -101,6 +105,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
       sad: Color.lerp(sad, other.sad, t)!,
       fill: Color.lerp(fill, other.fill, t)!,
       onFill: Color.lerp(onFill, other.onFill, t)!,
+      fillEdge: Color.lerp(fillEdge, other.fillEdge, t)!,
       mapGround: Color.lerp(mapGround, other.mapGround, t)!,
       mapLine: Color.lerp(mapLine, other.mapLine, t)!,
       error: Color.lerp(error, other.error, t)!,
@@ -123,6 +128,7 @@ const AppPalette darkPalette = AppPalette(
   sad: Color(0xFF7A9CFF),
   fill: Color(0xFF2A2A30),
   onFill: Color(0xFFECECF0),
+  fillEdge: Color(0xFF4A4A52),
   mapGround: Color(0xFF121216),
   mapLine: Color(0xFF383840),
   error: Color(0xFFF0685C),
@@ -143,6 +149,7 @@ const AppPalette lightPalette = AppPalette(
   sad: Color(0xFF4C6FE0),
   fill: Color(0xFFEDEDF0),
   onFill: Color(0xFF16161A),
+  fillEdge: Color(0xFFC8C8D0),
   mapGround: Color(0xFFFFFFFF),
   mapLine: Color(0xFFD4D4DC),
   error: Color(0xFFC93A2F),
@@ -163,6 +170,7 @@ const AppPalette pinkPalette = AppPalette(
   sad: Color(0xFF7B68E8),
   fill: Color(0xFFFF8FB8),
   onFill: Color(0xFF3A1E2B),
+  fillEdge: Color(0xFFFF5C9A),
   mapGround: Color(0xFFFFF1F5),
   mapLine: Color(0xFFF2C2D3),
   error: Color(0xFFC93A2F),

@@ -661,7 +661,7 @@ class Contrast(unittest.TestCase):
     def test_information_colors_are_black_and_gray_in_light_and_dark(self):
         """Design rule: accent, fill and their text colors are single-tone black or gray; color is for the mood faces only."""
         for theme in ("light", "dark"):
-            for name in ("accent", "onAccent", "fill", "onFill", "mapLine"):
+            for name in ("accent", "onAccent", "fill", "onFill", "fillEdge", "mapLine"):
                 with self.subTest(theme=theme, name=name):
                     argb = self.argb(theme, name)
                     r, g, b = (int(argb[i:i + 2], 16) for i in (2, 4, 6))
@@ -670,6 +670,15 @@ class Contrast(unittest.TestCase):
     def test_the_new_colors_are_required(self):
         self.assertIn("onFill", REQUIRED_COLORS)
         self.assertIn("onError", REQUIRED_COLORS)
+
+    def test_fill_edge_is_required(self):
+        self.assertIn("fillEdge", REQUIRED_COLORS)
+
+    def test_fill_edge_stands_out_from_the_ground(self):
+        """The line on top of the water has to be visible on the ground even when the fill itself is pale."""
+        for theme in THEMES:
+            with self.subTest(theme=theme):
+                self.assertGreaterEqual(contrast(self.argb(theme, "fillEdge"), self.argb(theme, "ground")), 1.5)
 
 
 STORYBOARD = (ROOT / SPLASH_FILES["ios_storyboard"]).read_text(encoding="utf-8")
