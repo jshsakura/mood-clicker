@@ -10,6 +10,8 @@ import '../domain/mood.dart';
 import '../feedback/feedback_kind.dart';
 import '../l10n/app_localizations.g.dart';
 import '../l10n/date_labels.dart';
+import '../map/map_rules.dart';
+import '../map/map_screen.dart';
 import 'calendar_screen.dart';
 import 'mood_labels.dart';
 import 'tap/tap_screen.dart';
@@ -35,7 +37,7 @@ class MoodSelectScreen extends StatelessWidget {
     return Scaffold(
       body: SafeArea(
         child: ListenableBuilder(
-          listenable: services.journal,
+          listenable: Listenable.merge([services.journal, services.mapView]),
           builder: (context, _) {
             final today = DayKey.of(services.now());
             final record = services.journal.journal.dayOf(today);
@@ -60,6 +62,20 @@ class MoodSelectScreen extends StatelessWidget {
                           ),
                         ),
                       ),
+                      if (services.mapView.value) ...[
+                        const SizedBox(width: Space.sm),
+                        PressableSurface.icon(
+                          icon: Icons.map_outlined,
+                          semanticLabel: l10n.map_openLabel,
+                          onTap: () => Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) => MapScreen(
+                                justRecorded: lastRecordedMood(record),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                       if (services.settingsBuilder != null) ...[
                         const SizedBox(width: Space.sm),
                         PressableSurface.icon(

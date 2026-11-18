@@ -29,6 +29,7 @@ class SettingsScreen extends StatefulWidget {
     required this.feel,
     required this.theme,
     required this.language,
+    required this.mapView,
     required this.reminder,
     required this.records,
     required this.appVersion,
@@ -39,6 +40,7 @@ class SettingsScreen extends StatefulWidget {
   final ValueNotifier<FeelSettings> feel;
   final ValueNotifier<ThemeChoice> theme;
   final ValueNotifier<LocaleChoice> language;
+  final ValueNotifier<bool> mapView;
   final ReminderController reminder;
   final RecordsPort records;
   final String appVersion;
@@ -73,6 +75,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     widget.feel.value = next.feelSettings;
     widget.theme.value = next.themeChoice;
     widget.language.value = next.language;
+    widget.mapView.value = next.mapView;
   }
 
   void _saveReminderSlice() {
@@ -211,6 +214,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
             _Section(
               label: l10n.settings_map,
               card: [
+                _ToggleBlock(
+                  label: l10n.settings_mapView,
+                  description: l10n.settings_mapViewDesc,
+                  value: _settings.mapView,
+                  onChanged: (on) => _save(_settings.copyWith(mapView: on)),
+                ),
                 _ToggleBlock(
                   label: l10n.settings_mapContribute,
                   description: l10n.settings_mapContributeDesc,

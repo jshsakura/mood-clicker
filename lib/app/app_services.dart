@@ -10,8 +10,10 @@ import '../domain/feel_settings.dart';
 import '../domain/mood.dart';
 import '../feedback/feedback_controller.dart';
 import '../l10n/locale_choice.dart';
+import '../map/map_source.dart';
 import '../reminder/reminder_controller.dart';
 import '../settings/records_port.dart';
+import '../settings/settings.dart';
 import '../settings/settings_store.dart';
 import '../surfaces/native_surfaces.dart';
 import 'journal_store.dart';
@@ -31,6 +33,8 @@ class AppServices {
     required this.tilt,
     required this.theme,
     this.language,
+    ValueNotifier<bool>? mapView,
+    this.mapSource = const SampleMapSource(),
     this.settingsStore,
     this.reminder,
     this.records,
@@ -38,7 +42,8 @@ class AppServices {
     this.settingsBuilder,
     this.surfaces,
     DateTime Function()? now,
-  }) : now = now ?? DateTime.now;
+  }) : mapView = mapView ?? ValueNotifier(Settings.mapViewDefault),
+       now = now ?? DateTime.now;
 
   final JournalStore journal;
   final FeedbackController feedback;
@@ -58,6 +63,12 @@ class AppServices {
   /// The language the user picked. The settings screen changes it. Null in
   /// tests that do not care.
   final ValueNotifier<LocaleChoice>? language;
+
+  /// Whether the map entry shows. The settings screen changes it.
+  final ValueNotifier<bool> mapView;
+
+  /// Where the map data comes from. Made-up data on the device until a server exists.
+  final MapSource mapSource;
 
   /// The one settings store behind the settings screen. Null in tests.
   final SettingsStore? settingsStore;

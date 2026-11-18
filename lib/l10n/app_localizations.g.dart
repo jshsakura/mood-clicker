@@ -831,6 +831,138 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'요리소이 상담전화(일본)'**
   String get settings_mindCareYorisoiJapan;
+
+  /// 기분 고르기 화면의 지도 버튼 숨김 이름(접근성)입니다. 설정에서 지도 보기를 켠 때만 보입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'지도 보기'**
+  String get map_openLabel;
+
+  /// 지도 아래 시트의 기본 제목입니다. 아무 동네도 고르지 않았을 때 보입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'내 주변 3km'**
+  String get map_nearby;
+
+  /// 지도 아래 시트에서 동네 하나를 골랐을 때 제목 위에 붙는 작은 글씨입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'고른 동네'**
+  String get map_pickedPlace;
+
+  /// 지도 아래 시트의 설명입니다. 묶는 단위 1km 와 숨기는 기준 5명이 규칙과 같아야 합니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'글씨는 사람들이 고른 한마디이고, 크기는 그 동네에서 두드린 수입니다. 약 1km 단위로 묶고, 5명이 안 되는 곳은 보이지 않습니다.'**
+  String get map_explain;
+
+  /// 지도 위 범위 전환의 오늘 버튼입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'오늘'**
+  String get map_rangeToday;
+
+  /// 지도 위 범위 전환의 이번 주 버튼입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'이번 주'**
+  String get map_rangeWeek;
+
+  /// 지도에서 내 자리를 가리키는 점의 숨김 이름(접근성)입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'내 위치'**
+  String get map_you;
+
+  /// 고른 동네의 두드린 횟수입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'{count}번 두드렸습니다'**
+  String map_tapsLine(int count);
+
+  /// 지도에 보이는 동네 전체에서 기분을 남긴 사람 수입니다. 행복 슬픔 비율을 켠 때만 씁니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'{count}명이 남겼습니다'**
+  String map_peopleLine(int count);
+
+  /// 지도 아래 시트의 제목입니다. 행복 슬픔 비율을 켠 때만 씁니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'행복한 쪽이 {percent}%'**
+  String map_happySide(int percent);
+
+  /// 지도 아래 시트의 제목입니다. 슬픈 쪽이 더 많을 때입니다. 행복 슬픔 비율을 켠 때만 씁니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'슬픈 쪽이 {percent}%'**
+  String map_sadSide(int percent);
+
+  /// 지도의 한마디 글씨 하나의 숨김 이름(접근성)입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'{word}, {count}번 두드림'**
+  String map_spotLabel(String word, int count);
+
+  /// 지도에 쓰는 준비된 한마디입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'오늘은 웃었다'**
+  String get map_wordSmiled;
+
+  /// 지도에 쓰는 준비된 한마디입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'조금 쉬고 싶다'**
+  String get map_wordRest;
+
+  /// 지도에 쓰는 준비된 한마디입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'맛있는 걸 먹었다'**
+  String get map_wordAteWell;
+
+  /// 지도에 쓰는 준비된 한마디입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'생각보다 괜찮았다'**
+  String get map_wordBetterThanExpected;
+
+  /// 지도에 쓰는 준비된 한마디입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'내일도 이렇게'**
+  String get map_wordTomorrowToo;
+
+  /// 지도에 쓰는 준비된 한마디입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'고마운 사람이 있었다'**
+  String get map_wordThankful;
+
+  /// 설정의 지도 구역에서 지도 화면 진입점을 켜고 끄는 스위치입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'지도 보기'**
+  String get settings_mapView;
+
+  /// 지도 보기 스위치 설명입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'켜 두면 기분 고르기 화면에 지도 버튼이 보입니다. 끄면 보이지 않습니다'**
+  String get settings_mapViewDesc;
+
+  /// 지도 아래 시트 제목입니다. 비율 표시를 공통성 문구로 고르고, 그 범위에서 슬픈 쪽이 더 많을 때 씁니다. 숫자와 순위를 쓰지 않습니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'오늘 마음이 가라앉은 사람이 나만은 아닙니다'**
+  String get map_togetherSad;
+
+  /// 지도 아래 시트 제목입니다. 비율 표시를 공통성 문구로 고르고, 그 범위에서 행복한 쪽이 더 많을 때 씁니다. 숫자와 순위를 쓰지 않습니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'오늘 기분이 좋은 사람이 가까이에 많습니다'**
+  String get map_togetherHappy;
 }
 
 class _AppLocalizationsDelegate

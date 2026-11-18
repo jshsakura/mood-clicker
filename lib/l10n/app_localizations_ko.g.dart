@@ -405,4 +405,81 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get settings_mindCareYorisoiJapan => '요리소이 상담전화(일본)';
+
+  @override
+  String get map_openLabel => '지도 보기';
+
+  @override
+  String get map_nearby => '내 주변 3km';
+
+  @override
+  String get map_pickedPlace => '고른 동네';
+
+  @override
+  String get map_explain =>
+      '글씨는 사람들이 고른 한마디이고, 크기는 그 동네에서 두드린 수입니다. 약 1km 단위로 묶고, 5명이 안 되는 곳은 보이지 않습니다.';
+
+  @override
+  String get map_rangeToday => '오늘';
+
+  @override
+  String get map_rangeWeek => '이번 주';
+
+  @override
+  String get map_you => '내 위치';
+
+  @override
+  String map_tapsLine(int count) {
+    return '$count번 두드렸습니다';
+  }
+
+  @override
+  String map_peopleLine(int count) {
+    return '$count명이 남겼습니다';
+  }
+
+  @override
+  String map_happySide(int percent) {
+    return '행복한 쪽이 $percent%';
+  }
+
+  @override
+  String map_sadSide(int percent) {
+    return '슬픈 쪽이 $percent%';
+  }
+
+  @override
+  String map_spotLabel(String word, int count) {
+    return '$word, $count번 두드림';
+  }
+
+  @override
+  String get map_wordSmiled => '오늘은 웃었다';
+
+  @override
+  String get map_wordRest => '조금 쉬고 싶다';
+
+  @override
+  String get map_wordAteWell => '맛있는 걸 먹었다';
+
+  @override
+  String get map_wordBetterThanExpected => '생각보다 괜찮았다';
+
+  @override
+  String get map_wordTomorrowToo => '내일도 이렇게';
+
+  @override
+  String get map_wordThankful => '고마운 사람이 있었다';
+
+  @override
+  String get settings_mapView => '지도 보기';
+
+  @override
+  String get settings_mapViewDesc => '켜 두면 기분 고르기 화면에 지도 버튼이 보입니다. 끄면 보이지 않습니다';
+
+  @override
+  String get map_togetherSad => '오늘 마음이 가라앉은 사람이 나만은 아닙니다';
+
+  @override
+  String get map_togetherHappy => '오늘 기분이 좋은 사람이 가까이에 많습니다';
 }

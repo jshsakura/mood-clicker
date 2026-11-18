@@ -34,6 +34,9 @@ void main() {
     expect(settings.reminder, const ReminderSettings());
     expect(settings.mapContribute, isFalse);
     expect(settings.mapComment, isFalse);
+    // The map is a core feature, so its entry starts on.
+    expect(settings.mapView, isTrue);
+    expect(Settings.mapViewDefault, isTrue);
   });
 
   test('themeChoice resolves the stored name', () {
@@ -70,6 +73,7 @@ void main() {
         shakeOnFull: false,
         tiltToPour: false,
         reminder: ReminderSettings(enabled: true, hour: 22),
+        mapView: false,
         mapContribute: true,
         mapComment: true,
       );

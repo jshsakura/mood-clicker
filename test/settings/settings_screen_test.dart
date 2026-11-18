@@ -93,6 +93,7 @@ class Harness {
   late final ValueNotifier<FeelSettings> feel;
   late final ValueNotifier<ThemeChoice> theme;
   late final ValueNotifier<LocaleChoice> language;
+  final mapView = ValueNotifier(Settings.mapViewDefault);
   late final FakeRecordsPort records;
 
   Future<bool> launchPhone(String url) async => true;
@@ -120,6 +121,7 @@ Future<void> pumpScreen(
     feel: harness.feel,
     theme: harness.theme,
     language: harness.language,
+    mapView: harness.mapView,
     reminder: harness.reminder,
     records: harness.records,
     appVersion: '1.2.3',
@@ -167,6 +169,22 @@ void main() {
     expect(harness.store.settings.theme, 'dark');
     expect(harness.theme.value, const ThemeChoice.named('dark'));
   });
+
+  testWidgets(
+    'the map switch starts on, persists its change and moves the notifier',
+    (tester) async {
+      final harness = Harness();
+      await pumpScreen(tester, harness: harness);
+      final l10n = lookupAppLocalizations(const Locale('ko'));
+      expect(harness.mapView.value, isTrue);
+      final label = find.text(l10n.settings_mapView);
+      await tester.ensureVisible(label);
+      await tester.tap(label);
+      await tester.pumpAndSettle();
+      expect(harness.store.settings.mapView, isFalse);
+      expect(harness.mapView.value, isFalse);
+    },
+  );
 
   testWidgets('picking a language persists it and moves the app notifier', (
     tester,
@@ -270,6 +288,7 @@ void main() {
           feel: harness.feel,
           theme: harness.theme,
           language: harness.language,
+          mapView: harness.mapView,
           reminder: harness.reminder,
           records: harness.records,
           appVersion: '1.2.3',

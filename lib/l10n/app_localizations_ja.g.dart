@@ -403,4 +403,81 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get settings_mindCareYorisoiJapan => 'よりそいホットライン';
+
+  @override
+  String get map_openLabel => '地図を見る';
+
+  @override
+  String get map_nearby => 'まわり3km';
+
+  @override
+  String get map_pickedPlace => '選んだ場所';
+
+  @override
+  String get map_explain =>
+      '文字は人が選んだひとことで、大きさはその場所で押した数です。約1km単位でまとめ、5人に満たない場所は表示されません。';
+
+  @override
+  String get map_rangeToday => '今日';
+
+  @override
+  String get map_rangeWeek => '今週';
+
+  @override
+  String get map_you => '自分の場所';
+
+  @override
+  String map_tapsLine(int count) {
+    return '$count回押しました';
+  }
+
+  @override
+  String map_peopleLine(int count) {
+    return '$count人が残しました';
+  }
+
+  @override
+  String map_happySide(int percent) {
+    return '幸せな側が$percent%';
+  }
+
+  @override
+  String map_sadSide(int percent) {
+    return '悲しい側が$percent%';
+  }
+
+  @override
+  String map_spotLabel(String word, int count) {
+    return '$word、$count回';
+  }
+
+  @override
+  String get map_wordSmiled => '今日は笑えた';
+
+  @override
+  String get map_wordRest => '少し休みたい';
+
+  @override
+  String get map_wordAteWell => 'おいしいものを食べた';
+
+  @override
+  String get map_wordBetterThanExpected => '思ったより良かった';
+
+  @override
+  String get map_wordTomorrowToo => '明日もこんなふうに';
+
+  @override
+  String get map_wordThankful => 'ありがたい人がいた';
+
+  @override
+  String get settings_mapView => '地図を見る';
+
+  @override
+  String get settings_mapViewDesc => 'オンにすると気分を選ぶ画面に地図ボタンが出ます。オフでは表示されません';
+
+  @override
+  String get map_togetherSad => '今日、心が沈んでいるのはあなただけではありません';
+
+  @override
+  String get map_togetherHappy => '今日は近くに気分のいい人がたくさんいます';
 }
