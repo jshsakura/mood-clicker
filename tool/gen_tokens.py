@@ -88,7 +88,7 @@ REQUIRED_CORE = {
     "space": ("sm", "md", "lg", "xl", "xxl", "xxxl"),
     "radius": ("card", "button", "pill"),
     "type": ("display", "title", "body", "label", "count"),
-    "motion": ("fillRise",),
+    "motion": ("fillRise", "tap"),
     "font": ("family",),
 }
 REQUIRED_COLORS = (
