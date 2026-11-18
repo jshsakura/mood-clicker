@@ -6,6 +6,11 @@ on:
     branches: [main]
 permissions:
   contents: read
+# One run per PR or branch. A newer push cancels the older run, so macOS jobs do not pile up
+# in the queue and stale commits do not report failures. Editing the PR text runs in its own group.
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}-${{ github.event.action == 'edited' && 'text' || 'build' }}
+  cancel-in-progress: true
 jobs:
   # Runs again when the title or body is edited. The builds below do not.
   pr-text:
@@ -84,6 +89,7 @@ jobs:
   apple:
     needs: check
     runs-on: macos-latest
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
       - uses: actions/cache@v4
