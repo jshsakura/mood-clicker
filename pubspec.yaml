@@ -31,9 +31,16 @@ dependencies:
   flutter:
     sdk: flutter
 
+  # Localization: flutter_localizations ships the material, widgets and
+  # cupertino translations, intl formats dates and numbers per locale.
+  flutter_localizations:
+    sdk: flutter
+  intl: any
+
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
+  shared_preferences: ^2.5.6
 
   # Haptic and sound layer (lib/feedback). Sound uses a low-latency engine that can overlap clips.
   flutter_soloud: ^4.1.7
@@ -56,6 +63,18 @@ dev_dependencies:
 # The following section is specific to Flutter packages.
 flutter:
 
+  # Turns on code generation for lib/l10n (see l10n.yaml).
+  generate: true
+
+  # Per-language cheer phrase packs (loaded through lib/l10n/asset_paths.dart) and sound packs.
+  # List each pack folder here too; a listed folder that does not exist fails the build.
+  # Stamp folders are listed here once real artwork lands.
+  assets:
+    - assets/cheers/ko.json
+    - assets/cheers/en.json
+    - assets/cheers/ja.json
+    - assets/sounds/basic/
+
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
@@ -73,9 +92,6 @@ flutter:
         - asset: assets/fonts/Baloo2-ExtraBold.ttf
           weight: 800
 
-  # Sound packs. List each pack folder here too (a listed folder that does not exist fails the build).
-  assets:
-    - assets/sounds/basic/
 
   # To add assets to your application, add an assets section, like this:
   # assets:
