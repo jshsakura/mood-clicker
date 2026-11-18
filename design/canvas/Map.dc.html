@@ -62,7 +62,7 @@ button{font-family:inherit}
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
-// 테마 색. design/tokens.json 의 값과 같다. 설정에서 고른 테마는 이 브라우저에 기억되고 모든 화면이 같이 바뀐다
+// Theme colors. Same values as design/tokens.json. The theme picked in settings is remembered in this browser and changes every screen together
 const PALETTES = {
   light: { id: 'light', ground: '#FFFFFF', surface: '#F5F5F7', line: '#E8E8EC', ink: '#16161A', ink2: '#3A3A42', inkMuted: '#62626C', muted: '#62626C', faint: '#A0A0AA', fill: '#EDEDF0', fillEdge: '#C8C8D0', mapLine: '#D4D4DC', happy: '#B07A00', sad: '#4C6FE0', error: '#C93A2F', inkRgb: '22,22,26' },
   dark: { id: 'dark', ground: '#121216', surface: '#222228', line: '#383840', ink: '#ECECF0', ink2: '#C8C8D0', inkMuted: '#A0A0AA', muted: '#A0A0AA', faint: '#6E6E78', fill: '#2A2A30', fillEdge: '#4A4A52', mapLine: '#383840', happy: '#FFC23D', sad: '#7A9CFF', error: '#F0685C', inkRgb: '236,236,240' },
@@ -92,7 +92,7 @@ renderVals() {
   }
   renderVals0() {
 const week = this.state.range === 'week';
-// 동네마다 사람들이 고른 한마디와 그 동네의 오늘 두드린 수. 두드린 수가 많을수록 글씨가 크다
+// Per area: the notes people picked and today's tap count there. The more taps, the larger the text
 const raw = [
 { id: 'a', x: 110, y: 200, h: 72, n: 23, taps: 3100, word: '오늘은 웃었다' }, { id: 'b', x: 262, y: 236, h: 38, n: 9, taps: 640, word: '조금 쉬고 싶다' },
 { id: 'c', x: 172, y: 330, h: 80, n: 31, taps: 5200, word: '맛있는 걸 먹었다' }, { id: 'd', x: 290, y: 392, h: 30, n: 12, taps: 980, word: '생각보다 괜찮았다' },
