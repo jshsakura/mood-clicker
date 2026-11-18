@@ -62,3 +62,6 @@ __pycache__/
 
 # Diff pictures appear here when a golden comparison fails. tool/shots.sh --check
 test/goldens/failures/
+
+# Songs stay out of the repository until their license is settled. docs/research/music-license.md
+assets/music/
