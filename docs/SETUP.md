@@ -59,6 +59,7 @@ brew tap leoafarias/fvm && brew install fvm && fvm install 3.44.0 && fvm global 
 ### 7) Docker Desktop 필요 여부
 **맥에서는 Docker Desktop 을 깔지 않아도 됩니다.**
 `tool/fl` 은 로컬에 Flutter `3.44.0` 이 있으면 도커 대신 로컬 `flutter` 를 쓰도록 동작하므로, 위 단계대로 로컬 Flutter `3.44.0` 을 깔아 두면 됩니다.
+다만 화면 그림 비교(`tool/shots.sh`)는 골든이 리눅스 도커 이미지로 만들어져 있어 맥에서도 도커를 씁니다. 골든을 맥에서 볼 일이 없으면 Docker Desktop 은 필요 없습니다.
 
 ### 8) Android 라이선스 동의 및 상태 점검 (확인 못 함)
 ```bash
@@ -81,18 +82,20 @@ git clone <저장소 주소> mood-clicker && cd mood-clicker
 ```
 
 ### 10) 저장소 초기 설정
-git 훅(`.githooks`)을 켜고 패키지를 받습니다.
+git 훅(`.githooks`)을 켜고 패키지를 받습니다. 끝나면 `Ready. Hooks: .githooks` 가 나옵니다.
 
 ```bash
 tool/setup.sh
 ```
 
 ### 11) 전체 테스트 실행
-파이썬 도구 테스트와 Flutter 테스트가 모두 통과하는지 봅니다.
+맥에서 로컬 Flutter 로 처음 돌릴 때는 골든(화면 그림 비교)을 뺍니다. 골든은 리눅스 도커 이미지 기준이라 맥에서는 같은 화면도 픽셀이 달라 실패합니다.
 
 ```bash
-tool/test.sh
+python3 -m unittest discover -s tool -p 'test_*.py' && python3 tool/cheers_check.py && tool/fl test --exclude-tags golden
 ```
+
+전부 통과하면 됩니다. 도커가 있는 컴퓨터(리눅스나 CI)에서는 골든까지 한 번에 `tool/test.sh` 로 돌립니다.
 
 ### 12) iOS 시뮬레이터로 앱 띄우기 (확인 못 함)
 시뮬레이터를 먼저 연 뒤 실행합니다.
@@ -139,7 +142,7 @@ python3 tool/gen_tokens.py
 글자와 바탕 대비가 기준(4.5) 아래로 떨어지거나 형식이 틀리면 이 단계에서 막아 줍니다.
 
 ```bash
-tool/test.sh && tool/fl analyze
+tool/fl test --exclude-tags golden && tool/fl analyze
 ```
 
 ### 17) 화면 확인 (확인 못 함)

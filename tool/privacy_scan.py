@@ -44,7 +44,9 @@ IP_OK = [ipaddress.ip_network(n) for n in (
 )]
 PRIVATE = [ipaddress.ip_network(n) for n in ("10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "100.64.0.0/10")]
 URL_OR_PORT = re.compile(r"://|:\d{2,5}\b")
-VERSION_CONTEXT = re.compile(r"\bversion\b|\bv(?=\d)|\bbuild\b", re.I)
+# A version word counts only when it stands directly in front of the number (separators and quotes
+# allowed), so a short version field earlier on the line cannot hide a host address after it.
+VERSION_BEFORE = re.compile(r"(?:\bversion|\bbuild)[\s\"':=v]{0,6}$|\bv$", re.I)
 IPV6 = re.compile(r"(?<![\w:.])([0-9a-fA-F]{0,4}(?::[0-9a-fA-F]{0,4}){2,7})(?![\w:])")
 INTERNAL_HOST = re.compile(
     r"\b[a-z0-9-]+\.(lan|local|internal|intranet|corp|localdomain|home\.arpa)(?!\.?[\w-])", re.I
@@ -86,10 +88,9 @@ def ip_findings(line):
             continue
         net = NET_CONTEXT.search(line)
         if any(ip in n for n in PRIVATE):
-            # Only a version word right before the number makes it a version, so a version field
-            # elsewhere on the line cannot hide a real host address.
+            # Only a version word right before the number makes it a version.
             before = line[max(0, m.start() - 24):m.start()]
-            versionish = VERSION_CONTEXT.search(before) and not URL_OR_PORT.search(line)
+            versionish = VERSION_BEFORE.search(before) and not URL_OR_PORT.search(line)
             if parts[3] not in (0, 255) and not versionish:
                 return ["IP"]
         elif ip.is_global and net:

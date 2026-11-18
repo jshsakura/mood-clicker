@@ -27,7 +27,7 @@ Person (decides)
 
 ## Setup
 
-You need Docker, git, tmux, the GitHub CLI (`gh`) and the agents you plan to use (Claude Code and others).
+You need Docker, git, python3, tmux, the GitHub CLI (`gh`) and the agents you plan to use (Claude Code and others).
 Flutter lives in a Docker image, so do not install it on the host.
 
 ```bash
