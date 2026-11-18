@@ -166,6 +166,48 @@ def _has_unnegated_self_harm(item: str, lang: str) -> bool:
     return False
 
 
+_EN_TRUNC_RE = re.compile(r"(?:['\u2019]s|\b(?:for|to|the|a|of))$", re.I)
+_JA_TRUNC_SUFFIXES = (
+    "\u306a\u304c\u3089",  # nagara
+    "\u3092",              # wo
+    "\u304c",              # ga
+    "\u697d\u3057",        # tanoshi
+    "\u5f85\u3061\u9060\u3057",  # machidooshi
+    "\u53e3\u305a\u3055",  # kuchizusa
+    "\u899a\u3048\u3066\u304a",  # oboeteo
+    "\u660e\u308b\u304f\u306a",  # akarukuna
+    "\u7acb",              # tachi/tatsu stem
+    "\u6c7a",              # ki stem
+    "\u62b1",              # daki stem
+    "\u7518",              # ama stem
+    "\u8fbc",              # komi stem
+    "\u9ad8",              # taka stem
+)
+
+
+def _strip_phrase_tail(item: str) -> str:
+    clusters = split_graphemes(item.strip())
+    while clusters and (
+        clusters[-1] in set(" ~\u301c!\uff01?\uff1f.\u3002,\u3001")
+        or _is_emoji_cluster(clusters[-1])
+    ):
+        clusters.pop()
+    return "".join(clusters).strip()
+
+
+def _has_truncated_ending(item: str, lang: str) -> bool:
+    st = _strip_phrase_tail(item)
+    if not st:
+        return False
+    if lang == "ko":
+        return st[-1] in ("\uc788", "\uac19", "\uc5c6")
+    if lang == "en":
+        return _EN_TRUNC_RE.search(st) is not None
+    if lang == "ja":
+        return st.endswith(_JA_TRUNC_SUFFIXES)
+    return False
+
+
 def _parse_item(item: object, loc: str) -> tuple[str | None, str | None, str | None]:
     if isinstance(item, str):
         return item, None, None
@@ -251,6 +293,8 @@ def check_bundle(
             if isinstance(allowed_emojis, list)
             else None
         )
+        max_emojis = rule.get("max_emojis")
+        allow_excl_with_emoji = rule.get("allow_exclamation_with_emoji", True)
         mood_banned = rule.get("banned_words", {}).get(lang, [])
         en_mood_re = _compile_en_ban_regex(mood_banned) if lang == "en" else None
 
@@ -312,17 +356,30 @@ def check_bundle(
                     or (lang == "ja" and JA_LAUGH_RE.search(item))
                 ):
                     errors.append(f"{loc}: laughter not allowed in {mood} ({item!r})")
-                if allowed_emoji_set is not None:
+                if allowed_emoji_set is not None or max_emojis is not None or not allow_excl_with_emoji:
+                    emoji_count = 0
                     for cl in clusters:
-                        if (
-                            _is_emoji_cluster(cl)
-                            and cl not in allowed_emoji_set
-                            and cl.replace("\uFE0F", "") not in allowed_emoji_set
-                        ):
-                            errors.append(
-                                f"{loc}: disallowed emoji {cl!r} in {mood} ({item!r})"
-                            )
-                            break
+                        if _is_emoji_cluster(cl):
+                            emoji_count += 1
+                            if (
+                                allowed_emoji_set is not None
+                                and cl not in allowed_emoji_set
+                                and cl.replace("\uFE0F", "") not in allowed_emoji_set
+                            ):
+                                errors.append(
+                                    f"{loc}: disallowed emoji {cl!r} in {mood} ({item!r})"
+                                )
+                                break
+                    if max_emojis is not None and emoji_count > int(max_emojis):
+                        errors.append(
+                            f"{loc}: emoji count {emoji_count} exceeds max {max_emojis} in {mood} ({item!r})"
+                        )
+                    if not allow_excl_with_emoji and excl_count > 0 and emoji_count > 0:
+                        errors.append(
+                            f"{loc}: exclamation and emoji cannot be used together in {mood} ({item!r})"
+                        )
+                if _has_truncated_ending(item, lang):
+                    errors.append(f"{loc}: truncated ending ({item!r})")
                 if DASH_RE.search(item):
                     errors.append(f"{loc}: contains dash ({item!r})")
                 if CURLY_RE.search(item):

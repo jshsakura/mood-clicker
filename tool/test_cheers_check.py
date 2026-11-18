@@ -37,9 +37,9 @@ class CheersCheckTest(unittest.TestCase):
 
     def test_valid_bundles_pass_with_emojis(self) -> None:
         ko = _valid_bundle("ko")
-        ko["moods"]["happy"]["low"][0] = "\uc88b\uc544! \U0001F389"
+        ko["moods"]["happy"]["low"][0] = "\uc88b\uc544 \u2600\uFE0F"
         en = _valid_bundle("en")
-        en["moods"]["happy"]["low"][0] = "Yay! \u2600\uFE0F"
+        en["moods"]["happy"]["low"][0] = "Yay \u2600\uFE0F"
         self.assertEqual(check_bundle(ko, "ko", self.small_counts), [])
         self.assertEqual(check_bundle(en, "en", self.small_counts), [])
 
@@ -59,9 +59,9 @@ class CheersCheckTest(unittest.TestCase):
     def test_base_grouping_allows_text_play_up_to_4_and_rejects_5(self) -> None:
         data = _valid_bundle("en")
         data["moods"]["happy"]["low"] = [
+            {"t": "Nice", "b": "b1"},
             {"t": "Nice!", "b": "b1"},
-            {"t": "Nice!!", "b": "b1"},
-            {"t": "Nice! \U0001F389", "b": "b1"},
+            {"t": "Nice \u2600\uFE0F", "b": "b1"},
             {"t": "Nice~", "b": "b1"},
         ]
         self.assertEqual(check_bundle(data, "en", self.small_counts), [])
@@ -83,8 +83,8 @@ class CheersCheckTest(unittest.TestCase):
         self.assertEqual(len(errs_ko), 2, errs_ko)
 
         en = _valid_bundle("en")
-        en["moods"]["sad"]["low"][0] = "A"
-        en["moods"]["sad"]["low"][1] = "A" * 21
+        en["moods"]["sad"]["low"][0] = "X"
+        en["moods"]["sad"]["low"][1] = "X" * 21
         errs_en = check_bundle(en, "en", self.small_counts)
         self.assertEqual(len(errs_en), 2, errs_en)
 
@@ -274,6 +274,58 @@ class CheersCheckTest(unittest.TestCase):
             any("en.angry.low:" in e and "short by 1" in e for e in errs),
             errs,
         )
+
+    def test_joy_exclamation_emoji_and_truncation_guards(self) -> None:
+        rules = load_rules()
+        # Exclamation max 1, emoji allowlist max 1, no exclamation + emoji together
+        bad_joy = [
+            ("happy", "Too excited!!"),
+            ("happy", "Yay! \U0001f642"),
+            ("happy", "Flower \U0001f33c"),
+            ("excited", "Sparkle \U0001f389"),
+            ("excited", "Two \u2728\u2728"),
+        ]
+        for mood, phrase in bad_joy:
+            data = _valid_bundle("en")
+            data["moods"][mood]["low"][0] = phrase
+            errs = check_bundle(data, "en", self.small_counts, rules=rules)
+            self.assertTrue(errs, f"{mood} should reject {phrase!r}")
+
+        good_joy = [
+            ("happy", "Warm sun!"),
+            ("happy", "Warm sun \u2600\ufe0f"),
+            ("excited", "Bright spark!"),
+            ("excited", "Bright spark \u2728"),
+        ]
+        for mood, phrase in good_joy:
+            data = _valid_bundle("en")
+            data["moods"][mood]["low"][0] = phrase
+            errs = check_bundle(data, "en", self.small_counts, rules=rules)
+            self.assertEqual([], errs, f"{mood} should allow {phrase!r}, got {errs}")
+
+        # Truncation guard across all 3 languages
+        trunc_bad = {
+            "ko": "\ubc30\uc6b8 \uc218 \uc788",
+            "en": "Eager for tomorrow's",
+            "ja": "\u697d\u3057",
+        }
+        trunc_good = {
+            "ko": "\ubc30\uc6b8 \uc218 \uc788\uc5b4",
+            "en": "Eager for tomorrow",
+            "ja": "\u697d\u3057\u3044\u3088",
+        }
+        for lang in ("ko", "en", "ja"):
+            data = _valid_bundle(lang)
+            data["moods"]["happy"]["low"][0] = trunc_bad[lang]
+            errs = check_bundle(data, lang, self.small_counts, rules=rules)
+            self.assertTrue(
+                any("truncated ending" in e for e in errs),
+                f"{lang} should reject truncated {trunc_bad[lang]!r}, got {errs}",
+            )
+            data = _valid_bundle(lang)
+            data["moods"]["happy"]["low"][0] = trunc_good[lang]
+            errs = check_bundle(data, lang, self.small_counts, rules=rules)
+            self.assertEqual([], errs, f"{lang} should allow {trunc_good[lang]!r}, got {errs}")
 
 
 BANNED_KO = "\uc6b0\uc6b8\uc99d"  # a clinical word the rules forbid in cheers

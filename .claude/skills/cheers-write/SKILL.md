@@ -10,7 +10,7 @@ description: Use when writing, editing, or reviewing mood cheer phrases in asset
 ## 기분별 기준
 
 - 모든 기분: 감정을 먼저 인정합니다. 치료·완치·비교·연속 기록 표현은 쓰지 않습니다.
-- `happy`, `excited`: 글자 놀이와 이모티콘을 살리되 `tool/cheers_rules.json` 의 금지어와 느낌표 상한을 지킵니다.
+- `happy`, `excited`: 글자 놀이와 이모티콘을 살리되 느낌표는 문구당 최대 1개, 기분별 허용 이모지(`happy`: 🙂 🌱 ☀️ 💧, `excited`: 🙂 ✨ 💧) 중 최대 1개만 쓰며 느낌표와 이모지를 함께 쓰지 않습니다(`tool/cheers_rules.json`, `docs/EVIDENCE.md`).
 - `angry`, `sad`, `anxious`: 느낌표(`!`), 이모지, 카오모지, 웃음(`ㅋㅋ`, `ㅎㅎ`, `haha`, `hehe`)을 쓰지 않습니다.
 - `angry`: 분출·공격("쏟아내", "더 세게" 등) 대신 인정, 신체 이완, 느린 호흡을 씁니다.
 - `sad`: "힘내", "그래도", "적어도" 대신 인정·허락·함께 있음을 둡니다.
