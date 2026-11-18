@@ -13,6 +13,11 @@
         "diagnose", "diagnosis", "clinically proven", "prescription",
         "symptom relief", "committed suicide", "streak", "you missed",
         "you lost", "reset", "everyone else", "happier than"
+      ],
+      "ja": [
+        "治療", "完治", "治癒", "うつ病", "症状緩和", "処方", "診断",
+        "自殺", "連続記録", "ストリーク", "途切れ", "リセット",
+        "みんなより", "平均より", "他の人は"
       ]
     }
   },
@@ -30,6 +35,10 @@
         "en": [
           "always be happy", "forever", "never lose", "don't lose this",
           "finally normal", "you should be happy"
+        ],
+        "ja": [
+          "ずっと幸せ", "永遠に", "絶対失わない", "逃さないで",
+          "やっと普通", "幸せでいなきゃ"
         ]
       }
     },
@@ -46,6 +55,10 @@
         "en": [
           "explode", "go crazy", "don't stop", "push harder",
           "unstoppable", "anything is possible"
+        ],
+        "ja": [
+          "爆発", "狂いそう", "最後まで走", "止まらないで",
+          "もっともっと", "なんでもできる", "幸せでいなきゃ"
         ]
       }
     },
@@ -65,6 +78,11 @@
           "let it out", "vent", "smash", "destroy", "crush", "punch", "hit",
           "revenge", "get even", "whose fault", "calm down", "relax", "chill",
           "not a big deal", "overreacting", "too sensitive", "harder", "faster"
+        ],
+        "ja": [
+          "吐き出", "発散", "ぶつけ", "壊し", "叩い", "殴", "吹き飛",
+          "復讐", "仕返し", "誰のせい", "落ち着いて", "我慢", "怒らないで",
+          "大したことない", "気にするな", "敏感すぎ", "もっと強く", "もっと速く"
         ]
       }
     },
@@ -85,6 +103,11 @@
           "at least", "could be worse", "don't be sad", "get over it",
           "happens for a reason", "you're amazing", "you're perfect",
           "i am lovable", "good vibes"
+        ],
+        "ja": [
+          "頑張", "がんば", "元気出", "笑って", "笑顔で", "ポジティブ",
+          "前向き", "それでも", "少なくとも", "もっと大変", "大したことない",
+          "泣かないで", "悲しまないで", "乗り越え", "完璧", "愛されるべき"
         ]
       }
     },
@@ -103,6 +126,10 @@
           "don't worry", "no need to worry", "nothing bad will happen",
           "all in your head", "just relax", "calm down", "stop thinking",
           "overthinking"
+        ],
+        "ja": [
+          "心配し", "大丈夫だよ", "何もない", "気のせい", "考えすぎ",
+          "考えないで", "落ち着いて", "力を抜いて", "頑張", "がんば"
         ]
       }
     }
