@@ -15,6 +15,7 @@ final _roles = <String, Color Function(AppPalette)>{
   'onAccent': (p) => p.onAccent,
   'error': (p) => p.error,
   'fill': (p) => p.fill,
+  'onFill': (p) => p.onFill,
   'happy': (p) => p.happy,
   'sad': (p) => p.sad,
   'mapGround': (p) => p.mapGround,
@@ -38,7 +39,7 @@ const _pairs = <(String fg, String bg, double min, String use)>[
   ('inkMuted', 'surface', _text, 'secondary text on a card'),
   ('onAccent', 'accent', _text, 'text on an accent button'),
   ('onAccent', 'error', _text, 'text on the error color (the theme onError)'),
-  ('ink', 'fill', _largeText, 'large number on a risen fill (56px bold)'),
+  ('onFill', 'fill', _largeText, 'large number on a risen fill (56px bold)'),
   ('happy', 'surface', _graphic, 'stripe of the happy side banner'),
   ('sad', 'surface', _graphic, 'stripe of the sad side banner'),
 ];
@@ -47,15 +48,8 @@ const _pairs = <(String fg, String bg, double min, String use)>[
 /// Remove an entry here once its color is fixed. A test below checks that only still-failing pairs remain.
 /// Changing values belongs to design/tokens, so this test never touches them.
 const _knownFailures = <String, String>{
-  'dark/ink/fill':
-      'the light text color made for dark grounds lands on the bright yellow fill at 1.37; a text color for fills (onFill) is needed',
-  'light/onAccent/error':
-      'the color used as onError is 4.22 on the error red; a matching onError color is needed',
-  'light/happy/surface': 'the happy stripe on the light ground is 1.85',
   'pink/onAccent/error':
       'the color used as onError is 3.51 on the error red; a matching onError color is needed',
-  'pink/happy/surface': 'the happy stripe is 2.61',
-  'pink/sad/surface': 'the sad stripe is 2.77',
 };
 
 void main() {

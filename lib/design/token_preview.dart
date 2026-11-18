@@ -88,7 +88,7 @@ class TokenPreview extends StatelessWidget {
                 child: Center(
                   child: Text(
                     '128',
-                    style: TypeScale.count.copyWith(color: p.ink),
+                    style: TypeScale.count.copyWith(color: p.onFill),
                   ),
                 ),
               ),
