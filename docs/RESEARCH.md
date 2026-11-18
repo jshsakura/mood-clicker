@@ -655,3 +655,59 @@ Flutter 앱이 웹앱처럼 어색해 보이지 않고 iOS·Android·macOS 에�
 
 - **핵심 구분**: 1단계(내 기록)는 기기 내 SQLite 에만 저장하고, 3단계(내 주변 지도)는 사용자가 직접 켠 경우에만 `H3 해상도 7`(약 `5.16km²`) 격자 번호·기분·횟수·날짜·익명 계정 ID 를 전송합니다. 원본 GPS 좌표·실명·연락처·광고 식별자는 수집하지 않습니다.
 - **법률 기준**: 대한민국 「개인정보 보호법」 제30조 제1항 필수 기재사항(국가법령정보센터 https://www.law.go.kr , 개인정보보호위원회 https://www.privacy.go.kr )을 반영했으며, 상단에 법률 자문이 아님을 명시했습니다.
+
+---
+
+## 13. 출시 준비물 규격 및 토큰-스플래시/아이콘 연동
+
+확인일: 2026-11-18
+
+### 13.1 앱 아이콘 규격
+
+| 플랫폼 | 규격 | 세부 조건 |
+|---|---|---|
+| **iOS** | **`1024x1024` px 단일 아이콘** (Xcode 14+ Single Size) | 투명도(알파 채널) 없는 정사각형 PNG/JPEG. 모서리 둥글기는 iOS 가 자동 적용하므로 직각으로 냅니다. |
+| **Android 스토어** | **`512x512` px** | 32비트 PNG(알파 가능), 최대 `1,024KB`, 정사각형(스토어가 둥글기·그림자 적용). |
+| **Android 적응형 아이콘** | 전경(`foreground`) + 배경(`background`), **`108x108dp`** 캔버스 | 핵심 그림은 중앙 **`66x66dp` 안전 영역(Safe Zone)** 안에 둡니다(바깥 `21dp` 는 잘릴 수 있음). |
+| **Android 단색 테마 아이콘 (13+)** | `<monochrome>` 레이어 (`adaptive_icon_monochrome`) | 단색 실루엣으로 제작하며 `108dp` 안에서 **`44x44dp`~`72x72dp`** 내 배치를 권장합니다. |
+
+### 13.2 스토어 스크린샷, 기능 그래픽, 글자 수 제한
+
+| 항목 | Apple App Store | Google Play |
+|---|---|---|
+| **스크린샷 필수 크기** | **iPhone 6.9"** (`1320x2868`, `1290x2796`, `1260x2736` 중 하나) 또는 **6.5"** (`1284x2778`, `1242x2688`). 6.9" 를 올리면 하위 크기로 자동 축소 적용됩니다. | 폰 기준 최소 `320px` ~ 최대 `3,840px`(최대 변 <= 최소 변 x 2, 예: `1080x1920` 또는 `1170x2532`). JPEG 또는 24비트 PNG(알파 없음). |
+| **스크린샷 개수** | **1~10장** | **최소 2장 ~ 최대 8장** (기기 유형별) |
+| **기능 그래픽 (Feature Graphic)** | 없음 | **필수 `1024x500` px** (JPEG 또는 24비트 PNG, 알파 없음) |
+| **앱 이름** | 최대 **30자** | 최대 **30자** ("무료", "최고" 등 홍보성 문구 금지) |
+| **부제 / 간단한 설명** | 부제(Subtitle) 최대 **30자** | 간단한 설명(Short description) 최대 **80자** |
+| **자세한 설명 / 키워드** | 설명 **4,000자**, 키워드 **100자** | 자세한 설명 **4,000자** |
+
+### 13.3 연령 등급 설문에서 이 앱이 걸릴 항목
+
+두 스토어 모두 연령을 직접 고르지 않고 사실 기반 설문(Apple Age Rating, Google Play IARC) 결과로 등급이 결정됩니다.
+
+1. **사용자 생성 콘텐츠(UGC) 및 자유 텍스트**:
+   - 1단계·3단계 모두 정해진 기분 배너만 고르고 자유 글·사진·채팅이 없다면 **UGC 없음**으로 답할 수 있습니다(보통 **4+ / 전체이용가** 수준).
+   - 만약 "그날 한 줄 메모" 를 **남에게 공개**하거나 지도 위에 자유 텍스트를 띄우면 UGC·비관리 상호작용에 걸려 **12+ / 17+** 로 올라갈 수 있습니다(메모를 넣더라도 기기 내 개인 저장 전용으로 두어야 등급 상승을 피합니다).
+2. **위치 공유 및 타인과의 상호작용**:
+   - 3단계 지도는 개인을 특정하지 않는 동네 격자(`H3 7`) 통계 표시뿐이고 1:1 만남·채팅이 없으므로 "사용자 간 위치 공유·실시간 소통" 이 아님을 명확히 구분해 답합니다.
+3. **감정·멘탈 표현 ("화나요", "슬퍼요", "불안해요")**:
+   - 폭력·자해 조장이나 의료 진단이 아니므로 해당 항목은 "아니오" 이지만, 설명·스크린샷에 의학적 효능이나 자극적 문구를 넣지 않아야 합니다.
+
+### 13.4 `flutter_launcher_icons` · `flutter_native_splash` 와 토큰 파이프라인 연동
+
+`design/tokens.json`(또는 `design/tokens/*.json`) 의 배경색(`light.ground`, `dark.ground`)을 `tool/gen_tokens.py` 가 읽어 설정 파일을 함께 생성하면, 디자이너가 토큰 색을 바꿀 때 앱 아이콘 배경과 네이티브 스플래시 색이 자동으로 따라갑니다.
+
+1. **`flutter_launcher_icons` (`^0.14.4`)**:
+   - `tool/gen_tokens.py` 가 `flutter_launcher_icons.yaml` 의 `adaptive_icon_background` 값을 토큰의 `light.ground`(예: `"#F6F6F8"`)로 갱신하게 둡니다.
+   - `adaptive_icon_foreground` 와 Android 13+ 용 `adaptive_icon_monochrome` 경로를 지정하고 `dart run flutter_launcher_icons` 를 실행합니다.
+2. **`flutter_native_splash` (`^2.4.x`)**:
+   - 네이티브 스플래시는 Flutter 엔진이 뜨기 전 OS 테마를 따르므로, `flutter_native_splash.yaml` 의 `color` / `android_12.color` 에 `light.ground`(`"#F6F6F8"`), `color_dark` / `android_12.color_dark` 에 `dark.ground`(`"#121216"`) 를 `tool/gen_tokens.py` 가 써 주도록 잇습니다.
+   - 이후 `dart run flutter_native_splash:create` 를 실행하면 iOS LaunchScreen 과 Android 12+ Splash API 리소스가 토큰 색과 맞물려 생성됩니다.
+
+출처 및 확인일 (2026-11-18):
+- Apple App Store 스크린샷·아이콘·메타데이터 규격: https://developer.apple.com/help/app-store-connect/reference/screenshot-specifications , https://developer.apple.com/app-store/product-page/
+- Apple Age Rating 가이드: https://developer.apple.com/help/app-store-connect/reference/age-ratings
+- Google Play 스토어 등록정보 그래픽·텍스트·IARC 연령 등급: https://support.google.com/googleplay/android-developer/answer/9866151 , https://support.google.com/googleplay/android-developer/answer/9859655
+- Android 적응형 아이콘 및 단색 테마 아이콘: https://developer.android.com/develop/ui/views/launch/icon_design_adaptive
+- `flutter_launcher_icons` / `flutter_native_splash`: https://pub.dev/packages/flutter_launcher_icons , https://pub.dev/packages/flutter_native_splash
