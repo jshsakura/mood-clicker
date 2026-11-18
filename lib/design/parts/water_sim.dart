@@ -139,7 +139,7 @@ class WaterSim extends ChangeNotifier {
   }
 
   /// Throws droplets up from the point [x], [y] on the surface.
-  void throwDroplets(double x, double y, int count) {
+  void throwDroplets(double x, double y, int count, {double power = 1}) {
     for (
       var i = 0;
       i < count && droplets.length < FillTuning.dropletsLimit;
@@ -151,8 +151,9 @@ class WaterSim extends ChangeNotifier {
           y,
           (_random.nextDouble() * 2 - 1) * FillTuning.dropletSide,
           -(FillTuning.dropletUpMin +
-              _random.nextDouble() *
-                  (FillTuning.dropletUpMax - FillTuning.dropletUpMin)),
+                  _random.nextDouble() *
+                      (FillTuning.dropletUpMax - FillTuning.dropletUpMin)) *
+              min(FillTuning.dropletUpPowerCap, power),
           FillTuning.dropletRadiusMin +
               _random.nextDouble() *
                   (FillTuning.dropletRadiusMax - FillTuning.dropletRadiusMin),
@@ -161,12 +162,15 @@ class WaterSim extends ChangeNotifier {
     }
   }
 
-  /// How many droplets a tap throws: 2 to 5, twice that at the moment the gauge fills.
-  int dropletCount({required bool complete}) {
+  /// How many droplets a tap of strength [power] throws: 2 to 5 for an ordinary tap, twice that
+  /// at the moment the gauge fills (the count follows the power up to [FillTuning.dropletsPowerCap]),
+  /// and only one or two on a gauge that is already full.
+  int dropletCount({required double power}) {
     final base =
         FillTuning.dropletsMin +
-        _random.nextInt(FillTuning.dropletsMax - FillTuning.dropletsMin + 1);
-    return complete ? base * FillTuning.dropletsWhenComplete : base;
+        _random.nextDouble() *
+            (FillTuning.dropletsMax - FillTuning.dropletsMin);
+    return (base * min(FillTuning.dropletsPowerCap, power)).round();
   }
 
   /// Moves everything on by [seconds].

@@ -52,15 +52,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get moodSelect_moodAnxious => 'Anxious';
 
   @override
-  String tap_todayCount(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: 'Today $count',
-      one: 'Today 1',
-    );
-    return '$_temp0';
-  }
+  String get tap_todayLabel => 'Taps today';
 
   @override
   String get calendar_prevMonth => 'Previous month';

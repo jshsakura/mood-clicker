@@ -42,15 +42,20 @@ abstract final class CheerTuning {
   static const double previousLifetimeShare = 0.85;
   static const double olderLifetimeShare = 0.7;
 
-  /// Font size of an ordinary phrase: base + level^exponent * span. About 18 at the start, 35 at
-  /// half, 60 when nearly full. A rare phrase is [fontSizeRareBonus] bigger and the complete
-  /// phrase has its own size. A phrase is shrunk until it fits in [maxWidthShare] of the width.
+  /// Phrases on screen at once. The oldest goes first.
+  static const int maxOnScreen = 8;
+
+  /// Font size of an ordinary phrase: base + level^exponent * span, rounded. About 18 at the
+  /// start, 35 at half, 60 when nearly full. A rare phrase is [fontSizeRareBonus] bigger and the
+  /// complete phrase has its own size. A phrase is shrunk until its text fits in
+  /// [maxWidthShare] of the width ([maxWidthShareComplete] for the complete phrase).
   static const double fontSizeBase = 18;
   static const double fontSizeSpan = 42;
   static const double fontSizeExponent = 1.3;
   static const double fontSizeRareBonus = 6;
   static const double fontSizeComplete = 76;
   static const double maxWidthShare = 0.6;
+  static const double maxWidthShareComplete = 0.9;
 
   /// A tap this far or less from the screen center may show its phrase on either side. A tap
   /// farther out shows it only on its own side.
@@ -68,12 +73,33 @@ abstract final class CheerTuning {
   static const double boxPadding = 12;
   static const double heightPerSize = 1.2;
 
+  /// The phrase appears this far above the finger, so the finger does not hide it.
+  static const double liftAboveFinger = 50;
+
+  /// Phrases stay between these heights of an 844 px tall screen (kept as shares for other heights).
+  static const double referenceHeight = 844;
+  static const double spotTop = 150;
+  static const double spotBottom = 700;
+
+  /// The complete phrase goes to this height of an 844 px tall screen, in the middle.
+  static const double completeY = 360;
+
+  /// A phrase turns by a whole number of degrees between -[tiltDegrees] and [tiltDegrees]; the
+  /// complete phrase always leans [completeTiltDegrees].
+  static const int tiltDegrees = 4;
+  static const int completeTiltDegrees = -4;
+
   /// How far a phrase floats up over its lifetime. A visible phrase blocks the spot it is at
   /// now, so the rise is applied to its box as it goes, not reserved in advance.
   static const double riseDistance = 46;
 
   /// A phrase blocks other phrases only while it is in the first this share of its lifetime.
   static const double blockingShare = 0.7;
+
+  /// A phrase pops in over the first [popInShare] of its life (a small overshoot), grows a little
+  /// more until it goes, stays fully visible until [fadeStart] and fades out after that.
+  static const double popInShare = 0.35;
+  static const double fadeStart = 0.6;
 
   /// Every tap shows a phrase. If the tap spot is taken, the nearest free spot on a grid is used:
   /// [spotStepX] left and right, [spotStepY] up and down, 5 columns by 9 rows = 45 spots.
@@ -93,7 +119,6 @@ abstract final class CheerTuning {
   static const int maxPhraseLength = 12;
 }
 
-/// Numbers for haptic and sound feedback.
 /// Numbers for the water. The screen runs the spring and draws it; the domain only keeps the
 /// numbers in one place.
 abstract final class FillTuning {
@@ -126,9 +151,16 @@ abstract final class FillTuning {
   /// A tap within [dropletReach] px of the surface throws [dropletsMin] to [dropletsMax] droplets
   /// (twice as many when the gauge becomes full), at most [dropletsLimit] at once.
   static const double dropletReach = 220;
+
+  /// No droplets when the surface is within this many px of the bottom: the screen is empty.
+  static const double dropletFloorMargin = 6;
   static const int dropletsMin = 2;
   static const int dropletsMax = 5;
-  static const int dropletsWhenComplete = 2; // multiplier
+
+  /// The tap strength that scales the droplet count tops out here, and the launch speed tops out
+  /// at [dropletUpPowerCap]. Strength is 1 for a tap, 2.2 when the gauge fills, 0.3 when it is full.
+  static const double dropletsPowerCap = 2;
+  static const double dropletUpPowerCap = 1.6;
   static const int dropletsLimit = 40;
 
   /// A droplet leaves going up at [dropletUpMin] to [dropletUpMax] px/s, sideways by up to

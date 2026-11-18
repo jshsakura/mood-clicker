@@ -51,7 +51,8 @@ void main() {
     expect(todayCount(app), 3);
     expect(app.haptics.played, isNotEmpty);
     expect(app.sound.played.length, 3);
-    expect(find.text(ko.tap_todayCount(3)), findsOneWidget);
+    expect(find.text('3'), findsOneWidget);
+    expect(find.text(ko.tap_todayLabel), findsOneWidget);
   });
 
   testWidgets('the tap counts when the finger lands, before it lifts', (

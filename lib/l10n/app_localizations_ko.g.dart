@@ -51,14 +51,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get moodSelect_moodAnxious => '불안해요';
 
   @override
-  String tap_todayCount(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '오늘 $count',
-    );
-    return '$_temp0';
-  }
+  String get tap_todayLabel => '오늘 두드린 수';
 
   @override
   String get calendar_prevMonth => '지난달';

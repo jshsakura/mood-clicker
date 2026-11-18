@@ -6,6 +6,7 @@ import 'package:flutter/scheduler.dart';
 
 import '../../app/app_services.dart';
 import '../../design/app_theme.dart';
+import '../../design/parts/line_icons.dart';
 import '../../design/parts/pressable_surface.dart';
 import '../../design/parts/water_painter.dart';
 import '../../design/parts/water_sim.dart';
@@ -43,12 +44,13 @@ class TapScreen extends StatefulWidget {
 class _TapScreenState extends State<TapScreen>
     with SingleTickerProviderStateMixin {
   late final WaterSim _sim = WaterSim(random: widget.random);
+  late final Random _tiltRandom = widget.random ?? Random();
   late final Ticker _ticker;
   late final AppServices _services;
 
   FillGauge _gauge = const FillGauge.empty();
   SpillLedger _ledger = const SpillLedger();
-  List<LivePhrase> _phrases = const [];
+  List<CheerSlot> _phrases = const [];
   CheerBook? _book;
   Size _size = Size.zero;
 
@@ -118,6 +120,9 @@ class _TapScreenState extends State<TapScreen>
     }
   }
 
+  /// The count block sits this far above the bottom edge, as in the canvas.
+  static const double _countBottom = 48;
+
   // --- each frame -------------------------------------------------------------------------
 
   void _onFrame(Duration elapsed) {
@@ -144,13 +149,6 @@ class _TapScreenState extends State<TapScreen>
     }
     _wasAboveZero = level > 0;
 
-    final alive = CheerLayout.alive([for (final p in _phrases) p.slot], now);
-    if (alive.length != _phrases.length) {
-      _phrases = [
-        for (final p in _phrases)
-          if (alive.contains(p.slot)) p,
-      ];
-    }
     unawaited(_services.journal.save(SaveTrigger.tick));
   }
 
@@ -199,15 +197,18 @@ class _TapScreenState extends State<TapScreen>
   void _hitWater(Offset at, bool filled, {required bool wasFull}) {
     final surfaceY = _sim.surfaceYAt(at.dx);
     final insideWater = at.dy >= surfaceY;
-    _sim.hit(
-      at.dx,
-      insideWater: insideWater,
-      scale: filled
-          ? CompleteTuning.waterKickScale
-          : (wasFull ? FillTuning.fullKick : 1),
-    );
-    if ((at.dy - surfaceY).abs() <= FillTuning.dropletReach) {
-      _sim.throwDroplets(at.dx, surfaceY, _sim.dropletCount(complete: filled));
+    final power = filled
+        ? CompleteTuning.waterKickScale
+        : (wasFull ? FillTuning.fullKick : 1.0);
+    _sim.hit(at.dx, insideWater: insideWater, scale: power);
+    if (surfaceY < _size.height - FillTuning.dropletFloorMargin &&
+        (at.dy - surfaceY).abs() < FillTuning.dropletReach) {
+      _sim.throwDroplets(
+        at.dx,
+        surfaceY,
+        _sim.dropletCount(power: power),
+        power: power,
+      );
     }
   }
 
@@ -216,39 +217,37 @@ class _TapScreenState extends State<TapScreen>
     if (book == null) return;
     final stage = CheerStage.of(_gauge, now);
     final draw = _services.cheerPicker.draw(book, widget.mood, stage);
-    final level = _gauge.valueAt(now);
     final fontSize = CheerLayout.fontSizeFor(
-      level: level,
+      level: _gauge.valueAt(now),
       kind: draw.kind,
-      length: draw.phrase.runes.length,
+      length: draw.phrase.length,
       screenWidth: _size.width,
+      textScale: _feel.textScale,
     );
+    final screen = Size2(_size.width, _size.height);
     final CheerPlacement placement;
     if (draw.kind == CheerKind.complete) {
       placement = CheerLayout.showComplete(
-        center: Point(_size.width / 2, _size.height * 0.38),
-        length: draw.phrase.runes.length,
+        screen: screen,
+        text: draw.phrase,
         fontSize: fontSize,
         now: now,
       );
     } else {
       placement = CheerLayout.show(
         tap: Point(at.dx, at.dy),
-        length: draw.phrase.runes.length,
+        text: draw.phrase,
         fontSize: fontSize,
-        slots: [for (final p in _phrases) p.slot],
+        slots: _phrases,
         now: now,
+        screen: screen,
+        rotationDegrees:
+            _tiltRandom.nextInt(CheerTuning.tiltDegrees * 2 + 1) -
+            CheerTuning.tiltDegrees,
         kind: draw.kind,
-        bounds: CheerRect(0, 0, _size.width, _size.height),
-        screenCenterX: _size.width / 2,
       );
     }
-    final known = {for (final p in _phrases) p.slot: p};
-    _phrases = [
-      for (final slot in placement.slots)
-        known[slot] ??
-            LivePhrase(slot: slot, text: draw.phrase, fontSize: fontSize),
-    ];
+    _phrases = placement.slots;
   }
 
   // --- leaving ---------------------------------------------------------------------------
@@ -318,7 +317,6 @@ class _TapScreenState extends State<TapScreen>
                               CheerOverlay(
                                 phrases: _phrases,
                                 now: _services.now,
-                                surfaceYAt: _sim.surfaceYAt,
                               ),
                             ],
                           ),
@@ -336,30 +334,19 @@ class _TapScreenState extends State<TapScreen>
                       padding: const EdgeInsets.all(Space.lg),
                       child: Row(
                         children: [
-                          PressableSurface.icon(
-                            icon: Icons.arrow_back,
+                          PressableSurface(
+                            kind: PressableKind.icon,
                             semanticLabel: l10n.common_back,
                             onTap: _leave,
+                            child: const Center(child: ChevronLeftIcon()),
                           ),
-                          const SizedBox(width: Space.md),
+                          const SizedBox(width: Space.sm),
                           Expanded(
                             child: Text(
-                              '${moodEmoji(widget.mood)} ${moodName(context, widget.mood)}',
+                              moodName(context, widget.mood),
                               style: TypeScale.title.copyWith(color: p.ink),
                             ),
                           ),
-                          if (_services.settingsBuilder != null) ...[
-                            const SizedBox(width: Space.md),
-                            PressableSurface.icon(
-                              icon: Icons.settings_outlined,
-                              semanticLabel: l10n.settings_title,
-                              onTap: () => Navigator.of(context).push(
-                                MaterialPageRoute<void>(
-                                  builder: _services.settingsBuilder!,
-                                ),
-                              ),
-                            ),
-                          ],
                         ],
                       ),
                     ),
@@ -368,29 +355,31 @@ class _TapScreenState extends State<TapScreen>
                 Positioned(
                   left: 0,
                   right: 0,
-                  bottom: 0,
-                  child: SafeArea(
-                    child: IgnorePointer(
-                      child: Padding(
-                        padding: const EdgeInsets.all(Space.xl),
-                        child: ListenableBuilder(
-                          listenable: _services.journal,
-                          builder: (context, _) {
-                            final count = _services.journal.journal
-                                .dayOf(DayKey.of(_services.now()))
-                                .countOf(widget.mood);
-                            return Text(
-                              l10n.tap_todayCount(count),
-                              textAlign: TextAlign.center,
-                              style: TypeScale.title.copyWith(
-                                color: _sim.level * _size.height > 120
-                                    ? p.onFill
-                                    : p.ink,
+                  bottom: _countBottom,
+                  child: IgnorePointer(
+                    child: ListenableBuilder(
+                      listenable: _services.journal,
+                      builder: (context, _) {
+                        final count = _services.journal.journal
+                            .dayOf(DayKey.of(_services.now()))
+                            .countOf(widget.mood);
+                        return Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              '$count',
+                              style: TypeScale.count.copyWith(color: p.ink),
+                            ),
+                            const SizedBox(height: Space.xs),
+                            Text(
+                              l10n.tap_todayLabel,
+                              style: TypeScale.label.copyWith(
+                                color: p.inkMuted,
                               ),
-                            );
-                          },
-                        ),
-                      ),
+                            ),
+                          ],
+                        );
+                      },
                     ),
                   ),
                 ),
