@@ -299,20 +299,26 @@ class _TapScreenState extends State<TapScreen>
                     onPointerDown: _onPointerDown,
                     child: AnimatedBuilder(
                       animation: _sim,
-                      builder: (context, _) => Transform.translate(
-                        offset: _shakeOffset(_services.now()),
-                        child: Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            CustomPaint(
-                              painter: WaterPainter(sim: _sim, palette: p),
-                            ),
-                            CheerOverlay(
-                              phrases: _phrases,
-                              now: _services.now,
-                              surfaceYAt: _sim.surfaceYAt,
-                            ),
-                          ],
+                      builder: (context, _) => ClipRect(
+                        child: Transform.translate(
+                          offset: _shakeOffset(_services.now()),
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              CustomPaint(
+                                painter: WaterPainter(
+                                  sim: _sim,
+                                  palette: p,
+                                  bleed: CompleteTuning.shakeAmplitude,
+                                ),
+                              ),
+                              CheerOverlay(
+                                phrases: _phrases,
+                                now: _services.now,
+                                surfaceYAt: _sim.surfaceYAt,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),

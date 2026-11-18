@@ -43,7 +43,7 @@ tool/fl test                 # 대비 검사까지 돕니다
 
 - 세트를 하나 더 두면 테마가 하나 늘어납니다. 색을 새로 넣으면 모든 테마에 같은 이름으로 넣어야 합니다.
 - 색은 `#RRGGBB` 나 `#RRGGBBAA`, 크기는 `16px` 이나 `16`(숫자만 적으면 px), 줄 높이는 `1.5` 나 `150%`, 시간은 `120ms` 처럼 씁니다.
-- 앱 코드가 쓰는 이름은 지울 수 없습니다. 지우면 생성기가 어느 이름이 빠졌는지 알려 주고 멈춥니다. 목록은 `tool/gen_tokens.py` 의 `REQUIRED_CORE`(간격 `sm` ~ `xxxl`, 둥글기 `card` `button` `pill`, 글자 `display` `title` `body` `label` `count` `wordmark`, 움직임 `fillRise` `tap` `page`, 글꼴 `family`)와 `REQUIRED_COLORS`(모든 테마의 색)입니다. 이름을 더 두는 것은 괜찮습니다.
+- 앱 코드가 쓰는 이름은 지울 수 없습니다. 지우면 생성기가 어느 이름이 빠졌는지 알려 주고 멈춥니다. 목록은 `tool/gen_tokens.py` 의 `REQUIRED_CORE`(간격 `xs` ~ `xxxl`, 둥글기 `card` `button` `pill`, 글자 `display` `title` `body` `label` `count` `wordmark`, 움직임 `fillRise` `tap` `page`, 글꼴 `family`)와 `REQUIRED_COLORS`(모든 테마의 색)입니다. 이름을 더 두는 것은 괜찮습니다.
 - 글자 토큰에는 `letterSpacing`(자간)을 `-0.5px` 처럼 쓸 수 있습니다. 자간을 좁히는 음수도 됩니다. 알 수 없는 필드(`fontWeigth` 같은 오타)는 오류로 알려 줍니다.
 - 시간은 0 이상 3600000ms(한 시간) 이하의 정수 ms 입니다. `0.12s` 처럼 초로 적어도 정수 ms 로 떨어져야 합니다.
 - `fillEdge` 는 채움 윗면(물 윗면)에 긋는 2px 선의 색입니다. 채움이 바탕과 비슷한 옅은 색이어도 차오른 높이가 보이도록 바탕과의 대비를 1.5 이상으로 둡니다.

@@ -7,11 +7,15 @@ import '../tokens.g.dart';
 /// Draws the water of the tap screen: a wave behind (surface color), the front wave (fill color)
 /// with a 2 px edge line, and the droplets. Everything is flat: no gradient, no shadow, no glow.
 class WaterPainter extends CustomPainter {
-  WaterPainter({required this.sim, required this.palette})
+  WaterPainter({required this.sim, required this.palette, this.bleed = 0})
     : super(repaint: sim);
 
   final WaterSim sim;
   final AppPalette palette;
+
+  /// How far the water runs past the left and right edges, flat. A shaking frame never shows
+  /// the background there.
+  final double bleed;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -26,8 +30,8 @@ class WaterPainter extends CustomPainter {
       );
       final top = _topPath(size, front, lift: 0);
       final body = Path.from(top)
-        ..lineTo(size.width, size.height)
-        ..lineTo(0, size.height)
+        ..lineTo(size.width + bleed, size.height)
+        ..lineTo(-bleed, size.height)
         ..close();
       canvas.drawPath(body, Paint()..color = palette.fill);
       canvas.drawPath(
@@ -46,8 +50,8 @@ class WaterPainter extends CustomPainter {
 
   Path _fillPath(Size size, List<double> heights, {required double lift}) {
     return _topPath(size, heights, lift: lift)
-      ..lineTo(size.width, size.height)
-      ..lineTo(0, size.height)
+      ..lineTo(size.width + bleed, size.height)
+      ..lineTo(-bleed, size.height)
       ..close();
   }
 
@@ -61,7 +65,9 @@ class WaterPainter extends CustomPainter {
           sim.restingYAt(i * size.width / (n - 1)) - heights[i] - lift,
         ),
     ];
-    final path = Path()..moveTo(points[0].dx, points[0].dy);
+    final path = Path()
+      ..moveTo(points[0].dx - bleed, points[0].dy)
+      ..lineTo(points[0].dx, points[0].dy);
     for (var i = 0; i < n - 1; i++) {
       final p0 = points[i == 0 ? 0 : i - 1];
       final p1 = points[i];
@@ -76,10 +82,10 @@ class WaterPainter extends CustomPainter {
         p2.dy,
       );
     }
-    return path;
+    return path..lineTo(points.last.dx + bleed, points.last.dy);
   }
 
   @override
   bool shouldRepaint(WaterPainter old) =>
-      old.sim != sim || old.palette != palette;
+      old.sim != sim || old.palette != palette || old.bleed != bleed;
 }

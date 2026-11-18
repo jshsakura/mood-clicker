@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mood_clicker/design/parts/water_painter.dart';
 import 'package:mood_clicker/domain/day_key.dart';
 import 'package:mood_clicker/domain/feel_settings.dart';
+import 'package:mood_clicker/domain/tuning.dart';
 import 'package:mood_clicker/domain/mood.dart';
 import 'package:mood_clicker/screens/tap/tap_screen.dart';
 
@@ -131,6 +133,31 @@ void main() {
     await tester.tap(find.text(ko.note_skip));
     await settle(tester);
     expect(find.byType(TapScreen), findsNothing);
+  });
+
+  testWidgets('the complete shake stays inside a clipped frame', (
+    tester,
+  ) async {
+    final app = await openTap(tester);
+    for (var i = 0; i < 60; i++) {
+      await tapOnce(tester, app, const Offset(200, 500), gapMs: 100);
+    }
+    final frame = find.descendant(
+      of: find.byType(TapScreen),
+      matching: find.byType(ClipRect),
+    );
+    expect(frame, findsWidgets);
+    final screen = tester.getRect(find.byType(Scaffold));
+    for (final box in tester.widgetList<ClipRect>(frame)) {
+      expect(box, isNotNull);
+    }
+    expect(tester.getRect(frame.first), screen);
+    final painter = tester
+        .widgetList<CustomPaint>(find.byType(CustomPaint))
+        .map((c) => c.painter)
+        .whereType<WaterPainter>()
+        .single;
+    expect(painter.bleed, CompleteTuning.shakeAmplitude);
   });
 
   testWidgets('leaving without filling asks nothing', (tester) async {
