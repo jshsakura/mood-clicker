@@ -32,7 +32,7 @@
   "map_legendLine": "Happy {happy}% · Sad {sad}%",
   "map_permissionReason": "Location is needed to show moods around you",
   "reminder_title": "How was your mood today?",
-  "reminder_body": "Take a moment to tap it out",
+  "reminder_body": "A moment to check in with yourself",
   "settings_title": "Settings",
   "settings_theme": "Theme",
   "settings_themeSystem": "Follow system",

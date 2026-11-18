@@ -130,7 +130,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get reminder_title => '오늘 기분은 어땠나요?';
 
   @override
-  String get reminder_body => '잠깐 들어와 두드려 보세요';
+  String get reminder_body => '잠깐 들러 오늘 마음을 남겨 보세요';
 
   @override
   String get settings_title => '설정';
