@@ -3,7 +3,7 @@
 
   privacy_scan.py --staged          스테이징된 변경 (pre-commit)
   privacy_scan.py --message FILE    커밋 메시지 (commit-msg)
-  privacy_scan.py --range A..B      커밋 범위 전체와 그 메시지 (pre-push, CI)
+  privacy_scan.py --range A..B      범위 안의 커밋 하나하나와 그 메시지 (pre-push, CI)
 
 찾은 값은 출력하지 않는다. 파일:줄과 종류만 알린다.
 정말 괜찮은 줄이면 그 줄에 `privacy-ok` 를 적는다.
@@ -17,6 +17,8 @@ SKIP_PATH = re.compile(
     r"(pubspec\.lock|Podfile\.lock|package-lock\.json|\.svg|\.pbxproj)$"
     r"|(^|/)(LICENSE|NOTICE|COPYING)[^/]*$"
 )
+# 잠금 파일, SVG, 2000자 넘는 줄은 해시와 경로 데이터가 많아 전부 보지 않는다.
+# 그래도 키 모양과 비밀값 대입은 거기서도 찾는다.
 GENERATED_LINE = 2000
 
 # 올리면 안 되는 파일. 서명 키, 스토어 키, 환경 파일, 파이어베이스 설정.
@@ -40,6 +42,11 @@ IP_OK = [ipaddress.ip_network(n) for n in (
     "1.1.1.1/32", "1.0.0.1/32", "8.8.8.8/32", "8.8.4.4/32",
 )]
 PRIVATE = [ipaddress.ip_network(n) for n in ("10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "100.64.0.0/10")]
+VERSION_CONTEXT = re.compile(r"\bversion\b|\bv(?=\d)|\bbuild\b", re.I)
+IPV6 = re.compile(r"(?<![\w:.])([0-9a-fA-F]{0,4}(?::[0-9a-fA-F]{0,4}){2,7})(?![\w:])")
+INTERNAL_HOST = re.compile(
+    r"\b[a-z0-9-]+\.(lan|local|internal|intranet|corp|localdomain|home\.arpa)(?![\w.-])", re.I
+)
 NET_CONTEXT = re.compile(r"://|\b(host|ip|addr|address|server|endpoint|connect|curl|ssh|ping)\b|:\d{2,5}\b", re.I)
 TAILNET = re.compile(r"\.ts\.net\b")
 OPS_PATH = re.compile(r"/mnt/[\w-]+|/srv/[\w-]+|appdata/|/volume\d/")  # privacy-ok
@@ -54,6 +61,45 @@ KNOWN_KEY = re.compile(r"AIza[0-9A-Za-z_\-]{35}|AKIA[0-9A-Z]{16}|gh[pousr]_[0-9A
 COORD = re.compile(r"(?<![\w.])-?\d{1,2}\.\d{4,}\s*,\s*-?\d{1,3}\.\d{4,}(?![\d])")
 
 
+def strong_findings(line):
+    """어디서든 찾는 것: 알려진 키 모양과 비밀값 대입."""
+    out = []
+    for m in SECRET.finditer(line):
+        v = m.group(2)
+        if re.search(r"[a-z]", v) and re.search(r"[A-Z]", v) and re.search(r"\d", v) and len(set(v)) > 10:
+            out.append("비밀값")
+            break
+    if KNOWN_KEY.search(line):
+        out.append("키")
+    return out
+
+
+def ip_findings(line):
+    for m in IPV4.finditer(line):
+        parts = [int(p) for p in m.groups()]
+        if max(parts) > 255 or line[m.end():m.end() + 1] == "/":
+            continue
+        ip = ipaddress.ip_address(".".join(map(str, parts)))
+        if any(ip in n for n in IP_OK):
+            continue
+        net = NET_CONTEXT.search(line)
+        if any(ip in n for n in PRIVATE):
+            if parts[3] not in (0, 255) and (net or not VERSION_CONTEXT.search(line)):
+                return ["IP"]
+        elif ip.is_global and net:
+            return ["IP"]
+    for m in IPV6.finditer(line):
+        try:
+            ip = ipaddress.IPv6Address(m.group(1))
+        except ValueError:
+            continue
+        if ip in ipaddress.ip_network("2001:db8::/32") or ip.is_loopback or ip.is_unspecified:
+            continue
+        if ip.is_private and not ip.is_reserved or ip.is_link_local or (ip.is_global and NET_CONTEXT.search(line)):
+            return ["IP"]
+    return []
+
+
 def findings_in_line(line):
     if "privacy-ok" in line:
         return []
@@ -64,20 +110,9 @@ def findings_in_line(line):
         if not EMAIL_OK.search(m.group(1)) and m.group(0).split("@")[0] != "git":
             out.append("이메일")
             break
-    for m in IPV4.finditer(line):
-        parts = [int(p) for p in m.groups()]
-        if max(parts) > 255 or line[m.end():m.end() + 1] == "/":
-            continue
-        ip = ipaddress.ip_address(".".join(map(str, parts)))
-        if any(ip in n for n in IP_OK):
-            continue
-        if any(ip in n for n in PRIVATE):
-            if parts[3] not in (0, 255):
-                out.append("IP")
-                break
-        elif ip.is_global and NET_CONTEXT.search(line):
-            out.append("IP")
-            break
+    out += ip_findings(line)
+    if INTERNAL_HOST.search(line) and NET_CONTEXT.search(line):
+        out.append("내부 호스트")
     if TAILNET.search(line):
         out.append("Tailscale 주소")
     if OPS_PATH.search(line):
@@ -90,23 +125,24 @@ def findings_in_line(line):
         if len(set(v)) > 4 and not sha:
             out.append("긴 hex")
             break
-    for m in SECRET.finditer(line):
-        v = m.group(2)
-        if re.search(r"[a-z]", v) and re.search(r"[A-Z]", v) and re.search(r"\d", v) and len(set(v)) > 10:
-            out.append("비밀값")
-            break
-    if KNOWN_KEY.search(line):
-        out.append("키")
+    out += strong_findings(line)
     if COORD.search(line):
         out.append("좌표")
     return out
+
+
+def diff_path(header):
+    path = header[4:]
+    if path.startswith('"') and path.endswith('"'):
+        path = path[1:-1].encode("latin-1", "backslashreplace").decode("unicode_escape").encode("latin-1").decode("utf-8", "replace")
+    return path[2:] if path.startswith("b/") else path
 
 
 def scan_diff(diff):
     hits, path, lineno = [], "?", 0
     for raw in diff.splitlines():
         if raw.startswith("+++ "):
-            path = raw[6:] if raw.startswith("+++ b/") else raw[4:]
+            path = diff_path(raw)
             continue
         if raw.startswith("@@"):
             m = re.search(r"\+(\d+)", raw)
@@ -115,9 +151,11 @@ def scan_diff(diff):
         if raw.startswith("-"):
             continue
         lineno += 1
-        if not raw.startswith("+") or SKIP_PATH.search(path) or len(raw) > GENERATED_LINE:
+        if not raw.startswith("+") or "privacy-ok" in raw:
             continue
-        hits += [f"{path}:{lineno} {kind}" for kind in findings_in_line(raw[1:])]
+        partial = SKIP_PATH.search(path) or len(raw) > GENERATED_LINE
+        kinds = strong_findings(raw[1:]) if partial else findings_in_line(raw[1:])
+        hits += [f"{path}:{lineno} {kind}" for kind in kinds]
     return hits
 
 
@@ -130,7 +168,8 @@ def scan_files(names):
 
 
 def git(*args):
-    r = subprocess.run(["git", *args], capture_output=True, text=True)
+    # 경로 인용을 끄면 한글 경로가 따옴표와 8진수 없이 그대로 나온다.
+    r = subprocess.run(["git", "-c", "core.quotePath=false", *args], capture_output=True, text=True)
     if r.returncode != 0:
         sys.exit(f"git {' '.join(args)} 실패: {r.stderr.strip()}")
     return r.stdout
@@ -152,18 +191,35 @@ def report(hits):
     return 1
 
 
+def names_z(out):
+    return sorted({n.strip("\n") for n in out.split("\0") if n.strip("\n")})
+
+
+SCISSORS = re.compile(r"^# -+ >8 -+$")
+
+
+def message_text(raw):
+    """git 이 지울 주석 줄도 본다. cleanup=verbatim 이면 그대로 남기 때문이다. 가위 줄 아래만 뺀다."""
+    lines = []
+    for line in raw.splitlines():
+        if SCISSORS.match(line):
+            break
+        lines.append(line)
+    return "\n".join(lines)
+
+
 def main(argv):
     if len(argv) == 1 and argv[0] == "--staged":
-        names = git("diff", "--cached", "--name-only", "--diff-filter=ACMR").splitlines()
+        names = names_z(git("diff", "--cached", "--name-only", "-z", "--diff-filter=ACMR"))
         return report(scan_files(names) + scan_diff(git("diff", "--cached", "-U0", "--no-color")))
     if len(argv) == 2 and argv[0] == "--message":
         with open(argv[1], encoding="utf-8", errors="ignore") as f:
-            text = "\n".join(l for l in f.read().splitlines() if not l.startswith("#"))
-        return report(scan_text("커밋 메시지", text))
+            return report(scan_text("커밋 메시지", message_text(f.read())))
     if len(argv) == 2 and argv[0] == "--range":
+        # 끝점끼리 비교하면 중간 커밋에서 넣었다 지운 것이 안 보인다. 커밋마다 본다.
         rng = argv[1]
-        names = git("diff", "--name-only", "--diff-filter=ACMR", rng).splitlines()
-        hits = scan_files(names) + scan_diff(git("diff", "-U0", "--no-color", rng))
+        names = names_z(git("log", "--name-only", "-z", "--diff-filter=ACMR", "--format=", rng))
+        hits = scan_files(names) + scan_diff(git("log", "-p", "-U0", "--no-color", "--format=", rng))
         return report(hits + scan_text("커밋 메시지", git("log", "--format=%B", rng)))
     print(__doc__, file=sys.stderr)
     return 2
