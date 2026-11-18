@@ -176,6 +176,12 @@ new_case "fl_dart does not mount a gradle volume"
 run fl_dart format lib
 expect_no_log ":/root/\\.gradle"
 
+new_case "shots.sh runs in docker even when the pinned local flutter exists"
+fake_flutter "$PINNED"
+run shots.sh --check
+expect_log "^docker run .*flutter:$PINNED"
+expect_no_log "^flutter"
+
 # --- android sdk: the NDK lives in one shared volume --------------------------------
 
 new_case "the NDK folder is a shared volume and nothing else of the SDK is mounted"

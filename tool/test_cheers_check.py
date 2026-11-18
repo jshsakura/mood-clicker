@@ -1,9 +1,14 @@
+import contextlib
+import io
+import json
+import shutil
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from cheers_check import MOODS, TIERS, check_bundle, count_graphemes, load_rules
+from cheers_check import MOODS, TIERS, check_bundle, count_graphemes, load_rules, main
 
 
 def _valid_bundle(lang: str) -> dict:
@@ -159,6 +164,35 @@ class CheersCheckTest(unittest.TestCase):
         # 5 moods * 5 tiers + 5 moods missing min bases + 1 total item count
         self.assertEqual(len(errs), len(MOODS) * len(TIERS) + len(MOODS) + 1)
 
+
+
+BANNED_KO = "\uc6b0\uc6b8\uc99d"  # a clinical word the rules forbid in cheers
+ROOT = Path(__file__).resolve().parent.parent
+
+
+class RealAssets(unittest.TestCase):
+    """The checker must run on the shipped assets, not only on fixtures."""
+
+    def run_on(self, root):
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err), contextlib.redirect_stdout(io.StringIO()):
+            code = main(["--root", str(root)])
+        return code, err.getvalue()
+
+    def test_the_shipped_assets_pass(self):
+        self.assertEqual((0, ""), self.run_on(ROOT))
+
+    def test_a_forbidden_word_in_a_shipped_asset_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            shutil.copytree(ROOT / "assets" / "cheers", Path(tmp) / "assets" / "cheers")
+            path = Path(tmp) / "assets" / "cheers" / "ko.json"
+            data = json.loads(path.read_text(encoding="utf-8"))
+            first = data["moods"]["happy"]["low"][0]
+            first["t"] = BANNED_KO + " " + first["t"]
+            path.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+            code, err = self.run_on(tmp)
+        self.assertEqual(1, code)
+        self.assertIn("ko", err)
 
 if __name__ == "__main__":
     unittest.main()

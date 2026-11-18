@@ -1,12 +1,27 @@
 name: ci
 on:
   pull_request:
+    types: [opened, synchronize, reopened, edited]
   push:
     branches: [main]
 permissions:
   contents: read
 jobs:
+  # Runs again when the title or body is edited. The builds below do not.
+  pr-text:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: privacy scan of the PR title and body
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          printf '%s\n\n%s\n' "$PR_TITLE" "$PR_BODY" > "$RUNNER_TEMP/pr-text.txt"
+          python3 tool/privacy_scan.py --message "$RUNNER_TEMP/pr-text.txt"
   check:
+    if: github.event.action != 'edited'
     runs-on: ubuntu-latest
     container: ghcr.io/cirruslabs/flutter:3.44.0
     env:
@@ -44,6 +59,7 @@ jobs:
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git diff --exit-code -- lib/l10n
           python3 tool/l10n_check.py
+      - run: python3 tool/cheers_check.py
       - run: python3 tool/gen_tokens.py --check
       - run: dart format --output=none --set-exit-if-changed $(find lib test -name '*.dart' ! -name '*.g.dart')
       - run: flutter analyze

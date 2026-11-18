@@ -6,4 +6,5 @@ cd "$(dirname "$0")/.."
 # throwaway repositories must not inherit them, or they commit into the branch being pushed.
 unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_COMMON_DIR GIT_OBJECT_DIRECTORY GIT_ALTERNATE_OBJECT_DIRECTORIES GIT_PREFIX
 python3 -m unittest discover -s tool -p 'test_*.py' -q
+python3 tool/cheers_check.py
 tool/fl test

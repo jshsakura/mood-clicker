@@ -29,7 +29,7 @@ English: [HARNESS.en.md](HARNESS.en.md)
 
 ## 준비
 
-필요한 것은 도커, git, tmux, GitHub CLI(`gh`), 그리고 쓰려는 에이전트(Claude Code 등)입니다.
+필요한 것은 도커, git, python3, tmux, GitHub CLI(`gh`), 그리고 쓰려는 에이전트(Claude Code 등)입니다.
 Flutter 는 도커 이미지 안에 있으니 깔지 않습니다.
 
 ```bash

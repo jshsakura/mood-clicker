@@ -230,6 +230,16 @@ class ClosesThirdReview(unittest.TestCase):
         line = '{"host": "' + LAN_IP + '", "version": "1.2.3"}'
         self.assertIn("IP", findings_in_line(line))
 
+    def test_a_short_version_before_the_host_does_not_hide_it_either(self):
+        line = '{"version": 1, "host": "' + LAN_IP + '"}'
+        self.assertIn("IP", findings_in_line(line))
+        self.assertIn("IP", findings_in_line("version 1, server " + LAN_IP))
+
+    def test_a_version_value_that_looks_like_an_address_stays_allowed_in_both_shapes(self):
+        self.assertEqual([], findings_in_line('{"version": "10.2.3.4"}'))
+        self.assertEqual([], findings_in_line("build 10.2.3.4"))
+        self.assertEqual([], findings_in_line("tool v10.2.3.4"))
+
     def test_path_with_space_keeps_its_extension(self):
         diff = f"+++ b/docs/a b.md\t\n@@ -0,0 +1 @@\n+mail {EMAIL}\n"
         self.assertEqual(["docs/a b.md:1 email"], scan_diff(diff))

@@ -6,7 +6,7 @@
 ## 먼저 알아 둘 것
 
 - `tool/fl` 과 `tool/fl_dart` 는 로컬에 지정 버전(Flutter `3.44.0`)이 있으면 로컬 명령을 쓰고, 없으면 도커(`ghcr.io/cirruslabs/flutter:3.44.0`)에서 돌립니다. 로컬 Flutter 가 있더라도 `FL_DOCKER=1` 을 주면 도커로 강제합니다.
-- 도커 모드를 쓰려면 git, 도커(`sudo` 없이 실행), 파이썬 3, bash 가 필요합니다.
+- 도커 모드를 쓰려면 git, 도커(`sudo` 없이 실행), 파이썬 3, bash 가 필요합니다. 로컬 모드(맥)에는 도커가 필요 없지만 `tool/shots.sh` 는 골든 때문에 언제나 도커를 씁니다.
 - 아이폰과 맥 앱은 맥의 로컬 Flutter 또는 GitHub Actions 의 macOS 러너에서 빌드합니다(아래 CI 절).
 - 색, 간격 같은 디자인 값은 `design/tokens.json` 한 파일에서 고치고, 코드가 아니라 값으로 다룹니다. 흐름은 디자인 토큰 절에 있습니다.
 
@@ -25,9 +25,10 @@ tool/test.sh      # 테스트 전부
 2. Flutter 이미지(`ghcr.io/cirruslabs/flutter:3.44.0`, 약 7GB)를 받습니다. 처음 한 번만 오래 걸립니다.
 3. `tool/fl pub get` 으로 패키지를 받습니다.
 
-끝나면 `준비 끝. 훅: .githooks` 가 나옵니다. 이미지가 이미 있는 컴퓨터에서는 2초 안팎으로 끝납니다.
+끝나면 `Ready. Hooks: .githooks` 가 나옵니다. 이미지가 이미 있는 컴퓨터에서는 2초 안팎으로 끝납니다.
 
-`tool/test.sh` 는 파이썬 도구 테스트(162개)와 Flutter 테스트(비골든 210개 + 골든)를 차례로 돌립니다.
+`tool/test.sh` 는 파이썬 도구 테스트, 응원 문구 검사(`cheers_check.py`), Flutter 테스트(골든 포함)를 차례로 돌리고 전부 통과해야 끝납니다.
+골든은 리눅스 도커 이미지 기준이라, 맥에서 로컬 Flutter 로 처음 돌릴 때는 `tool/fl test --exclude-tags golden` 을 씁니다(아래 화면 그림 절).
 로컬에 Flutter 가 없는 환경이나 골든 제외 확인만 필요할 때는 `tool/fl test --exclude-tags golden` 으로 단위·위젯 테스트를 빠르게 돌릴 수 있습니다.
 
 ## 도구 한눈에 보기
@@ -169,7 +170,7 @@ tool/shots.sh --update   # 의도한 변경이면 골든을 새 그림으로 바
 - 그림은 지금 테마 3개(라이트, 다크, 핑크) × 기기 2개(아이폰 390x844 @3x, 안드로이드 412x915 @2.625)로 뽑힙니다. 화면 한 장은 기기 화면 크기만큼만 담기므로, 스크롤로 넘어가는 아랫부분은 그림에 없습니다.
 - 글자는 앱의 진짜 글꼴(Pretendard, Baloo2)로 그려집니다. 아이콘과 이모지는 도커 이미지 안의 Flutter SDK 글꼴(Material 아이콘, Noto Color Emoji)을 씁니다. 이모지 모양은 이 그림용이고 실제 기기에서는 기기의 이모지가 나옵니다.
 - 화면을 새로 만들면 `test/goldens/harness.dart` 의 `goldenScreens` 목록에 한 줄을 더합니다. 테마와 기기는 같은 파일의 `goldenThemes`, `goldenDevices` 입니다.
-- **골든 비교는 도커에서만 맞습니다.** 골든은 리눅스 도커 이미지에서 뽑았고, 맥이나 다른 환경에서는 같은 화면도 픽셀이 조금 다르게 그려집니다. 그래서 비교는 `tool/shots.sh` 와 CI(같은 이미지를 씁니다)에서만 합니다. 맥에서 `flutter test` 를 직접 돌릴 때는 `--exclude-tags golden` 을 붙입니다.
+- **골든 비교는 도커에서만 맞습니다.** 골든은 리눅스 도커 이미지에서 뽑았고, 맥이나 다른 환경에서는 같은 화면도 픽셀이 조금 다르게 그려집니다. 그래서 비교는 `tool/shots.sh` 와 CI(같은 이미지를 씁니다)에서만 합니다. 맥에서 `flutter test` 를 직접 돌릴 때는 `--exclude-tags golden` 을 붙입니다. `tool/shots.sh` 는 로컬 Flutter 가 있어도 `FL_DOCKER=1` 로 도커를 강제하므로, 맥에서 골든을 보려면 도커(Docker Desktop)가 필요합니다.
 - 허용 오차는 두지 않았습니다. 같은 이미지에서 두 번 돌려 바이트까지 같은 그림이 나왔습니다. CI 가 로컬과 다르게 나오는 일이 실제로 생기면 그때 근거와 함께 아주 작게 둡니다.
 - CI 에서 비교가 실패하면 차이 그림이 `golden-diffs` 이름의 산출물로 올라갑니다.
 
@@ -232,9 +233,7 @@ tool/shots.sh --update   # 의도한 변경이면 골든을 새 그림으로 바
 
 ## 확인한 환경
 
-- 확인일: 2026-11-18
+- 확인일: 2026-11-19
 - Linux, 파이썬 3.14, Flutter 3.44.0 (도커 이미지)
-- `python3 -m unittest discover -s tool -p 'test_*.py'`: 162개 통과
-- `tool/fl test test/feedback`: 61개 통과
-- `tool/fl test --exclude-tags golden`: 210개 통과, 6개 건너뜀 (기존 `integrate/poc` 기준 비골든 1건 실패 포함)
+- `tool/test.sh`: 파이썬 도구 테스트, 응원 문구 검사, Flutter 테스트(골든 포함) 전부 통과
 - macOS 로컬 Flutter 자동 선택(`FL_DOCKER=1` 미지정)은 맥이 없어 직접 확인하지 못했습니다.

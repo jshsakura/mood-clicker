@@ -5,7 +5,9 @@
 #   tool/shots.sh --update   replace the committed goldens with the current screens; look at the changed pictures, then commit
 #
 # The goldens come from the linux docker image, so pixels differ on a Mac or any other environment.
-# That is why the comparison runs only in this script and in CI (same image).
+# That is why the comparison runs only in this script and in CI (same image). So this script always
+# uses docker, even when a local Flutter of the pinned version is installed (as on a Mac).
+export FL_DOCKER=1
 set -euo pipefail
 cd "$(dirname "$0")/.."
 TEST=test/goldens/golden_test.dart
