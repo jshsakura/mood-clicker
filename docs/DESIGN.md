@@ -61,16 +61,15 @@ tool/fl test                 # 대비 검사까지 돕니다
 
 ### 스플래시 색
 
-앱을 켤 때 Flutter 가 뜨기 전에 보이는 네이티브 시작 화면의 바탕색은 `light.ground` 와 `dark.ground` 를 따라갑니다. 토큰을 바꾸고 `python3 tool/gen_tokens.py` 를 돌리면 아래 파일이 함께 바뀌고, 손으로 고치면 훅과 CI 가 막습니다.
+앱을 켤 때 Flutter 가 뜨기 전에 보이는 네이티브 시작 화면의 바탕색은 `light.ground` 를 따라갑니다. 앱이 라이트로 시작하므로 OS 가 다크여도 시작 화면은 흰색이고, 다크 변형은 두지 않습니다. 토큰을 바꾸고 `python3 tool/gen_tokens.py` 를 돌리면 아래 파일이 함께 바뀌고, 손으로 고치면 훅과 CI 가 막습니다.
 
 | 파일 | 따라가는 값 |
 |---|---|
 | `android/app/src/main/res/values/colors.xml` | `light.ground` |
-| `android/app/src/main/res/values-night/colors.xml` | `dark.ground` |
-| `ios/Runner/Assets.xcassets/SplashBackground.colorset/Contents.json` | Any 는 `light.ground`, Dark 는 `dark.ground` |
+| `ios/Runner/Assets.xcassets/SplashBackground.colorset/Contents.json` | `light.ground` 한 색(다크 변형 없음) |
 | `ios/Runner/Base.lproj/LaunchScreen.storyboard` | 색 자산이 없을 때의 대체값. `light.ground` |
 
-스플래시 바탕은 불투명해야 해서, 알파가 있는 `ground` 는 오류로 알려 줍니다.
+스플래시 바탕은 불투명해야 해서, 알파가 있는 `light.ground` 는 오류로 알려 줍니다. `--check` 는 파일 내용뿐 아니라 안드로이드 styles 가 `splash_background` 를, iOS 스토리보드가 `SplashBackground` 색 자산을 실제로 쓰는지와 대체색 알파가 1 인지도 검사합니다.
 시작 화면의 로고와 앱 아이콘은 아직 없습니다. 생기면 같은 방식으로 잇습니다.
 
 ### Tokens Studio 와 GitHub 동기화 (무료판)

@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <!-- Generated file. Do not edit. tool/gen_tokens.py writes it from dark.color.ground in design/tokens.json. -->
-    <color name="splash_background">#121216</color>
-</resources>
