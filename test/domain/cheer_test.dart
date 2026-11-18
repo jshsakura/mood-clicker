@@ -1,25 +1,12 @@
-import 'dart:convert';
-import 'dart:math';
+import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mood_clicker/domain/cheer.dart';
 import 'package:mood_clicker/domain/fill_gauge.dart';
 import 'package:mood_clicker/domain/mood.dart';
+import 'package:mood_clicker/domain/tuning.dart';
 
-Map<String, Object?> moodsWith(int size) => {
-  for (final mood in Mood.values)
-    mood.id: <String, Object?>{
-      for (final stage in CheerStage.values)
-        stage.id: <Object?>[
-          for (var i = 0; i < size; i++) '${mood.index}${stage.id[0]}$i',
-        ],
-    },
-};
-
-String fileOf(Map<String, Object?> moods) =>
-    jsonEncode({'version': 1, 'moods': moods});
-
-CheerBook bookOf(int size) => CheerBook.parse(fileOf(moodsWith(size))).book;
+import 'cheer_fixtures.dart';
 
 void main() {
   group('parse', () {
@@ -90,79 +77,144 @@ void main() {
       return g;
     }
 
-    test('follows the level: below half, half or more, full', () {
+    test('follows the level: below half, half or more, full, complete', () {
       expect(CheerStage.of(taps(1), t0), CheerStage.low);
       expect(CheerStage.of(taps(19), t0), CheerStage.low);
       expect(CheerStage.of(taps(20), t0), CheerStage.high);
       expect(CheerStage.of(taps(39), t0), CheerStage.high);
-      expect(CheerStage.of(taps(40), t0), CheerStage.full);
+      // The tap that fills the gauge is the complete moment; later taps are plain full.
+      expect(CheerStage.of(taps(40), t0), CheerStage.complete);
+      expect(CheerStage.of(taps(41), t0), CheerStage.full);
+    });
+
+    test('complete is only for the one tap that fills the gauge', () {
+      var gauge = const FillGauge.empty();
+      final stages = <CheerStage>[];
+      for (var i = 0; i < 45; i++) {
+        gauge = gauge.tap(t0);
+        stages.add(CheerStage.of(gauge, t0));
+      }
+      expect(stages.where((s) => s == CheerStage.complete), hasLength(1));
+      expect(stages[39], CheerStage.complete);
+      expect(stages.skip(40), everyElement(CheerStage.full));
+    });
+
+    test('complete uses the full font size', () {
+      expect(CheerStage.complete.fontSize, CheerStage.full.fontSize);
     });
   });
 
-  group('picker', () {
-    test('only picks from the bundle of the asked mood and stage', () {
-      final picker = CheerPicker(Random(1));
-      final book = bookOf(4);
-      for (var i = 0; i < 30; i++) {
+  group('complete bundle', () {
+    test('is optional and falls back to the full bundle', () {
+      final book = bookOf(3, complete: false);
+      expect(
+        book.bundle(Mood.happy, CheerStage.complete),
+        book.bundle(Mood.happy, CheerStage.full),
+      );
+      expect(
+        book.effectiveStage(Mood.happy, CheerStage.complete),
+        CheerStage.full,
+      );
+    });
+
+    test('is used when the file has it', () {
+      final book = bookOf(3);
+      expect(book.bundle(Mood.happy, CheerStage.complete), [
+        '0c0',
+        '0c1',
+        '0c2',
+      ]);
+      expect(
+        book.effectiveStage(Mood.happy, CheerStage.complete),
+        CheerStage.complete,
+      );
+    });
+
+    test('may be present for one mood only', () {
+      final moods = moodsWith(2, complete: false);
+      (moods['sad']! as Map<String, Object?>)['complete'] = ['done!'];
+      final book = CheerBook.parse(fileOf(moods)).book;
+      expect(book.bundle(Mood.sad, CheerStage.complete), ['done!']);
+      expect(
+        book.bundle(Mood.happy, CheerStage.complete),
+        book.bundle(Mood.happy, CheerStage.full),
+      );
+    });
+
+    test('an empty complete bundle is an error, not a silent fallback', () {
+      final moods = moodsWith(2);
+      (moods['sad']! as Map<String, Object?>)['complete'] = <String>[];
+      expect(() => CheerBook.parse(fileOf(moods)), throwsFormatException);
+    });
+  });
+
+  group('file size and loading', () {
+    test('a file over the size cap is refused before parsing', () {
+      final big = 'x' * (CheerTuning.maxFileBytes + 1);
+      expect(() => CheerBook.parse(big), throwsFormatException);
+    });
+
+    test('measures bytes, not characters', () {
+      // Each Hangul-like character below is 3 bytes in UTF-8.
+      final text = '\u3042' * (CheerTuning.maxFileBytes ~/ 3 + 1);
+      expect(text.length, lessThan(CheerTuning.maxFileBytes));
+      expect(() => CheerBook.parse(text), throwsFormatException);
+    });
+
+    test('the shipped phrase files stay under the cap', () {
+      final dir = Directory('assets/cheers');
+      final files = dir.listSync().whereType<File>().where(
+        (f) => f.path.endsWith('.json'),
+      );
+      expect(files, isNotEmpty);
+      for (final file in files) {
         expect(
-          picker.pick(book, Mood.angry, CheerStage.high),
-          startsWith('2h'),
+          file.lengthSync(),
+          lessThanOrEqualTo(CheerTuning.maxFileBytes),
+          reason: file.path,
         );
       }
     });
 
-    test('a bundle of 8 or fewer never repeats the phrase just before', () {
-      final picker = CheerPicker(Random(2));
-      final book = bookOf(8);
-      String? last;
-      for (var i = 0; i < 300; i++) {
-        final phrase = picker.pick(book, Mood.happy, CheerStage.low);
-        expect(phrase, isNot(last));
-        last = phrase;
-      }
-    });
+    test(
+      'parseInBackground gives the same book without blocking the caller',
+      () async {
+        final text = fileOf(moodsWith(40));
+        final inline = CheerBook.parse(text);
+        final background = await CheerBook.parseInBackground(text);
+        expect(background.warnings, inline.warnings);
+        for (final mood in Mood.values) {
+          for (final stage in CheerStage.values) {
+            expect(
+              background.book.bundle(mood, stage),
+              inline.book.bundle(mood, stage),
+            );
+          }
+        }
+      },
+    );
 
-    test('a bundle of one still answers', () {
-      final picker = CheerPicker(Random(3));
-      final book = bookOf(1);
-      expect(picker.pick(book, Mood.sad, CheerStage.low), '3l0');
-      expect(picker.pick(book, Mood.sad, CheerStage.low), '3l0');
+    test('parseInBackground reports a bad file as FormatException', () async {
+      await expectLater(
+        CheerBook.parseInBackground('[]'),
+        throwsFormatException,
+      );
     });
+  });
 
-    test('a bigger bundle never repeats within the last 8 picks', () {
-      final picker = CheerPicker(Random(4));
-      final book = bookOf(12);
-      final picks = [
-        for (var i = 0; i < 400; i++)
-          picker.pick(book, Mood.excited, CheerStage.high),
-      ];
-      for (var i = 0; i < picks.length; i++) {
-        final window = picks.sublist(max(0, i - 8), i);
-        expect(window, isNot(contains(picks[i])), reason: 'pick $i');
-      }
-    });
-
-    test('a bundle of 9 uses every phrase over time', () {
-      final picker = CheerPicker(Random(5));
-      final book = bookOf(9);
-      final seen = {
-        for (var i = 0; i < 200; i++)
-          picker.pick(book, Mood.happy, CheerStage.low),
-      };
-      expect(seen, hasLength(9));
-    });
-
-    test('the same seed gives the same sequence', () {
-      List<String> run() {
-        final picker = CheerPicker(Random(7));
-        final book = bookOf(10);
-        return [
-          for (var i = 0; i < 20; i++)
-            picker.pick(book, Mood.happy, CheerStage.low),
-        ];
-      }
-
-      expect(run(), run());
-    });
+  test('a repeated phrase inside one bundle is a warning', () {
+    final moods = moodsWith(2);
+    (moods['happy']! as Map<String, Object?>)['low'] = [
+      'same',
+      'same',
+      'other',
+    ];
+    final parsed = CheerBook.parse(fileOf(moods));
+    expect(
+      parsed.warnings.where(
+        (w) => w.contains('happy/low') && w.contains('repeated'),
+      ),
+      hasLength(1),
+    );
   });
 }

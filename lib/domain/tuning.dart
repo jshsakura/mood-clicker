@@ -56,11 +56,13 @@ abstract final class CheerTuning {
   static const int spotColumns = 5;
   static const int spotRows = 9;
 
-  /// A phrase shown within the last this many picks is not picked again.
-  static const int recentWindow = 8;
+  /// Phrases are dealt from a shuffled deck. When a deck runs out, the next one is shuffled so
+  /// that the last this many phrases of the old deck stay out of the first this many of the new
+  /// one. For a small bundle the number is half of its size.
+  static const int deckTailSize = 50;
 
-  /// A bundle this small or smaller only avoids the phrase picked just before.
-  static const int smallBundle = 8;
+  /// A phrase file larger than this is refused (bytes).
+  static const int maxFileBytes = 1024 * 1024;
 
   /// Longer phrases get a warning when a phrase file is loaded.
   static const int maxPhraseLength = 12;
