@@ -62,6 +62,13 @@ flutter:
   # Turns on code generation for lib/l10n (see l10n.yaml).
   generate: true
 
+  # Per-language cheer phrase packs, loaded through lib/l10n/asset_paths.dart.
+  # Stamp folders are listed here once real artwork lands.
+  assets:
+    - assets/cheers/ko.json
+    - assets/cheers/en.json
+    - assets/cheers/ja.json
+
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.

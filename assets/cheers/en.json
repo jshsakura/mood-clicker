@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "moods": {
+    "happy": {
+      "low": ["Good start", "Nice"],
+      "high": ["Feeling good", "Bright"],
+      "full": ["Full of joy", "Brimming"]
+    },
+    "excited": {
+      "low": ["Off you go", "Buzzing"],
+      "high": ["So alive", "Flying"],
+      "full": ["On top", "Full up"]
+    },
+    "angry": {
+      "low": ["Let it out", "Easy now"],
+      "high": ["Almost there", "Keep going"],
+      "full": ["All out", "Clear head"]
+    },
+    "sad": {
+      "low": ["It's okay", "No rush"],
+      "high": ["Doing fine", "Little more"],
+      "full": ["Let it flow", "Well done"]
+    },
+    "anxious": {
+      "low": ["Breathe out", "Slow down"],
+      "high": ["Steady now", "Almost calm"],
+      "full": ["Settled", "You made it"]
+    }
+  }
+}
