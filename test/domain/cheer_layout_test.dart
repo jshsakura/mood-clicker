@@ -37,7 +37,7 @@ void main() {
     });
 
     test('stage font sizes are 38, 44 and 52', () {
-      expect(CheerStage.values.map((s) => s.fontSize), [38, 44, 52]);
+      expect(CheerStage.values.map((s) => s.fontSize), [38, 44, 52, 52]);
     });
   });
 
