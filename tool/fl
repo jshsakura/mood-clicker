@@ -18,7 +18,14 @@ fi
 # An empty array under set -u fails on bash 3.2, hence the ${TTY[@]+...} form.
 TTY=()
 [ -t 1 ] && TTY=(-t)
-exec docker run --rm ${TTY[@]+"${TTY[@]}"} \
+# Tests and analysis run inside a memory cap (4g, no extra swap) so a runaway test cannot take the
+# machine down. FL_TEST_MEMORY changes it, in docker sizes such as 6g. Builds are not capped:
+# Gradle asks for 8G (android/gradle.properties). The local flutter path above has no cap.
+LIMIT=()
+case "${1:-}" in
+  test | analyze) LIMIT=(--memory "${FL_TEST_MEMORY:-4g}" --memory-swap "${FL_TEST_MEMORY:-4g}") ;;
+esac
+exec docker run --rm ${TTY[@]+"${TTY[@]}"} ${LIMIT[@]+"${LIMIT[@]}"} \
   -v "$ROOT":/app \
   -v mood-clicker-pub-cache:/root/.pub-cache \
   -v "$(gradle_volume "$ROOT")":/root/.gradle \

@@ -90,6 +90,7 @@ Rules that depend on memory get broken. A rule broken once becomes a check.
 | No bare use of the shared stash | Claude hook | Worktrees share one stash and can pop someone else's change |
 | No repeated waiting and checking | Claude hook | Every agent tool call rereads the whole conversation, however cheap the command. Run long jobs in the background and wait for the notice |
 | All three languages have the same keys | `l10n_check.py` | Changing one language and moving on happens often |
+| Tests and analysis run within 4GB of memory | `tool/fl` (docker `--memory 4g`, no extra swap) | Several workers run tests on one server at once. One test that eats all memory stops the whole server. Measured peak on 2026-11-19 was 2.4GB. `FL_TEST_MEMORY` changes it |
 | Design values only in tokens | `gen_tokens.py --check` | Hard-coded colors and spacing scatter the places a designer has to touch |
 | Cheer phrases follow the evidence rules | `cheers_check.py` | Blocks exclamation marks, emoji, laughter and banned words for angry, sad and anxious moods |
 | Do not move on while CI is red | GitHub PR checks | The iOS build failed quietly for a day. Linux cannot compile iOS code, so nobody saw it |
