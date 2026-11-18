@@ -4,10 +4,10 @@ import 'ports.dart';
 
 typedef SoundLoader<T> = Future<T> Function(String assetPath);
 
-/// 소리 파일을 미리 불러 두는 곳. 재생 엔진과 상관없이 "없으면 조용히 건너뛴다" 를 맡는다.
+/// Preloads sound assets and silently skips missing files regardless of playback engine.
 ///
-/// 파일은 `assets/sounds/<묶음>/<id>.ogg` 를 먼저 찾고, 없으면 `.wav` 를 찾는다.
-/// 둘 다 없으면 그 소리는 건너뛰고, 로그는 전체에서 한 번만 남긴다.
+/// Looks up `assets/sounds/<pack>/<id>.ogg` first, then `.wav`.
+/// Missing cues are skipped and logged once overall.
 class SoundBank<T extends Object> {
   SoundBank({required this.load, void Function(String)? log})
     : _log = log ?? debugPrint;
@@ -39,13 +39,13 @@ class SoundBank<T extends Object> {
     if (_missing.isNotEmpty && !_logged) {
       _logged = true;
       _log(
-        '소리 파일 ${_missing.length}개를 찾지 못해 그 소리는 건너뜁니다. '
-        '예: ${pathFor(_missing.first, extensions.first)}',
+        'Skipped ${_missing.length} missing sound file(s), '
+        'e.g. ${pathFor(_missing.first, extensions.first)}',
       );
     }
   }
 
-  /// 불러 둔 소리. 없으면 null 이다.
+  /// Returns the preloaded sound source, or null if unavailable.
   T? sourceFor(SoundCue cue) => _sources[cue];
 
   Future<T?> _loadFirst(SoundCue cue) async {
@@ -53,7 +53,7 @@ class SoundBank<T extends Object> {
       try {
         return await load(pathFor(cue, ext));
       } catch (_) {
-        // 이 확장자 파일이 없다. 다음을 찾는다.
+        // File not found for this extension; try the next one.
       }
     }
     return null;

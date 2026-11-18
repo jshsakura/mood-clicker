@@ -1,14 +1,14 @@
-/// 화면이 부르는 반응의 종류. 화면 코드는 이 이름과 기분 id 만 안다.
+/// Feedback kinds called by screens. UI code only knows this enum and mood IDs.
 enum FeedbackKind {
-  /// 두드릴 때마다. 기분마다 다르다.
+  /// Played on each tap; varies by mood.
   tap,
 
-  /// 채움이 끝까지 찼을 때.
+  /// Played when the fill gauge reaches full.
   full,
 
-  /// 기분 배너를 눌렀을 때.
+  /// Played when a mood banner is selected.
   select,
 
-  /// 채움이 0으로 떨어졌을 때.
+  /// Played when the fill gauge drops back to zero.
   drop,
 }

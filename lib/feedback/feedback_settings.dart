@@ -1,4 +1,4 @@
-/// 소리 묶음. 파일은 assets/sounds/<이름>/ 아래에 둔다.
+/// Sound pack selection. Audio files live under `assets/sounds/<pack>/`.
 enum SoundPack { basic, soft }
 
 class FeedbackSettings {

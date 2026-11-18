@@ -1,24 +1,24 @@
 import 'feedback_kind.dart';
 import 'haptic_cue.dart';
 
-/// 반응에 쓰는 기분 id. 도메인과 따로 문자열로만 맞춘다.
+/// Mood IDs used by feedback. Matched by string independently from the domain layer.
 const feedbackMoodIds = ['happy', 'excited', 'angry', 'sad', 'anxious'];
 
-/// (kind, 기분) 하나의 반응. 진동이나 소리가 없으면 null 이다.
+/// Feedback entry for a (kind, mood) pair. Null fields mean no haptic or no sound.
 class FeedbackEntry {
   const FeedbackEntry({this.haptic, this.soundId});
 
   final HapticCue? haptic;
 
-  /// 소리 파일 이름(확장자 없이). 묶음은 설정이 정한다.
+  /// Sound asset base name (without extension). The pack is chosen in settings.
   final String? soundId;
 
   static const silent = FeedbackEntry();
 }
 
 // ---------------------------------------------------------------------------
-// 진동 값. 출처: docs/RESEARCH.md 8.1 (조사 초안). 실기기에서 손맛을 보고 여기만 고친다.
-// steps 는 지금 실제로 내는 근사, ios 와 android 는 나중에 플랫폼 채널이 쓸 값이다.
+// Haptic values from docs/RESEARCH.md 8.1 (draft). Tune here on physical devices.
+// steps are the current approximation; ios and android are for platform channels.
 // ---------------------------------------------------------------------------
 
 const _happy = HapticCue(
@@ -83,14 +83,14 @@ const _select = HapticCue(
   android: AndroidHaptic([0, 12], [0, 115]),
 );
 
-// 아주 약한 진동. 가장 약한 기본 진동(selection)으로 근사한다.
+// Very light haptic; approximated with the lightest built-in style (selection).
 const _drop = HapticCue(
   steps: [HapticStep(HapticStyle.selection)],
   ios: [IosHapticEvent(IosHapticType.transient, 0.25, 0.20)],
   android: AndroidHaptic([0, 15], [0, 60]),
 );
 
-// 소리 id. 파일은 assets/sounds/<묶음>/<id>.ogg (또는 .wav).
+// Sound IDs. Files live at assets/sounds/<pack>/<id>.ogg (or .wav).
 const _tapHappy = FeedbackEntry(haptic: _happy, soundId: 'tap_happy');
 const _tapExcited = FeedbackEntry(haptic: _excited, soundId: 'tap_excited');
 const _tapAngry = FeedbackEntry(haptic: _angry, soundId: 'tap_angry');
@@ -100,8 +100,8 @@ const _fullAll = FeedbackEntry(haptic: _full, soundId: 'full');
 const _selectAll = FeedbackEntry(haptic: _select, soundId: 'select');
 const _dropAll = FeedbackEntry(haptic: _drop);
 
-/// 모든 반응의 표. 바꿀 곳은 여기 한 군데다.
-/// 모든 kind 와 기분 조합이 빠짐없이 있어야 하고, 테스트가 강제한다.
+/// Lookup table for all feedback cues. Edit only here to adjust mappings.
+/// Every kind and mood combination must be present; enforced by tests.
 abstract final class FeedbackTable {
   static const _entries = <FeedbackKind, Map<String, FeedbackEntry>>{
     FeedbackKind.tap: {
@@ -137,7 +137,7 @@ abstract final class FeedbackTable {
   static bool has(FeedbackKind kind, String moodId) =>
       _entries[kind]?.containsKey(moodId) ?? false;
 
-  /// 표에 없는 기분 id 는 조용한 반응을 돌려준다. 반응 때문에 화면이 죽지 않게 한다.
+  /// Returns a silent entry for unknown mood IDs so the UI never crashes.
   static FeedbackEntry of(FeedbackKind kind, String moodId) =>
       _entries[kind]?[moodId] ?? FeedbackEntry.silent;
 

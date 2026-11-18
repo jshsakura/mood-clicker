@@ -8,10 +8,10 @@ import 'feedback_settings.dart';
 import 'feedback_table.dart';
 import 'ports.dart';
 
-/// 진동 사이 최소 간격. 이보다 빨리 오는 진동은 거른다. 소리는 겹쳐도 된다.
+/// Minimum interval between haptics. Earlier triggers are dropped; sounds may overlap.
 const minHapticGap = Duration(milliseconds: 40);
 
-/// 음 높이를 흔드는 폭. 원래 높이의 ±3%.
+/// Pitch jitter range: ±3% around the base pitch.
 const pitchJitter = 0.03;
 
 class FeedbackController {
@@ -32,12 +32,12 @@ class FeedbackController {
   final Random _random;
   final void Function(String) _log;
 
-  /// 설정을 바꾸면 다음 반응부터 적용된다.
+  /// Updated settings take effect on the next trigger.
   FeedbackSettings settings;
 
   Duration? _lastHaptic;
 
-  /// 반응을 낸다. 어떤 실패도 부른 쪽으로 던지지 않는다.
+  /// Triggers feedback without throwing errors to the caller.
   void trigger(FeedbackKind kind, String moodId) {
     final entry = FeedbackTable.of(kind, moodId);
 
@@ -64,9 +64,11 @@ class FeedbackController {
 
   void _fire(Future<void> Function() play) {
     try {
-      unawaited(play().onError((Object e, StackTrace _) => _log('반응 실패: $e')));
+      unawaited(
+        play().onError((Object e, StackTrace _) => _log('Feedback failed: $e')),
+      );
     } catch (e) {
-      _log('반응 실패: $e');
+      _log('Feedback failed: $e');
     }
   }
 

@@ -8,9 +8,9 @@ import 'ports.dart';
 import 'sound_bank.dart';
 import 'feedback_settings.dart';
 
-/// flutter_soloud 로 소리를 낸다. 짧은 소리를 겹쳐 낼 수 있고, 아이폰 무음 스위치를 존중한다.
+/// Plays sounds via flutter_soloud, supporting overlapping cues and iOS mute switch respect.
 ///
-/// 시작에 실패하거나 파일이 없으면 소리만 조용히 빠지고 앱은 그대로 돈다.
+/// If initialization or asset loading fails, audio is silently disabled so the app keeps running.
 class SoloudSound implements SoundPort {
   SoloudSound({void Function(String)? log}) : _log = log ?? debugPrint {
     _bank = SoundBank<AudioSource>(
@@ -23,11 +23,11 @@ class SoloudSound implements SoundPort {
   late final SoundBank<AudioSource> _bank;
   bool _ready = false;
 
-  /// 표에 나오는 모든 소리를 모든 묶음에서 미리 불러 둔다. 앱을 켠 뒤 한 번만 부른다.
+  /// Preloads all sounds in the table across all packs. Call once after startup.
   Future<void> init() async {
     try {
       final session = await AudioSession.instance;
-      // ambient: 무음 스위치를 켜면 소리가 나지 않고, 다른 앱의 음악도 끊지 않는다.
+      // ambient: stays silent when the iOS mute switch is on and mixes with other apps.
       await session.configure(
         const AudioSessionConfiguration(
           avAudioSessionCategory: AVAudioSessionCategory.ambient,
@@ -38,7 +38,7 @@ class SoloudSound implements SoundPort {
       await SoLoud.instance.init();
       _ready = true;
     } catch (e) {
-      _log('소리 엔진을 켜지 못해 소리 없이 진행합니다: $e');
+      _log('Failed to start sound engine; continuing without sound: $e');
       return;
     }
     await _bank.preload(_allCues());
@@ -55,7 +55,7 @@ class SoloudSound implements SoundPort {
       soloud.setRelativePlaySpeed(handle, pitch);
       soloud.setPause(handle, false);
     } catch (e) {
-      _log('소리 재생 실패: $e');
+      _log('Sound playback failed: $e');
     }
   }
 

@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import 'haptic_cue.dart';
 import 'ports.dart';
 
-/// Flutter 기본 HapticFeedback 으로 진동을 낸다. 맥처럼 진동이 없는 곳에서는 아무 일도 없다.
+/// Plays haptics via Flutter's HapticFeedback. No-op on devices without a motor (e.g. macOS).
 class SystemHaptics implements HapticsPort {
   SystemHaptics({
     Future<void> Function(HapticStyle style)? fire,
@@ -18,7 +18,7 @@ class SystemHaptics implements HapticsPort {
   final Future<void> Function(Duration) _delay;
   final void Function(String) _log;
 
-  /// 새 신호가 오면 올라간다. 기다리던 앞 신호의 남은 단계는 이 값이 달라진 것을 보고 멈춘다.
+  /// Incremented on each new cue so pending delayed steps from an older cue cancel.
   int _generation = 0;
 
   @override
@@ -33,7 +33,7 @@ class SystemHaptics implements HapticsPort {
         await _fire(step.style);
       }
     } catch (e) {
-      _log('진동 실패: $e');
+      _log('Haptics failed: $e');
     }
   }
 

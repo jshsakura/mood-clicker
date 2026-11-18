@@ -8,7 +8,7 @@ import 'package:mood_clicker/feedback/feedback_table.dart';
 
 import 'fakes.dart';
 
-/// 정해 둔 값을 차례로 돌려주는 Random. 0.0 이면 가장 낮게, 1.0 에 가깝게 가장 높게 흔든다.
+/// Deterministic Random returning preset values (0.0 for lowest, near 1.0 for highest pitch).
 class _FixedRandom implements Random {
   _FixedRandom(this.values);
   final List<double> values;
