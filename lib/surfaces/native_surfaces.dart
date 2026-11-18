@@ -26,7 +26,7 @@ class NativeSurfaces {
   final LaunchLinks links;
 
   /// Opens the tap screen of this mood.
-  final void Function(Mood mood) onLaunchMood;
+  void Function(Mood mood) onLaunchMood;
 
   WidgetSnapshot? _lastPublished;
   StreamSubscription<Uri?>? _subscription;

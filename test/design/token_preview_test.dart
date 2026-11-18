@@ -4,13 +4,13 @@ import 'package:mood_clicker/design/app_theme.dart';
 import 'package:mood_clicker/design/theme_choice.dart';
 import 'package:mood_clicker/design/token_preview.dart';
 import 'package:mood_clicker/design/tokens.g.dart';
-import 'package:mood_clicker/main.dart';
+import 'preview_host.dart';
 
 void main() {
   testWidgets('switching to pink repaints the screen with the pink ground', (
     tester,
   ) async {
-    await tester.pumpWidget(const MoodClickerApp());
+    await tester.pumpWidget(const PreviewHost());
     await tester.tap(find.text('pink'));
     await tester.pumpAndSettle();
 
@@ -22,7 +22,7 @@ void main() {
   testWidgets('every theme renders the preview without layout errors', (
     tester,
   ) async {
-    await tester.pumpWidget(const MoodClickerApp());
+    await tester.pumpWidget(const PreviewHost());
     for (final name in allPalettes.map((p) => p.name)) {
       await tester.tap(find.text(name));
       await tester.pumpAndSettle();
@@ -33,7 +33,7 @@ void main() {
   testWidgets('a button is shown for system and for every palette', (
     tester,
   ) async {
-    await tester.pumpWidget(const MoodClickerApp());
+    await tester.pumpWidget(const PreviewHost());
     for (final label in ['system', ...allPalettes.map((p) => p.name)]) {
       expect(find.text(label), findsOneWidget, reason: label);
     }

@@ -133,5 +133,23 @@ void main() {
         ),
       );
     });
+
+    test('a passed slot never repeats the same day', () {
+      // The reminder already fired at 21:00; a refresh at 21:05 (still no
+      // record) must not schedule a second one for tonight.
+      final plan = planReminder(
+        settings: on,
+        now: DateTime(2026, 11, 18, 21, 5),
+        recordedToday: false,
+      );
+      expect(
+        plan,
+        isA<ScheduleReminder>().having(
+          (p) => p.at,
+          'at',
+          DateTime(2026, 11, 19, 21, 0),
+        ),
+      );
+    });
   });
 }

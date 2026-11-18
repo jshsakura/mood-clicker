@@ -8,6 +8,7 @@ library;
 import 'package:flutter/foundation.dart';
 
 import '../design/theme_choice.dart';
+import '../domain/feel_settings.dart';
 import '../feedback/feedback_settings.dart';
 import '../l10n/locale_choice.dart';
 import '../reminder/reminder_settings.dart';
@@ -31,7 +32,7 @@ class Settings {
     this.cheersOn = true,
     this.cheerSize = CheerSize.normal,
     this.shakeOnFull = true,
-    this.tiltToPour = false,
+    this.tiltToPour = true,
     this.reminder = const ReminderSettings(),
     this.mapContribute = false,
     this.mapComment = false,
@@ -55,6 +56,23 @@ class Settings {
   ThemeChoice get themeChoice => theme == ThemeChoice.system.name
       ? ThemeChoice.system
       : ThemeChoice.named(theme);
+
+  /// The tap screen reads its effects through this mapping.
+  FeelSettings get feelSettings => FeelSettings(
+    screenShake: shakeOnFull,
+    cheerPhrases: cheersOn,
+    largeText: cheerSize == CheerSize.large,
+    tiltSpill: tiltToPour,
+  );
+
+  Settings fromFeel(FeelSettings feel) {
+    return copyWith(
+      shakeOnFull: feel.screenShake,
+      cheersOn: feel.cheerPhrases,
+      cheerSize: feel.largeText ? CheerSize.large : CheerSize.normal,
+      tiltToPour: feel.tiltSpill,
+    );
+  }
 
   Settings copyWith({
     String? theme,

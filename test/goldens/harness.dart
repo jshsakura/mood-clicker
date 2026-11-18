@@ -7,6 +7,10 @@ import 'package:mood_clicker/design/app_theme.dart';
 import 'package:mood_clicker/design/theme_choice.dart';
 import 'package:mood_clicker/design/token_preview.dart';
 import 'package:mood_clicker/design/tokens.g.dart';
+import 'package:mood_clicker/l10n/app_localizations.g.dart';
+
+import '../screens/fake_app.dart';
+import 'screen_shots.dart';
 
 /// The fonts the tests really load. They must match fonts in pubspec.yaml; a test reports a mismatch.
 const goldenFonts = <String, List<String>>{
@@ -95,10 +99,14 @@ final goldenThemes = [for (final p in allPalettes) ThemeChoice.named(p.name)];
 
 /// One screen. Its name becomes the file name.
 class GoldenScreen {
-  const GoldenScreen(this.name, this.build);
+  const GoldenScreen(this.name, this.build, {this.act});
 
   final String name;
   final Widget Function(ThemeChoice choice) build;
+
+  /// For a screen that never settles (the tap screen has a running ticker): it drives the screen
+  /// to the state to shoot. The screen is then not pumped until it settles.
+  final Future<void> Function(WidgetTester tester)? act;
 }
 
 /// The screens to render. Add one line when a screen is added.
@@ -107,15 +115,31 @@ final goldenScreens = <GoldenScreen>[
     'token_preview',
     (choice) => TokenPreview(choice: choice, onChoice: (_) {}),
   ),
+  for (final shot in shotScreens)
+    GoldenScreen(
+      shot.name,
+      (choice) {
+        final app = shotApp(holdLoading: shot.name == 'loading');
+        _shotApps[shot.name] = app;
+        return scoped(app, shot.build(app));
+      },
+      act: shot.act == null
+          ? null
+          : (tester) => shot.act!(tester, _shotApps[shot.name]!),
+    ),
 ];
+
+/// The fake app behind each screen shot, so the act step can move its clock.
+final _shotApps = <String, TestApp>{};
 
 /// Sets the device size and safe area, then pumps the screen.
 Future<void> pumpOnDevice(
   WidgetTester tester,
   GoldenDevice device,
   ThemeChoice choice,
-  Widget screen,
-) async {
+  Widget screen, {
+  bool settle = true,
+}) async {
   final view = tester.view;
   view.devicePixelRatio = device.pixelRatio;
   view.physicalSize = device.size * device.pixelRatio;
@@ -140,8 +164,15 @@ Future<void> pumpOnDevice(
       theme: base.copyWith(
         textTheme: base.textTheme.apply(fontFamilyFallback: [emojiFamily]),
       ),
+      locale: const Locale('ko'),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: screen,
     ),
   );
-  await tester.pumpAndSettle();
+  if (settle) {
+    await tester.pumpAndSettle();
+  } else {
+    await tester.pump(const Duration(milliseconds: 100));
+  }
 }

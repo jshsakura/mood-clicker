@@ -2,13 +2,26 @@ import 'tuning.dart';
 
 /// An immutable value for how hard the user is tapping, from 0 to 1. It never reads the clock; callers pass the time.
 class FillGauge {
-  const FillGauge.empty() : _level = 0, _lastTapAt = null, justFilled = false;
+  const FillGauge.empty()
+    : _level = 0,
+      _lastTapAt = null,
+      _armed = true,
+      justFilled = false;
 
-  const FillGauge._(this._level, this._lastTapAt, {this.justFilled = false});
+  const FillGauge._(
+    this._level,
+    this._lastTapAt,
+    this._armed, {
+    this.justFilled = false,
+  });
 
   /// The level right after the last tap.
   final double _level;
   final DateTime? _lastTapAt;
+
+  /// Whether becoming full counts as a fill moment. A fill disarms it, and it arms again only
+  /// when a tap finds the level below [FillTuning.rearm].
+  final bool _armed;
 
   /// True only on the value returned by the tap that took the gauge from not full to full.
   /// Use it to play the one-time full effect. It is false on every later value.
@@ -37,8 +50,17 @@ class FillGauge {
     final before = valueAt(at);
     final next = before + GaugeTuning.stepPerTap;
     final level = next > 1 ? 1.0 : next;
-    final filled = _isFull(level) && !_isFull(before);
-    return FillGauge._(level, at, justFilled: filled);
+    final armed = _armed || before < FillTuning.rearm;
+    final filled = armed && _isFull(level) && !_isFull(before);
+    return FillGauge._(level, at, armed && !filled, justFilled: filled);
+  }
+
+  /// The gauge after [amount] of water spilled out of the phone. Only the level drops: the time
+  /// of the last tap stays, so the grace time and the decay carry on as before.
+  FillGauge spilled(double amount) {
+    if (amount <= 0) return this;
+    final next = _level - amount;
+    return FillGauge._(next < 0 ? 0 : next, _lastTapAt, _armed);
   }
 
   static bool _isFull(double level) => level >= 1 - _epsilon;

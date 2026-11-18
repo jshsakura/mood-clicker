@@ -30,7 +30,14 @@ void main() {
       for (final device in goldenDevices) {
         final name = '${screen.name}_${choice.name}_${device.name}';
         testWidgets(name, (tester) async {
-          await pumpOnDevice(tester, device, choice, screen.build(choice));
+          await pumpOnDevice(
+            tester,
+            device,
+            choice,
+            screen.build(choice),
+            settle: screen.act == null,
+          );
+          await screen.act?.call(tester);
           await expectLater(
             find.byType(MaterialApp),
             matchesGoldenFile('images/$name.png'),

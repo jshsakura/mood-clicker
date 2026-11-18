@@ -61,7 +61,7 @@ class SharedPreferencesSettingsStore implements SettingsStore {
         ], CheerSize.normal.name),
       ),
       shakeOnFull: _prefs.getBool(_shakeOnFull) ?? true,
-      tiltToPour: _prefs.getBool(_tiltToPour) ?? false,
+      tiltToPour: _prefs.getBool(_tiltToPour) ?? true,
       reminder: ReminderSettings(
         enabled: _prefs.getBool(_reminderEnabled) ?? false,
         hour: (_prefs.getInt(_reminderMinutes) ?? _defaultMinutes) ~/ 60,

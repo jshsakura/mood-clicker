@@ -130,7 +130,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get reminder_title => '오늘 기분은 어땠나요?';
 
   @override
-  String get reminder_body => '잠깐 들어와 두드려 보세요';
+  String get reminder_body => '잠깐 들러 오늘 마음을 남겨 보세요';
 
   @override
   String get settings_title => '설정';
@@ -184,6 +184,56 @@ class AppLocalizationsKo extends AppLocalizations {
   String get settings_reminderTime => '알림 시각';
 
   @override
+  String get settings_mapContribute => '지도에 내 기분 보태기';
+
+  @override
+  String get moodSelect_openCalendar => '달력 보기';
+
+  @override
+  String get note_title => '오늘 한마디';
+
+  @override
+  String get note_hint => '한 줄로 남겨 보세요';
+
+  @override
+  String get note_skip => '건너뛰기';
+
+  @override
+  String get note_save => '남기기';
+
+  @override
+  String get note_presetLabel => '이런 말은 어때요';
+
+  @override
+  String get note_presetProud => '뿌듯한 하루였어요';
+
+  @override
+  String get note_presetCalm => '마음이 차분했어요';
+
+  @override
+  String get note_presetThanks => '고마운 일이 있었어요';
+
+  @override
+  String get note_presetHard => '힘들었지만 버텼어요';
+
+  @override
+  String get note_presetTired => '많이 피곤했어요';
+
+  @override
+  String get note_presetRest => '푹 쉬고 싶어요';
+
+  @override
+  String get dayDetail_note => '한마디';
+
+  @override
+  String get dayDetail_empty => '이날은 기록이 없습니다';
+
+  @override
+  String calendar_openDay(String date) {
+    return '$date 보기';
+  }
+
+  @override
   String get settings_time20 => '오후 8시';
 
   @override
@@ -199,7 +249,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get settings_tapping => '두드리기';
 
   @override
-  String get settings_strengthWeak => '약';
+  String get settings_strengthWeak => '약하게';
 
   @override
   String get settings_strengthNormal => '보통';
@@ -217,7 +267,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get settings_cheersSize => '글자 크기';
 
   @override
-  String get settings_cheersNormal => '보통';
+  String get settings_cheersNormal => '보통 글씨';
 
   @override
   String get settings_cheersLarge => '큰 글씨';
@@ -232,10 +282,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get settings_mindCare => '마음 돌봄';
 
   @override
-  String get settings_mindCareHelp => '위기 때 도움 요청하기';
+  String get settings_mindCareHelp => '마음이 많이 힘들 때';
 
   @override
-  String get settings_mindCareCenter => '정신건강 상담전화';
+  String get settings_mindCareCenter => '정신건강 위기상담';
 
   @override
   String get settings_mindCareCenterNote => '가까운 정신건강복지센터로 연결합니다';
@@ -244,7 +294,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get settings_mindCareSuicide => '자살예방 상담전화';
 
   @override
-  String get settings_mindCareKakao => '카카오톡 마들랜';
+  String get settings_mindCareKakao => '카카오톡 상담 마들랜';
 
   @override
   String get settings_mindCarePolice => '경찰';
@@ -253,16 +303,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get settings_mindCareMedical => '응급 의료';
 
   @override
-  String get settings_notMedical => '이 앱은 의료기기가 아니며 진료를 대신하지 않습니다';
-
-  @override
   String get settings_map => '지도';
 
   @override
   String get settings_mapComment => '한마디도 보태기';
-
-  @override
-  String get settings_mapCommentNote => '고른 준비 문장만 보냅니다';
 
   @override
   String get settings_records => '기록';
@@ -274,13 +318,14 @@ class AppLocalizationsKo extends AppLocalizations {
   String get settings_deleteAll => '모든 기록 지우기';
 
   @override
-  String get settings_deleteConfirmTitle => '기록을 지웁니다';
+  String get settings_deleteConfirmTitle => '모든 기록을 지웁니다';
 
   @override
-  String get settings_deleteConfirmBody => '지난 날들의 기록이 모두 사라집니다. 되돌릴 수 없습니다.';
+  String get settings_deleteConfirmBody =>
+      '달력의 기록, 오늘의 한마디, 두드린 수가 모두 사라집니다. 되돌릴 수 없습니다. 먼저 내보내 두면 나중에 다시 볼 수 있습니다.';
 
   @override
-  String get settings_deleteConfirmAction => '지웁니다';
+  String get settings_deleteConfirmAction => '지우기';
 
   @override
   String get settings_about => '정보';
@@ -298,5 +343,66 @@ class AppLocalizationsKo extends AppLocalizations {
   String get settings_privacyPending => '준비 중입니다';
 
   @override
-  String get settings_mapContribute => '지도에 내 기분 보태기';
+  String get settings_themeNote => '고르면 바로 모든 화면에 적용됩니다.';
+
+  @override
+  String get settings_vibrationDesc => '두드릴 때마다, 그리고 가득 찰 때 더 크게 울립니다';
+
+  @override
+  String get settings_soundDesc => '무음 모드에서는 나지 않습니다';
+
+  @override
+  String get settings_cheersDesc => '두드린 자리에 짧은 말이 나타납니다';
+
+  @override
+  String get settings_shakeDesc => '끄면 흔들림 없이 문구만 보여 줍니다';
+
+  @override
+  String get settings_pourDesc => '폰을 기울이면 물이 넘친 만큼 쏟아지고 두드린 수도 줄어듭니다';
+
+  @override
+  String get settings_reminderDesc => '아직 기록하지 않은 날 한 번만 알려 줍니다';
+
+  @override
+  String get settings_mapContributeDesc =>
+      '약 1km 단위로 묶어 보내고, 5명이 안 되는 곳은 보이지 않습니다';
+
+  @override
+  String get settings_mapCommentDesc =>
+      '준비된 문장 중에서 고른 한마디만 보냅니다. 직접 쓴 말은 기기에만 남습니다';
+
+  @override
+  String get settings_exportDesc => '달력의 기록을 파일 하나로 저장합니다';
+
+  @override
+  String get settings_exportDone => '기록을 파일로 저장했습니다';
+
+  @override
+  String get settings_mindCareRowDesc => '24시간 이야기를 들어 주는 곳에 바로 연결합니다';
+
+  @override
+  String get settings_mindCareTitle => '혼자 견디지 않아도 됩니다';
+
+  @override
+  String get settings_mindCareIntro =>
+      '지금 많이 힘들다면 이야기를 들어 줄 사람이 있습니다. 무료이고, 이름을 말하지 않아도 됩니다.';
+
+  @override
+  String get settings_mindCareSuicideNote => '24시간 상담';
+
+  @override
+  String get settings_mindCareKakaoNote => '전화가 어려우면 글로 이야기합니다. 24시간';
+
+  @override
+  String get settings_mindCareFootnote =>
+      '당장 위험하다면 119 또는 112에 전화합니다. 이 앱은 의료기기가 아니며 진료를 대신하지 않습니다.';
+
+  @override
+  String get settings_close => '닫기';
+
+  @override
+  String get settings_mindCareSosJapan => '#이노치SOS';
+
+  @override
+  String get settings_mindCareYorisoiJapan => '요리소이 상담전화(일본)';
 }

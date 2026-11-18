@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mood_clicker/design/app_theme.dart';
+import 'package:mood_clicker/design/theme_choice.dart';
 import 'package:mood_clicker/design/tokens.g.dart';
+import 'package:mood_clicker/domain/feel_settings.dart';
 import 'package:mood_clicker/l10n/app_localizations.g.dart';
 import 'package:mood_clicker/l10n/locale_choice.dart';
 import 'package:mood_clicker/reminder/reminder_controller.dart';
@@ -71,56 +73,79 @@ class FakeRecordsPort implements RecordsPort {
   Future<void> deleteAll() async => deletions += 1;
 }
 
+class Harness {
+  Harness({Settings settings = const Settings()}) {
+    store = MemorySettingsStore(settings);
+    port = FakeNotificationPort();
+    reminder = ReminderController(
+      port: port,
+      store: SettingsReminderSettingsStore(store),
+    );
+    feel = ValueNotifier(settings.feelSettings);
+    theme = ValueNotifier(settings.themeChoice);
+    language = ValueNotifier(settings.language);
+    records = FakeRecordsPort();
+  }
+
+  late final MemorySettingsStore store;
+  late final FakeNotificationPort port;
+  late final ReminderController reminder;
+  late final ValueNotifier<FeelSettings> feel;
+  late final ValueNotifier<ThemeChoice> theme;
+  late final ValueNotifier<LocaleChoice> language;
+  late final FakeRecordsPort records;
+
+  Future<bool> launchPhone(String url) async => true;
+}
+
 Future<void> pumpScreen(
   WidgetTester tester, {
-  Settings initial = const Settings(),
-  required ReminderController reminder,
-  required SettingsStore store,
-  required RecordsPort records,
-  ValueChanged<Settings>? onChanged,
+  required Harness harness,
+  SettingsFunction? customize,
+  String? deviceCountryCode,
 }) async {
   // The settings list is long; give it a tall surface so every section
   // builds and the finders see it.
-  await tester.binding.setSurfaceSize(const Size(480, 3200));
+  await tester.binding.setSurfaceSize(const Size(480, 3600));
   addTearDown(() => tester.binding.setSurfaceSize(null));
-  tester.platformDispatcher.localesTestValue = const [Locale('ko')];
+  tester.platformDispatcher.localesTestValue = [
+    deviceCountryCode == null
+        ? const Locale('ko')
+        : Locale('ko', deviceCountryCode),
+  ];
+  tester.platformDispatcher.localeTestValue =
+      tester.platformDispatcher.locales.first;
+  var screen = SettingsScreen(
+    store: harness.store,
+    feel: harness.feel,
+    theme: harness.theme,
+    language: harness.language,
+    reminder: harness.reminder,
+    records: harness.records,
+    appVersion: '1.2.3',
+    launchPhone: harness.launchPhone,
+  );
+  if (customize != null) {
+    screen = customize(screen);
+  }
   await tester.pumpWidget(
     MaterialApp(
       theme: buildTheme(lightPalette),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      locale: initial.language.locale,
-      home: SettingsScreen(
-        initial: initial,
-        store: store,
-        reminder: reminder,
-        records: records,
-        appVersion: '1.2.3',
-        onChanged: onChanged,
-      ),
+      home: screen,
     ),
   );
+  // Let the screen read the store.
+  await tester.pump();
 }
 
-ReminderController controllerWith(
-  FakeNotificationPort port,
-  SettingsStore store,
-) {
-  return ReminderController(
-    port: port,
-    store: SettingsReminderSettingsStore(store),
-  );
-}
+typedef SettingsFunction = SettingsScreen Function(SettingsScreen screen);
 
 void main() {
   testWidgets('the sections render in the current locale', (tester) async {
-    final store = MemorySettingsStore(const Settings());
-    await pumpScreen(
-      tester,
-      store: store,
-      reminder: controllerWith(FakeNotificationPort(), store),
-      records: FakeRecordsPort(),
-    );
+    final harness = Harness();
+    await pumpScreen(tester, harness: harness);
     final l10n = lookupAppLocalizations(const Locale('ko'));
     expect(find.text(l10n.settings_theme), findsOneWidget);
     expect(find.text(l10n.settings_tapping), findsOneWidget);
@@ -131,170 +156,131 @@ void main() {
     expect(find.text(l10n.settings_privacyPending), findsOneWidget);
   });
 
-  testWidgets('tapping a theme card persists and applies it', (tester) async {
-    final store = MemorySettingsStore(const Settings());
-    Settings? applied;
-    final reminder = controllerWith(FakeNotificationPort(), store);
-    final l10n = lookupAppLocalizations(const Locale('ko'));
-    await pumpScreen(
-      tester,
-      store: store,
-      reminder: reminder,
-      records: FakeRecordsPort(),
-      onChanged: (settings) => applied = settings,
-    );
-    await tester.tap(find.text(l10n.settings_themeDark));
-    await tester.pumpAndSettle();
-    expect(store.settings.theme, 'dark');
-    expect(applied?.theme, 'dark');
-  });
-
-  testWidgets('picking a language stores it and notifies the app', (
+  testWidgets('tapping a theme card persists it and moves the app notifier', (
     tester,
   ) async {
-    final store = MemorySettingsStore(const Settings());
-    Settings? applied;
-    final reminder = controllerWith(FakeNotificationPort(), store);
-    await pumpScreen(
-      tester,
-      store: store,
-      reminder: reminder,
-      records: FakeRecordsPort(),
-      onChanged: (settings) => applied = settings,
-    );
-    await tester.tap(find.text('English'));
+    final harness = Harness();
+    await pumpScreen(tester, harness: harness);
+    final l10n = lookupAppLocalizations(const Locale('ko'));
+    await tester.tap(find.text(l10n.settings_themeDark));
     await tester.pumpAndSettle();
-    expect(store.settings.language, LocaleChoice.en);
-    expect(applied?.language, LocaleChoice.en);
+    expect(harness.store.settings.theme, 'dark');
+    expect(harness.theme.value, const ThemeChoice.named('dark'));
   });
 
-  testWidgets('turning a toggle hides its detail choices', (tester) async {
-    final store = MemorySettingsStore(const Settings());
-    final reminder = controllerWith(FakeNotificationPort(), store);
+  testWidgets('picking a language persists it and moves the app notifier', (
+    tester,
+  ) async {
+    final harness = Harness();
+    await pumpScreen(tester, harness: harness);
+    await tester.tap(find.text('English'));
+    await tester.pumpAndSettle();
+    expect(harness.store.settings.language, LocaleChoice.en);
+    expect(harness.language.value, LocaleChoice.en);
+  });
+
+  testWidgets('turning the cheers off reaches the feel notifier', (
+    tester,
+  ) async {
+    final harness = Harness();
+    await pumpScreen(tester, harness: harness);
     final l10n = lookupAppLocalizations(const Locale('ko'));
-    await pumpScreen(
-      tester,
-      store: store,
-      reminder: reminder,
-      records: FakeRecordsPort(),
-    );
+    await tester.tap(find.text(l10n.settings_cheers));
+    await tester.pumpAndSettle();
+    expect(harness.feel.value.cheerPhrases, isFalse);
+    expect(harness.store.settings.cheersOn, isFalse);
+  });
+
+  testWidgets('turning a toggle off hides its detail choices', (tester) async {
+    final harness = Harness();
+    await pumpScreen(tester, harness: harness);
+    final l10n = lookupAppLocalizations(const Locale('ko'));
     // Vibration is on by default, so its strength choices are visible.
-    expect(find.text(l10n.settings_vibrationStrength), findsOneWidget);
+    expect(find.text(l10n.settings_strengthNormal), findsOneWidget);
     await tester.tap(find.text(l10n.settings_vibration));
     await tester.pumpAndSettle();
-    expect(find.text(l10n.settings_vibrationStrength), findsNothing);
-    expect(store.settings.hapticsOn, isFalse);
+    expect(find.text(l10n.settings_strengthNormal), findsNothing);
+    expect(harness.store.settings.hapticsOn, isFalse);
   });
 
   testWidgets('enabling the reminder asks for permission only then', (
     tester,
   ) async {
-    final port = FakeNotificationPort();
-    final store = MemorySettingsStore(const Settings());
-    final reminder = controllerWith(port, store);
+    final harness = Harness();
+    await pumpScreen(tester, harness: harness);
     final l10n = lookupAppLocalizations(const Locale('ko'));
-    await pumpScreen(
-      tester,
-      store: store,
-      reminder: reminder,
-      records: FakeRecordsPort(),
-    );
-    expect(port.permissionRequests, 0);
+    expect(harness.port.permissionRequests, 0);
     await tester.tap(find.text(l10n.settings_reminder));
     await tester.pumpAndSettle();
-    expect(port.permissionRequests, 1);
-    expect(store.settings.reminder.enabled, isTrue);
+    expect(harness.port.permissionRequests, 1);
+    expect(harness.store.settings.reminder.enabled, isTrue);
     expect(find.text(l10n.settings_time21), findsOneWidget);
   });
 
   testWidgets('a denied permission keeps the reminder off', (tester) async {
-    final port = FakeNotificationPort()..permission = false;
-    final store = MemorySettingsStore(const Settings());
-    final reminder = controllerWith(port, store);
+    final harness = Harness()..port.permission = false;
+    await pumpScreen(tester, harness: harness);
     final l10n = lookupAppLocalizations(const Locale('ko'));
-    await pumpScreen(
-      tester,
-      store: store,
-      reminder: reminder,
-      records: FakeRecordsPort(),
-    );
     await tester.tap(find.text(l10n.settings_reminder));
     await tester.pumpAndSettle();
-    expect(store.settings.reminder.enabled, isFalse);
+    expect(harness.store.settings.reminder.enabled, isFalse);
     expect(find.text(l10n.settings_time21), findsNothing);
   });
 
   testWidgets('picking a reminder time reschedules', (tester) async {
-    final port = FakeNotificationPort();
-    final store = MemorySettingsStore(
-      const Settings(reminder: ReminderSettings(enabled: true)),
+    final harness = Harness(
+      settings: const Settings(reminder: ReminderSettings(enabled: true)),
     );
-    final reminder = controllerWith(port, store);
-    await reminder.load();
+    await harness.reminder.load();
+    await pumpScreen(tester, harness: harness);
     final l10n = lookupAppLocalizations(const Locale('ko'));
-    await pumpScreen(
-      tester,
-      initial: store.settings,
-      store: store,
-      reminder: reminder,
-      records: FakeRecordsPort(),
-    );
     await tester.tap(find.text(l10n.settings_time22));
     await tester.pumpAndSettle();
-    expect(store.settings.reminder.hour, 22);
+    expect(harness.store.settings.reminder.hour, 22);
   });
 
-  testWidgets('the crisis sheet shows the pinned numbers and the disclaimer', (
+  testWidgets('the crisis sheet shows the pinned Korean numbers', (
     tester,
   ) async {
-    final store = MemorySettingsStore(const Settings());
-    final reminder = controllerWith(FakeNotificationPort(), store);
+    final harness = Harness();
+    await pumpScreen(tester, harness: harness);
     final l10n = lookupAppLocalizations(const Locale('ko'));
+    await tester.tap(find.text(l10n.settings_mindCareHelp));
+    await tester.pumpAndSettle();
+    // 109 and 1577-0199 are rows; 112 and 119 stay in the footnote.
+    expect(find.text(crisisPhoneNumbers['suicidePrevention']!), findsOneWidget);
+    expect(
+      find.text(crisisPhoneNumbers['mentalHealthCenter']!),
+      findsOneWidget,
+    );
+    expect(find.text(l10n.settings_mindCareFootnote), findsOneWidget);
+    expect(find.text(l10n.settings_mindCareIntro), findsOneWidget);
+  });
+
+  testWidgets('a crisis number dials through the launcher', (tester) async {
+    final harness = Harness();
     final urls = <String>[];
     await pumpScreen(
       tester,
-      store: store,
-      reminder: reminder,
-      records: FakeRecordsPort(),
-    );
-    // The crisis rows dial through the injected launcher; swap it in.
-    await tester.tap(find.text(l10n.settings_mindCareHelp));
-    await tester.pumpAndSettle();
-    for (final number in crisisPhoneNumbers.values) {
-      expect(find.text(number), findsOneWidget);
-    }
-    expect(find.text(l10n.settings_notMedical), findsOneWidget);
-    expect(urls, isEmpty);
-  });
-
-  testWidgets('a crisis number dials through the injected launcher', (
-    tester,
-  ) async {
-    final store = MemorySettingsStore(const Settings());
-    final reminder = controllerWith(FakeNotificationPort(), store);
-    final l10n = lookupAppLocalizations(const Locale('ko'));
-    final urls = <String>[];
-    await tester.binding.setSurfaceSize(const Size(480, 3200));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-    tester.platformDispatcher.localesTestValue = const [Locale('ko')];
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: buildTheme(lightPalette),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        home: SettingsScreen(
-          initial: const Settings(),
-          store: store,
-          reminder: reminder,
-          records: FakeRecordsPort(),
+      harness: harness,
+      customize: (screen) {
+        urls.clear();
+        return SettingsScreen(
+          store: harness.store,
+          feel: harness.feel,
+          theme: harness.theme,
+          language: harness.language,
+          reminder: harness.reminder,
+          records: harness.records,
           appVersion: '1.2.3',
           launchPhone: (url) async {
             urls.add(url);
             return true;
           },
-        ),
-      ),
+        );
+      },
     );
+    final l10n = lookupAppLocalizations(const Locale('ko'));
     await tester.tap(find.text(l10n.settings_mindCareHelp));
     await tester.pumpAndSettle();
     await tester.tap(find.text(crisisPhoneNumbers['suicidePrevention']!));
@@ -302,53 +288,48 @@ void main() {
     expect(urls, ['tel:${crisisPhoneNumbers['suicidePrevention']}']);
   });
 
-  testWidgets('delete all asks first and only then wipes', (tester) async {
-    final store = MemorySettingsStore(const Settings());
-    final reminder = controllerWith(FakeNotificationPort(), store);
-    final records = FakeRecordsPort();
+  testWidgets('the Japan region swaps in the Japanese numbers', (tester) async {
+    final harness = Harness();
+    await pumpScreen(tester, harness: harness, deviceCountryCode: 'JP');
     final l10n = lookupAppLocalizations(const Locale('ko'));
-    await pumpScreen(
-      tester,
-      store: store,
-      reminder: reminder,
-      records: records,
-    );
+    await tester.tap(find.text(l10n.settings_mindCareHelp));
+    await tester.pumpAndSettle();
+    for (final number in japanCrisisPhoneNumbers.values) {
+      expect(find.text(number), findsOneWidget);
+    }
+    for (final number in crisisPhoneNumbers.values) {
+      expect(find.text(number), findsNothing);
+    }
+  });
+
+  testWidgets('delete all asks first and only then wipes', (tester) async {
+    final harness = Harness();
+    await pumpScreen(tester, harness: harness);
+    final l10n = lookupAppLocalizations(const Locale('ko'));
     await tester.tap(find.text(l10n.settings_deleteAll));
     await tester.pumpAndSettle();
-    expect(records.deletions, 0);
+    expect(harness.records.deletions, 0);
     expect(find.text(l10n.settings_deleteConfirmBody), findsOneWidget);
     await tester.tap(find.text(l10n.settings_deleteConfirmAction));
     await tester.pumpAndSettle();
-    expect(records.deletions, 1);
+    expect(harness.records.deletions, 1);
   });
 
-  testWidgets('export calls the records port', (tester) async {
-    final store = MemorySettingsStore(const Settings());
-    final reminder = controllerWith(FakeNotificationPort(), store);
-    final records = FakeRecordsPort();
+  testWidgets('export calls the records port and toasts', (tester) async {
+    final harness = Harness();
+    await pumpScreen(tester, harness: harness);
     final l10n = lookupAppLocalizations(const Locale('ko'));
-    await pumpScreen(
-      tester,
-      store: store,
-      reminder: reminder,
-      records: records,
-    );
     await tester.tap(find.text(l10n.settings_export));
     await tester.pumpAndSettle();
-    expect(records.exports, 1);
+    expect(harness.records.exports, 1);
+    expect(find.text(l10n.settings_exportDone), findsOneWidget);
   });
 
   testWidgets('the about section shows the version and opens licenses', (
     tester,
   ) async {
-    final store = MemorySettingsStore(const Settings());
-    final reminder = controllerWith(FakeNotificationPort(), store);
-    await pumpScreen(
-      tester,
-      store: store,
-      reminder: reminder,
-      records: FakeRecordsPort(),
-    );
+    final harness = Harness();
+    await pumpScreen(tester, harness: harness);
     expect(find.text('1.2.3'), findsOneWidget);
     final l10n = lookupAppLocalizations(const Locale('ko'));
     await tester.tap(find.text(l10n.settings_licenses));

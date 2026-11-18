@@ -8,6 +8,7 @@ import 'package:mood_clicker/reminder/reminder_settings.dart';
 class FakeNotificationPort implements NotificationPort {
   final calls = <String>[];
   final scheduledAt = <DateTime>[];
+  final scheduledIds = <int>[];
   bool permission = true;
   String? launchPayload;
 
@@ -25,6 +26,7 @@ class FakeNotificationPort implements NotificationPort {
   @override
   Future<void> scheduleDaily(int id, DateTime at, ReminderText text) async {
     calls.add('schedule');
+    scheduledIds.add(id);
     scheduledAt.add(at);
   }
 
@@ -199,6 +201,29 @@ void main() {
           now: morning,
         );
         expect(port.calls, ['cancel', 'schedule']);
+      },
+    );
+
+    test(
+      'repeated refreshes keep one id, so at most one notification a day',
+      () async {
+        final port = FakeNotificationPort();
+        final controller = await enabledController(port);
+        await controller.refresh(
+          text: text,
+          recordedToday: false,
+          now: morning,
+        );
+        await controller.refresh(
+          text: text,
+          recordedToday: false,
+          now: morning,
+        );
+        expect(port.scheduledIds, [
+          reminderNotificationId,
+          reminderNotificationId,
+        ]);
+        expect(port.calls, ['cancel', 'schedule', 'cancel', 'schedule']);
       },
     );
   });

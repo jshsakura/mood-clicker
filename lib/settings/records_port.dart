@@ -4,9 +4,9 @@ library;
 
 import 'dart:io';
 
-import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../app/journal_store.dart' as app_journal;
 import '../domain/day_key.dart';
 import '../domain/json_file_mood_repository.dart';
 import '../domain/mood_repository.dart';
@@ -23,13 +23,6 @@ abstract interface class RecordsPort {
   Future<void> deleteAll();
 }
 
-/// The journal file of this app. Every reader and writer, now and in the
-/// screen work, must go through here so they agree on the location.
-Future<File> moodJournalFile() async {
-  final dir = await getApplicationDocumentsDirectory();
-  return File('${dir.path}/mood_journal.json');
-}
-
 /// Shares paths through the system share sheet.
 Future<void> shareThroughSheet(List<String> paths) async {
   await SharePlus.instance.share(
@@ -39,9 +32,12 @@ Future<void> shareThroughSheet(List<String> paths) async {
 
 class DeviceRecordsPort implements RecordsPort {
   DeviceRecordsPort({
-    this.journalFile = moodJournalFile,
+    this.journalFile = defaultJournalFile,
     this.shareFiles = shareThroughSheet,
   });
+
+  /// Resolves to the app's one journal file from lib/app/journal_store.dart.
+  static Future<File> defaultJournalFile() => app_journal.journalFile();
 
   final Future<File> Function() journalFile;
   final Future<void> Function(List<String> paths) shareFiles;

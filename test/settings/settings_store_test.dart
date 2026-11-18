@@ -29,7 +29,8 @@ void main() {
     expect(settings.cheersOn, isTrue);
     expect(settings.cheerSize, CheerSize.normal);
     expect(settings.shakeOnFull, isTrue);
-    expect(settings.tiltToPour, isFalse);
+    // The canvas default: pouring is part of the toy, so it starts on.
+    expect(settings.tiltToPour, isTrue);
     expect(settings.reminder, const ReminderSettings());
     expect(settings.mapContribute, isFalse);
     expect(settings.mapComment, isFalse);
@@ -67,7 +68,7 @@ void main() {
         cheersOn: false,
         cheerSize: CheerSize.large,
         shakeOnFull: false,
-        tiltToPour: true,
+        tiltToPour: false,
         reminder: ReminderSettings(enabled: true, hour: 22),
         mapContribute: true,
         mapComment: true,

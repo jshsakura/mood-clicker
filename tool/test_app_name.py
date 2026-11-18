@@ -37,7 +37,7 @@ class AppName(unittest.TestCase):
         self.assertEqual(re.search(r"^PRODUCT_NAME\s*=\s*(.+)$", config, re.M).group(1).strip(), NAME)
 
     def test_flutter_app_title(self):
-        main = (ROOT / "lib/main.dart").read_text(encoding="utf-8")
+        main = (ROOT / "lib/app/app.dart").read_text(encoding="utf-8")
         self.assertEqual(re.search(r"title: '([^']*)'", main).group(1), NAME)
 
     def test_package_id_is_not_renamed(self):

@@ -38,4 +38,31 @@ class MoodJournal {
       record,
     ]);
   }
+
+  /// Sets the note and preset id of a day that already has taps. The note belongs to a day the
+  /// user actually tapped, so a day with no record is refused.
+  MoodJournal withNote(DayKey day, {String? note, String? presetId}) {
+    final record = _byDay[day];
+    if (record == null) {
+      throw ArgumentError.value(
+        day,
+        'day',
+        'no taps on this day to attach a note to',
+      );
+    }
+    return MoodJournal([
+      ..._byDay.values.where((r) => r.day != day),
+      record.withNote(note: note, presetId: presetId),
+    ]);
+  }
+
+  /// Takes taps off one mood of a day: water the phone spilled.
+  MoodJournal withTapsRemoved(DayKey day, Mood mood, int count) {
+    final record = _byDay[day];
+    if (record == null) return this;
+    return MoodJournal([
+      ..._byDay.values.where((r) => r.day != day),
+      record.withTapsRemoved(mood, count),
+    ]);
+  }
 }
