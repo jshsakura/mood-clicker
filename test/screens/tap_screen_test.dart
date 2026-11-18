@@ -48,6 +48,7 @@ int todayCount(TestApp app) =>
 void main() {
   edgeAndAccessTests();
   leavingTests();
+  touchDownTests();
   testWidgets('every pointer down counts one tap and feeds back', (
     tester,
   ) async {
@@ -528,6 +529,51 @@ void leavingTests() {
       debugDefaultTargetPlatformOverride = null;
       expect(left, isTrue);
       expect(asked, 1);
+    },
+  );
+}
+
+void touchDownTests() {
+  testWidgets(
+    'a touch in the middle sounds and vibrates when it lands, before it lifts',
+    (tester) async {
+      final app = await openTap(tester);
+      final finger = await tester.startGesture(const Offset(200, 500));
+      expect(app.sound.played, hasLength(1));
+      expect(app.haptics.played, hasLength(1));
+      expect(todayCount(app), 1);
+      await finger.up();
+      await tester.pump(const Duration(milliseconds: 50));
+      expect(app.sound.played, hasLength(1));
+      expect(app.haptics.played, hasLength(1));
+      expect(todayCount(app), 1);
+    },
+  );
+
+  testWidgets(
+    'a touch on the edge strip waits for the lift, as the back gesture needs',
+    (tester) async {
+      final app = await openTap(tester);
+      final finger = await tester.startGesture(const Offset(4, 500));
+      expect(app.sound.played, isEmpty);
+      expect(app.haptics.played, isEmpty);
+      expect(todayCount(app), 0);
+      await finger.up();
+      await tester.pump(const Duration(milliseconds: 50));
+      expect(app.sound.played, hasLength(1));
+      expect(app.haptics.played, hasLength(1));
+      expect(todayCount(app), 1);
+    },
+  );
+
+  testWidgets(
+    'sound and vibration come from the same call, the sound being a limited tap sound',
+    (tester) async {
+      final app = await openTap(tester);
+      final finger = await tester.startGesture(const Offset(200, 500));
+      expect(app.sound.played.single.limited, isTrue);
+      await finger.up();
+      await tester.pump(const Duration(milliseconds: 50));
     },
   );
 }

@@ -268,6 +268,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settings_soundPackBasic => 'Basic';
 
   @override
+  String get settings_soundPackPentatonic => 'Pentatonic';
+
+  @override
   String get settings_cheers => 'Cheer phrases';
 
   @override

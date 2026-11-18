@@ -264,6 +264,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get settings_soundPackBasic => '基本';
 
   @override
+  String get settings_soundPackPentatonic => 'ペンタトニック';
+
+  @override
   String get settings_cheers => '応援メッセージ';
 
   @override

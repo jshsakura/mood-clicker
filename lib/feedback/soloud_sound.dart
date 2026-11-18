@@ -6,6 +6,8 @@ import 'feedback_kind.dart';
 import 'feedback_table.dart';
 import 'ports.dart';
 import 'sound_bank.dart';
+import 'voice_limiter.dart';
+import '../domain/tuning.dart';
 import 'feedback_settings.dart';
 
 /// Plays sounds via flutter_soloud, supporting overlapping cues and iOS mute switch respect.
@@ -22,6 +24,14 @@ class SoloudSound implements SoundPort {
   final void Function(String) _log;
   late final SoundBank<AudioSource> _bank;
   bool _ready = false;
+  final VoiceLimiter<SoundHandle> _voices = VoiceLimiter<SoundHandle>(
+    max: FeedbackTuning.maxTapVoices,
+    isAlive: (voice) => SoLoud.instance.getIsValidVoiceHandle(voice),
+    fadeOut: (voice) {
+      SoLoud.instance.fadeVolume(voice, 0, FeedbackTuning.voiceFade);
+      SoLoud.instance.scheduleStop(voice, FeedbackTuning.voiceFade);
+    },
+  );
 
   /// Per Apple's AVAudioSession.Category.ambient docs, ambient mixes with other
   /// audio automatically and respects the hardware mute switch; setting
@@ -45,15 +55,21 @@ class SoloudSound implements SoundPort {
   }
 
   @override
-  Future<void> play(SoundCue cue, {double pitch = 1.0}) async {
+  Future<void> play(
+    SoundCue cue, {
+    double pitch = 1.0,
+    double volume = 1.0,
+    bool limitVoices = false,
+  }) async {
     if (!_ready) return;
     final source = _bank.sourceForWithFallback(cue);
     if (source == null) return;
     try {
       final soloud = SoLoud.instance;
-      final handle = soloud.play(source, paused: true);
+      final handle = soloud.play(source, volume: volume, paused: true);
       soloud.setRelativePlaySpeed(handle, pitch);
       soloud.setPause(handle, false);
+      if (limitVoices) _voices.admit(handle);
     } catch (e) {
       _log('Sound playback failed: $e');
     }
@@ -66,6 +82,10 @@ class SoloudSound implements SoundPort {
           ?FeedbackTable.of(kind, mood).soundId,
     };
     for (final pack in SoundPack.available) {
+      final tapId = pack.tapSoundId;
+      if (tapId != null) yield SoundCue(pack, tapId);
+      // A pack with one tap sound still falls back to the basic pack for its other cues.
+      if (tapId != null) continue;
       for (final id in ids) {
         yield SoundCue(pack, id);
       }

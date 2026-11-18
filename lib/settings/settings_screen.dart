@@ -179,9 +179,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           for (final pack in SoundPack.available)
                             (
                               pack,
-                              pack == SoundPack.basic
-                                  ? l10n.settings_soundPackBasic
-                                  : pack.name,
+                              switch (pack) {
+                                SoundPack.basic => l10n.settings_soundPackBasic,
+                                SoundPack.pentatonic =>
+                                  l10n.settings_soundPackPentatonic,
+                                SoundPack.soft => pack.name,
+                              },
                             ),
                         ],
                         selectedDetail: _settings.soundPack,

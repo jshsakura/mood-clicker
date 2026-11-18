@@ -8,6 +8,7 @@ import 'feedback_kind.dart';
 import 'feedback_settings.dart';
 import 'feedback_table.dart';
 import 'ports.dart';
+import 'tap_pitch.dart';
 
 /// Minimum interval between haptics. Earlier triggers are dropped; sounds may overlap.
 const minHapticGap = FeedbackTuning.minHapticGap;
@@ -26,12 +27,14 @@ class FeedbackController {
   }) : _settings = settings ?? const FeedbackSettings(),
        _clock = clock ?? _stopwatchClock(),
        _random = random ?? Random(),
+       _run = TapPitchRun(random: random),
        _log = log ?? debugPrint;
 
   final HapticsPort haptics;
   final SoundPort sound;
   final Duration Function() _clock;
   final Random _random;
+  final TapPitchRun _run;
   final void Function(String) _log;
 
   FeedbackSettings _settings;
@@ -66,9 +69,24 @@ class FeedbackController {
 
     final soundId = entry.soundId;
     if (_settings.soundOn && soundId != null) {
-      final cue = SoundCue(_settings.soundPack, soundId);
-      final pitch = 1 + (_random.nextDouble() * 2 - 1) * pitchJitter;
-      _fire(() => sound.play(cue, pitch: pitch));
+      final isTap = kind == FeedbackKind.tap;
+      final tapId = _settings.soundPack.tapSoundId;
+      if (isTap && tapId != null) {
+        final voice = _run.next(tapPitchRuleOf(moodId), _clock());
+        final cue = SoundCue(_settings.soundPack, tapId);
+        _fire(
+          () => sound.play(
+            cue,
+            pitch: voice.pitch,
+            volume: voice.volume,
+            limitVoices: true,
+          ),
+        );
+      } else {
+        final cue = SoundCue(_settings.soundPack, soundId);
+        final pitch = 1 + (_random.nextDouble() * 2 - 1) * pitchJitter;
+        _fire(() => sound.play(cue, pitch: pitch, limitVoices: isTap));
+      }
     }
   }
 

@@ -53,7 +53,7 @@ class SharedPreferencesSettingsStore implements SettingsStore {
       soundPack: SoundPack.values.byName(
         _named(_prefs.getString(_soundPack), [
           for (final v in SoundPack.values) v.name,
-        ], SoundPack.basic.name),
+        ], SoundPack.defaultPack.name),
       ),
       cheersOn: _prefs.getBool(_cheersOn) ?? true,
       cheerSize: CheerSize.values.byName(

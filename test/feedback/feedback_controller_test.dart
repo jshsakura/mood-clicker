@@ -231,7 +231,8 @@ void main() {
     });
 
     test('soft pack is hidden from available packs until files exist', () {
-      expect(SoundPack.available, [SoundPack.basic]);
+      expect(SoundPack.available, [SoundPack.basic, SoundPack.pentatonic]);
+      expect(SoundPack.available, isNot(contains(SoundPack.soft)));
     });
   });
 
