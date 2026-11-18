@@ -1,86 +1,341 @@
 #!/usr/bin/env python3
-"""design/tokens/*.json 에서 lib/design/tokens.g.dart 를 만든다.
+"""Generate lib/design/tokens.g.dart from design/tokens.json.
 
-  python3 tool/gen_tokens.py           만든다
-  python3 tool/gen_tokens.py --check   만든 파일이 토큰과 맞는지만 본다 (훅, CI)
+  python3 tool/gen_tokens.py           generate the files
+  python3 tool/gen_tokens.py --check   only verify that the files match the tokens (hook, CI)
 
-토큰은 Tokens Studio 의 세트 구성을 따른다. core.json 은 공통 값, 나머지 파일 하나가 테마 하나다.
-디자이너는 이 파일들만 고친다. 색을 새로 넣으면 모든 테마에 같은 이름으로 넣어야 한다.
+Generated files: lib/design/tokens.g.dart and the native splash colors (two Android colors.xml
+files, the iOS color set, and the fallback color in LaunchScreen.storyboard). The splash colors
+follow light.ground and dark.ground.
+
+The tokens use the Tokens Studio single-file format. The top-level key core holds the shared values
+and every other set is one theme. Top-level keys that start with $ ($themes, $metadata) are
+skipped, and $metadata.tokenSetOrder sets the order of the sets when it is present.
+Designers edit only this file. A new color must be added to every theme under the same name.
+
+Accepted value forms (W3C DTCG 2025.10):
+  color  "#RRGGBB", "#RRGGBBAA", {colorSpace: "srgb", components: [r, g, b], alpha?, hex?}
+  size   "16px", 16, {value, unit: "px"}
+  time   "120ms", {value, unit: "ms" or "s"}  (must come out as a whole number of ms, 0 or more)
+Each group has a fixed $type (TYPE_OF). An explicit $type that differs is refused. A missing $type
+follows the group's slot.
 """
 import json
+import math
 import re
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-SRC = ROOT / "design" / "tokens"
+SRC = ROOT / "design" / "tokens.json"
 OUT = ROOT / "lib" / "design" / "tokens.g.dart"
 
-HEX = re.compile(r"^#([0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$")
-IDENT = re.compile(r"^[a-z][A-Za-z0-9]*$")
-DURATION = re.compile(r"^(\d+)ms$")
+# Native splash. The platform files are written directly, without a package. They follow light.ground and dark.ground.
+SPLASH_FILES = {
+    "android_light": Path("android/app/src/main/res/values/colors.xml"),
+    "android_dark": Path("android/app/src/main/res/values-night/colors.xml"),
+    "ios_colorset": Path("ios/Runner/Assets.xcassets/SplashBackground.colorset/Contents.json"),
+    "ios_storyboard": Path("ios/Runner/Base.lproj/LaunchScreen.storyboard"),
+}
+
+HEX = re.compile(r"#([0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})")
+HEX6 = re.compile(r"#[0-9A-Fa-f]{6}")
+IDENT = re.compile(r"[a-z][A-Za-z0-9]*")
+DURATION = re.compile(r"(\d+)ms", re.ASCII)
+NUMBER = re.compile(r"\d+(?:\.\d+)?", re.ASCII)
+SIZE = re.compile(r"(\d+(?:\.\d+)?)(?:px)?", re.ASCII)
+SIGNED_SIZE = re.compile(r"(-?\d+(?:\.\d+)?)(?:px)?", re.ASCII)
+PERCENT = re.compile(r"(\d+(?:\.\d+)?)%", re.ASCII)
 WEIGHTS = {100, 200, 300, 400, 500, 600, 700, 800, 900}
+
+# The $type each group expects. An explicit $type that differs is refused.
+TYPE_OF = {
+    "color": "color",
+    "space": "dimension",
+    "radius": "dimension",
+    "motion": "duration",
+    "type": "typography",
+    "font": "fontFamily",
+}
+
+# Reserved words of the Dart language. They cannot be identifiers.
+DART_WORDS = frozenset(
+    """assert break case catch class const continue default do else enum extends false final
+    finally for if in is new null rethrow return super switch this throw true try var void while
+    with""".split()
+)
+
+# Dart rejects a static member that has the same name as an instance member of Object.
+OBJECT_MEMBERS = frozenset({"hashCode", "toString", "runtimeType", "noSuchMethod"})
+
+# Space, radius, motion and type names are static members, so only these two sets matter for them.
+STATIC_RESERVED = DART_WORDS | OBJECT_MEMBERS
+
+# Color names are fields of AppPalette and parameters of copyWith and lerp, so more names collide.
+PALETTE_RESERVED = DART_WORDS | OBJECT_MEMBERS | frozenset(
+    """abstract as covariant deferred dynamic export extension external factory function get hide
+    implements import interface late library mixin on operator part required set show static
+    sync typedef async await yield base sealed
+    name brightness type other t copyWith lerp debugFillProperties toDiagnosticsNode""".split()
+)
+
+# Names the app code (lib, test) uses. The app does not compile without them, so refuse before generating.
+# tool/test_gen_tokens.py checks that every reference found in lib is listed here.
+REQUIRED_CORE = {
+    "space": ("sm", "md", "lg", "xl", "xxl", "xxxl"),
+    "radius": ("card", "button", "pill"),
+    "type": ("display", "title", "body", "label", "count"),
+    "motion": ("fillRise",),
+    "font": ("family",),
+}
+REQUIRED_COLORS = (
+    "accent", "error", "fill", "ground", "happy", "ink", "inkMuted",
+    "line", "mapLine", "onAccent", "onError", "onFill", "sad", "surface",
+)
+
+# Fields a typography token accepts. Tokens Studio adds a few more that are known but unused, so they are skipped.
+TYPOGRAPHY_FIELDS = frozenset({"fontFamily", "fontSize", "fontWeight", "lineHeight", "letterSpacing"})
+TOKENS_STUDIO_EXTRAS = frozenset({"paragraphSpacing", "paragraphIndent", "textCase", "textDecoration"})
+
+MAX_MS = 3_600_000  # one hour
 
 
 class TokenError(ValueError):
     pass
 
 
-REF = re.compile(r"^\{([A-Za-z0-9_.]+)\}$")
+REF = re.compile(r"\{([A-Za-z0-9_.]+)\}")
+
+
+def _no_duplicates(pairs):
+    out = {}
+    for k, v in pairs:
+        if k in out:
+            raise TokenError(f"duplicate key '{k}'")
+        out[k] = v
+    return out
+
+
+def _no_constant(name):
+    raise TokenError(f"{name} is not allowed in JSON")
+
+
+def parse_json(text, where="JSON"):
+    """Refuse duplicate keys and the NaN and Infinity literals."""
+    try:
+        return json.loads(text, object_pairs_hook=_no_duplicates, parse_constant=_no_constant)
+    except TokenError as e:
+        raise TokenError(f"{where}: {e}") from None
+    except json.JSONDecodeError as e:
+        raise TokenError(f"{where}: not valid JSON ({e})") from None
 
 
 def value(tok, where):
     if not isinstance(tok, dict) or "$value" not in tok:
-        raise TokenError(f"{where}: $value 가 없습니다")
+        raise TokenError(f"{where}: missing $value")
     return tok["$value"]
 
 
+def check_type(tok, group, where):
+    expected = TYPE_OF[group]
+    if isinstance(tok, dict) and "$type" in tok and tok["$type"] != expected:
+        raise TokenError(f"{where}: $type must be '{expected}' (got {tok['$type']!r})")
+
+
+def group_items(parent, name, where, required=()):
+    """Return only the tokens of a group. Group-level keys that start with $ ($type, $description) are not tokens.
+
+    Refuse a group that is missing, null, not an object or empty, and one that lacks a name the app uses.
+    The group's $type must equal the slot's expected type, and the tokens below inherit it.
+    """
+    g = parent.get(name) if isinstance(parent, dict) else None
+    if not isinstance(g, dict):
+        raise TokenError(f"{where}: group {name} is missing or not an object")
+    if "$type" in g and g["$type"] != TYPE_OF[name]:
+        raise TokenError(f"{where}.{name}: the group's $type must be '{TYPE_OF[name]}' (got {g['$type']!r})")
+    items = {k: v for k, v in g.items() if not k.startswith("$")}
+    if not items:
+        raise TokenError(f"{where}: group {name} is empty")
+    missing = [k for k in required if k not in items]
+    if missing:
+        raise TokenError(f"{where}.{name}: names the app uses are missing {missing}")
+    return items
+
+
 def resolve(v, core, where):
-    """'{font.family}' 같은 참조를 core 의 값으로 바꾼다."""
-    m = REF.match(v) if isinstance(v, str) else None
+    """Replace a reference such as '{font.family}' with the value from core."""
+    m = REF.fullmatch(v) if isinstance(v, str) else None
     if not m:
         return v
     node = core
     for part in m.group(1).split("."):
         if not isinstance(node, dict) or part not in node:
-            raise TokenError(f"{where}: 참조 {v} 를 찾지 못했습니다")
+            raise TokenError(f"{where}: reference {v} not found")
         node = node[part]
+    check_type(node, "font", f"{where} (reference {v})")
     return value(node, where)
 
 
-def ident(name, where):
-    if not IDENT.match(name):
-        raise TokenError(f"{where}: 이름 '{name}' 은 소문자로 시작하는 영문, 숫자만 씁니다")
+def ident(name, where, banned=STATIC_RESERVED):
+    if not IDENT.fullmatch(name):
+        raise TokenError(f"{where}: name '{name}' must start with a lowercase letter and use only ASCII letters and digits")
+    if name in banned:
+        raise TokenError(f"{where}: name '{name}' is a Dart reserved word or collides with generated code")
     return name
 
 
-def color(tok, where):
-    v = value(tok, where)
-    if not isinstance(v, str) or not HEX.match(v):
-        raise TokenError(f"{where}: 색은 #RRGGBB 나 #RRGGBBAA 로 씁니다")
-    h = v[1:].upper()
-    argb = h[6:] + h[:6] if len(h) == 8 else "FF" + h
-    return f"Color(0x{argb})"
-
-
-def number(tok, where):
-    return plain_number(value(tok, where), where)
-
-
-def plain_number(v, where):
-    if isinstance(v, str) and v.endswith("px"):
-        v = v[:-2]
+def real(v, where, what="number"):
+    if isinstance(v, bool) or not isinstance(v, (int, float)):
+        raise TokenError(f"{where}: {what} must be a finite number")
     try:
-        return float(v)
-    except (TypeError, ValueError):
-        raise TokenError(f"{where}: 숫자여야 합니다") from None
+        n = float(v)
+    except OverflowError:
+        n = math.inf
+    if not math.isfinite(n):
+        raise TokenError(f"{where}: {what} must be a finite number")
+    return n
+
+
+def unit_object(v, where, units):
+    if not isinstance(v, dict) or set(v) != {"value", "unit"}:
+        raise TokenError(f"{where}: the object form takes exactly the keys value and unit")
+    if v["unit"] not in units:
+        raise TokenError(f"{where}: unit must be {' or '.join(units)}")
+    return real(v["value"], where), v["unit"]
+
+
+def size(v, where, positive=False, signed=False):
+    """'16px', 16 or {value, unit: px}. A finite number: 0 or more (more than 0 when positive, negatives allowed when signed)."""
+    if isinstance(v, dict):
+        n, _ = unit_object(v, where, ("px",))
+    elif isinstance(v, str):
+        m = (SIGNED_SIZE if signed else SIZE).fullmatch(v)
+        if not m:
+            raise TokenError(f"{where}: a size looks like '16px' ({'a number' if signed else 'a number of 0 or more'}, px optional)")
+        n = real(float(m.group(1)), where)
+    else:
+        n = real(v, where)
+    if (n < 0 and not signed) or (positive and n == 0):
+        raise TokenError(f"{where}: a size must be {'greater than 0' if positive else '0 or more'}")
+    return n
+
+
+def line_height(v, where):
+    """1.2, '1.2' or '150%'. A finite number greater than 0."""
+    if isinstance(v, str):
+        m = PERCENT.fullmatch(v)
+        if m:
+            n = real(float(m.group(1)) / 100, where)
+        elif NUMBER.fullmatch(v):
+            n = real(float(v), where)
+        else:
+            raise TokenError(f"{where}: a line height looks like 1.2 or '150%'")
+    else:
+        n = real(v, where)
+    if n <= 0:
+        raise TokenError(f"{where}: a line height must be greater than 0")
+    return n
+
+
+def font_family(v, where):
+    if not isinstance(v, str) or not v.strip():
+        raise TokenError(f"{where}: a font name must be a non-empty string")
+    if any(c in "\\$" or ord(c) < 32 or ord(c) == 127 for c in v):
+        raise TokenError(f"{where}: a font name cannot contain a backslash, $ or a control character such as a newline")
+    return v
+
+
+def dart_quote_safe(text):
+    """Make text safe inside a single-quoted Dart string. Only the single quote is rewritten (as \\x27); the other dangerous characters were refused earlier."""
+    return text.replace("'", "\\x27")
+
+
+def byte(x):
+    return int(x * 255 + 0.5)
+
+
+def color_object(v, where):
+    if not isinstance(v, dict) or not {"colorSpace", "components"} <= set(v) <= {
+        "colorSpace", "components", "alpha", "hex"
+    }:
+        raise TokenError(f"{where}: a color object takes colorSpace and components, plus optional alpha and hex")
+    if v["colorSpace"] != "srgb":
+        raise TokenError(f"{where}: only the srgb color space is supported")
+    comps = v["components"]
+    if not isinstance(comps, list) or len(comps) != 3:
+        raise TokenError(f"{where}: components must be [r, g, b]")
+    chans = [real(c, where, "color component") for c in comps]
+    alpha = real(v["alpha"], where, "alpha") if "alpha" in v else 1.0
+    if not all(0 <= c <= 1 for c in [*chans, alpha]):
+        raise TokenError(f"{where}: color components and alpha must be between 0 and 1")
+    r, g, b = (byte(c) for c in chans)
+    if "hex" in v and not (
+        isinstance(v["hex"], str)
+        and HEX6.fullmatch(v["hex"])
+        and v["hex"][1:].upper() == f"{r:02X}{g:02X}{b:02X}"
+    ):
+        raise TokenError(f"{where}: hex does not match components")
+    return f"{byte(alpha):02X}{r:02X}{g:02X}{b:02X}"
+
+
+def color_argb(tok, where):
+    """AARRGGBB of a color token (eight uppercase hex digits)."""
+    check_type(tok, "color", where)
+    v = value(tok, where)
+    if isinstance(v, dict):
+        return color_object(v, where)
+    if not isinstance(v, str) or not HEX.fullmatch(v):
+        raise TokenError(f"{where}: a color is #RRGGBB, #RRGGBBAA or an srgb object")
+    h = v[1:].upper()
+    return h[6:] + h[:6] if len(h) == 8 else "FF" + h
+
+
+def luminance(argb):
+    """WCAG relative luminance, 0 to 1. Alpha is ignored."""
+    def lin(byte_hex):
+        c = int(byte_hex, 16) / 255
+        return c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4
+    return 0.2126 * lin(argb[2:4]) + 0.7152 * lin(argb[4:6]) + 0.0722 * lin(argb[6:8])
+
+
+def brightness_of(doc, argbs, theme):
+    """Follow $extensions.app.brightness. When it is missing, guess from whether the relative luminance of ground is above 0.5."""
+    ext = doc.get("$extensions")
+    app = ext.get("app") if isinstance(ext, dict) else None
+    b = app.get("brightness") if isinstance(app, dict) else None
+    if b is None:
+        return "light" if luminance(argbs["ground"]) > 0.5 else "dark"
+    if b not in ("light", "dark"):
+        raise TokenError(f"{theme}: $extensions.app.brightness must be light or dark")
+    return b
+
+
+def number(tok, group, where):
+    check_type(tok, group, where)
+    return size(value(tok, where), where)
 
 
 def millis(tok, where):
-    m = DURATION.match(str(value(tok, where)))
-    if not m:
-        raise TokenError(f"{where}: 시간은 '120ms' 처럼 씁니다")
-    return int(m.group(1))
+    check_type(tok, "motion", where)
+    v = value(tok, where)
+    out_of_range = f"{where}: a duration must be between 0 and {MAX_MS}ms (one hour)"
+    if isinstance(v, str):
+        m = DURATION.fullmatch(v)
+        if not m:
+            raise TokenError(f"{where}: a duration looks like '120ms' or {{value, unit: ms or s}}")
+        ms = int(m.group(1))
+        if ms > MAX_MS:
+            raise TokenError(out_of_range)
+        return ms
+    if not isinstance(v, dict):
+        raise TokenError(f"{where}: a duration looks like '120ms' or {{value, unit: ms or s}}")
+    n, unit = unit_object(v, where, ("ms", "s"))
+    ms = n * 1000 if unit == "s" else n
+    if not math.isfinite(ms) or not 0 <= ms <= MAX_MS:
+        raise TokenError(out_of_range)
+    if abs(ms - round(ms)) >= 1e-6 or (ms > 0 and round(ms) == 0):
+        raise TokenError(f"{where}: a duration must be a whole number of ms; values below 1ms are not allowed")
+    return int(round(ms))
 
 
 def num(x):
@@ -89,29 +344,45 @@ def num(x):
 
 def palettes(theme_docs):
     if not theme_docs:
-        raise TokenError("테마 파일이 하나도 없습니다")
+        raise TokenError("no theme sets found")
     themes, bright = {}, {}
     for theme, doc in theme_docs.items():
-        ident(theme, f"{theme}.json")
-        b = (((doc.get("$extensions") or {}).get("app")) or {}).get("brightness")
-        if b not in ("light", "dark"):
-            raise TokenError(f"{theme}.json: $extensions.app.brightness 는 light 나 dark 여야 합니다")
-        bright[theme] = b
-        body = doc.get("color") or {}
-        themes[theme] = {
-            ident(k, f"{theme}.color.{k}"): color(v, f"{theme}.color.{k}")
-            for k, v in body.items()
+        ident(theme, f"{theme} set", banned=frozenset())
+        if not isinstance(doc, dict):
+            raise TokenError(f"{theme}: a set must be an object")
+        argbs = {
+            ident(k, f"{theme}.color.{k}", PALETTE_RESERVED): color_argb(v, f"{theme}.color.{k}")
+            for k, v in group_items(doc, "color", theme, REQUIRED_COLORS).items()
         }
+        bright[theme] = brightness_of(doc, argbs, theme)
+        themes[theme] = {k: f"Color(0x{a})" for k, a in argbs.items()}
     first, *rest = themes
     keys = list(themes[first])
     for t in rest:
         missing, extra = set(keys) - set(themes[t]), set(themes[t]) - set(keys)
         if missing or extra:
             raise TokenError(
-                f"{t}.json: 테마마다 색 이름이 같아야 합니다. "
-                f"빠진 것 {sorted(missing) or '없음'}, 남는 것 {sorted(extra) or '없음'}"
+                f"{t}: every theme must have the same color names. "
+                f"missing {sorted(missing) or 'none'}, extra {sorted(extra) or 'none'}"
             )
     return keys, themes, bright
+
+
+def token_sets(doc):
+    """Skip top-level keys that start with $ and return the sets in $metadata.tokenSetOrder order when it is present."""
+    if not isinstance(doc, dict):
+        raise TokenError("the top level of the token file must be an object")
+    sets = {k: v for k, v in doc.items() if not k.startswith("$")}
+    meta = doc.get("$metadata")
+    order = meta.get("tokenSetOrder") if isinstance(meta, dict) else None
+    if order is None:
+        return sets
+    if not isinstance(order, list) or not all(isinstance(n, str) for n in order) or len(set(order)) != len(order):
+        raise TokenError("$metadata.tokenSetOrder must be a list of distinct set names")
+    for n in order:
+        if n not in sets:
+            raise TokenError(f"$metadata.tokenSetOrder lists set '{n}' which is not in the file")
+    return {**{n: sets[n] for n in order}, **{k: v for k, v in sets.items() if k not in order}}
 
 
 def palette_class(keys):
@@ -158,15 +429,49 @@ class AppPalette extends ThemeExtension<AppPalette> {{
 """
 
 
+def type_style(k, v, core):
+    where = f"core.type.{k}"
+    check_type(v, "type", where)
+    spec = value(v, where)
+    if not isinstance(spec, dict):
+        raise TokenError(f"{where}: $value must be an object with keys such as fontFamily and fontSize")
+    unknown = sorted(set(spec) - TYPOGRAPHY_FIELDS - TOKENS_STUDIO_EXTRAS)
+    if unknown:
+        raise TokenError(f"{where}: unknown fields {unknown}. Allowed: {sorted(TYPOGRAPHY_FIELDS)}")
+    family = font_family(
+        resolve(spec.get("fontFamily", "{font.family}"), core, f"{where}.fontFamily"),
+        f"{where}.fontFamily",
+    )
+    weight = spec.get("fontWeight", "400")
+    weight = weight if isinstance(weight, int) and not isinstance(weight, bool) else (
+        int(weight) if isinstance(weight, str) and weight.isascii() and weight.isdecimal() else -1
+    )
+    if weight not in WEIGHTS:
+        raise TokenError(f"{where}.fontWeight: must be 100 to 900 in steps of 100")
+    if "fontSize" not in spec:
+        raise TokenError(f"{where}.fontSize: missing")
+    font_size = size(spec["fontSize"], f"{where}.fontSize", positive=True)
+    height = line_height(spec.get("lineHeight", "1.2"), f"{where}.lineHeight")
+    spacing = ""
+    if "letterSpacing" in spec:
+        spacing = f", letterSpacing: {num(size(spec['letterSpacing'], f'{where}.letterSpacing', signed=True))}"
+    return (
+        f"  static const TextStyle {ident(k, where)} = TextStyle(fontFamily: '{dart_quote_safe(family)}', "
+        f"fontSize: {num(font_size)}, fontWeight: FontWeight.w{weight}, "
+        f"height: {num(height)}{spacing});"
+    )
+
+
 def render(tokens):
-    """tokens = {"core": {...}, "dark": {...}, ...}. core 외의 키가 테마다."""
+    """tokens = {"core": {...}, "dark": {...}, ...}. Every key except core is a theme."""
+    tokens = token_sets(tokens)
     core = tokens.get("core")
     if not isinstance(core, dict):
-        raise TokenError("core.json 이 없습니다")
+        raise TokenError("the core set is missing")
     keys, themes, bright = palettes({k: v for k, v in tokens.items() if k != "core"})
     out = [
-        "// 생성 파일이다. 손대지 않는다.",
-        "// design/tokens/*.json 을 고친 뒤 python3 tool/gen_tokens.py 를 돌린다.",
+        "// Generated file. Do not edit.",
+        "// Edit design/tokens.json, then run python3 tool/gen_tokens.py.",
         "// ignore_for_file: lines_longer_than_80_chars",
         "import 'package:flutter/material.dart';",
         "",
@@ -181,63 +486,150 @@ def render(tokens):
     out.append("const List<AppPalette> allPalettes = [" + ", ".join(f"{t}Palette" for t in themes) + "];\n")
 
     for group, cls in (("space", "Space"), ("radius", "Radii")):
-        items = core.get(group) or {}
+        items = group_items(core, group, "core", REQUIRED_CORE[group])
         lines = "\n".join(
-            f"  static const double {ident(k, f'{group}.{k}')} = {num(number(v, f'{group}.{k}'))};"
+            f"  static const double {ident(k, f'{group}.{k}')} = {num(number(v, group, f'{group}.{k}'))};"
             for k, v in items.items()
         )
         out.append(f"abstract final class {cls} {{\n{lines}\n}}\n")
 
-    styles = []
-    for k, v in (core.get("type") or {}).items():
-        where = f"core.type.{k}"
-        spec = value(v, where)
-        family = resolve(spec.get("fontFamily", "{font.family}"), core, f"{where}.fontFamily")
-        try:
-            weight = int(str(spec.get("fontWeight", "400")))
-        except ValueError:
-            weight = -1
-        if weight not in WEIGHTS:
-            raise TokenError(f"{where}.fontWeight: 100 단위로 100~900 입니다")
-        size = plain_number(spec.get("fontSize"), f"{where}.fontSize")
-        lh = str(spec.get("lineHeight", "1.2"))
-        height = plain_number(lh[:-1], f"{where}.lineHeight") / 100 if lh.endswith("%") else plain_number(lh, f"{where}.lineHeight")
-        styles.append(
-            f"  static const TextStyle {ident(k, where)} = TextStyle(fontFamily: '{family}', "
-            f"fontSize: {num(size)}, fontWeight: FontWeight.w{weight}, "
-            f"height: {num(height)});"
-        )
+    for k, v in group_items(core, "font", "core", REQUIRED_CORE["font"]).items():
+        check_type(v, "font", f"font.{k}")
+        font_family(value(v, f"font.{k}"), f"font.{k}")
+
+    styles = [
+        type_style(k, v, core) for k, v in group_items(core, "type", "core", REQUIRED_CORE["type"]).items()
+    ]
     out.append("abstract final class TypeScale {\n" + "\n".join(styles) + "\n}\n")
 
     motion = "\n".join(
         f"  static const Duration {ident(k, f'motion.{k}')} = Duration(milliseconds: {millis(v, f'motion.{k}')});"
-        for k, v in (core.get("motion") or {}).items()
+        for k, v in group_items(core, "motion", "core", REQUIRED_CORE["motion"]).items()
     )
     out.append(f"abstract final class Motion {{\n{motion}\n}}\n")
     return "\n".join(out)
 
 
-def load(src=SRC):
-    files = sorted(src.glob("*.json"))
-    return {f.stem: json.loads(f.read_text(encoding="utf-8")) for f in files}
+def splash_ground(tokens, theme):
+    """RRGGBB of theme.ground for the splash. The splash background must be opaque."""
+    sets = token_sets(tokens)
+    doc = sets.get(theme)
+    ground = doc.get("color", {}).get("ground") if isinstance(doc, dict) else None
+    if ground is None:
+        raise TokenError(f"{theme}.color.ground is missing, so there is no splash color")
+    argb = color_argb(ground, f"{theme}.color.ground")
+    if argb[:2] != "FF":
+        raise TokenError(f"{theme}.color.ground: the splash background must be opaque")
+    return argb[2:]
+
+
+def android_colors_xml(theme, rgb):
+    return (
+        '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n'
+        f"    <!-- Generated file. Do not edit. tool/gen_tokens.py writes it from {theme}.color.ground "
+        "in design/tokens.json. -->\n"
+        f'    <color name="splash_background">#{rgb}</color>\n</resources>\n'
+    )
+
+
+def ios_color_set(light_rgb, dark_rgb):
+    def comps(rgb):
+        r, g, b = (f"0x{rgb[i:i + 2]}" for i in (0, 2, 4))
+        return f'{{ "red" : "{r}", "green" : "{g}", "blue" : "{b}", "alpha" : "1.000" }}'
+
+    return f"""{{
+  "colors" : [
+    {{
+      "idiom" : "universal",
+      "color" : {{
+        "color-space" : "srgb",
+        "components" : {comps(light_rgb)}
+      }}
+    }},
+    {{
+      "appearances" : [ {{ "appearance" : "luminosity", "value" : "dark" }} ],
+      "idiom" : "universal",
+      "color" : {{
+        "color-space" : "srgb",
+        "components" : {comps(dark_rgb)}
+      }}
+    }}
+  ],
+  "info" : {{ "version" : 1, "author" : "xcode" }}
+}}
+"""
+
+
+STORYBOARD_COLOR = re.compile(
+    r'(<namedColor name="SplashBackground">\s*<color )red="[^"]*" green="[^"]*" blue="[^"]*"'
+)
+
+
+def ios_storyboard(storyboard, light_rgb):
+    """Change only the SplashBackground fallback in LaunchScreen.storyboard to light.ground."""
+    r, g, b = (f"{int(light_rgb[i:i + 2], 16) / 255:.17g}" for i in (0, 2, 4))
+    out, n = STORYBOARD_COLOR.subn(lambda m: f'{m.group(1)}red="{r}" green="{g}" blue="{b}"', storyboard)
+    if n != 1:
+        raise TokenError("SplashBackground color not found in LaunchScreen.storyboard")
+    return out
+
+
+def splash_outputs(tokens, storyboard):
+    """{repo-relative path: content}. The splash colors come from light.ground and dark.ground."""
+    light, dark = splash_ground(tokens, "light"), splash_ground(tokens, "dark")
+    return {
+        SPLASH_FILES["android_light"]: android_colors_xml("light", light),
+        SPLASH_FILES["android_dark"]: android_colors_xml("dark", dark),
+        SPLASH_FILES["ios_colorset"]: ios_color_set(light, dark),
+        SPLASH_FILES["ios_storyboard"]: ios_storyboard(storyboard, light),
+    }
+
+
+def outputs(tokens, root=ROOT):
+    """Every file to generate, as {repo-relative path: content}."""
+    storyboard_path = root / SPLASH_FILES["ios_storyboard"]
+    if not storyboard_path.is_file():
+        raise TokenError(f"{SPLASH_FILES['ios_storyboard']} is missing")
+    out = {OUT.relative_to(ROOT): render(tokens)}
+    out.update(splash_outputs(tokens, storyboard_path.read_text(encoding="utf-8")))
+    return out
+
+
+def stale(outs, root=ROOT):
+    """Files whose content on disk is missing or different."""
+    return [
+        rel
+        for rel, text in outs.items()
+        if not (root / rel).is_file() or (root / rel).read_text(encoding="utf-8") != text
+    ]
+
+
+def load(path=SRC):
+    if not path.is_file():
+        raise TokenError(f"{path.name} is missing")
+    return token_sets(parse_json(path.read_text(encoding="utf-8"), path.name))
 
 
 def main(argv):
     try:
-        text = render(load())
-    except (TokenError, json.JSONDecodeError, KeyError) as e:
-        print(f"design/tokens 오류: {e}", file=sys.stderr)
+        outs = outputs(load())
+    except (TokenError, KeyError) as e:
+        print(f"design/tokens.json error: {e}", file=sys.stderr)
         return 1
+    old = stale(outs)
     if argv == ["--check"]:
-        current = OUT.read_text(encoding="utf-8") if OUT.exists() else ""
-        if current != text:
-            print("lib/design/tokens.g.dart 가 design/tokens 와 다릅니다. "
-                  "python3 tool/gen_tokens.py 를 돌린 뒤 둘 다 커밋합니다.", file=sys.stderr)
+        if old:
+            print("files generated from design/tokens.json are out of date: "
+                  + ", ".join(str(p) for p in old)
+                  + ". Run python3 tool/gen_tokens.py and commit the result.", file=sys.stderr)
             return 1
         return 0
-    OUT.parent.mkdir(parents=True, exist_ok=True)
-    OUT.write_text(text, encoding="utf-8")
-    print(f"만들었습니다: {OUT.relative_to(ROOT)}")
+    for rel in old:
+        (ROOT / rel).parent.mkdir(parents=True, exist_ok=True)
+        (ROOT / rel).write_text(outs[rel], encoding="utf-8")
+        print(f"wrote {rel}")
+    if not old:
+        print("nothing changed")
     return 0
 
 

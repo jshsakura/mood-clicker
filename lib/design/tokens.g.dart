@@ -1,5 +1,5 @@
-// 생성 파일이다. 손대지 않는다.
-// design/tokens/*.json 을 고친 뒤 python3 tool/gen_tokens.py 를 돌린다.
+// Generated file. Do not edit.
+// Edit design/tokens.json, then run python3 tool/gen_tokens.py.
 // ignore_for_file: lines_longer_than_80_chars
 import 'package:flutter/material.dart';
 
@@ -18,9 +18,11 @@ class AppPalette extends ThemeExtension<AppPalette> {
     required this.happy,
     required this.sad,
     required this.fill,
+    required this.onFill,
     required this.mapGround,
     required this.mapLine,
     required this.error,
+    required this.onError,
   });
 
   final String name;
@@ -35,9 +37,11 @@ class AppPalette extends ThemeExtension<AppPalette> {
   final Color happy;
   final Color sad;
   final Color fill;
+  final Color onFill;
   final Color mapGround;
   final Color mapLine;
   final Color error;
+  final Color onError;
 
   @override
   AppPalette copyWith({
@@ -53,9 +57,11 @@ class AppPalette extends ThemeExtension<AppPalette> {
     Color? happy,
     Color? sad,
     Color? fill,
+    Color? onFill,
     Color? mapGround,
     Color? mapLine,
     Color? error,
+    Color? onError,
   }) {
     return AppPalette(
       name: name ?? this.name,
@@ -70,9 +76,11 @@ class AppPalette extends ThemeExtension<AppPalette> {
       happy: happy ?? this.happy,
       sad: sad ?? this.sad,
       fill: fill ?? this.fill,
+      onFill: onFill ?? this.onFill,
       mapGround: mapGround ?? this.mapGround,
       mapLine: mapLine ?? this.mapLine,
       error: error ?? this.error,
+      onError: onError ?? this.onError,
     );
   }
 
@@ -92,9 +100,11 @@ class AppPalette extends ThemeExtension<AppPalette> {
       happy: Color.lerp(happy, other.happy, t)!,
       sad: Color.lerp(sad, other.sad, t)!,
       fill: Color.lerp(fill, other.fill, t)!,
+      onFill: Color.lerp(onFill, other.onFill, t)!,
       mapGround: Color.lerp(mapGround, other.mapGround, t)!,
       mapLine: Color.lerp(mapLine, other.mapLine, t)!,
       error: Color.lerp(error, other.error, t)!,
+      onError: Color.lerp(onError, other.onError, t)!,
     );
   }
 }
@@ -112,9 +122,11 @@ const AppPalette darkPalette = AppPalette(
   happy: Color(0xFFFFC23D),
   sad: Color(0xFF7A9CFF),
   fill: Color(0xFFFFC23D),
+  onFill: Color(0xFF16161A),
   mapGround: Color(0xFF121216),
   mapLine: Color(0xFF383840),
   error: Color(0xFFF0685C),
+  onError: Color(0xFF16161A),
 );
 
 const AppPalette lightPalette = AppPalette(
@@ -127,12 +139,14 @@ const AppPalette lightPalette = AppPalette(
   inkMuted: Color(0xFF62626C),
   accent: Color(0xFFFFC23D),
   onAccent: Color(0xFF16161A),
-  happy: Color(0xFFF2A900),
+  happy: Color(0xFFB07A00),
   sad: Color(0xFF4C6FE0),
   fill: Color(0xFFFFC23D),
+  onFill: Color(0xFF16161A),
   mapGround: Color(0xFFFFFFFF),
   mapLine: Color(0xFFD4D4DC),
-  error: Color(0xFFD9473B),
+  error: Color(0xFFC93A2F),
+  onError: Color(0xFFFFFFFF),
 );
 
 const AppPalette pinkPalette = AppPalette(
@@ -145,12 +159,14 @@ const AppPalette pinkPalette = AppPalette(
   inkMuted: Color(0xFF80505F),
   accent: Color(0xFFFF6FA3),
   onAccent: Color(0xFF3A1E2B),
-  happy: Color(0xFFFF6FA3),
-  sad: Color(0xFF9B8CFF),
+  happy: Color(0xFFD9407A),
+  sad: Color(0xFF7B68E8),
   fill: Color(0xFFFF8FB8),
+  onFill: Color(0xFF3A1E2B),
   mapGround: Color(0xFFFFF1F5),
   mapLine: Color(0xFFF2C2D3),
-  error: Color(0xFFD9473B),
+  error: Color(0xFFC93A2F),
+  onError: Color(0xFFFFFFFF),
 );
 
 const List<AppPalette> allPalettes = [darkPalette, lightPalette, pinkPalette];

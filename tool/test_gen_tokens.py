@@ -1,8 +1,14 @@
-"""gen_tokens 가 디자이너의 실수를 분명한 말로 막는지 고정한다."""
+"""Pin that gen_tokens stops a designer's mistakes with a clear message."""
 import copy
+import re
+import tempfile
 import unittest
+from pathlib import Path
 
-from gen_tokens import TokenError, load, render
+from gen_tokens import (
+    IDENT, OUT, REQUIRED_COLORS, REQUIRED_CORE, ROOT, SPLASH_FILES, SRC, TokenError, load, outputs, parse_json,
+    render, splash_outputs, stale, token_sets,
+)
 
 BASE = load()
 THEMES = [k for k in BASE if k != "core"]
@@ -47,7 +53,7 @@ class Refuses(unittest.TestCase):
     def test_color_missing_from_one_theme(self):
         t = copy.deepcopy(BASE)
         del t["pink"]["color"]["sad"]
-        self.assertRefuses(t, "pink.json")
+        self.assertRefuses(t, "pink")
 
     def test_bad_hex(self):
         t = copy.deepcopy(BASE)
@@ -64,15 +70,698 @@ class Refuses(unittest.TestCase):
         t["core"]["type"]["body"]["$value"]["fontFamily"] = "{font.nope}"
         self.assertRefuses(t, "{font.nope}")
 
-    def test_theme_without_brightness(self):
-        t = copy.deepcopy(BASE)
-        del t["pink"]["$extensions"]
-        self.assertRefuses(t, "brightness")
-
     def test_bad_weight(self):
         t = copy.deepcopy(BASE)
         t["core"]["type"]["body"]["$value"]["fontWeight"] = "450"
         self.assertRefuses(t, "type.body.fontWeight")
+
+
+DART_RESERVED = """assert break case catch class const continue default do else enum extends
+false final finally for if in is new null rethrow return super switch this throw true try var
+void while with""".split()
+
+
+def edited(fn):
+    t = copy.deepcopy(BASE)
+    fn(t)
+    return t
+
+
+class RefusesWith(unittest.TestCase):
+    def assertRefuses(self, tokens, fragment):
+        with self.assertRaises(TokenError) as cm:
+            render(tokens)
+        self.assertIn(fragment, str(cm.exception))
+
+
+class GroupTypes(RefusesWith):
+    def test_each_group_demands_its_own_type(self):
+        cases = {
+            "light.color.ink": lambda t: t["light"]["color"]["ink"].update({"$type": "dimension"}),
+            "space.xs": lambda t: t["core"]["space"]["xs"].update({"$type": "color"}),
+            "radius.card": lambda t: t["core"]["radius"]["card"].update({"$type": "duration"}),
+            "motion.tap": lambda t: t["core"]["motion"]["tap"].update({"$type": "dimension"}),
+            "type.body": lambda t: t["core"]["type"]["body"].update({"$type": "color"}),
+            "font.family": lambda t: t["core"]["font"]["family"].update({"$type": "color"}),
+        }
+        for where, change in cases.items():
+            with self.subTest(where):
+                self.assertRefuses(edited(change), where)
+
+    def test_unreferenced_font_is_checked_too(self):
+        t = edited(lambda t: t["core"]["font"].update({"spare": {"$type": "color", "$value": "Mono"}}))
+        self.assertRefuses(t, "font.spare")
+
+    def test_reference_must_point_at_a_font_family(self):
+        t = edited(lambda t: t["core"]["type"]["body"]["$value"].update({"fontFamily": "{space.xs}"}))
+        self.assertRefuses(t, "type.body.fontFamily")
+
+
+class Json(unittest.TestCase):
+    def test_duplicate_key_is_refused_at_any_depth(self):
+        for text in ('{"a": 1, "a": 2}', '{"x": {"a": 1, "b": 2, "a": 3}}'):
+            with self.subTest(text):
+                with self.assertRaises(TokenError) as cm:
+                    parse_json(text, "light.json")
+                self.assertIn("light.json", str(cm.exception))
+
+    def test_load_reports_the_file_with_a_duplicate(self):
+        with tempfile.TemporaryDirectory() as d:
+            f = Path(d, "tokens.json")
+            f.write_text('{"core": {"space": {}, "space": {}}}', encoding="utf-8")
+            with self.assertRaises(TokenError) as cm:
+                load(f)
+            self.assertIn("tokens.json", str(cm.exception))
+
+    def test_load_refuses_a_missing_file(self):
+        with tempfile.TemporaryDirectory() as d:
+            with self.assertRaises(TokenError):
+                load(Path(d, "nope.json"))
+
+    def test_nan_and_infinity_literals_are_refused(self):
+        for text in ('{"a": NaN}', '{"a": Infinity}', '{"a": -Infinity}'):
+            with self.subTest(text):
+                with self.assertRaises(TokenError):
+                    parse_json(text)
+
+
+class Sizes(RefusesWith):
+    BAD = [True, False, float("nan"), float("inf"), float("-inf"), -4, -0.5, "-4px", "NaNpx",
+           "inf", "1e999", {"value": -1, "unit": "px"}, {"value": True, "unit": "px"},
+           {"value": float("nan"), "unit": "px"}, None, [], "px"]
+
+    def test_space_and_radius_take_only_finite_non_negative_numbers(self):
+        for group, name in (("space", "xs"), ("radius", "card")):
+            for bad in self.BAD:
+                with self.subTest(group=group, bad=bad):
+                    t = edited(lambda t: t["core"][group][name].update({"$value": bad}))
+                    self.assertRefuses(t, f"{group}.{name}")
+
+    def test_zero_is_a_fine_size(self):
+        t = edited(lambda t: t["core"]["space"]["xs"].update({"$value": "0px"}))
+        self.assertIn("static const double xs = 0;", render(t))
+
+    def test_font_size_and_line_height_must_be_positive(self):
+        for field, bads in (
+            ("fontSize", ["0px", 0, -1, "-3px", True, float("nan"), float("inf"), None]),
+            ("lineHeight", ["0", 0, -1.2, "0%", "-10%", True, float("nan"), float("inf"), "x%"]),
+        ):
+            for bad in bads:
+                with self.subTest(field=field, bad=bad):
+                    t = edited(lambda t: t["core"]["type"]["body"]["$value"].update({field: bad}))
+                    self.assertRefuses(t, f"type.body.{field}")
+
+    def test_typography_value_must_be_an_object(self):
+        t = edited(lambda t: t["core"]["type"]["body"].update({"$value": "16px"}))
+        self.assertRefuses(t, "type.body")
+
+
+class Odd(RefusesWith):
+    def test_huge_integers_are_refused_not_crashed_on(self):
+        t = edited(lambda t: t["core"]["space"]["xs"].update({"$value": 10**400}))
+        self.assertRefuses(t, "space.xs")
+        t = edited(lambda t: t["core"]["motion"]["tap"].update({"$value": {"value": 10**400, "unit": "ms"}}))
+        self.assertRefuses(t, "motion.tap")
+
+    def test_non_ascii_digits_are_refused(self):
+        t = edited(lambda t: t["core"]["space"]["xs"].update({"$value": "\u0664px"}))
+        self.assertRefuses(t, "space.xs")
+        t = edited(lambda t: t["core"]["motion"]["tap"].update({"$value": "\u0669\u0660ms"}))
+        self.assertRefuses(t, "motion.tap")
+        t = edited(lambda t: t["core"]["type"]["body"]["$value"].update({"fontWeight": "\u0664\u0660\u0660"}))
+        self.assertRefuses(t, "type.body.fontWeight")
+
+    def test_a_group_that_is_not_an_object_is_refused_even_when_falsy(self):
+        for group in ("space", "radius", "type", "motion", "font"):
+            for bad in ([], 0, "", False):
+                with self.subTest(group=group, bad=bad):
+                    self.assertRefuses(edited(lambda t: t["core"].update({group: bad})), group)
+
+
+class Durations(RefusesWith):
+    def test_durations_must_be_whole_non_negative_milliseconds(self):
+        bads = ["-5ms", "1.5ms", "ms", 120, True, None,
+                {"value": -1, "unit": "ms"}, {"value": 1.5, "unit": "ms"},
+                {"value": True, "unit": "ms"}, {"value": float("nan"), "unit": "ms"},
+                {"value": float("inf"), "unit": "s"}, {"value": 0.0005, "unit": "s"},
+                {"value": 1, "unit": "min"}, {"value": 1}]
+        for bad in bads:
+            with self.subTest(bad=bad):
+                t = edited(lambda t: t["core"]["motion"]["tap"].update({"$value": bad}))
+                self.assertRefuses(t, "motion.tap")
+
+    def test_zero_duration_is_fine(self):
+        t = edited(lambda t: t["core"]["motion"]["tap"].update({"$value": "0ms"}))
+        self.assertIn("tap = Duration(milliseconds: 0)", render(t))
+
+
+class Names(RefusesWith):
+    def test_color_names_must_not_clash_with_the_palette_class(self):
+        for name in ["name", "brightness", "type", "other", "t", "copyWith", "lerp", "hashCode",
+                     "runtimeType", "toString", "required", *DART_RESERVED]:
+            with self.subTest(name):
+                def add(t):
+                    for theme in THEMES:
+                        t[theme]["color"][name] = {"$type": "color", "$value": "#112233"}
+                self.assertRefuses(edited(add), name)
+
+    def test_newline_at_the_end_of_a_name_is_not_allowed(self):
+        def add(t):
+            for theme in THEMES:
+                t[theme]["color"]["glow\n"] = {"$type": "color", "$value": "#112233"}
+        self.assertRefuses(edited(add), "glow")
+
+    def test_reserved_words_are_refused_in_every_group(self):
+        cases = {
+            "space": {"$type": "dimension", "$value": "4px"},
+            "radius": {"$type": "dimension", "$value": "4px"},
+            "motion": {"$type": "duration", "$value": "10ms"},
+            "type": copy.deepcopy(BASE["core"]["type"]["body"]),
+        }
+        for group, token in cases.items():
+            for word in ("default", "class", "switch"):
+                with self.subTest(group=group, word=word):
+                    t = edited(lambda t: t["core"][group].update({word: token}))
+                    self.assertRefuses(t, word)
+
+    def test_font_family_cannot_break_out_of_the_dart_string(self):
+        for bad in ["a\\b", "a\nb", "a\rb", "Cost$", "tab\tfont", "", "  ", 3, None]:
+            with self.subTest(bad=bad):
+                t = edited(lambda t: t["core"]["font"]["family"].update({"$value": bad}))
+                self.assertRefuses(t, "font.family")
+
+    def test_apostrophe_in_a_font_name_is_escaped(self):
+        t = edited(lambda t: t["core"]["font"]["family"].update({"$value": "O'Neil Sans"}))
+        out = render(t)
+        self.assertIn("fontFamily: 'O\\x27Neil Sans'", out)
+        self.assertNotIn("O'Neil", out)
+
+    def test_font_family_with_spaces_is_fine(self):
+        t = edited(lambda t: t["core"]["font"]["family"].update({"$value": "Noto Sans KR"}))
+        self.assertIn("fontFamily: 'Noto Sans KR'", render(t))
+
+    def test_every_emitted_identifier_passes_the_ident_rule(self):
+        out = render(BASE)
+        names = re.findall(r"static const \w+ (\w+) =", out) + re.findall(r"final Color (\w+);", out)
+        self.assertTrue(names)
+        for n in names:
+            self.assertRegex(n, IDENT)
+
+
+class Dtcg(RefusesWith):
+    def test_color_object_matches_the_hex_form(self):
+        obj = {"colorSpace": "srgb", "components": [1, 0.5, 0], "alpha": 0.5}
+        t = edited(lambda t: t["dark"]["color"]["line"].update({"$value": obj}))
+        self.assertIn("line: Color(0x80FF8000)", render(t))
+
+    def test_color_object_without_alpha_is_opaque(self):
+        obj = {"colorSpace": "srgb", "components": [0, 0, 1]}
+        t = edited(lambda t: t["dark"]["color"]["line"].update({"$value": obj}))
+        self.assertIn("line: Color(0xFF0000FF)", render(t))
+
+    def test_color_object_may_carry_a_matching_hex(self):
+        obj = {"colorSpace": "srgb", "components": [1, 0, 0], "hex": "#ff0000"}
+        t = edited(lambda t: t["dark"]["color"]["line"].update({"$value": obj}))
+        self.assertIn("line: Color(0xFFFF0000)", render(t))
+
+    def test_bad_color_objects(self):
+        good = {"colorSpace": "srgb", "components": [0.1, 0.2, 0.3]}
+        bads = [
+            {**good, "colorSpace": "display-p3"},
+            {"components": [0.1, 0.2, 0.3]},
+            {**good, "components": [0.1, 0.2]},
+            {**good, "components": [0.1, 0.2, 0.3, 0.4]},
+            {**good, "components": [0.1, 0.2, 1.1]},
+            {**good, "components": [-0.1, 0.2, 0.3]},
+            {**good, "components": [True, 0.2, 0.3]},
+            {**good, "components": ["none", 0.2, 0.3]},
+            {**good, "components": [float("nan"), 0.2, 0.3]},
+            {**good, "alpha": 2},
+            {**good, "alpha": -0.1},
+            {**good, "alpha": True},
+            {**good, "extra": 1},
+            {**good, "hex": "#FFFFFF"},
+            {**good, "hex": "red"},
+            "#12345",
+            12,
+            [1, 2, 3],
+        ]
+        for bad in bads:
+            with self.subTest(bad=bad):
+                t = edited(lambda t: t["dark"]["color"]["line"].update({"$value": bad}))
+                self.assertRefuses(t, "dark.color.line")
+
+    def test_dimension_object_matches_the_string_form(self):
+        a = edited(lambda t: t["core"]["space"]["xs"].update({"$value": "4px"}))
+        b = edited(lambda t: t["core"]["space"]["xs"].update({"$value": {"value": 4, "unit": "px"}}))
+        self.assertEqual(render(a), render(b))
+
+    def test_dimension_object_needs_px(self):
+        for bad in ({"value": 4, "unit": "rem"}, {"value": 4}, {"unit": "px"},
+                    {"value": 4, "unit": "px", "extra": 1}):
+            with self.subTest(bad=bad):
+                t = edited(lambda t: t["core"]["space"]["xs"].update({"$value": bad}))
+                self.assertRefuses(t, "space.xs")
+
+    def test_font_size_may_be_a_dimension_object(self):
+        spec = {"fontSize": {"value": 16, "unit": "px"}}
+        t = edited(lambda t: t["core"]["type"]["body"]["$value"].update(spec))
+        self.assertEqual(render(t), render(BASE))
+
+    def test_duration_object_forms_match_the_string_form(self):
+        for form in ({"value": 120, "unit": "ms"}, {"value": 0.12, "unit": "s"}, "120ms"):
+            with self.subTest(form=form):
+                t = edited(lambda t: t["core"]["motion"]["fillRise"].update({"$value": form}))
+                self.assertEqual(render(t), render(BASE))
+
+
+def without_brightness(theme, ground=None):
+    def change(t):
+        t[theme].pop("$extensions", None)
+        if ground:
+            t[theme]["color"]["ground"]["$value"] = ground
+    return edited(change)
+
+
+class Brightness(RefusesWith):
+    def test_missing_brightness_is_guessed_from_ground(self):
+        for theme in THEMES:
+            with self.subTest(theme):
+                self.assertEqual(render(without_brightness(theme)), render(BASE))
+
+    def test_empty_extensions_count_as_missing(self):
+        t = edited(lambda t: t["dark"].update({"$extensions": {"app": {}}}))
+        self.assertEqual(render(t), render(BASE))
+
+    def test_relative_luminance_half_is_the_dividing_line(self):
+        cases = {"#FFFFFF": "light", "#BCBCBC": "light", "#BBBBBB": "dark",
+                 "#808080": "dark", "#000000": "dark", "#FFF1F5": "light", "#121216": "dark"}
+        for ground, expected in cases.items():
+            with self.subTest(ground):
+                out = render(without_brightness("pink", ground))
+                self.assertIn(f"name: 'pink',\n  brightness: Brightness.{expected},", out)
+
+    def test_ground_alpha_is_ignored(self):
+        out = render(without_brightness("pink", "#00000080"))
+        self.assertIn("name: 'pink',\n  brightness: Brightness.dark,", out)
+
+    def test_ground_may_be_a_color_object(self):
+        obj = {"colorSpace": "srgb", "components": [1, 1, 1]}
+        out = render(without_brightness("pink", obj))
+        self.assertIn("name: 'pink',\n  brightness: Brightness.light,", out)
+
+    def test_written_brightness_wins_over_the_guess(self):
+        t = edited(lambda t: t["light"]["color"]["ground"].update({"$value": "#000000"}))
+        self.assertIn("name: 'light',\n  brightness: Brightness.light,", render(t))
+
+    def test_a_wrong_brightness_is_still_refused(self):
+        t = edited(lambda t: t["pink"]["$extensions"]["app"].update({"brightness": "bright"}))
+        self.assertRefuses(t, "brightness")
+
+    def test_nothing_to_guess_from_is_refused(self):
+        t = without_brightness("pink")
+        del t["pink"]["color"]["ground"]
+        for theme in THEMES:
+            t[theme]["color"].pop("ground", None)
+        self.assertRefuses(t, "ground")
+
+
+class SingleFile(RefusesWith):
+    def doc(self, **extra):
+        return {**BASE, **extra}
+
+    def test_the_checked_in_file_lists_every_set_in_a_fixed_order(self):
+        self.assertEqual(list(BASE), ["core", "dark", "light", "pink"])
+
+    def test_dollar_keys_are_skipped(self):
+        doc = self.doc(**{"$themes": [{"id": "x", "name": "x"}], "$metadata": {"tokenSetOrder": list(BASE)},
+                          "$other": 3})
+        self.assertEqual(render(doc), render(BASE))
+        self.assertEqual(list(token_sets(doc)), list(BASE))
+
+    def test_token_set_order_decides_the_theme_order(self):
+        doc = self.doc(**{"$metadata": {"tokenSetOrder": ["core", "pink", "dark", "light"]}})
+        self.assertIn("allPalettes = [pinkPalette, darkPalette, lightPalette];", render(doc))
+
+    def test_sets_missing_from_the_order_follow_it(self):
+        doc = self.doc(**{"$metadata": {"tokenSetOrder": ["core", "light"]}})
+        self.assertEqual(list(token_sets(doc)), ["core", "light", "dark", "pink"])
+
+    def test_bad_token_set_order_is_refused(self):
+        for order in (["core", "ghost"], ["core", "core"], "core", [1, 2], {"core": 1}):
+            with self.subTest(order):
+                self.assertRefuses(self.doc(**{"$metadata": {"tokenSetOrder": order}}), "tokenSetOrder")
+
+    def test_the_checked_in_file_is_the_single_source(self):
+        self.assertEqual(SRC.name, "tokens.json")
+        self.assertTrue(SRC.is_file())
+        self.assertFalse(SRC.with_suffix("").exists())
+
+    def test_load_reads_one_file_and_skips_dollar_keys(self):
+        with tempfile.TemporaryDirectory() as d:
+            f = Path(d, "tokens.json")
+            f.write_text(
+                __import__("json").dumps({**BASE, "$themes": [], "$metadata": {"tokenSetOrder": list(BASE)}}),
+                encoding="utf-8",
+            )
+            self.assertEqual(render(load(f)), render(BASE))
+
+    def test_a_bare_number_is_pixels(self):
+        a = edited(lambda t: t["core"]["space"]["xs"].update({"$value": 4}))
+        b = edited(lambda t: t["core"]["space"]["xs"].update({"$value": "4"}))
+        self.assertEqual(render(a), render(BASE))
+        self.assertEqual(render(b), render(BASE))
+        c = edited(lambda t: t["core"]["type"]["body"]["$value"].update({"fontSize": 16}))
+        self.assertEqual(render(c), render(BASE))
+
+
+CORE_GROUPS = ("space", "radius", "type", "motion", "font")
+BAD_GROUPS = [None, {}, [], 0, "", False, "x", 5, {"$type": "dimension"}, {"$description": "empty"}]
+
+
+class RequiredGroups(RefusesWith):
+    def test_core_groups_cannot_be_null_empty_or_not_objects(self):
+        for group in CORE_GROUPS:
+            for bad in BAD_GROUPS:
+                with self.subTest(group=group, bad=bad):
+                    self.assertRefuses(edited(lambda t: t["core"].update({group: bad})), group)
+
+    def test_core_groups_cannot_be_missing(self):
+        for group in CORE_GROUPS:
+            with self.subTest(group):
+                self.assertRefuses(edited(lambda t: t["core"].pop(group)), group)
+
+    def test_color_group_cannot_be_null_empty_or_missing_in_any_theme(self):
+        for theme in THEMES:
+            for bad in BAD_GROUPS:
+                with self.subTest(theme=theme, bad=bad):
+                    self.assertRefuses(edited(lambda t: t[theme].update({"color": bad})), theme)
+            with self.subTest(theme=theme, bad="missing"):
+                self.assertRefuses(edited(lambda t: t[theme].pop("color")), theme)
+
+    def test_a_set_that_is_null_or_not_an_object_is_refused(self):
+        for name in ("core", *THEMES):
+            for bad in (None, [], 0, "x"):
+                with self.subTest(name=name, bad=bad):
+                    self.assertRefuses(edited(lambda t: t.update({name: bad})), name)
+
+    def test_names_the_app_uses_cannot_go_missing(self):
+        for group, names in REQUIRED_CORE.items():
+            for name in names:
+                with self.subTest(group=group, name=name):
+                    self.assertRefuses(edited(lambda t: t["core"][group].pop(name)), name)
+
+    def test_colors_the_app_uses_cannot_go_missing_from_any_theme(self):
+        for theme in THEMES:
+            for name in REQUIRED_COLORS:
+                with self.subTest(theme=theme, name=name):
+                    self.assertRefuses(edited(lambda t: t[theme]["color"].pop(name)), name)
+
+    def test_required_names_match_what_lib_uses(self):
+        classes = {"Space": "space", "Radii": "radius", "TypeScale": "type", "Motion": "motion"}
+        used = {g: set() for g in classes.values()}
+        root = Path(__file__).resolve().parent.parent
+        for f in [*(root / "lib").rglob("*.dart"), *(root / "test").rglob("*.dart")]:
+            if f.name == "tokens.g.dart":
+                continue
+            for m in re.finditer(r"\b(Space|Radii|TypeScale|Motion)\.(\w+)", f.read_text(encoding="utf-8")):
+                used[classes[m[1]]].add(m[2])
+        for group, names in used.items():
+            self.assertLessEqual(names, set(REQUIRED_CORE[group]), f"{group}: add it to REQUIRED_CORE")
+
+    def test_extra_names_are_fine(self):
+        t = edited(lambda t: t["core"]["space"].update({"huge": {"$type": "dimension", "$value": "96px"}}))
+        self.assertIn("static const double huge = 96;", render(t))
+
+
+class NullAndInheritedTypes(RefusesWith):
+    def test_an_explicit_null_type_is_refused(self):
+        spots = {
+            "light.color.ink": lambda t: t["light"]["color"]["ink"].update({"$type": None}),
+            "space.xs": lambda t: t["core"]["space"]["xs"].update({"$type": None}),
+            "radius.card": lambda t: t["core"]["radius"]["card"].update({"$type": None}),
+            "motion.tap": lambda t: t["core"]["motion"]["tap"].update({"$type": None}),
+            "type.body": lambda t: t["core"]["type"]["body"].update({"$type": None}),
+            "font.family": lambda t: t["core"]["font"]["family"].update({"$type": None}),
+        }
+        for where, change in spots.items():
+            with self.subTest(where):
+                self.assertRefuses(edited(change), where)
+
+    def test_a_group_type_must_match_the_slot(self):
+        for group, wrong in (("space", "color"), ("radius", "duration"), ("type", "dimension"),
+                             ("motion", "dimension"), ("font", "color"), ("space", None), ("space", 3)):
+            with self.subTest(group=group, wrong=wrong):
+                t = edited(lambda t: t["core"][group].update({"$type": wrong}))
+                self.assertRefuses(t, group)
+        t = edited(lambda t: t["dark"]["color"].update({"$type": "dimension"}))
+        self.assertRefuses(t, "dark")
+
+    def test_a_matching_group_type_is_fine_and_is_not_a_token_name(self):
+        def add(t):
+            for group, typ in (("space", "dimension"), ("radius", "dimension"), ("type", "typography"),
+                               ("motion", "duration"), ("font", "fontFamily")):
+                t["core"][group]["$type"] = typ
+            for theme in THEMES:
+                t[theme]["color"]["$type"] = "color"
+                t[theme]["color"]["$description"] = "note"
+        self.assertEqual(render(edited(add)), render(BASE))
+
+    def test_tokens_inherit_the_group_type(self):
+        def add(t):
+            t["core"]["space"]["$type"] = "dimension"
+            for tok in t["core"]["space"].values():
+                if isinstance(tok, dict):
+                    tok.pop("$type", None)
+        self.assertEqual(render(edited(add)), render(BASE))
+
+    def test_a_token_type_that_differs_from_the_group_is_refused(self):
+        def add(t):
+            t["core"]["space"]["$type"] = "dimension"
+            t["core"]["space"]["xs"]["$type"] = "color"
+        self.assertRefuses(edited(add), "space.xs")
+
+
+class Letters(RefusesWith):
+    def test_misspelt_typography_field_is_refused(self):
+        t = edited(lambda t: t["core"]["type"]["body"]["$value"].update({"fontWeigth": "700"}))
+        self.assertRefuses(t, "fontWeigth")
+
+    def test_fields_tokens_studio_adds_are_ignored(self):
+        extra = {"paragraphSpacing": "0", "paragraphIndent": "0", "textCase": "none", "textDecoration": "none"}
+        t = edited(lambda t: t["core"]["type"]["body"]["$value"].update(extra))
+        self.assertEqual(render(t), render(BASE))
+
+    def test_letter_spacing_becomes_a_text_style_field(self):
+        cases = {"-0.5px": "-0.5", "2px": "2", 1: "1", "0": "0"}
+        for given, shown in cases.items():
+            with self.subTest(given):
+                t = edited(lambda t: t["core"]["type"]["body"]["$value"].update({"letterSpacing": given}))
+                self.assertIn(f"height: 1.5, letterSpacing: {shown});", render(t))
+        t = edited(lambda t: t["core"]["type"]["body"]["$value"].update(
+            {"letterSpacing": {"value": 1.5, "unit": "px"}}))
+        self.assertIn("height: 1.5, letterSpacing: 1.5);", render(t))
+
+    def test_bad_letter_spacing_is_refused(self):
+        for bad in (True, float("nan"), float("inf"), "x", "1em", "", None, {"value": 1, "unit": "rem"}):
+            with self.subTest(bad=bad):
+                t = edited(lambda t: t["core"]["type"]["body"]["$value"].update({"letterSpacing": bad}))
+                self.assertRefuses(t, "type.body.letterSpacing")
+
+    def test_without_letter_spacing_the_output_has_none(self):
+        self.assertNotIn("letterSpacing", render(BASE))
+
+
+class StaticNames(RefusesWith):
+    OK = ["name", "type", "t", "other", "copyWith", "lerp", "required", "static", "get", "brightness"]
+    BAD = ["hashCode", "toString", "runtimeType", "noSuchMethod", *DART_RESERVED]
+
+    def token(self, group):
+        return {
+            "space": {"$type": "dimension", "$value": "4px"},
+            "radius": {"$type": "dimension", "$value": "4px"},
+            "motion": {"$type": "duration", "$value": "10ms"},
+            "type": copy.deepcopy(BASE["core"]["type"]["body"]),
+        }[group]
+
+    def test_only_real_collisions_are_refused_outside_the_palette(self):
+        for group in ("space", "radius", "motion", "type"):
+            for name in self.OK:
+                with self.subTest(group=group, ok=name):
+                    t = edited(lambda t: t["core"][group].update({name: self.token(group)}))
+                    self.assertIn(f" {name} = ", render(t))
+            for name in self.BAD:
+                with self.subTest(group=group, bad=name):
+                    t = edited(lambda t: t["core"][group].update({name: self.token(group)}))
+                    self.assertRefuses(t, name)
+
+    def test_palette_names_stay_strict(self):
+        for name in ("type", "t", "other", "required", "name"):
+            def add(t):
+                for theme in THEMES:
+                    t[theme]["color"][name] = {"$type": "color", "$value": "#112233"}
+            with self.subTest(name):
+                self.assertRefuses(edited(add), name)
+
+
+class DurationLimits(RefusesWith):
+    def test_one_hour_is_the_ceiling(self):
+        ok = ["3600000ms", {"value": 3600000, "unit": "ms"}, {"value": 3600, "unit": "s"}]
+        for good in ok:
+            with self.subTest(good=good):
+                t = edited(lambda t: t["core"]["motion"]["tap"].update({"$value": good}))
+                self.assertIn("tap = Duration(milliseconds: 3600000)", render(t))
+        too_long = ["3600001ms", "99999999999999999999ms", {"value": 3600001, "unit": "ms"},
+                    {"value": 3601, "unit": "s"}, {"value": 1e308, "unit": "ms"},
+                    {"value": 1e308, "unit": "s"}, {"value": 10**400, "unit": "s"}]
+        for bad in too_long:
+            with self.subTest(bad=bad):
+                t = edited(lambda t: t["core"]["motion"]["tap"].update({"$value": bad}))
+                self.assertRefuses(t, "motion.tap")
+
+    def test_a_tiny_positive_value_that_rounds_to_zero_is_refused(self):
+        for bad in ({"value": 1e-9, "unit": "ms"}, {"value": 1e-9, "unit": "s"},
+                    {"value": 5e-7, "unit": "ms"}, {"value": 0.4, "unit": "ms"}):
+            with self.subTest(bad=bad):
+                t = edited(lambda t: t["core"]["motion"]["tap"].update({"$value": bad}))
+                self.assertRefuses(t, "motion.tap")
+
+    def test_zero_in_every_form_is_fine(self):
+        for good in ("0ms", {"value": 0, "unit": "ms"}, {"value": 0.0, "unit": "s"}, {"value": -0.0, "unit": "ms"}):
+            with self.subTest(good=good):
+                t = edited(lambda t: t["core"]["motion"]["tap"].update({"$value": good}))
+                self.assertIn("tap = Duration(milliseconds: 0)", render(t))
+
+
+def contrast(a, b):
+    from gen_tokens import luminance
+    hi, lo = sorted((luminance(a), luminance(b)), reverse=True)
+    return (hi + 0.05) / (lo + 0.05)
+
+
+class Contrast(unittest.TestCase):
+    """Keep a color change from making text unreadable. Same criterion (WCAG) as the Dart palette_test."""
+
+    def argb(self, theme, name):
+        from gen_tokens import color_argb
+        return color_argb(BASE[theme]["color"][name], f"{theme}.color.{name}")
+
+    def test_text_on_fill_accent_and_error_is_readable(self):
+        for theme in THEMES:
+            for text, ground in (("onFill", "fill"), ("onAccent", "accent"), ("onError", "error")):
+                with self.subTest(theme=theme, pair=f"{text}/{ground}"):
+                    self.assertGreaterEqual(contrast(self.argb(theme, text), self.argb(theme, ground)), 4.5)
+
+    def test_mood_colors_stand_out_on_the_card_surface(self):
+        for theme in THEMES:
+            for name in ("happy", "sad"):
+                with self.subTest(theme=theme, name=name):
+                    self.assertGreaterEqual(contrast(self.argb(theme, name), self.argb(theme, "surface")), 3.0)
+
+    def test_the_new_colors_are_required(self):
+        self.assertIn("onFill", REQUIRED_COLORS)
+        self.assertIn("onError", REQUIRED_COLORS)
+
+
+STORYBOARD = (ROOT / SPLASH_FILES["ios_storyboard"]).read_text(encoding="utf-8")
+
+
+def with_ground(light=None, dark=None):
+    def change(t):
+        if light:
+            t["light"]["color"]["ground"]["$value"] = light
+        if dark:
+            t["dark"]["color"]["ground"]["$value"] = dark
+    return edited(change)
+
+
+class Splash(RefusesWith):
+    A_LIGHT, A_DARK, SET, STORY = (SPLASH_FILES[k] for k in ("android_light", "android_dark", "ios_colorset",
+                                                              "ios_storyboard"))
+
+    def test_android_colors_come_from_the_grounds(self):
+        out = splash_outputs(with_ground("#F6F6F8", "#101820"), STORYBOARD)
+        self.assertIn('<color name="splash_background">#F6F6F8</color>', out[self.A_LIGHT])
+        self.assertIn('<color name="splash_background">#101820</color>', out[self.A_DARK])
+
+    def test_ios_color_set_holds_any_and_dark(self):
+        import json
+        out = splash_outputs(with_ground("#F6F6F8", "#101820"), STORYBOARD)
+        colors = json.loads(out[self.SET])["colors"]
+        comps = lambda c: tuple(c["color"]["components"][k] for k in ("red", "green", "blue"))
+        self.assertNotIn("appearances", colors[0])
+        self.assertEqual(comps(colors[0]), ("0xF6", "0xF6", "0xF8"))
+        self.assertEqual(colors[1]["appearances"], [{"appearance": "luminosity", "value": "dark"}])
+        self.assertEqual(comps(colors[1]), ("0x10", "0x18", "0x20"))
+
+    def test_storyboard_fallback_follows_light_ground_and_nothing_else_changes(self):
+        out = splash_outputs(with_ground("#F6F6F8"), STORYBOARD)[self.STORY]
+        self.assertIn('red="0.96470588235294119" green="0.96470588235294119" blue="0.97254901960784312"', out)
+        changed = [(a, b) for a, b in zip(STORYBOARD.splitlines(), out.splitlines()) if a != b]
+        self.assertEqual(len(changed), 1)
+        self.assertEqual(len(STORYBOARD.splitlines()), len(out.splitlines()))
+
+    def test_storyboard_fallback_uses_exact_one_and_zero(self):
+        out = splash_outputs(with_ground("#FF0000"), STORYBOARD)[self.STORY]
+        self.assertIn('red="1" green="0" blue="0" alpha="1"', out)
+
+    def test_the_dark_ground_does_not_touch_the_storyboard(self):
+        self.assertEqual(splash_outputs(with_ground(dark="#101820"), STORYBOARD)[self.STORY],
+                         splash_outputs(BASE, STORYBOARD)[self.STORY])
+
+    def test_color_objects_work_and_alpha_is_refused(self):
+        obj = {"colorSpace": "srgb", "components": [0, 0, 0]}
+        out = splash_outputs(with_ground(dark=obj), STORYBOARD)
+        self.assertIn("#000000", out[self.A_DARK])
+        self.assertRefuses_splash(with_ground(light="#FFFFFF80"), "light")
+        self.assertRefuses_splash(with_ground(dark="#12121680"), "dark")
+
+    def assertRefuses_splash(self, tokens, fragment):
+        with self.assertRaises(TokenError) as cm:
+            splash_outputs(tokens, STORYBOARD)
+        self.assertIn(fragment, str(cm.exception))
+
+    def test_it_needs_a_light_and_a_dark_set(self):
+        for name in ("light", "dark"):
+            with self.subTest(name):
+                self.assertRefuses_splash(edited(lambda t: t.pop(name)), name)
+
+    def test_a_storyboard_without_the_named_color_is_refused(self):
+        with self.assertRaises(TokenError) as cm:
+            splash_outputs(BASE, STORYBOARD.replace("SplashBackground", "Other"))
+        self.assertIn("SplashBackground", str(cm.exception))
+
+    def test_checked_in_platform_files_are_what_the_tokens_produce(self):
+        for rel, text in splash_outputs(BASE, STORYBOARD).items():
+            with self.subTest(rel.name):
+                self.assertEqual((ROOT / rel).read_text(encoding="utf-8"), text)
+
+    def test_stale_lists_every_file_that_differs_and_only_those(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            for rel in SPLASH_FILES.values():
+                (root / rel).parent.mkdir(parents=True, exist_ok=True)
+                (root / rel).write_text((ROOT / rel).read_text(encoding="utf-8"), encoding="utf-8")
+            (root / OUT.relative_to(ROOT)).parent.mkdir(parents=True, exist_ok=True)
+            (root / OUT.relative_to(ROOT)).write_text(OUT.read_text(encoding="utf-8"), encoding="utf-8")
+            self.assertEqual(stale(outputs(BASE, root), root), [])
+            changed = stale(outputs(with_ground(light="#F6F6F8"), root), root)
+            self.assertEqual(
+                sorted(p.name for p in changed),
+                sorted([self.A_LIGHT.name, self.SET.name, self.STORY.name, OUT.name]),
+            )
+            (root / self.A_DARK).unlink()
+            self.assertIn(self.A_DARK, stale(outputs(BASE, root), root))
+
+
+class Output(unittest.TestCase):
+    def test_header_points_at_the_single_token_file(self):
+        out = render(BASE)
+        self.assertIn("// Edit design/tokens.json, then run python3 tool/gen_tokens.py.", out)
+        self.assertNotIn("design/tokens/", out)
+
+    def test_checked_in_output_is_exactly_what_the_tokens_render(self):
+        self.assertEqual(OUT.read_text(encoding="utf-8"), render(BASE))
 
 
 if __name__ == "__main__":

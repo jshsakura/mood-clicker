@@ -1,8 +1,20 @@
 #!/usr/bin/env bash
-# Run dart with the Flutter SDK inside Docker. Example: tool/fl_dart format lib
+# Run dart from the Flutter SDK: the one next to the flutter on PATH when that is the pinned
+# version (see tool/flutter_env.sh), otherwise one in a docker image. FL_DOCKER=1 forces docker.
+# Example: tool/fl_dart format lib test
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-IMAGE="${FLUTTER_IMAGE:-ghcr.io/cirruslabs/flutter:3.44.0}"
+. "$ROOT/tool/flutter_env.sh"
+
+if use_local_flutter; then
+  DART="$(dirname "$(command -v flutter)")/dart"
+  if [ -x "$DART" ]; then
+    cd "$ROOT"
+    exec "$DART" "$@"
+  fi
+  echo "tool/fl_dart: no dart next to the flutter on PATH; using docker" >&2
+fi
+
 exec docker run --rm -v "$ROOT":/app -v mood-clicker-pub-cache:/root/.pub-cache -w /app \
-  -e OWNER="$(id -u):$(id -g)" "$IMAGE" \
+  -e OWNER="$(id -u):$(id -g)" "$FLUTTER_IMAGE" \
   bash -c 'dart "$@"; rc=$?; find /app -xdev -uid 0 -exec chown "$OWNER" {} + 2>/dev/null; exit $rc' -- "$@"
