@@ -615,4 +615,34 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get release_breathingRing =>
       'A circle that helps you pace your breath. Breathe in as it grows and out as it shrinks, or ignore it.';
+
+  @override
+  String get howTo_label => 'How to play';
+
+  @override
+  String get howTo_title => 'How to play';
+
+  @override
+  String get howTo_fill => 'Tap and the water rises.';
+
+  @override
+  String get howTo_rest => 'Rest a moment and it sinks little by little.';
+
+  @override
+  String get howTo_tilt =>
+      'Tilt the phone and the water spills, so the number on screen goes down.';
+
+  @override
+  String get howTo_spark => 'Now and then a sparkling special phrase appears.';
+
+  @override
+  String get howTo_hold =>
+      'Stay between 95 and 100 percent for a few seconds for a special reward.';
+
+  @override
+  String get howTo_finish =>
+      'Fill it up and a finish that fits your mood plays.';
+
+  @override
+  String get howTo_bubble => 'How to play';
 }

@@ -29,6 +29,7 @@ import '../surfaces/home_widget_adapters.dart';
 import '../surfaces/native_surfaces.dart';
 import 'app_services.dart';
 import 'journal_store.dart';
+import 'seen_hints.dart';
 import 'settings_hub.dart';
 
 /// The tilt of the phone as an angle: 0 upright, positive when the right edge leans down.
@@ -54,9 +55,8 @@ Future<AppServices> createServices({WidgetBuilder? settingsBuilder}) async {
 
   // Every persisted setting in one store; the feel, theme and language
   // notifiers start from it and the settings screen keeps them in step.
-  final settingsStore = SharedPreferencesSettingsStore(
-    await SharedPreferences.getInstance(),
-  );
+  final prefs = await SharedPreferences.getInstance();
+  final settingsStore = SharedPreferencesSettingsStore(prefs);
   final feedback = FeedbackController(haptics: SystemHaptics(), sound: sound);
   final hub = await SettingsHub.open(store: settingsStore, feedback: feedback);
 
@@ -110,6 +110,7 @@ Future<AppServices> createServices({WidgetBuilder? settingsBuilder}) async {
     language: hub.language,
     mapView: hub.mapView,
     settingsStore: settingsStore,
+    hints: SharedPreferencesSeenHints(prefs),
     reminder: reminder,
     records: records,
     appVersion: info.version,

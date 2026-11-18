@@ -112,6 +112,10 @@ class CheerPicker {
     return variants[_random.nextInt(variants.length)];
   }
 
+  /// A rare phrase on purpose: the reward of holding the gauge near full.
+  CheerDraw drawRare(CheerBook book, Mood mood) =>
+      CheerDraw(pick(book, mood, CheerStage.rare), CheerKind.rare);
+
   /// Decides what one tap shows. The complete stage is always the complete phrase. Any other tap
   /// is a rare phrase with [CheerTuning.rareChance], else an ordinary one of that stage.
   CheerDraw draw(CheerBook book, Mood mood, CheerStage stage) {

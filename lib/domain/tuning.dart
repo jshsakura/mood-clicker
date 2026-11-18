@@ -322,3 +322,31 @@ abstract final class ReleaseTuning {
   /// The breathing ring is this share of the shorter side of the screen when full.
   static const double ringShare = 0.45;
 }
+
+/// Numbers for the reward of holding the gauge just below full.
+abstract final class HoldTuning {
+  /// The reward band starts here: from this level up to, but not including, full.
+  static const double from = 0.95;
+
+  /// How long the level must stay in the band, without a break, for the reward.
+  static const Duration duration = Duration(seconds: 3);
+
+  /// After a reward the next one waits until the level has fallen below this.
+  static const double rearm = 0.85;
+}
+
+/// What the water a tilted phone spills does to the taps.
+abstract final class SpillTuning {
+  /// Whether spilled water also takes taps off the saved record of the day. False keeps the
+  /// record whole: the number on the tap screen goes down, the saved count does not.
+  static const bool takesFromRecord = false;
+}
+
+/// Numbers for the one-time hint beside the how-to button.
+abstract final class HowToTuning {
+  /// How long the first-visit bubble stays.
+  static const Duration bubbleDuration = Duration(seconds: 2);
+
+  /// The id the bubble is remembered under.
+  static const String bubbleHintId = 'howToBubble';
+}

@@ -601,4 +601,31 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get release_breathingRing =>
       '숨 고르기를 돕는 원입니다. 커질 때 들이쉬고 작아질 때 내쉬어도 좋고, 따라 하지 않아도 됩니다.';
+
+  @override
+  String get howTo_label => '놀이 방법';
+
+  @override
+  String get howTo_title => '놀이 방법';
+
+  @override
+  String get howTo_fill => '두드리면 물이 차오릅니다.';
+
+  @override
+  String get howTo_rest => '잠시 쉬면 물이 조금씩 내려갑니다.';
+
+  @override
+  String get howTo_tilt => '폰을 기울이면 물이 넘쳐 화면의 숫자가 줄어듭니다.';
+
+  @override
+  String get howTo_spark => '가끔 반짝이는 특별한 말이 나옵니다.';
+
+  @override
+  String get howTo_hold => '95퍼센트에서 100퍼센트 사이를 몇 초 버티면 특별한 보상이 있습니다.';
+
+  @override
+  String get howTo_finish => '가득 채우면 기분에 맞는 마무리가 펼쳐집니다.';
+
+  @override
+  String get howTo_bubble => '놀이 방법';
 }

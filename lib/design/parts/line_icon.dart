@@ -15,7 +15,13 @@ enum LineIcons {
   chevronLeft('chevron_left'),
   chevronRight('chevron_right'),
   chevronRightHeavy('chevron_right_heavy'),
-  check('check');
+  check('check'),
+  howDrop('how_drop'),
+  howRest('how_rest'),
+  howTilt('how_tilt'),
+  howSpark('how_spark'),
+  howHold('how_hold'),
+  howFinish('how_finish');
 
   const LineIcons(this.file);
 

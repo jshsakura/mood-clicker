@@ -69,7 +69,8 @@ class FeedbackController {
     final isPriority =
         kind == FeedbackKind.full ||
         kind == FeedbackKind.rare ||
-        kind == FeedbackKind.cleanse;
+        kind == FeedbackKind.cleanse ||
+        kind == FeedbackKind.hold;
     if (_settings.hapticsOn &&
         haptic != null &&
         _hapticAllowed(priority: isPriority)) {
@@ -84,8 +85,13 @@ class FeedbackController {
     if (_settings.soundOn && soundId != null) {
       final isTap = kind == FeedbackKind.tap;
       final tapId = _settings.soundPack.tapSoundId;
-      if (kind == FeedbackKind.cleanse) {
-        final cue = SoundCue(SoundPack.pentatonic, SoundPack.cleanseSoundId);
+      if (kind == FeedbackKind.cleanse || kind == FeedbackKind.hold) {
+        final cue = SoundCue(
+          SoundPack.pentatonic,
+          kind == FeedbackKind.hold
+              ? SoundPack.holdSoundId
+              : SoundPack.cleanseSoundId,
+        );
         _fire(() => sound.play(cue));
       } else if (isTap && (settled || tapId != null)) {
         final rule = settled ? TapPitchRule.rise : tapPitchRuleOf(moodId);

@@ -10,6 +10,9 @@ enum FeedbackKind {
   /// two slow, gentle vibrations.
   cleanse,
 
+  /// Played once when the gauge has stayed just below full long enough: a short bright chord.
+  hold,
+
   /// Played when a mood banner is selected.
   select,
 

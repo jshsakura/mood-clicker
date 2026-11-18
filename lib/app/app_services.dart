@@ -17,6 +17,7 @@ import '../settings/settings.dart';
 import '../settings/settings_store.dart';
 import '../surfaces/native_surfaces.dart';
 import 'journal_store.dart';
+import 'seen_hints.dart';
 
 /// Reads the phone tilt as an angle in radians. 0 is upright, positive leans the right edge down.
 typedef TiltStream = Stream<double> Function();
@@ -36,16 +37,21 @@ class AppServices {
     ValueNotifier<bool>? mapView,
     this.mapSource = const SampleMapSource(),
     this.settingsStore,
+    SeenHints? hints,
     this.reminder,
     this.records,
     this.appVersion,
     this.settingsBuilder,
     this.surfaces,
     DateTime Function()? now,
-  }) : mapView = mapView ?? ValueNotifier(Settings.mapViewDefault),
+  }) : hints = hints ?? MemorySeenHints(),
+       mapView = mapView ?? ValueNotifier(Settings.mapViewDefault),
        now = now ?? DateTime.now;
 
   final JournalStore journal;
+
+  /// Which one-time hints were shown already.
+  final SeenHints hints;
   final FeedbackController feedback;
 
   /// Loads the cheer phrases for a language code. Called once per language.

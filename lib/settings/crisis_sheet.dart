@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../design/app_theme.dart';
 import '../design/parts/pressable_surface.dart';
+import '../design/parts/sheet_grab_bar.dart';
 import '../design/tokens.g.dart';
 import '../l10n/app_localizations.g.dart';
 import 'crisis_contacts.dart';
@@ -12,8 +13,8 @@ Future<bool> launchPhoneCall(String url) {
   return launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
 }
 
-/// Opens the crisis sheet for the region of the device. Reached from the settings and from the
-/// mood screen, so both show the same sheet.
+/// Opens the crisis sheet for the region of the device. It is reached only from the mind care
+/// entry of the settings.
 ///
 /// The sheet drags: down to close, up to scroll when the region has more
 /// lines than fit.
@@ -111,31 +112,7 @@ class CrisisSheet extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // The canvas grab bar. It drags the sheet closed and, for
-            // assistive tech, it is the top close button.
-            Semantics(
-              button: true,
-              label: l10n.settings_close,
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () => Navigator.of(context).pop(),
-                child: Center(
-                  child: Container(
-                    width: 36,
-                    height: 12,
-                    alignment: Alignment.center,
-                    child: Container(
-                      width: 36,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: palette.line,
-                        borderRadius: BorderRadius.circular(Radii.pill),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
+            const SheetGrabBar(),
             const SizedBox(height: Space.md),
             Text(
               l10n.settings_mindCareTitle,

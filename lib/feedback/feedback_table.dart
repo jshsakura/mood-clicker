@@ -166,6 +166,7 @@ const _tapSad = FeedbackEntry(haptic: _sad, soundId: 'tap_sad');
 const _tapAnxious = FeedbackEntry(haptic: _anxious, soundId: 'tap_anxious');
 const _fullAll = FeedbackEntry(haptic: _full, soundId: 'full');
 const _cleanseAll = FeedbackEntry(haptic: _cleanse, soundId: 'cleanse');
+const _holdAll = FeedbackEntry(haptic: _rare, soundId: 'chime');
 const _selectAll = FeedbackEntry(haptic: _select, soundId: 'select');
 const _dropAll = FeedbackEntry(haptic: _drop);
 const _rareAll = FeedbackEntry(haptic: _rare);
@@ -194,6 +195,13 @@ abstract final class FeedbackTable {
       'angry': _cleanseAll,
       'sad': _cleanseAll,
       'anxious': _cleanseAll,
+    },
+    FeedbackKind.hold: {
+      'happy': _holdAll,
+      'excited': _holdAll,
+      'angry': _holdAll,
+      'sad': _holdAll,
+      'anxious': _holdAll,
     },
     FeedbackKind.select: {
       'happy': _selectAll,
