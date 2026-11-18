@@ -26,9 +26,6 @@ abstract final class CheerTuning {
   /// How long one phrase stays on screen.
   static const Duration lifetime = Duration(milliseconds: 800);
 
-  /// At most this many phrases are visible at once.
-  static const int maxVisible = 8;
-
   /// When a new phrase appears, the previous one keeps this share of its lifetime,
   /// and the one before that keeps [olderLifetimeShare].
   static const double previousLifetimeShare = 0.6;
@@ -40,19 +37,24 @@ abstract final class CheerTuning {
   static const double fontSizeFull = 52;
 
   /// Phrase box: width = characters * size * [widthPerSize] + [boxPadding],
-  /// height = size * [heightPerSize]. The box also covers the [riseDistance] the phrase
-  /// floats up, so a rising phrase still blocks its own track.
+  /// height = size * [heightPerSize]. The box is where the phrase is drawn now.
   static const double widthPerSize = 0.95;
-  static const double boxPadding = 16;
-  static const double heightPerSize = 1.25;
+  static const double boxPadding = 12;
+  static const double heightPerSize = 1.2;
+
+  /// How far a phrase floats up over its lifetime. A visible phrase blocks the spot it is at
+  /// now, so the rise is applied to its box as it goes, not reserved in advance.
   static const double riseDistance = 46;
 
-  /// The full-gauge phrase looks for a free spot on a grid around the tap:
-  /// [spotStepX] left and right, [spotStepY] up and down, 3 columns by 5 rows = 15 spots.
-  static const double spotStepX = 120;
-  static const double spotStepY = 90;
-  static const int spotColumns = 3;
-  static const int spotRows = 5;
+  /// A phrase blocks other phrases only while it is in the first this share of its lifetime.
+  static const double blockingShare = 0.7;
+
+  /// Every tap shows a phrase. If the tap spot is taken, the nearest free spot on a grid is used:
+  /// [spotStepX] left and right, [spotStepY] up and down, 5 columns by 9 rows = 45 spots.
+  static const double spotStepX = 100;
+  static const double spotStepY = 70;
+  static const int spotColumns = 5;
+  static const int spotRows = 9;
 
   /// A phrase shown within the last this many picks is not picked again.
   static const int recentWindow = 8;

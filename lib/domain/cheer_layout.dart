@@ -42,9 +42,34 @@ class CheerRect {
   String toString() => 'CheerRect($left, $top, $right, $bottom)';
 }
 
-/// Where cheer phrases go and how long they live. Pure functions only.
+/// A phrase on screen: where it was born and when. Immutable.
+class CheerSlot {
+  const CheerSlot(this.bornBox, this.shownAt);
+
+  final CheerRect bornBox;
+  final DateTime shownAt;
+}
+
+/// The result of one tap: the new slot list and where the new phrase goes.
+class CheerPlacement {
+  const CheerPlacement({
+    required this.slots,
+    required this.box,
+    required this.evictedOldest,
+  });
+
+  /// All slots after the tap, oldest first, the new phrase last. A new list every time.
+  final List<CheerSlot> slots;
+  final CheerRect box;
+
+  /// True when no spot was free and the oldest phrase was removed to make room.
+  final bool evictedOldest;
+}
+
+/// Where cheer phrases go and how long they live. Pure functions only: the screen keeps the
+/// slot list, replaces it with what [show] returns, and the frame loop never rewrites it.
 abstract final class CheerLayout {
-  /// The box a phrase takes when centered on [center]. It reaches up by the rise distance.
+  /// The box a phrase takes when centered on [center].
   static CheerRect boxFor({
     required Point<double> center,
     required int length,
@@ -55,21 +80,62 @@ abstract final class CheerLayout {
     final height = fontSize * CheerTuning.heightPerSize;
     return CheerRect(
       center.x - width / 2,
-      center.y - height / 2 - CheerTuning.riseDistance,
+      center.y - height / 2,
       center.x + width / 2,
       center.y + height / 2,
     );
   }
 
-  static bool isFree(CheerRect box, Iterable<CheerRect> visible) =>
-      !visible.any(box.overlaps);
+  /// How far up a phrase of the given age has floated, in pixels.
+  static double riseAt(Duration age) {
+    final progress = age.inMicroseconds / CheerTuning.lifetime.inMicroseconds;
+    return CheerTuning.riseDistance * progress.clamp(0.0, 1.0);
+  }
 
-  /// Whether a phrase may appear at [box]: there is room, and no visible phrase is in the way.
-  /// An ordinary tap that fails this only moves the gauge.
-  static bool canShow(CheerRect box, List<CheerRect> visible) =>
-      hasRoom(visible.length) && isFree(box, visible);
+  /// Where the slot is drawn at [now].
+  static CheerRect currentBox(CheerSlot slot, DateTime now) =>
+      slot.bornBox.shifted(0, -riseAt(_age(slot, now)));
 
-  /// The grid of offsets the full-gauge phrase may use, nearest to the tap first.
+  /// The share of its lifetime a phrase keeps once [newerCount] newer phrases exist:
+  /// 1 for the newest, 0.6 for the one before it, 0.35 for the one before that and older.
+  static double lifetimeShare(int newerCount) => switch (newerCount) {
+    <= 0 => 1,
+    1 => CheerTuning.previousLifetimeShare,
+    _ => CheerTuning.olderLifetimeShare,
+  };
+
+  static Duration lifetimeFor(int newerCount) => Duration(
+    microseconds:
+        (CheerTuning.lifetime.inMicroseconds * lifetimeShare(newerCount))
+            .round(),
+  );
+
+  /// Slots that have not run out of life yet, oldest first.
+  static List<CheerSlot> alive(List<CheerSlot> slots, DateTime now) => [
+    for (var i = 0; i < slots.length; i++)
+      if (_age(slots[i], now) < lifetimeFor(slots.length - 1 - i)) slots[i],
+  ];
+
+  /// The boxes that block a new phrase at [now]: only phrases still in the first 70 percent
+  /// of their own lifetime, each at the place it has floated to by now.
+  static List<CheerRect> blockers(List<CheerSlot> slots, DateTime now) => [
+    for (var i = 0; i < slots.length; i++)
+      if (_isBlocking(slots[i], slots.length - 1 - i, now))
+        currentBox(slots[i], now),
+  ];
+
+  static bool _isBlocking(CheerSlot slot, int newerCount, DateTime now) {
+    final limit =
+        lifetimeFor(newerCount).inMicroseconds * CheerTuning.blockingShare;
+    return _age(slot, now).inMicroseconds < limit;
+  }
+
+  static Duration _age(CheerSlot slot, DateTime now) {
+    final age = now.difference(slot.shownAt);
+    return age.isNegative ? Duration.zero : age;
+  }
+
+  /// Offsets of the search grid, nearest to the tap first. The tap spot itself is first.
   static List<Point<double>> spotOffsets() {
     final columns = CheerTuning.spotColumns ~/ 2;
     final rows = CheerTuning.spotRows ~/ 2;
@@ -88,36 +154,36 @@ abstract final class CheerLayout {
 
   static double _distance(Point<double> p) => p.x * p.x + p.y * p.y;
 
-  /// For the full-gauge phrase: the free box nearest to the tap, or null when all 15 spots are
-  /// taken. [bounds] keeps the box on screen when given.
-  static CheerRect? findSpot({
-    required CheerRect wanted,
-    required List<CheerRect> visible,
+  /// Handles one tap. A phrase always appears: at the tap if it is free, else at the nearest
+  /// free grid spot (kept on screen when [bounds] is given), else at the tap after the oldest
+  /// phrase is removed. Expired phrases are dropped first.
+  static CheerPlacement show({
+    required Point<double> tap,
+    required int length,
+    required double fontSize,
+    required List<CheerSlot> slots,
+    required DateTime now,
     CheerRect? bounds,
   }) {
-    if (!hasRoom(visible.length)) return null;
+    final live = alive(slots, now);
+    final blocking = blockers(live, now);
+    final wanted = boxFor(center: tap, length: length, fontSize: fontSize);
+
     for (final offset in spotOffsets()) {
       final box = wanted.shifted(offset.x, offset.y);
       if (bounds != null && !box.isInside(bounds)) continue;
-      if (isFree(box, visible)) return box;
+      if (blocking.any(box.overlaps)) continue;
+      return CheerPlacement(
+        slots: List.unmodifiable([...live, CheerSlot(box, now)]),
+        box: box,
+        evictedOldest: false,
+      );
     }
-    return null;
+    final kept = live.isEmpty ? live : live.sublist(1);
+    return CheerPlacement(
+      slots: List.unmodifiable([...kept, CheerSlot(wanted, now)]),
+      box: wanted,
+      evictedOldest: live.isNotEmpty,
+    );
   }
-
-  /// The share of its lifetime a visible phrase keeps once [newerCount] newer phrases exist:
-  /// 1 for the newest, 0.6 for the one before it, 0.35 for the one before that and older.
-  static double lifetimeShare(int newerCount) => switch (newerCount) {
-    <= 0 => 1,
-    1 => CheerTuning.previousLifetimeShare,
-    _ => CheerTuning.olderLifetimeShare,
-  };
-
-  static Duration lifetimeFor(int newerCount) => Duration(
-    microseconds:
-        (CheerTuning.lifetime.inMicroseconds * lifetimeShare(newerCount))
-            .round(),
-  );
-
-  static bool hasRoom(int visibleCount) =>
-      visibleCount < CheerTuning.maxVisible;
 }
