@@ -189,4 +189,51 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settings_mapContribute => 'Share my mood on the map';
+
+  @override
+  String get moodSelect_openCalendar => 'View calendar';
+
+  @override
+  String get note_title => 'Note for today';
+
+  @override
+  String get note_hint => 'Leave one line';
+
+  @override
+  String get note_skip => 'Skip';
+
+  @override
+  String get note_save => 'Save';
+
+  @override
+  String get note_presetLabel => 'Or pick one';
+
+  @override
+  String get note_presetProud => 'I felt proud today';
+
+  @override
+  String get note_presetCalm => 'I felt calm';
+
+  @override
+  String get note_presetThanks => 'Something made me grateful';
+
+  @override
+  String get note_presetHard => 'It was hard, but I got through';
+
+  @override
+  String get note_presetTired => 'I was very tired';
+
+  @override
+  String get note_presetRest => 'I just want to rest';
+
+  @override
+  String get dayDetail_note => 'Note';
+
+  @override
+  String get dayDetail_empty => 'Nothing recorded this day';
+
+  @override
+  String calendar_openDay(String date) {
+    return 'View $date';
+  }
 }

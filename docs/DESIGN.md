@@ -43,7 +43,7 @@ tool/fl test                 # 대비 검사까지 돕니다
 
 - 세트를 하나 더 두면 테마가 하나 늘어납니다. 색을 새로 넣으면 모든 테마에 같은 이름으로 넣어야 합니다.
 - 색은 `#RRGGBB` 나 `#RRGGBBAA`, 크기는 `16px` 이나 `16`(숫자만 적으면 px), 줄 높이는 `1.5` 나 `150%`, 시간은 `120ms` 처럼 씁니다.
-- 앱 코드가 쓰는 이름은 지울 수 없습니다. 지우면 생성기가 어느 이름이 빠졌는지 알려 주고 멈춥니다. 목록은 `tool/gen_tokens.py` 의 `REQUIRED_CORE`(간격 `sm` ~ `xxxl`, 둥글기 `card` `button` `pill`, 글자 `display` `title` `body` `label` `count`, 움직임 `fillRise`, 글꼴 `family`)와 `REQUIRED_COLORS`(모든 테마의 색)입니다. 이름을 더 두는 것은 괜찮습니다.
+- 앱 코드가 쓰는 이름은 지울 수 없습니다. 지우면 생성기가 어느 이름이 빠졌는지 알려 주고 멈춥니다. 목록은 `tool/gen_tokens.py` 의 `REQUIRED_CORE`(간격 `xs` ~ `xxxl`, 둥글기 `card` `button` `pill`, 글자 `display` `title` `body` `label` `count` `wordmark`, 움직임 `fillRise` `tap` `page`, 글꼴 `family`)와 `REQUIRED_COLORS`(모든 테마의 색)입니다. 이름을 더 두는 것은 괜찮습니다.
 - 글자 토큰에는 `letterSpacing`(자간)을 `-0.5px` 처럼 쓸 수 있습니다. 자간을 좁히는 음수도 됩니다. 알 수 없는 필드(`fontWeigth` 같은 오타)는 오류로 알려 줍니다.
 - 시간은 0 이상 3600000ms(한 시간) 이하의 정수 ms 입니다. `0.12s` 처럼 초로 적어도 정수 ms 로 떨어져야 합니다.
 - `fillEdge` 는 채움 윗면(물 윗면)에 긋는 2px 선의 색입니다. 채움이 바탕과 비슷한 옅은 색이어도 차오른 높이가 보이도록 바탕과의 대비를 1.5 이상으로 둡니다.
@@ -99,6 +99,9 @@ Figma 의 Tokens Studio 플러그인에서 한 번만 설정합니다. 메뉴 �
 | `mood_banner.dart` | 기분 고르기의 큰 배너 |
 | `fill_gauge.dart` | 두드리기 화면의 차오르는 채움 |
 | `character_slot.dart` | 캐릭터 자리. 상태는 idle, react, palmsTogether, finish |
+| `pressable_surface.dart` | 눌리는 모든 면. 아이콘 버튼(44px 원, 0.92배)과 배너, 카드(0.98배)가 살짝 어두워지며 줄어듭니다. 잉크 번짐과 사각 하이라이트는 없습니다 |
+| `water_painter.dart` | 두드리기 화면의 물. 앞 물결, 뒤 물결, 물방울을 단색으로 그립니다 |
+| `water_sim.dart` | 물의 용수철 계산. 숫자는 `lib/domain/tuning.dart` 의 `FillTuning` 에 있습니다 |
 
 캐릭터 애니메이션(Rive, Lottie)이 오면 `character_slot.dart` 안만 바꿉니다. 상태 이름을 애니메이션의 상태 이름과 맞추면 부르는 쪽은 그대로 둡니다.
 

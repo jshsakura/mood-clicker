@@ -50,5 +50,20 @@
   "settings_soundPack": "サウンドセット",
   "settings_reminder": "夜のリマインダー",
   "settings_reminderTime": "通知の時刻",
-  "settings_mapContribute": "地図に自分の気分を足す"
+  "settings_mapContribute": "地図に自分の気分を足す",
+  "moodSelect_openCalendar": "カレンダーを見る",
+  "note_title": "今日のひとこと",
+  "note_hint": "ひとことで残してみましょう",
+  "note_skip": "スキップ",
+  "note_save": "残す",
+  "note_presetLabel": "こんな言葉はどう？",
+  "note_presetProud": "誇らしい一日でした",
+  "note_presetCalm": "心が穏やかでした",
+  "note_presetThanks": "ありがたいことがありました",
+  "note_presetHard": "つらかったけど乗り越えました",
+  "note_presetTired": "とても疲れました",
+  "note_presetRest": "ゆっくり休みたいです",
+  "dayDetail_note": "ひとこと",
+  "dayDetail_empty": "この日は記録がありません",
+  "calendar_openDay": "{date}を見る"
 }

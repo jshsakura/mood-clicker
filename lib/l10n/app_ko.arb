@@ -60,7 +60,9 @@
   "@tap_todayCount": {
     "description": "두드리기 화면 아래에 오늘 누적 수를 보여 주는 문구입니다. 숫자는 자리표시자 count 로 들어갑니다.",
     "placeholders": {
-      "count": {"type": "int"}
+      "count": {
+        "type": "int"
+      }
     }
   },
   "calendar_prevMonth": "지난달",
@@ -83,8 +85,12 @@
   "@dayDetail_moodCount": {
     "description": "그날 상세에서 기분별 누적 수를 보여 주는 문구입니다. mood 는 기분 이름, count 는 누적 수입니다.",
     "placeholders": {
-      "mood": {"type": "String"},
-      "count": {"type": "int"}
+      "mood": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
     }
   },
   "review_thisWeek": "이번 주",
@@ -99,22 +105,31 @@
   "@review_ratioLine": {
     "description": "돌아보기에서 그 기간의 행복 쪽과 슬픔 쪽 비율을 한 줄로 보여 주는 문구입니다.",
     "placeholders": {
-      "happy": {"type": "int"},
-      "sad": {"type": "int"}
+      "happy": {
+        "type": "int"
+      },
+      "sad": {
+        "type": "int"
+      }
     }
   },
   "review_topMood": "가장 많았던 기분: {mood}",
   "@review_topMood": {
     "description": "돌아보기에서 그 기간에 가장 많이 두드린 기분을 알려 주는 문구입니다.",
     "placeholders": {
-      "mood": {"type": "String"}
+      "mood": {
+        "type": "String"
+      }
     }
   },
   "review_mostTappedDay": "가장 많이 두드린 날: {date}",
   "@review_mostTappedDay": {
     "description": "돌아보기에서 그 기간에 가장 많이 두드린 날을 알려 주는 문구입니다. date 는 달력 형식으로 언어에 맞게 표시됩니다.",
     "placeholders": {
-      "date": {"type": "DateTime", "format": "yMMMMd"}
+      "date": {
+        "type": "DateTime",
+        "format": "yMMMMd"
+      }
     }
   },
   "review_trendUp": "지난 기간보다 행복 쪽이 늘었습니다",
@@ -137,8 +152,12 @@
   "@map_legendLine": {
     "description": "지도 화면 아래에 보이는 범위 전체의 행복 쪽, 슬픔 쪽 비율입니다.",
     "placeholders": {
-      "happy": {"type": "int"},
-      "sad": {"type": "int"}
+      "happy": {
+        "type": "int"
+      },
+      "sad": {
+        "type": "int"
+      }
     }
   },
   "map_permissionReason": "동네 기분 지도를 보려면 위치가 필요합니다",
@@ -224,5 +243,70 @@
   "settings_mapContribute": "지도에 내 기분 보태기",
   "@settings_mapContribute": {
     "description": "설정에서 내 기분을 지도에 보내는지 고르는 항목입니다. 기본은 꺼짐이고 3단계에 켭니다."
+  },
+  "moodSelect_openCalendar": "달력 보기",
+  "@moodSelect_openCalendar": {
+    "description": "기분 고르기 화면의 달력 버튼 숨김 이름(접근성)입니다."
+  },
+  "note_title": "오늘 한마디",
+  "@note_title": {
+    "description": "끝까지 채운 날 두드리기 화면을 나갈 때 뜨는 한마디 창의 제목입니다."
+  },
+  "note_hint": "한 줄로 남겨 보세요",
+  "@note_hint": {
+    "description": "한마디 입력칸의 안내 문구입니다. 40자까지 쓸 수 있습니다."
+  },
+  "note_skip": "건너뛰기",
+  "@note_skip": {
+    "description": "한마디를 남기지 않고 닫는 버튼입니다."
+  },
+  "note_save": "남기기",
+  "@note_save": {
+    "description": "한마디를 저장하고 닫는 버튼입니다."
+  },
+  "note_presetLabel": "이런 말은 어때요",
+  "@note_presetLabel": {
+    "description": "준비된 문장 목록 위의 작은 제목입니다."
+  },
+  "note_presetProud": "뿌듯한 하루였어요",
+  "@note_presetProud": {
+    "description": "준비된 한마디 문장입니다. 고른 문장의 id 만 나중에 지도로 보낼 수 있습니다."
+  },
+  "note_presetCalm": "마음이 차분했어요",
+  "@note_presetCalm": {
+    "description": "준비된 한마디 문장입니다."
+  },
+  "note_presetThanks": "고마운 일이 있었어요",
+  "@note_presetThanks": {
+    "description": "준비된 한마디 문장입니다."
+  },
+  "note_presetHard": "힘들었지만 버텼어요",
+  "@note_presetHard": {
+    "description": "준비된 한마디 문장입니다."
+  },
+  "note_presetTired": "많이 피곤했어요",
+  "@note_presetTired": {
+    "description": "준비된 한마디 문장입니다."
+  },
+  "note_presetRest": "푹 쉬고 싶어요",
+  "@note_presetRest": {
+    "description": "준비된 한마디 문장입니다."
+  },
+  "dayDetail_note": "한마디",
+  "@dayDetail_note": {
+    "description": "하루 상세 화면에서 그날 남긴 한마디 위의 작은 제목입니다."
+  },
+  "dayDetail_empty": "이날은 기록이 없습니다",
+  "@dayDetail_empty": {
+    "description": "기록이 없는 날을 눌렀을 때 하루 상세 화면에 보이는 문구입니다."
+  },
+  "calendar_openDay": "{date} 보기",
+  "@calendar_openDay": {
+    "description": "달력의 날짜 칸 숨김 이름(접근성)입니다. {date} 는 이미 현지 형식으로 만든 날짜입니다.",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
   }
 }

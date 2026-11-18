@@ -155,4 +155,31 @@ void main() {
   test('the display follow time is a plain tuning constant', () {
     expect(GaugeTuning.displayFollow, const Duration(milliseconds: 420));
   });
+
+  group('spilled', () {
+    test('lowers the level and keeps the grace and decay timing', () {
+      var gauge = const FillGauge.empty();
+      for (var i = 0; i < 30; i++) {
+        gauge = gauge.tap(t0);
+      }
+      final before = gauge.valueAt(at(2000));
+      final after = gauge.spilled(0.1).valueAt(at(2000));
+      expect(after, closeTo(before - 0.1, 1e-9));
+      expect(gauge.spilled(0.1).valueAt(at(500)), closeTo(0.4, 1e-9));
+    });
+
+    test(
+      'never goes below zero and a zero or negative amount changes nothing',
+      () {
+        final gauge = const FillGauge.empty().tap(t0);
+        expect(gauge.spilled(5).valueAt(t0), 0);
+        expect(identical(gauge.spilled(0), gauge), isTrue);
+        expect(identical(gauge.spilled(-1), gauge), isTrue);
+      },
+    );
+
+    test('is not a fill moment', () {
+      expect(const FillGauge.empty().tap(t0).spilled(0.01).justFilled, isFalse);
+    });
+  });
 }

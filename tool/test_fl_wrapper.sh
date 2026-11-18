@@ -218,7 +218,7 @@ fake_flutter "$PINNED"
 fake_dart
 run format.sh
 expect_rc 0
-expect_log "^dart format lib/design/app_theme.dart .* lib/main.dart "
+expect_log "^dart format .*lib/design/app_theme.dart .* lib/main.dart "
 expect_no_log "\.g\.dart"
 expect_no_log "set-exit-if-changed"
 
@@ -227,7 +227,7 @@ fake_flutter "$PINNED"
 fake_dart
 run format.sh --check
 expect_rc 0
-expect_log "^dart format --output=none --set-exit-if-changed lib/design/app_theme.dart .* lib/main.dart "
+expect_log "^dart format --output=none --set-exit-if-changed .*lib/design/app_theme.dart .* lib/main.dart "
 expect_no_log "\.g\.dart"
 
 # --- bash 3.2 ----------------------------------------------------------------

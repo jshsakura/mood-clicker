@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mood_clicker/design/app_theme.dart';
 import 'package:mood_clicker/design/tokens.g.dart';
-import 'package:mood_clicker/main.dart';
+import 'preview_host.dart';
 
 void main() {
   testWidgets('a theme switch lands in one frame, with no blended colors', (
     tester,
   ) async {
-    await tester.pumpWidget(const MoodClickerApp());
+    await tester.pumpWidget(const PreviewHost());
     for (final target in [darkPalette, pinkPalette, lightPalette]) {
       await tester.tap(find.text(target.name));
       await tester

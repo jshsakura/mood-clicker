@@ -185,4 +185,51 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get settings_mapContribute => '지도에 내 기분 보태기';
+
+  @override
+  String get moodSelect_openCalendar => '달력 보기';
+
+  @override
+  String get note_title => '오늘 한마디';
+
+  @override
+  String get note_hint => '한 줄로 남겨 보세요';
+
+  @override
+  String get note_skip => '건너뛰기';
+
+  @override
+  String get note_save => '남기기';
+
+  @override
+  String get note_presetLabel => '이런 말은 어때요';
+
+  @override
+  String get note_presetProud => '뿌듯한 하루였어요';
+
+  @override
+  String get note_presetCalm => '마음이 차분했어요';
+
+  @override
+  String get note_presetThanks => '고마운 일이 있었어요';
+
+  @override
+  String get note_presetHard => '힘들었지만 버텼어요';
+
+  @override
+  String get note_presetTired => '많이 피곤했어요';
+
+  @override
+  String get note_presetRest => '푹 쉬고 싶어요';
+
+  @override
+  String get dayDetail_note => '한마디';
+
+  @override
+  String get dayDetail_empty => '이날은 기록이 없습니다';
+
+  @override
+  String calendar_openDay(String date) {
+    return '$date 보기';
+  }
 }
