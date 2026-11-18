@@ -7,6 +7,7 @@ import unittest
 from pathlib import Path
 
 from slop_scan import findings_in_line, scan_diff
+from testsupport import run_git
 
 SCANNER = Path(__file__).resolve().parent / "slop_scan.py"
 
@@ -77,7 +78,7 @@ class ClosesThirdReview(unittest.TestCase):
     def test_renamed_file_is_scanned_as_added(self):
         repo_dir = tempfile.TemporaryDirectory()
         d = Path(repo_dir.name)
-        run = lambda *a: subprocess.run(["git", *a], cwd=d, check=True, capture_output=True, text=True)
+        run = lambda *a: run_git(d, *a)
         run("init", "-q")
         run("config", "user.email", "dev@example.com")
         run("config", "user.name", "dev")
@@ -109,7 +110,7 @@ class JudgesARangeByItsResult(unittest.TestCase):
         self.repo_dir.cleanup()
 
     def git(self, *a):
-        return subprocess.run(["git", *a], cwd=self.d, check=True, capture_output=True, text=True)
+        return run_git(self.d, *a)
 
     def commit(self, path, text, message):
         (self.d / path).write_text(text)

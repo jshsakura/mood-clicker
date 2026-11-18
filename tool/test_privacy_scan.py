@@ -11,6 +11,7 @@ import unittest
 from pathlib import Path
 
 from privacy_scan import findings_in_line, scan_diff, scan_files
+from testsupport import run_git
 
 SCANNER = Path(__file__).resolve().parent / "privacy_scan.py"
 
@@ -37,7 +38,7 @@ class Repo:
         self.commit("README.md", "start\n", "chore: start")
 
     def git(self, *args):
-        return subprocess.run(["git", *args], cwd=self.dir, check=True, capture_output=True, text=True).stdout.strip()
+        return run_git(self.dir, *args)
 
     def write(self, name, text):
         path = self.dir / name
