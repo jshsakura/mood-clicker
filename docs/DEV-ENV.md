@@ -192,10 +192,25 @@ tool/shots.sh --update   # 의도한 변경이면 골든을 새 그림으로 바
 |---|---|
 | `AGENTS.md` | 에이전트용 규칙. 하지 않을 일, 확인 명령, git 규칙, 개인정보, 글쓰기. 사람은 README 부터 봅니다 |
 | `CLAUDE.md` | `@AGENTS.md` 한 줄. Claude Code 가 같은 규칙을 읽게 하는 연결이라 규칙은 한 곳에서만 고칩니다 |
-| `.claude/settings.json` | Claude Code 설정. 쓰는 플러그인(pstack, eli5)과, 확인 명령(`tool/fl`, `tool/fl_dart`, `privacy_scan`, `unittest`)을 묻지 않고 돌리는 허용 목록 |
+| `.claude/settings.json` | Claude Code 설정. 쓰는 플러그인(pstack, eli5)과, 확인 명령(`tool/fl`, `tool/fl_dart`, `privacy_scan`, `unittest`)을 묻지 않고 돌리는 허용 목록, 아래 훅 연결 |
+| `.claude/hooks/` | Claude Code 훅. 아래 "Claude 훅" 절 |
+| `tool/team/` | 여러 에이전트 세션을 tmux 에 띄우고 서로 말을 주고받는 도구. `tool/team/README.md` |
 
 개인 설정은 `.claude/settings.local.json` 에 두면 되고, 이 파일은 git 이 무시합니다.
 규칙을 바꾸면 사람이 읽는 문서(이 문서, README)와 `AGENTS.md` 가 어긋나지 않게 함께 고칩니다.
+
+## Claude 훅
+
+`.claude/hooks/` 의 파이썬 파일이 Claude Code 가 Bash 를 부르기 전에 명령을 검사하고, 어긋나면 거절하면서 고칠 방법을 알려 줍니다. `python3` 만 있으면 되고 `.claude/settings.json` 의 `hooks` 에 `$CLAUDE_PROJECT_DIR` 기준 상대 경로로 연결돼 있어 클론하면 바로 켜집니다. 이 훅은 에이전트를 막을 뿐이고 사람이 터미널에서 치는 명령에는 닿지 않습니다. 사람 쪽은 `.githooks` 가 막습니다.
+
+| 파일 | 막는 것 | 대신 할 일 |
+|---|---|---|
+| `push_guard.py` | `main`, `master` 로 push(`--all`, `--mirror`, 인자 없는 push 를 main 에서 칠 때 포함), 같은 명령 안에서 `tool/test.sh &&` 로 테스트를 먼저 돌리지 않은 push | 브랜치를 올리고 PR 로 합칩니다. `tool/test.sh && git push -u origin <브랜치>` 로 한 명령에 묶습니다 |
+| `no_verify_guard.py` | `--no-verify`, `git commit -n`, `core.hooksPath` 바꾸기 | 훅이 알려 준 것을 고치고 플래그 없이 다시 합니다 |
+| `stash_guard.py` | 이름 없는 `git stash`, 참조 없는 `stash pop`, `apply`, `drop` | stash 목록은 모든 worktree 가 같이 쓰므로 `git stash push -m "<무엇>"` 로 이름을 붙이고 `git stash pop stash@{n}` 로 가리킵니다 |
+| `idle_guard.py` | 아무 일도 안 하는 호출, `sleep` 만 하는 호출, `sleep` 이 든 폴링 루프, 30초가 넘는 전경 `sleep`, 늘지 않은 백그라운드 작업 출력 파일 다시 읽기 | Bash 한 번은 명령이 무엇이든 대화 전체를 다시 청구하므로, 오래 걸리면 `run_in_background`, 조건을 기다리면 Monitor 의 `until` 을 한 번만 씁니다 |
+
+공통 파서 `shellparse.py` 는 따옴표와 heredoc 안의 글을 명령으로 읽지 않고, `bash -c "..."` 안과 `&&`, `;`, `|` 로 이은 명령을 따로 봅니다. 테스트는 `tool/test_claude_hooks.py` 이고 `tool/test.sh` 가 같이 돌립니다. 훅을 고칠 때는 오탐(정상 명령을 막는 것)이 제일 큰 위험이라서 "통과해야 하는 명령" 목록에도 케이스를 먼저 추가합니다. 급할 때는 개인 설정 `.claude/settings.local.json` 에서 훅을 끄면 되지만, 규칙이 마음에 안 들면 끄지 말고 고칩니다.
 
 ## 다섯 세션 팀 운영
 

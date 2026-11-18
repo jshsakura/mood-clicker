@@ -1,0 +1,288 @@
+#!/usr/bin/env python3
+"""itl: pass messages between tmux panes of one machine, so agents can talk to each other.
+
+An agent that wants to tell "the leader" something does not know the tmux socket or pane id of
+the leader. itl is that one layer: panes get a name (tmux pane option @itl_name, set by
+tool/team/start.sh or `itl name`), and `itl send leader '...'` finds the pane and types the text
+into it.
+
+  itl list [--all]            panes of the current tmux server (--all: every server of this user)
+  itl whoami                  the name and address of this pane
+  itl name <name>             name this pane
+  itl send <to> <text>        type the text into that pane and press Enter (--no-enter to skip)
+  itl read <to> [-n LINES]    the last lines of that pane's screen
+  itl doctor                  check tmux and the pane this runs in
+
+<to> is a pane name, or an exact address as `itl list` prints it (<session>:<pane id>).
+
+Rules:
+1. Discovery, not configuration. itl asks tmux what exists now and keeps no state of its own.
+2. One machine. No network, no credentials.
+3. Standard library only, one file.
+4. The text is data. It is pasted as a literal tmux buffer, never sent as key names, so text
+   received from someone else cannot press keys in the target pane.
+5. An ambiguous target is an error. Guessing would put the text into the wrong pane, and a
+   message that was typed into a pane cannot be taken back.
+
+Sending presses Enter, so sending to a pane that runs a shell runs the text as a command. Send to
+panes that run an agent.
+"""
+from __future__ import annotations
+
+import argparse
+import os
+import re
+import secrets
+import shutil
+import subprocess
+import sys
+import time
+
+TIMEOUT_SEC = 5.0
+MAX_TEXT_BYTES = 8192
+# An agent's terminal UI digests a paste asynchronously. An Enter that arrives before it is done
+# is folded into the paste and the prompt is left unsubmitted, so Enter comes after a pause.
+PASTE_SETTLE_SEC = 0.4
+# A second Enter catches a first one that was still swallowed. Enter on an empty prompt does
+# nothing, so the extra press is harmless.
+ENTER_RETRY_SEC = 0.6
+NAME_OPTION = "@itl_name"
+NAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,31}$")
+# Control characters other than tab and line feed are refused: they would act in the target.
+CONTROL_RE = re.compile(r"[\x00-\x08\x0b-\x1f\x7f]")
+PANE_FORMAT = "\t".join([
+    "#{pane_id}", "#{session_name}", "#{window_index}.#{pane_index}",
+    "#{pane_current_command}", "#{pane_current_path}", f"#{{{NAME_OPTION}}}",
+])
+
+
+class ItlError(Exception):
+    pass
+
+
+def run(argv, input_text=None):
+    """(returncode, stdout, stderr). Never raises: a missing tmux is a normal state."""
+    try:
+        done = subprocess.run(
+            argv, input=input_text, stdin=None if input_text is not None else subprocess.DEVNULL,
+            capture_output=True, text=True, errors="replace", timeout=TIMEOUT_SEC)
+        return done.returncode, done.stdout or "", done.stderr or ""
+    except (OSError, subprocess.SubprocessError) as exc:
+        return 127, "", str(exc)
+
+
+def tmux_bin():
+    path = shutil.which("tmux")
+    if not path:
+        raise ItlError("tmux is not installed")
+    return path
+
+
+def own_socket():
+    return (os.environ.get("TMUX") or "").split(",", 1)[0]
+
+
+def sockets(all_servers):
+    """Sockets to ask: the current server, or every socket of this user."""
+    current = own_socket()
+    if current and not all_servers:
+        return [current]
+    base = os.path.join(os.environ.get("TMUX_TMPDIR") or "/tmp", f"tmux-{os.getuid()}")
+    try:
+        found = [os.path.join(base, n) for n in sorted(os.listdir(base))]
+    except OSError:
+        found = []
+    if current and current not in found:
+        found.append(current)
+    return found
+
+
+def parse_panes(raw, socket):
+    panes = []
+    for line in raw.splitlines():
+        parts = line.split("\t", 5)
+        if len(parts) < 6:
+            continue
+        pane_id, session, where, command, cwd, name = parts
+        panes.append({"socket": socket, "id": pane_id, "session": session, "where": where,
+                      "command": command, "cwd": cwd, "name": name,
+                      "addr": f"{session}:{pane_id}"})
+    return panes
+
+
+def discover(all_servers=False):
+    binary = tmux_bin()
+    panes = []
+    for sock in sockets(all_servers):
+        code, out, err = run([binary, "-S", sock, "list-panes", "-a", "-F", PANE_FORMAT])
+        if code != 0:
+            if sock == own_socket() and not all_servers:
+                raise ItlError(f"cannot reach the current tmux server: {err.strip() or code}")
+            continue  # a dead socket file is common
+        panes += parse_panes(out, sock)
+    return panes
+
+
+def resolve(panes, target):
+    """(pane, error). A name or an exact address; anything ambiguous is an error."""
+    want = (target or "").strip()
+    if not want:
+        return None, "empty target"
+    for key in ("name", "addr"):
+        hits = [p for p in panes if p[key] == want]
+        if len(hits) == 1:
+            return hits[0], ""
+        if len(hits) > 1:
+            options = ", ".join(p["addr"] for p in hits)
+            return None, f"'{want}' matches several panes, use an address: {options}"
+    return None, f"no pane named or addressed '{want}' (see: itl list)"
+
+
+def whoami(panes):
+    pane_id, socket = os.environ.get("TMUX_PANE"), own_socket()
+    hits = [p for p in panes if p["id"] == pane_id and (not socket or p["socket"] == socket)]
+    return hits[0] if len(hits) == 1 else None
+
+
+def sender_tag(name):
+    return f"[from {name} · reply: itl send {name} '...'] "
+
+
+def send_text(pane, text, enter=True):
+    """Pastes text into the pane as a literal buffer, then presses Enter."""
+    if len(text.encode("utf-8")) > MAX_TEXT_BYTES:
+        raise ItlError(f"text is longer than {MAX_TEXT_BYTES} bytes")
+    if CONTROL_RE.search(text):
+        raise ItlError("text contains control characters")
+    base, target = [tmux_bin(), "-S", pane["socket"]], pane["id"]
+    code, mode, err = run([*base, "display-message", "-p", "-t", target, "#{pane_in_mode}"])
+    if code != 0:
+        raise ItlError(err.strip() or f"cannot read the pane state ({code})")
+    if enter and mode.strip() == "1":
+        run([*base, "send-keys", "-X", "-t", target, "cancel"])  # leave copy mode first
+    buffer = "itl-" + secrets.token_hex(8)
+    code, _out, err = run([*base, "load-buffer", "-b", buffer, "-"], input_text=text)
+    if code != 0:
+        raise ItlError(err.strip() or f"load-buffer failed ({code})")
+    # -p frames the paste so a terminal UI does not take Enter as a newline; -r keeps line feeds.
+    code, _out, err = run([*base, "paste-buffer", "-p", "-r", "-d", "-b", buffer, "-t", target])
+    if code != 0:
+        run([*base, "delete-buffer", "-b", buffer])
+        raise ItlError(err.strip() or f"paste failed ({code})")
+    if enter:
+        for delay in (PASTE_SETTLE_SEC, ENTER_RETRY_SEC):
+            time.sleep(delay)
+            code, _out, err = run([*base, "send-keys", "-t", target, "Enter"])
+            if code != 0:
+                raise ItlError(err.strip() or f"Enter failed ({code})")
+
+
+def read_screen(pane, lines):
+    code, out, err = run([tmux_bin(), "-S", pane["socket"], "capture-pane", "-p", "-t", pane["id"],
+                          "-S", f"-{max(lines, 1)}"])
+    if code != 0:
+        raise ItlError(err.strip() or f"capture-pane failed ({code})")
+    return out
+
+
+def format_table(panes, me):
+    if not panes:
+        return "no panes: tmux is not running here."
+    rows = [("", "NAME", "ADDR", "WHERE", "COMMAND", "CWD")]
+    for p in panes:
+        mark = "*" if me and p["addr"] == me["addr"] and p["socket"] == me["socket"] else ""
+        rows.append((mark, p["name"] or "-", p["addr"], p["where"], p["command"], p["cwd"]))
+    widths = [max(len(r[i]) for r in rows) for i in range(5)]
+    return "\n".join("  ".join(c.ljust(w) for c, w in zip(r[:5], widths)) + "  " + r[5] for r in rows)
+
+
+def cmd_list(args):
+    panes = discover(args.all)
+    print(format_table(panes, whoami(panes)))
+
+
+def cmd_whoami(_args):
+    me = whoami(discover())
+    if not me:
+        raise ItlError("this process is not in a tmux pane")
+    print(f"{me['name'] or '-'}  {me['addr']}")
+
+
+def cmd_name(args):
+    if not NAME_RE.match(args.name):
+        raise ItlError("a name is 1 to 32 letters, digits, dot, dash or underscore, starting with a letter or digit")
+    me = whoami(discover())
+    if not me:
+        raise ItlError("this process is not in a tmux pane")
+    code, _out, err = run([tmux_bin(), "-S", me["socket"], "set-option", "-p", "-t", me["id"], NAME_OPTION, args.name])
+    if code != 0:
+        raise ItlError(err.strip() or f"set-option failed ({code})")
+
+
+def cmd_send(args):
+    panes = discover()
+    pane, error = resolve(panes, args.to)
+    if not pane:
+        raise ItlError(error)
+    me = whoami(panes)
+    text = " ".join(args.text)
+    if me and me["name"]:
+        text = sender_tag(me["name"]) + text
+    send_text(pane, text, enter=not args.no_enter)
+
+
+def cmd_read(args):
+    pane, error = resolve(discover(), args.to)
+    if not pane:
+        raise ItlError(error)
+    sys.stdout.write(read_screen(pane, args.n))
+
+
+def cmd_doctor(_args):
+    try:
+        print(f"tmux: {tmux_bin()}")
+    except ItlError as exc:
+        print(f"tmux: {exc}")
+        return
+    print(f"server: {own_socket() or 'not inside tmux (every socket of this user is searched)'}")
+    panes = discover()
+    me = whoami(panes)
+    print(f"panes: {len(panes)}, named: {sum(1 for p in panes if p['name'])}")
+    print(f"this pane: {me['addr'] + ' ' + (me['name'] or '(no name: itl name <name>)') if me else 'none'}")
+
+
+def build_parser():
+    parser = argparse.ArgumentParser(prog="itl", description="Pass messages between tmux panes.")
+    sub = parser.add_subparsers(dest="command", required=True)
+    p = sub.add_parser("list", help="list panes")
+    p.add_argument("--all", action="store_true", help="every tmux server of this user")
+    p.set_defaults(func=cmd_list)
+    sub.add_parser("whoami", help="this pane").set_defaults(func=cmd_whoami)
+    p = sub.add_parser("name", help="name this pane")
+    p.add_argument("name")
+    p.set_defaults(func=cmd_name)
+    p = sub.add_parser("send", help="type text into a pane")
+    p.add_argument("to")
+    p.add_argument("text", nargs="+")
+    p.add_argument("--no-enter", action="store_true", help="paste only, do not submit")
+    p.set_defaults(func=cmd_send)
+    p = sub.add_parser("read", help="last lines of a pane")
+    p.add_argument("to")
+    p.add_argument("-n", type=int, default=40, help="lines (default 40)")
+    p.set_defaults(func=cmd_read)
+    sub.add_parser("doctor", help="check the setup").set_defaults(func=cmd_doctor)
+    return parser
+
+
+def main(argv=None):
+    args = build_parser().parse_args(argv)
+    try:
+        args.func(args)
+    except ItlError as exc:
+        print(f"itl: {exc}", file=sys.stderr)
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

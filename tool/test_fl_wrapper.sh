@@ -3,7 +3,7 @@
 # Fake flutter, dart and docker programs go first on PATH and record what they were asked to do.
 # This must also run on bash 3.2 (the macOS default): no mapfile, associative arrays or ${var,,}.
 set -u
-unset FL_DOCKER FLUTTER_VERSION FLUTTER_IMAGE
+unset FL_DOCKER FLUTTER_VERSION FLUTTER_IMAGE FL_GRADLE_VOLUME FL_ANDROID_SDK_VOLUME CMAKE_VERSION NDK_VERSION
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
