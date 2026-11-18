@@ -8,7 +8,10 @@ cd "$ROOT"
 echo "▶ 개인정보와 비밀 파일 검사"
 python3 tool/privacy_scan.py --staged
 
-DART=$(git diff --cached --name-only --diff-filter=ACMR -- '*.dart' || true)
+echo "▶ 디자인 토큰과 생성 파일이 맞는지"
+python3 tool/gen_tokens.py --check
+
+DART=$(git diff --cached --name-only --diff-filter=ACMR -- '*.dart' | grep -v '\.g\.dart$' || true)
 if [ -n "$DART" ]; then
   echo "▶ dart format, flutter analyze"
   # shellcheck disable=SC2086

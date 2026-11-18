@@ -57,6 +57,14 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
+  # 글꼴 이름은 design/tokens.json 의 font.family 와 같아야 한다.
+  fonts:
+    - family: Pretendard
+      fonts:
+        - asset: assets/fonts/Pretendard-Regular.otf
+        - asset: assets/fonts/Pretendard-Bold.otf
+          weight: 700
+
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg
