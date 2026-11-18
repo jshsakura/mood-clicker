@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mood_clicker/domain/day_key.dart';
 import 'package:mood_clicker/domain/day_record.dart';
 import 'package:mood_clicker/domain/mood.dart';
+import 'package:mood_clicker/domain/mood_journal.dart';
 import 'package:mood_clicker/l10n/app_localizations.g.dart';
 import 'package:mood_clicker/surfaces/mood_links.dart';
 import 'package:mood_clicker/surfaces/native_surfaces.dart';
@@ -106,17 +107,48 @@ void main() {
     },
   );
 
-  test('shortcuts hold every mood with its translated name', () async {
+  test('shortcuts hold four moods with their translated names', () async {
     final s = build();
     final ko = await AppLocalizations.delegate.load(const Locale('ko'));
-    await s.registerShortcuts(ko);
+    await s.registerShortcuts(ko, MoodJournal.empty(), noon);
     final entries = shortcuts.registered.single;
-    expect(entries.map((e) => e.type), Mood.values.map(shortcutTypeFor));
-    expect(entries.map((e) => e.title).toSet().length, Mood.values.length);
+    expect(
+      entries.map((e) => e.type),
+      [Mood.happy, Mood.excited, Mood.angry, Mood.sad].map(shortcutTypeFor),
+    );
     expect(entries.first.title, ko.moodSelect_moodHappy);
     final en = await AppLocalizations.delegate.load(const Locale('en'));
-    await s.registerShortcuts(en);
+    await s.registerShortcuts(en, MoodJournal.empty(), noon);
     expect(shortcuts.registered.last.first.title, 'Happy');
+  });
+
+  test('shortcuts follow what was picked in the last 14 days', () async {
+    final s = build();
+    final en = await AppLocalizations.delegate.load(const Locale('en'));
+    final journal = MoodJournal.empty()
+        .withTap(Mood.anxious, noon)
+        .withTap(Mood.anxious, noon)
+        .withTap(Mood.sad, noon);
+    await s.registerShortcuts(en, journal, noon);
+    expect(shortcuts.registered.single.map((e) => e.title), [
+      'Anxious',
+      'Sad',
+      'Happy',
+      'Excited',
+    ]);
+  });
+
+  test('registering again after a change replaces the shortcuts', () async {
+    final s = build();
+    final en = await AppLocalizations.delegate.load(const Locale('en'));
+    await s.registerShortcuts(en, MoodJournal.empty(), noon);
+    await s.registerShortcuts(
+      en,
+      MoodJournal.empty().withTap(Mood.anxious, noon),
+      noon,
+    );
+    expect(shortcuts.registered, hasLength(2));
+    expect(shortcuts.registered.last.first.title, 'Anxious');
   });
 }
 
