@@ -1,0 +1,8 @@
+{
+  "app_en.arb": {
+    "settings_languageKo": "The name of a language is written in that language, so Korean is shown as Hangul in every locale."
+  },
+  "app_ja.arb": {
+    "settings_languageKo": "The name of a language is written in that language, so Korean is shown as Hangul in every locale."
+  }
+}

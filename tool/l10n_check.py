@@ -10,6 +10,10 @@ Checks:
      Phrase counts may differ per language; phrases longer than 12
      characters only warn.
 
+  3. An en or ja file carries no Korean text (Hangul) in its values or phrases. A real exception,
+     such as the name of a Korean institution, goes in tool/l10n_allow.json with a reason, one entry
+     per ARB key (or per phrase text for a cheers file). An entry that is no longer needed is an error.
+
 Run: python3 tool/l10n_check.py    (pre-commit and CI run the same command)
 """
 import json
@@ -24,6 +28,11 @@ TEMPLATE = "app_ko.arb"
 MOOD_IDS = ("happy", "excited", "angry", "sad", "anxious")
 STAGES = ("low", "high", "full")
 PHRASE_LIMIT = 12
+
+ALLOW_FILE = ROOT / "tool" / "l10n_allow.json"
+# Languages whose files must not contain Korean text.
+HANGUL_FREE = ("en", "ja")
+HANGUL = re.compile(r"[\u1100-\u11ff\u3130-\u318f\uac00-\ud7a3]")
 
 # "{name}" is a placeholder; "{count, plural, ...}" opens an ICU clause, so
 # only single-word braces match.
@@ -41,7 +50,35 @@ def load_json(path):
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def check_arb_pair(template, locale_file):
+def language_of(name):
+    """The language code of app_<code>.arb or <code>.json."""
+    match = re.fullmatch(r"app_([A-Za-z_]+)\.arb|([A-Za-z_]+)\.json", name)
+    return (match.group(1) or match.group(2)) if match else None
+
+
+def check_value_language(name, values, allowed):
+    """Errors for Hangul in the values of an en or ja file.
+
+    values: {id: text}, where id is an ARB key or a phrase text. allowed: {id: reason}, the exceptions.
+    Every allow entry must carry a reason and must still be needed.
+    """
+    errors, used = [], set()
+    checked = language_of(name) in HANGUL_FREE
+    for key, text in values.items():
+        if checked and HANGUL.search(text):
+            if key in (allowed or {}):
+                used.add(key)
+            else:
+                errors.append(f"{name}: {key} has Korean text, but {name} is not Korean")
+    for key, reason in (allowed or {}).items():
+        if not isinstance(reason, str) or not reason.strip():
+            errors.append(f"{name}: allow list entry {key} needs a reason")
+        if key not in used:
+            errors.append(f"{name}: allow list entry {key} is not needed")
+    return errors
+
+
+def check_arb_pair(template, locale_file, allowed=None):
     """Errors of one locale ARB against the parsed template messages."""
     name = locale_file.name
     try:
@@ -59,13 +96,14 @@ def check_arb_pair(template, locale_file):
     for key in other:
         if not key.startswith("@") and key not in template:
             errors.append(f"{name}: extra key {key}")
-    return errors
+    texts = {k: v for k, v in other.items() if not k.startswith("@") and isinstance(v, str)}
+    return errors + check_value_language(name, texts, allowed)
 
 
-def check_cheers_file(path):
+def check_cheers_file(path, allowed=None):
     """Hard errors and soft warnings of one cheers JSON file."""
     name = path.name
-    errors, warnings = [], []
+    errors, warnings, texts = [], [], {}
     try:
         data = load_json(path)
     except (OSError, json.JSONDecodeError) as exc:
@@ -97,6 +135,7 @@ def check_cheers_file(path):
                 else:
                     errors.append(f"{name}: mood {mood_id} stage {stage} has a non-string phrase")
                     continue
+                texts[text] = text
                 if len(text) > PHRASE_LIMIT:
                     warnings.append(
                         f"{name}: mood {mood_id} stage {stage} phrase longer than {PHRASE_LIMIT} characters"
@@ -104,12 +143,28 @@ def check_cheers_file(path):
     for mood_id in moods:
         if mood_id not in MOOD_IDS:
             errors.append(f"{name}: unknown mood {mood_id}")
-    return errors, warnings
+    return errors + check_value_language(name, texts, allowed), warnings
+
+
+def load_allow(path=ALLOW_FILE):
+    """{file name: {id: reason}} from tool/l10n_allow.json. Empty when the file does not exist."""
+    return load_json(path) if path.is_file() else {}
+
+
+def check_allow_files(allow, known=()):
+    """Errors for allow entries that name a file the check does not know."""
+    return [f"l10n_allow.json: {name} is not an ARB or cheers file of this repository"
+            for name in allow if name not in known]
 
 
 def check_tree():
     """Errors and warnings of the whole repository tree."""
     errors, warnings = [], []
+    try:
+        allow = load_allow()
+    except (OSError, json.JSONDecodeError) as exc:
+        allow = {}
+        errors.append(f"l10n_allow.json: cannot read ({exc})")
     arb_files = sorted(ARB_DIR.glob("app_*.arb")) if ARB_DIR.is_dir() else []
     if not arb_files:
         errors.append(f"no ARB files under {ARB_DIR.relative_to(ROOT)}")
@@ -121,12 +176,15 @@ def check_tree():
             template = {}
         for path in arb_files:
             if path.name != TEMPLATE:
-                errors += check_arb_pair(template, path)
+                errors += check_arb_pair(template, path, allow.get(path.name))
     if CHEERS_DIR.is_dir():
         for path in sorted(CHEERS_DIR.glob("*.json")):
-            file_errors, file_warnings = check_cheers_file(path)
+            file_errors, file_warnings = check_cheers_file(path, allow.get(path.name))
             errors += file_errors
             warnings += file_warnings
+    known = {p.name for p in arb_files if p.name != TEMPLATE}
+    known |= {p.name for p in CHEERS_DIR.glob("*.json")} if CHEERS_DIR.is_dir() else set()
+    errors += check_allow_files(allow, known)
     return errors, warnings
 
 
