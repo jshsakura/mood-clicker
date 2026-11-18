@@ -56,3 +56,11 @@ tool/fl build apk --debug
 ## 글쓰기
 
 UI 문구와 문서는 합니다체로 쓴다. 엠대시로 문장을 잇지 않는다.
+
+## 스킬
+
+`.claude/skills/` 아래 세 스킬을 쓴다.
+
+- `cheers-write`: 기분별 응원 문구를 쓰거나 고칠 때 (`docs/PRINCIPLES.md`, `docs/EVIDENCE.md`, `tool/cheers_rules.json`, `tool/cheers_check.py`)
+- `principles-check`: 새 기능이나 화면을 여섯 가지 핵심 가치와 안전·민감정보 기준에 대어 볼 때 (`docs/PRINCIPLES.md`, `docs/PRIVACY.md`)
+- `l10n-add`: 화면 문구 키를 추가하고 번역을 맞출 때 (`docs/I18N.md`, `tool/l10n_check.py`)
