@@ -350,7 +350,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--langs",
         nargs="+",
-        default=["ko", "en"],
+        default=["ko", "en", "ja"],
         help="Languages to validate",
     )
     parser.add_argument(
