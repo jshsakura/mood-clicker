@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mood_clicker/design/parts/help_button.dart';
 import 'package:mood_clicker/design/parts/water_painter.dart';
 import 'package:mood_clicker/domain/day_key.dart';
 import 'package:mood_clicker/domain/feel_settings.dart';
@@ -62,6 +63,21 @@ void main() {
     final gesture = await tester.startGesture(const Offset(200, 500));
     expect(todayCount(app), 1);
     await gesture.up();
+  });
+
+  testWidgets('the help button opens the crisis sheet', (tester) async {
+    tester.platformDispatcher.localesTestValue = [const Locale('ko', 'KR')];
+    tester.platformDispatcher.localeTestValue = const Locale('ko', 'KR');
+    addTearDown(tester.platformDispatcher.clearAllTestValues);
+    final app = TestApp();
+    await tester.pumpWidget(
+      app.wrap(TapScreen(mood: Mood.happy, launchPhone: (url) async => true)),
+    );
+    await tester.pump(const Duration(milliseconds: 16));
+    expect(find.byType(HelpButton), findsOneWidget);
+    await tester.tap(find.bySemanticsLabel(ko.settings_mindCareHelp));
+    await settle(tester);
+    expect(find.text(ko.settings_mindCareTitle), findsOneWidget);
   });
 
   testWidgets('a tap on the back button is not a tap on the screen', (

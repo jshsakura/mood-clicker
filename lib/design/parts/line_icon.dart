@@ -11,6 +11,7 @@ enum LineIcons {
   map('map'),
   calendar('calendar'),
   settings('settings'),
+  help('help'),
   chevronLeft('chevron_left'),
   chevronRight('chevron_right'),
   chevronRightHeavy('chevron_right_heavy'),

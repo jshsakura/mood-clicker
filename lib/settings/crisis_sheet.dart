@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../design/app_theme.dart';
@@ -13,6 +14,9 @@ Future<bool> launchPhoneCall(String url) {
 
 /// Opens the crisis sheet for the region of the device. Reached from the settings and from the
 /// mood screen, so both show the same sheet.
+///
+/// The sheet drags: down to close, up to scroll when the region has more
+/// lines than fit.
 Future<void> showCrisisSheet(
   BuildContext context, {
   Future<bool> Function(String url) launchPhone = launchPhoneCall,
@@ -22,8 +26,16 @@ Future<void> showCrisisSheet(
   );
   return showModalBottomSheet<void>(
     context: context,
-    builder: (sheetContext) =>
-        CrisisSheet(region: region, launchPhone: launchPhone),
+    isScrollControlled: true,
+    builder: (sheetContext) => DraggableScrollableSheet(
+      expand: false,
+      snap: true,
+      builder: (context, scrollController) => CrisisSheet(
+        region: region,
+        launchPhone: launchPhone,
+        scrollController: scrollController,
+      ),
+    ),
   );
 }
 
@@ -33,10 +45,15 @@ class CrisisSheet extends StatelessWidget {
     super.key,
     required this.region,
     required this.launchPhone,
+    this.scrollController,
   });
 
   final CrisisRegion region;
   final Future<bool> Function(String url) launchPhone;
+
+  /// The sheet's own controller, so dragging scrolls while pinned and
+  /// dismisses at the top of the content.
+  final ScrollController? scrollController;
 
   @override
   Widget build(BuildContext context) {
@@ -59,13 +76,67 @@ class CrisisSheet extends StatelessWidget {
       'FindHelplineNote' => l10n.settings_mindCareFindHelplineNote,
       _ => null,
     };
+
+    /// Dials or texts, and when the system refuses, copies the number and
+    /// says so: the number on the row is the fallback.
+    Future<void> openEntry(CrisisEntry entry) async {
+      final url = entry.launchUrl!;
+      final opened = await launchPhone(url);
+      if (opened || !context.mounted) return;
+      await Clipboard.setData(
+        ClipboardData(
+          text: entry.trailing ?? entry.number ?? entry.textNumber ?? '',
+        ),
+      );
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(content: Text(l10n.settings_mindCareCopyFallback)),
+        );
+    }
+
     return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(Space.xl),
+      // The sheet grows with the region; small screens scroll instead of
+      // overflowing. The bar at the top says it can be dragged down to close.
+      child: SingleChildScrollView(
+        controller: scrollController,
+        padding: const EdgeInsets.fromLTRB(
+          Space.xl,
+          Space.md,
+          Space.xl,
+          Space.xl,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // The canvas grab bar. It drags the sheet closed and, for
+            // assistive tech, it is the top close button.
+            Semantics(
+              button: true,
+              label: l10n.settings_close,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => Navigator.of(context).pop(),
+                child: Center(
+                  child: Container(
+                    width: 36,
+                    height: 12,
+                    alignment: Alignment.center,
+                    child: Container(
+                      width: 36,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: palette.line,
+                        borderRadius: BorderRadius.circular(Radii.pill),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: Space.md),
             Text(
               l10n.settings_mindCareTitle,
               style: TypeScale.title.copyWith(
@@ -82,9 +153,7 @@ class CrisisSheet extends StatelessWidget {
             for (final entry in crisisEntriesFor(region)) ...[
               PressableSurface(
                 kind: PressableKind.card,
-                onTap: entry.launchUrl == null
-                    ? null
-                    : () => launchPhone(entry.launchUrl!),
+                onTap: entry.launchUrl == null ? null : () => openEntry(entry),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: Space.md),
                   child: Row(

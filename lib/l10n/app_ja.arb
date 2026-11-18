@@ -171,5 +171,6 @@
   "settings_mindCareFindHelplineNote": "国ごとの無料相談窓口をまとめたサイトが開きます",
   "settings_mindCareFootnoteJapan": "危険なときは110か119に電話してください。このアプリは医療機器ではなく、診療の代わりにはなりません。",
   "settings_mindCareFootnoteUs": "危険なときは911に電話してください。このアプリは医療機器ではなく、診療の代わりにはなりません。",
-  "settings_mindCareFootnoteOther": "危険なときは、今いる国の緊急番号に電話してください。このアプリは医療機器ではなく、診療の代わりにはなりません。"
+  "settings_mindCareFootnoteOther": "危険なときは、今いる国の緊急番号に電話してください。このアプリは医療機器ではなく、診療の代わりにはなりません。",
+  "settings_mindCareCopyFallback": "アプリを開けなかったため、番号をコピーしました。電話やメッセージアプリに貼り付けてください。"
 }

@@ -964,7 +964,6 @@ abstract class AppLocalizations {
   /// **'오늘 기분이 좋은 사람이 가까이에 많습니다'**
   String get map_togetherHappy;
 
-<<<<<<< HEAD
   /// 기분 고르기 화면의 큰 제목입니다.
   ///
   /// In ko, this message translates to:
@@ -1090,7 +1089,7 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'지금은 둘러보기용 표본 지도입니다'**
   String get map_sampleNotice;
-=======
+
   /// 기기 지역이 미국일 때 보이는 988 전화 이름입니다. 번호는 코드의 상수에서 옵니다.
   ///
   /// In ko, this message translates to:
@@ -1132,7 +1131,12 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'당장 위험하다면 지금 계신 나라의 긴급 번호에 전화합니다. 이 앱은 의료기기가 아니며 진료를 대신하지 않습니다.'**
   String get settings_mindCareFootnoteOther;
->>>>>>> 04a55ed (fix: route the crisis sheet by region and add a help button on the mood screen)
+
+  /// 전화나 문자 실행에 실패했을 때 잠깐 뜨는 안내입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'앱을 열지 못해 번호를 복사해 두었습니다. 전화나 문자 앱에 붙여 넣어 주세요.'**
+  String get settings_mindCareCopyFallback;
 }
 
 class _AppLocalizationsDelegate
