@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Flutter 를 도커 안에서 돌린다. 호스트에 SDK 를 깔지 않는다.
-# 예: tool/fl test, tool/fl analyze, tool/fl build apk --debug
+# Run Flutter inside Docker so the host needs no SDK.
+# Examples: tool/fl test, tool/fl analyze, tool/fl build apk --debug
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 IMAGE="${FLUTTER_IMAGE:-ghcr.io/cirruslabs/flutter:3.44.0}"

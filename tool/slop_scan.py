@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
-"""글과 코드에 AI 티가 나는 흔적이 섞이지 않게 막는다.
+"""Keep AI writing and code tells out of the repository.
 
-pstack 의 unslop(글), deslop(코드) 스킬 규칙 가운데 기계로 판정할 수 있는 것만 옮겼다.
-나머지(수동태, 군더더기 문장, 불필요한 방어 코드)는 리뷰 때 스킬로 본다.
+This ports the mechanical subset of the pstack unslop (prose) and deslop (code) skills.
+The rest (passive voice, filler, needless defensive code) stays a review step with those skills.
 
-  slop_scan.py --staged          스테이징된 변경 (pre-commit)
-  slop_scan.py --message FILE    커밋 메시지 (commit-msg)
-  slop_scan.py --range A..B      범위 안의 커밋 하나하나와 그 메시지 (pre-push, CI)
+  slop_scan.py --staged          staged changes (pre-commit)
+  slop_scan.py --message FILE    commit message (commit-msg)
+  slop_scan.py --range A..B      every commit in the range and its message (pre-push, CI)
 
-정말 필요한 줄이면 그 줄에 `slop-ok` 를 적는다.
+Put `slop-ok` on a line only when it is really needed.
 """
 import re
 import sys
 
-from privacy_scan import MERGES, diff_lines, git, message_text, scissors_apply
+from privacy_scan import MERGES, NO_RENAMES, diff_lines, git, message_text
 
 JUDGED = re.compile(r"\.(md|txt|dart|py|sh|ya?ml|json)$|(^|/)\.githooks/[^/]+$")
 NOT_JUDGED = re.compile(
@@ -21,18 +21,24 @@ NOT_JUDGED = re.compile(
     r"|^tool/(slop_scan|test_slop_scan)\.py$"
 )
 
-DASH = re.compile(r"[—–]")
+# An en dash between digits is a numeric range (3\u20135), not a sentence connector.
+DASH = re.compile(r"\u2014|(?<!\d)\u2013|\u2013(?!\d)")
 CURLY = re.compile(r"[“”‘’]")
 AI_WORDS = re.compile(
     r"\b(delve|tapestry|testament|pivotal|showcas\w*|garner\w*|intricate|interplay|vibrant|fostering"
     r"|leverag\w*|utiliz\w*|serves as|stands as|in order to|it is important to note"
-    r"|i hope this helps|let me know if|certainly!|great question|you're absolutely right)\b"
-    r"|물론입니다|도움이 되셨|도움이 되길|결론적으로|다양한 측면",
+    r"|i hope this helps|let me know if|great question|you're absolutely right)\b|\bcertainly!"
+    r"|\ubb3c\ub860\uc785\ub2c8\ub2e4|\ub3c4\uc6c0\uc774 \ub418\uc168|\ub3c4\uc6c0\uc774 \ub418\uae38|\uacb0\ub860\uc801\uc73c\ub85c",
     re.I,
 )
 EMOJI = "\U0001F300-\U0001FAFF☀-➿⭐⬆↔-⇿"
-DECORATED = re.compile(rf"^\s*(#{{1,6}}|[-*+]|\d+\.)\s+[{EMOJI}]")
-DEBUG_PRINT = re.compile(r"(?<![\w.])(print|debugPrint)\s*\(")
+DECORATED = re.compile(rf"^\s*(#{{1,6}}|[-*+]|\d+\.)\s+([{EMOJI}])")
+# Status marks carry meaning (done, failed, warning), so they are not decoration.
+STATUS_MARKS = set("\u2705\u274c\u26a0\u2714\u2716")
+DEBUG_PRINT = re.compile(r"(?<![\w.])(?:core\.)?(print|debugPrint)\s*\(")
+# "String print()" or "void print()" declares a method; it does not call the global print.
+PRINT_DECLARATION = re.compile(r"\b\w+[?>]?\s+(print|debugPrint)\s*\(")
+DART_COMMENT = re.compile(r"^\s*//")
 DYNAMIC_CAST = re.compile(r"\bas\s+dynamic\b")
 # Code and comments are English only. Korean belongs in docs (.md), translations (.arb) and token data (.json).
 HANGUL = re.compile(r"[\u1100-\u11ff\u3130-\u318f\uac00-\ud7a3]")
@@ -40,25 +46,27 @@ CODE_KINDS = ("dart", "dart-test", "code")
 
 
 def findings_in_line(line, kind):
-    """kind: md(글), dart(lib 코드), dart-test, py, msg(커밋 메시지) 등 파일 종류."""
+    """kind: md (prose), dart (lib code), dart-test, code, data (json) or msg (commit message)."""
     if "slop-ok" in line:
         return []
     out = []
     if DASH.search(line):
-        out.append("대시")
+        out.append("dash")
     if CURLY.search(line):
-        out.append("둥근 따옴표")
-    if AI_WORDS.search(line):
-        out.append("AI 말투")
-    if kind in ("md", "msg") and DECORATED.search(line):
-        out.append("꾸밈 이모지")
+        out.append("curly quote")
+    if kind in ("md", "msg") and AI_WORDS.search(line):
+        out.append("AI phrase")
+    decorated = DECORATED.search(line) if kind in ("md", "msg") else None
+    if decorated and decorated.group(2) not in STATUS_MARKS:
+        out.append("decorative emoji")
     if kind in CODE_KINDS and HANGUL.search(line):
-        out.append("한글 코드")
+        out.append("Hangul in code")
     if kind == "dart":
-        if DEBUG_PRINT.search(line):
-            out.append("디버그 출력")
+        code = not DART_COMMENT.match(line)
+        if code and DEBUG_PRINT.search(line) and not PRINT_DECLARATION.search(line):
+            out.append("debug print")
         if DYNAMIC_CAST.search(line):
-            out.append("dynamic 캐스트")
+            out.append("dynamic cast")
     return out
 
 
@@ -81,18 +89,20 @@ def scan_diff(diff):
 
 
 def scan_message(text):
-    return [f"커밋 메시지:{i} {k}" for i, line in enumerate(text.splitlines(), 1) for k in findings_in_line(line, "msg")]
+    # Comment lines are git's template (file lists, hints); style rules apply to what the author wrote.
+    lines = enumerate(text.split("\n"), 1)
+    return [f"commit message:{i} {k}" for i, line in lines if not line.startswith("#") for k in findings_in_line(line, "msg")]
 
 
 def report(hits):
     if not hits:
         return 0
-    print("AI 티가 나는 흔적이 있습니다.", file=sys.stderr)
+    print("Found AI writing or code tells.", file=sys.stderr)
     for h in hits[:30]:
         print(f"  {h}", file=sys.stderr)
     print(
-        "대시는 마침표나 연결어미로, 둥근 따옴표는 곧은 따옴표로, 꾸밈 이모지는 빼고, "
-        "디버그 출력은 지우고, 코드와 주석은 영어로 씁니다. 정말 필요한 줄이면 그 줄에 slop-ok 를 적습니다.",
+        "Replace dashes with a period or a joined sentence, curly quotes with straight ones, drop decorative emoji, "
+        "remove debug prints, and write code and comments in English. Mark a line slop-ok only when really needed.",
         file=sys.stderr,
     )
     return 1
@@ -100,13 +110,13 @@ def report(hits):
 
 def main(argv):
     if argv == ["--staged"]:
-        return report(scan_diff(git("diff", "--cached", "-U0", "--no-color")))
+        return report(scan_diff(git("diff", "--cached", NO_RENAMES, "-U0", "--no-color")))
     if len(argv) == 2 and argv[0] == "--message":
         with open(argv[1], encoding="utf-8", errors="ignore") as f:
-            return report(scan_message(message_text(f.read(), scissors_apply())))
+            return report(scan_message(message_text(f.read())))
     if len(argv) == 2 and argv[0] == "--range":
         rng = argv[1]
-        hits = scan_diff(git("log", MERGES, "-p", "-U0", "--no-color", "--format=", rng))
+        hits = scan_diff(git("log", MERGES, NO_RENAMES, "-p", "-U0", "--no-color", "--format=", rng))
         return report(hits + scan_message(git("log", "--format=%B", rng)))
     print(__doc__, file=sys.stderr)
     return 2

@@ -1,7 +1,7 @@
-"""privacy_scan 의 판정을 고정한다.
+"""Pin privacy_scan verdicts.
 
-진짜처럼 보이는 값은 조각을 이어 붙여 만든다. 이 파일 자체가 검사에 걸리지 않게 하려는 것이다.
-실행: python3 -m unittest discover -s tool -p 'test_*.py'
+Realistic values are built from pieces so this file does not trip the scan itself.
+Run: python3 -m unittest discover -s tool -p 'test_*.py'
 """
 import os
 import subprocess
@@ -21,12 +21,12 @@ HOME = "/home/" + "alice" + "/project"
 MAC_HOME = "/Users/" + "alice" + "/Library"
 REAL_COORD = "37.5665" + "12, 126.9780" + "12"
 API_KEY = "AIza" + "Sy" + "A1b2C3d4E5f6G7h8I9j0K1l2M3n4O5p6Q7"
-ULA_V6 = "fd12:3456:" + "789a::1"  # privacy-ok 가짜 ULA
+ULA_V6 = "fd12:3456:" + "789a::1"  # privacy-ok fake ULA
 INTERNAL_HOST = "nas" + ".lan"
 
 
 class Repo:
-    """검사기를 실제 git 저장소에 돌려 본다. 리뷰에서 나온 재현 시나리오를 그대로 옮긴다."""
+    """Run the scanner against a real git repository, replaying the review scenarios."""
 
     def __init__(self):
         self.tmp = tempfile.TemporaryDirectory()
@@ -61,17 +61,17 @@ class FindsLeaks(unittest.TestCase):
         self.assertIn("IP", findings_in_line(f"ssh {TAIL_IP}"))
 
     def test_flags_real_email(self):
-        self.assertIn("이메일", findings_in_line(f"contact: {EMAIL}"))
+        self.assertIn("email", findings_in_line(f"contact: {EMAIL}"))
 
     def test_flags_home_paths_on_linux_and_mac(self):
-        self.assertIn("홈 경로", findings_in_line(HOME))
-        self.assertIn("홈 경로", findings_in_line(MAC_HOME))
+        self.assertIn("home path", findings_in_line(HOME))
+        self.assertIn("home path", findings_in_line(MAC_HOME))
 
     def test_flags_precise_coordinates(self):
-        self.assertIn("좌표", findings_in_line(f"LatLng({REAL_COORD})"))
+        self.assertIn("coordinates", findings_in_line(f"LatLng({REAL_COORD})"))
 
     def test_flags_known_key_shapes(self):
-        self.assertIn("키", findings_in_line(f"apiKey: {API_KEY}"))
+        self.assertIn("key", findings_in_line(f"apiKey: {API_KEY}"))
 
     def test_flags_secret_files_but_not_env_example(self):
         hits = scan_files(["android/key.properties", "android/app/google-services.json", ".env", ".env.example"])
@@ -81,7 +81,7 @@ class FindsLeaks(unittest.TestCase):
     def test_reports_path_and_line_without_value(self):
         diff = f"+++ b/lib/a.dart\n@@ -0,0 +3,2 @@\n+ok line\n+mail {EMAIL}\n"
         hits = scan_diff(diff)
-        self.assertEqual(["lib/a.dart:4 이메일"], hits)
+        self.assertEqual(["lib/a.dart:4 email"], hits)
         self.assertNotIn("gmail", hits[0])
 
 
@@ -123,25 +123,25 @@ class ClosesReviewGaps(unittest.TestCase):
 
     def test_staged_sees_secret_file_under_non_ascii_folder(self):
         repo = Repo()
-        repo.write("설정/key.properties", "storePassword=x\n")
+        repo.write("\uc124\uc815/key.properties", "storePassword=x\n")
         repo.git("add", "-A")
         result = repo.scan("--staged")
         self.assertEqual(1, result.returncode, result.stderr)
-        self.assertIn("설정/key.properties", result.stderr)
+        self.assertIn("\uc124\uc815/key.properties", result.stderr)
 
     def test_range_sees_secret_file_under_non_ascii_folder(self):
         repo = Repo()
         base = repo.git("rev-parse", "HEAD")
-        repo.commit("설정/.env", "A=1\n", "chore: env")
+        repo.commit("\uc124\uc815/.env", "A=1\n", "chore: env")
         self.assertEqual(1, repo.scan("--range", f"{base}..HEAD").returncode)
 
     def test_key_inside_svg_is_still_caught(self):
         diff = f"+++ b/assets/logo.svg\n@@ -0,0 +1 @@\n+<svg data-k=\"{API_KEY}\"/>\n"
-        self.assertEqual(["assets/logo.svg:1 키"], scan_diff(diff))
+        self.assertEqual(["assets/logo.svg:1 key"], scan_diff(diff))
 
     def test_key_inside_very_long_line_is_still_caught(self):
         diff = f"+++ b/a.js\n@@ -0,0 +1 @@\n+{'x' * 3000} {API_KEY}\n"
-        self.assertEqual(["a.js:1 키"], scan_diff(diff))
+        self.assertEqual(["a.js:1 key"], scan_diff(diff))
 
     def test_lock_file_hashes_stay_quiet(self):
         diff = "+++ b/pubspec.lock\n@@ -0,0 +1 @@\n+      sha256: \"" + "ab12" * 16 + "\"\n"
@@ -149,7 +149,7 @@ class ClosesReviewGaps(unittest.TestCase):
 
     def test_flags_private_ipv6_and_internal_hosts(self):
         self.assertIn("IP", findings_in_line(f"server: [{ULA_V6}]"))
-        self.assertIn("내부 호스트", findings_in_line(f"url: http://{INTERNAL_HOST}:8080"))
+        self.assertIn("internal host", findings_in_line(f"url: http://{INTERNAL_HOST}:8080"))
 
     def test_allows_documentation_ipv6_and_local_settings_file(self):
         self.assertEqual([], findings_in_line("server: [2001:db8::1] and ::1"))
@@ -164,9 +164,10 @@ class ClosesReviewGaps(unittest.TestCase):
         repo.write("MSG", f"feat: x\n#{EMAIL}\n")
         self.assertEqual(1, repo.scan("--message", "MSG").returncode)
 
-    def test_message_ignores_text_below_scissors(self):
+    def test_message_ignores_verbose_diff_below_git_scissors(self):
         repo = Repo()
-        repo.write("MSG", f"feat: x\n# ------------------------ >8 ------------------------\n+{EMAIL}\n")
+        repo.write("MSG", "feat: x\n# ------------------------ >8 ------------------------\n"
+                   "# Do not modify or remove the line above.\n" + f"+{EMAIL}\n")
         self.assertEqual(0, repo.scan("--message", "MSG").returncode)
 
 
@@ -190,23 +191,23 @@ class ClosesSecondReview(unittest.TestCase):
 
     def test_flags_password_in_json(self):
         secret = "Ab3" + "xY9qLm2" + "Pz7WkR4tQ2v"
-        self.assertIn("비밀값", findings_in_line(f'  "password": "{secret}",'))
+        self.assertIn("secret", findings_in_line(f'  "password": "{secret}",'))
 
     def test_quoted_korean_path_with_double_quote_does_not_crash(self):
         repo = Repo()
-        repo.write('메모 "1".txt', "plain line\n")
+        repo.write('\uba54\ubaa8 "1".txt', "plain line\n")
         repo.git("add", "-A")
         result = repo.scan("--staged")
         self.assertEqual(0, result.returncode, result.stderr)
 
-    def test_verbatim_cleanup_scans_below_scissors(self):
+    def test_verbatim_cleanup_scans_below_scissors_written_by_hand(self):
         repo = Repo()
         repo.git("config", "commit.cleanup", "verbatim")
         repo.write("MSG", f"feat: x\n# ------------------------ >8 ------------------------\n{EMAIL}\n")
         self.assertEqual(1, repo.scan("--message", "MSG").returncode)
 
     def test_internal_host_with_trailing_dot(self):
-        self.assertIn("내부 호스트", findings_in_line(f"server: {INTERNAL_HOST}."))
+        self.assertIn("internal host", findings_in_line(f"server: {INTERNAL_HOST}."))
 
     def test_cpp_scope_and_server_version_are_not_addresses(self):
         self.assertEqual([], findings_in_line("server = a::b;"))
@@ -215,7 +216,43 @@ class ClosesSecondReview(unittest.TestCase):
 
     def test_content_line_shaped_like_file_header_is_still_scanned(self):
         diff = f"+++ b/a.txt\n@@ -0,0 +1,2 @@\n+++ b/x {API_KEY}\n+ok\n"
-        self.assertEqual(["a.txt:1 키"], scan_diff(diff))
+        self.assertEqual(["a.txt:1 key"], scan_diff(diff))
+
+
+class ClosesThirdReview(unittest.TestCase):
+    def test_unicode_line_separator_does_not_shift_hunks(self):
+        diff = ("+++ b/a.svg\n@@ -0,0 +1,2 @@\n+<svg>\u2028</svg>\n+<g/>\n"
+                f"+++ b/b.md\n@@ -0,0 +1 @@\n+mail {EMAIL}\n")
+        self.assertEqual(["b.md:1 email"], scan_diff(diff))
+
+    def test_version_field_does_not_hide_host_address(self):
+        line = '{"host": "' + LAN_IP + '", "version": "1.2.3"}'
+        self.assertIn("IP", findings_in_line(line))
+
+    def test_path_with_space_keeps_its_extension(self):
+        diff = f"+++ b/docs/a b.md\t\n@@ -0,0 +1 @@\n+mail {EMAIL}\n"
+        self.assertEqual(["docs/a b.md:1 email"], scan_diff(diff))
+
+    def test_merge_reports_only_lines_new_to_every_parent(self):
+        repo = Repo()
+        repo.git("switch", "-q", "-c", "feature")
+        base = repo.git("rev-parse", "main")
+        repo.commit("feature.md", "ok\n", "docs: feature")
+        repo.git("switch", "-q", "main")
+        repo.commit("base.txt", f"mail {EMAIL}  privacy-ok\n", "docs: base")
+        repo.commit("base.txt", f"mail {EMAIL}\n", "docs: base again")
+        repo.git("switch", "-q", "feature")
+        repo.git("merge", "-q", "--no-edit", "main")
+        main_tip = repo.git("rev-parse", "main")
+        self.assertEqual(0, repo.scan("--range", f"{main_tip}..feature").returncode)
+
+    def test_message_keeps_scissors_text_unless_git_wrote_it(self):
+        repo = Repo()
+        repo.write("MSG", f"feat: x\n# ------------------------ >8 ------------------------\n{EMAIL}\n")
+        self.assertEqual(1, repo.scan("--message", "MSG").returncode)
+        repo.write("MSG2", "feat: x\n# ------------------------ >8 ------------------------\n"
+                   "# Do not modify or remove the line above.\n" + f"+{EMAIL}\n")
+        self.assertEqual(0, repo.scan("--message", "MSG2").returncode)
 
 
 if __name__ == "__main__":

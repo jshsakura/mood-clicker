@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""커밋과 push 에 개인정보와 서버 정보가 섞이지 않게 막는다.
+"""Keep personal data and server details out of commits and pushes.
 
-  privacy_scan.py --staged          스테이징된 변경 (pre-commit)
-  privacy_scan.py --message FILE    커밋 메시지 (commit-msg)
-  privacy_scan.py --range A..B      범위 안의 커밋 하나하나와 그 메시지 (pre-push, CI)
+  privacy_scan.py --staged          staged changes (pre-commit)
+  privacy_scan.py --message FILE    commit message (commit-msg)
+  privacy_scan.py --range A..B      every commit in the range and its message (pre-push, CI)
 
-찾은 값은 출력하지 않는다. 파일:줄과 종류만 알린다.
-정말 괜찮은 줄이면 그 줄에 `privacy-ok` 를 적는다.
+Found values are never printed, only file:line and the kind.
+Put `privacy-ok` on a line only when it is truly safe.
 """
 import codecs
 import ipaddress
@@ -18,11 +18,11 @@ SKIP_PATH = re.compile(
     r"(pubspec\.lock|Podfile\.lock|package-lock\.json|\.svg|\.pbxproj)$"
     r"|(^|/)(LICENSE|NOTICE|COPYING)[^/]*$"
 )
-# 잠금 파일, SVG, 2000자 넘는 줄은 해시와 경로 데이터가 많아 전부 보지 않는다.
-# 그래도 키 모양과 비밀값 대입은 거기서도 찾는다.
+# Lock files, SVG and lines over 2000 chars are full of hashes and path data, so they get a partial scan:
+# known key shapes and secret assignments are still caught there.
 GENERATED_LINE = 2000
 
-# 올리면 안 되는 파일. 서명 키, 스토어 키, 환경 파일, 파이어베이스 설정.
+# Files that must never be committed: signing keys, store keys, env files, Firebase config.
 SECRET_FILE = re.compile(
     r"(^|/)\.env(\.[^/]*)?$|\.(jks|keystore|p8|p12|pem|key|mobileprovision|cer)$"
     r"|(^|/)key\.properties$|(^|/)google-services\.json$|(^|/)GoogleService-Info\.plist$"
@@ -34,7 +34,7 @@ EMAIL_OK = re.compile(
     r"(^|\.)(example\.(com|org|net)|noreply\.github\.com|anthropic\.com|localhost|test|invalid|example)$",
     re.I,
 )
-# Icon-App-20x20@2x.png 같은 해상도 접미사 파일명은 이메일이 아니다.
+# File names with a scale suffix such as Icon-App-20x20@2x.png are not emails.
 FILE_EXT = re.compile(r"\.(png|jpe?g|gif|webp|svg|pdf|ttf|otf)$", re.I)
 IPV4 = re.compile(r"(?<![\d.])(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})(?![\d.])")
 IP_OK = [ipaddress.ip_network(n) for n in (
@@ -59,20 +59,20 @@ SHA256_CONTEXT = re.compile(r"sha-?256", re.I)
 HEX = re.compile(r"(?<![0-9a-fA-F])[0-9a-f]{40,}(?![0-9a-fA-F])")
 SECRET = re.compile(r"(api[_-]?key|secret|token|password)['\"]?\s*[:=]\s*['\"]([A-Za-z0-9_\-./+=]{20,})['\"]", re.I)
 KNOWN_KEY = re.compile(r"AIza[0-9A-Za-z_\-]{35}|AKIA[0-9A-Z]{16}|gh[pousr]_[0-9A-Za-z]{36}|-----BEGIN [A-Z ]*PRIVATE KEY")
-# 소수점 넷째 자리(약 10m) 이상인 위도, 경도 쌍. 실제 집이나 동네를 가리킬 수 있다.
+# Latitude/longitude pairs with 4+ decimals (about 10 m) can point at a real home.
 COORD = re.compile(r"(?<![\w.])-?\d{1,2}\.\d{4,}\s*,\s*-?\d{1,3}\.\d{4,}(?![\d])")
 
 
 def strong_findings(line):
-    """어디서든 찾는 것: 알려진 키 모양과 비밀값 대입."""
+    """Checks that apply everywhere: known key shapes and secret assignments."""
     out = []
     for m in SECRET.finditer(line):
         v = m.group(2)
         if re.search(r"[a-z]", v) and re.search(r"[A-Z]", v) and re.search(r"\d", v) and len(set(v)) > 10:
-            out.append("비밀값")
+            out.append("secret")
             break
     if KNOWN_KEY.search(line):
-        out.append("키")
+        out.append("key")
     return out
 
 
@@ -86,7 +86,10 @@ def ip_findings(line):
             continue
         net = NET_CONTEXT.search(line)
         if any(ip in n for n in PRIVATE):
-            versionish = VERSION_CONTEXT.search(line) and not URL_OR_PORT.search(line)
+            # Only a version word right before the number makes it a version, so a version field
+            # elsewhere on the line cannot hide a real host address.
+            before = line[max(0, m.start() - 24):m.start()]
+            versionish = VERSION_CONTEXT.search(before) and not URL_OR_PORT.search(line)
             if parts[3] not in (0, 255) and not versionish:
                 return ["IP"]
         elif ip.is_global and net:
@@ -111,44 +114,56 @@ def findings_in_line(line):
         if FILE_EXT.search(m.group(1)):
             continue
         if not EMAIL_OK.search(m.group(1)) and m.group(0).split("@")[0] != "git":
-            out.append("이메일")
+            out.append("email")
             break
     out += ip_findings(line)
     if INTERNAL_HOST.search(line) and NET_CONTEXT.search(line):
-        out.append("내부 호스트")
+        out.append("internal host")
     if TAILNET.search(line):
-        out.append("Tailscale 주소")
+        out.append("Tailscale address")
     if OPS_PATH.search(line):
-        out.append("운영 경로")
+        out.append("ops path")
     if any(m.group(1) not in HOME_OK for m in HOME.finditer(line)):
-        out.append("홈 경로")
+        out.append("home path")
     for m in HEX.finditer(line):
         v = m.group(0)
         sha = (len(v) == 40 and SHA_CONTEXT.search(line)) or (len(v) == 64 and SHA256_CONTEXT.search(line))
         if len(set(v)) > 4 and not sha:
-            out.append("긴 hex")
+            out.append("long hex")
             break
     out += strong_findings(line)
     if COORD.search(line):
-        out.append("좌표")
+        out.append("coordinates")
     return out
 
 
 def diff_path(header):
-    path = header[4:]
+    # git ends an unquoted header with a TAB when the path has a space.
+    path = header[4:].rstrip("\t")
     if path.startswith('"') and path.endswith('"'):
-        # git 은 특수 문자를 C 식 이스케이프(\" \t \354)로 감싼다. 바이트로 풀어 UTF-8 로 읽는다.
+        # git wraps special characters in C escapes (\" \t \354). Decode to bytes, then read UTF-8.
         path = codecs.escape_decode(path[1:-1].encode("utf-8"))[0].decode("utf-8", "replace")
     return path[2:] if path.startswith("b/") else path
 
 
 HUNK = re.compile(r"^@@ -\d+(?:,(\d+))? \+(\d+)(?:,(\d+))? @@")
+# Combined diff of a merge (two parents): "@@@ -a,b -c,d +e,f @@@" and two prefix columns per line.
+HUNK_CC = re.compile(r"^@@@ -\d+(?:,\d+)? -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@@")
 
 
 def diff_lines(diff):
-    """(경로, 줄 번호, 추가된 줄) 을 낸다. 헝크의 줄 수를 세어서, 내용이 '+++ ' 로 시작해도 헤더로 착각하지 않는다."""
-    path, lineno, old_left, new_left = "?", 0, 0, 0
-    for raw in diff.splitlines():
+    """Yield (path, line number, added line). Hunk line counts decide what is content, so a line starting with '+++ ' is not taken for a header."""
+    path, lineno, old_left, new_left, cc_left = "?", 0, 0, 0, 0
+    # split on newline only: splitlines() also breaks on U+2028 and friends, which git does not.
+    for raw in diff.split("\n"):
+        if cc_left:
+            prefix = raw[:2]
+            if "-" not in prefix:
+                cc_left -= 1
+                lineno += 1
+                if prefix == "++":
+                    yield path, lineno, raw[2:]
+            continue
         if old_left or new_left:
             if raw.startswith("-"):
                 old_left -= 1
@@ -161,6 +176,11 @@ def diff_lines(diff):
             continue
         if raw.startswith("+++ "):
             path = diff_path(raw)
+        m = HUNK_CC.match(raw)
+        if m:
+            cc_left = int(m.group(2) if m.group(2) is not None else 1)
+            lineno = int(m.group(1)) - 1
+            continue
         m = HUNK.match(raw)
         if m:
             old_left = int(m.group(1) if m.group(1) is not None else 1)
@@ -185,28 +205,28 @@ def scan_text(label, text):
 
 
 def scan_files(names):
-    return [f"{n} 올리면 안 되는 파일" for n in names if SECRET_FILE.search(n) and not SECRET_FILE_OK.search(n)]
+    return [f"{n} secret file" for n in names if SECRET_FILE.search(n) and not SECRET_FILE_OK.search(n)]
 
 
 def git(*args):
-    # 경로 인용을 끄면 한글 경로가 따옴표와 8진수 없이 그대로 나온다.
+    # With quotePath off, non-ASCII paths come out as-is instead of quoted octal.
     r = subprocess.run(["git", "-c", "core.quotePath=false", *args], capture_output=True, text=True)
     if r.returncode != 0:
-        sys.exit(f"git {' '.join(args)} 실패: {r.stderr.strip()}")
+        sys.exit(f"git {' '.join(args)} failed: {r.stderr.strip()}")
     return r.stdout
 
 
 def report(hits):
     if not hits:
         return 0
-    print("개인정보나 서버 정보로 보이는 것이 있습니다. 값은 출력하지 않습니다.", file=sys.stderr)
+    print("Found what looks like personal data or server details. Values are not printed.", file=sys.stderr)
     for h in hits[:30]:
         print(f"  {h}", file=sys.stderr)
     if len(hits) > 30:
-        print(f"  외 {len(hits) - 30}건", file=sys.stderr)
+        print(f"  and {len(hits) - 30} more", file=sys.stderr)
     print(
-        "문서용 값(192.0.2.x, example.com, 가짜 키, 가짜 좌표)으로 바꿉니다. "
-        "정말 괜찮은 줄이면 그 줄에 privacy-ok 를 적습니다.",
+        "Use documentation values (192.0.2.x, example.com, fake keys, fake coordinates). "
+        "Mark a line privacy-ok only when it is truly safe.",
         file=sys.stderr,
     )
     return 1
@@ -219,39 +239,39 @@ def names_z(out):
 SCISSORS = re.compile(r"^# -+ >8 -+$")
 
 
-def message_text(raw, stop_at_scissors=True):
-    """git 이 지울 주석 줄도 본다. cleanup=verbatim 이면 그대로 남기 때문이다.
-    가위 줄 아래는 git 이 지울 때만 뺀다."""
-    lines = []
-    for line in raw.splitlines():
-        if stop_at_scissors and SCISSORS.match(line):
-            break
-        lines.append(line)
+GIT_SCISSORS_NOTE = "# Do not modify or remove the line above."
+
+
+def message_text(raw):
+    """Scan comment lines too: -F and cleanup=verbatim keep them in the commit.
+    Stop only at the scissors block git itself writes for `commit -v`, which git always cuts."""
+    lines = raw.split("\n")
+    for i, line in enumerate(lines):
+        if SCISSORS.match(line) and i + 1 < len(lines) and lines[i + 1].strip() == GIT_SCISSORS_NOTE:
+            return "\n".join(lines[:i])
     return "\n".join(lines)
 
 
-def scissors_apply():
-    r = subprocess.run(["git", "config", "commit.cleanup"], capture_output=True, text=True)
-    return r.stdout.strip() not in ("verbatim", "whitespace")
-
-
-# 병합 커밋은 기본 git log -p 에 diff 가 안 나온다. 첫 부모 기준 diff 로 병합에서만 생긴 변경도 본다.
-MERGES = "--diff-merges=first-parent"
+# Plain git log -p hides merge diffs. Dense combined diff shows only what the merge itself adds
+# relative to every parent, so lines that arrive from the base branch are not reported again.
+MERGES = "--diff-merges=dense-combined"
+# A rename is reported as delete + add, so a file moved into a stricter folder is scanned in full.
+NO_RENAMES = "--no-renames"
 
 
 def main(argv):
     if len(argv) == 1 and argv[0] == "--staged":
-        names = names_z(git("diff", "--cached", "--name-only", "-z", "--diff-filter=ACMR"))
-        return report(scan_files(names) + scan_diff(git("diff", "--cached", "-U0", "--no-color")))
+        names = names_z(git("diff", "--cached", NO_RENAMES, "--name-only", "-z", "--diff-filter=ACMR"))
+        return report(scan_files(names) + scan_diff(git("diff", "--cached", NO_RENAMES, "-U0", "--no-color")))
     if len(argv) == 2 and argv[0] == "--message":
         with open(argv[1], encoding="utf-8", errors="ignore") as f:
-            return report(scan_text("커밋 메시지", message_text(f.read(), scissors_apply())))
+            return report(scan_text("commit message", message_text(f.read())))
     if len(argv) == 2 and argv[0] == "--range":
-        # 끝점끼리 비교하면 중간 커밋에서 넣었다 지운 것이 안 보인다. 커밋마다 본다.
+        # Comparing only the end points misses what a middle commit added and a later one removed.
         rng = argv[1]
-        names = names_z(git("log", MERGES, "--name-only", "-z", "--diff-filter=ACMR", "--format=", rng))
-        hits = scan_files(names) + scan_diff(git("log", MERGES, "-p", "-U0", "--no-color", "--format=", rng))
-        return report(hits + scan_text("커밋 메시지", git("log", "--format=%B", rng)))
+        names = names_z(git("log", MERGES, NO_RENAMES, "--name-only", "-z", "--diff-filter=ACMR", "--format=", rng))
+        hits = scan_files(names) + scan_diff(git("log", MERGES, NO_RENAMES, "-p", "-U0", "--no-color", "--format=", rng))
+        return report(hits + scan_text("commit message", git("log", "--format=%B", rng)))
     print(__doc__, file=sys.stderr)
     return 2
 

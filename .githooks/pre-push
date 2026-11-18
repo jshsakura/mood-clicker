@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# main 으로 바로 올리지 않는다. 올릴 커밋 전체를 다시 검사하고 테스트를 돌린다.
+# Never push straight to main. Re-scan every outgoing commit and run the tests.
 set -euo pipefail
 ROOT="$(git rev-parse --show-toplevel)"
 cd "$ROOT"
@@ -8,7 +8,7 @@ while read -r _local_ref local_sha remote_ref remote_sha; do
   [ "$local_sha" = "$ZERO" ] && continue
   case "$remote_ref" in
     refs/heads/main|refs/heads/master)
-      echo "main 으로 바로 올리지 않습니다. 브랜치를 올리고 PR 로 합칩니다." >&2
+      echo "Do not push to main directly. Push a branch and merge it through a PR." >&2
       exit 1 ;;
   esac
   if [ "$remote_sha" = "$ZERO" ]; then
@@ -16,21 +16,21 @@ while read -r _local_ref local_sha remote_ref remote_sha; do
   else
     BASE=$remote_sha
   fi
-  # 테스트는 작업 폴더에서 돈다. 다른 브랜치를 올리면 그 브랜치가 아니라 지금 브랜치를 시험하게 된다.
+  # Tests run on the working folder, so pushing another branch would test the wrong code.
   if [ "$local_sha" != "$(git rev-parse HEAD)" ]; then
-    echo "올릴 커밋이 지금 체크아웃한 커밋이 아닙니다. 그 브랜치로 바꾼 뒤 push 합니다." >&2
+    echo "The pushed commit is not the checked-out HEAD. Switch to that branch, then push." >&2
     exit 1
   fi
-  if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
-    echo "커밋하지 않은 변경이 있으면 테스트가 올릴 내용과 달라집니다. 커밋하거나 치운 뒤 push 합니다." >&2
+  if [ -n "$(git status --porcelain)" ]; then
+    echo "Uncommitted or untracked files would change what the tests see. Commit or remove them, then push." >&2
     exit 1
   fi
-  echo "▶ 올릴 커밋 개인정보 검사"
+  echo "> privacy and slop scan of outgoing commits"
   python3 tool/privacy_scan.py --range "$BASE..$local_sha"
   python3 tool/slop_scan.py --range "$BASE..$local_sha"
-  echo "▶ 올릴 커밋의 토큰과 생성 파일"
+  echo "> tokens and generated files of the outgoing commit"
   tool/check_snapshot.sh "$local_sha"
 done
-echo "▶ 테스트"
+echo "> tests"
 tool/test.sh
-echo "✓ pre-push 통과"
+echo "ok: pre-push"

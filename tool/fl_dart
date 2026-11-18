@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# dart 명령을 도커 안의 Flutter SDK 로 돌린다. 예: tool/fl_dart format lib test
+# Run dart with the Flutter SDK inside Docker. Example: tool/fl_dart format lib
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 IMAGE="${FLUTTER_IMAGE:-ghcr.io/cirruslabs/flutter:3.44.0}"

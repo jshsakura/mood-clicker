@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
-# 커밋 전에 개인정보, 서버 정보, 비밀 파일을 막고 다트 코드의 형식과 분석을 확인한다.
-# 설치: tool/setup.sh   (한 번만)
+# Before a commit: block personal data, server details and secret files, then check Dart format and analysis.
+# Install once with tool/setup.sh
 set -euo pipefail
 ROOT="$(git rev-parse --show-toplevel)"
 cd "$ROOT"
 
-echo "▶ 개인정보와 비밀 파일 검사"
+echo "> privacy and secret file scan"
 python3 tool/privacy_scan.py --staged
 
-echo "▶ AI 티 검사 (대시, 둥근 따옴표, AI 말투, 디버그 출력)"
+echo "> slop scan (dashes, curly quotes, AI phrases, debug prints, Hangul in code)"
 python3 tool/slop_scan.py --staged
 
-echo "▶ 디자인 토큰과 생성 파일이 맞는지"
+echo "> design tokens match generated files"
 tool/check_snapshot.sh --index
 
 DART=$(git diff --cached --name-only --diff-filter=ACMR -- '*.dart' | grep -v '\.g\.dart$' || true)
@@ -19,7 +19,7 @@ if [ -n "$DART" ]; then
   echo "▶ dart format, flutter analyze"
   # shellcheck disable=SC2086
   tool/fl_dart format --output=none --set-exit-if-changed $DART \
-    || { echo "형식이 맞지 않습니다. tool/format.sh 를 돌린 뒤 다시 스테이징합니다." >&2; exit 1; }
+    || { echo "Format is off. Run tool/format.sh and stage again." >&2; exit 1; }
   tool/fl analyze --no-pub
 fi
-echo "✓ pre-commit 통과"
+echo "ok: pre-commit"
