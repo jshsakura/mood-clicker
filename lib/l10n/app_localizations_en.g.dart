@@ -134,7 +134,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reminder_title => 'How was your mood today?';
 
   @override
-  String get reminder_body => 'Take a moment to tap it out';
+  String get reminder_body => 'A moment to check in with yourself';
 
   @override
   String get settings_title => 'Settings';

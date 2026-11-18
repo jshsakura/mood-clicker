@@ -292,10 +292,10 @@ abstract class AppLocalizations {
   /// **'오늘 기분은 어땠나요?'**
   String get reminder_title;
 
-  /// 저녁 알림의 본문입니다. 알림을 누르면 기분 고르기 화면으로 갑니다.
+  /// 저녁 알림의 본문입니다. 알림을 누르면 기분 고르기 화면으로 갑니다. 죄책감을 주는 말(어제 남기지 못했다, 연속 기록 따위)은 쓰지 않고, 잠금 화면에 나와도 괜찮은 문구만 둡니다.
   ///
   /// In ko, this message translates to:
-  /// **'잠깐 들어와 두드려 보세요'**
+  /// **'잠깐 들러 오늘 마음을 남겨 보세요'**
   String get reminder_body;
 
   /// 설정 화면의 제목입니다.

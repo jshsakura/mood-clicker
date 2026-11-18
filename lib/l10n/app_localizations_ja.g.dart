@@ -130,7 +130,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get reminder_title => '今日の気分はどうでしたか？';
 
   @override
-  String get reminder_body => 'ちょっとだけたたいてみませんか';
+  String get reminder_body => '少しだけ、今日の気持ちを残してみませんか';
 
   @override
   String get settings_title => '設定';
