@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "moods": {
+    "happy": {
+      "allow_exclamation": true,
+      "allowed_emojis": null,
+      "banned_words": {
+        "ko": [],
+        "en": []
+      }
+    },
+    "excited": {
+      "allow_exclamation": true,
+      "allowed_emojis": null,
+      "banned_words": {
+        "ko": [],
+        "en": []
+      }
+    },
+    "angry": {
+      "allow_exclamation": true,
+      "allowed_emojis": null,
+      "banned_words": {
+        "ko": [],
+        "en": []
+      }
+    },
+    "sad": {
+      "allow_exclamation": true,
+      "allowed_emojis": null,
+      "banned_words": {
+        "ko": [],
+        "en": []
+      }
+    },
+    "anxious": {
+      "allow_exclamation": true,
+      "allowed_emojis": null,
+      "banned_words": {
+        "ko": [],
+        "en": []
+      }
+    }
+  }
+}

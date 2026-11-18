@@ -3,7 +3,7 @@ import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from cheers_check import MOODS, TIERS, check_bundle, count_graphemes
+from cheers_check import MOODS, TIERS, check_bundle, count_graphemes, load_rules
 
 
 def _valid_bundle(lang: str) -> dict:
@@ -95,6 +95,44 @@ class CheersCheckTest(unittest.TestCase):
         ko["moods"]["sad"]["low"][0] = "\uc6b0\uc6b8\uc99d \uadf9\ubcf5"
         errs_ko = check_bundle(ko, "ko", self.small_counts)
         self.assertTrue(any("forbidden word" in e for e in errs_ko), errs_ko)
+
+    def test_per_mood_rules_exclamation_emojis_and_banned_words(self) -> None:
+        data = _valid_bundle("en")
+        data["moods"]["sad"] = {
+            "low": ["Softly now!", "Warm tea \U0001F389"],
+            "high": ["Cheer up now", "Quiet breath"],
+            "full": ["Rest easy"],
+            "complete": ["Dawn is here"],
+            "rare": ["Soft light"],
+        }
+        data["moods"]["anxious"]["low"][0] = "Breathe \U0001F33F"
+
+        rules = {
+            "version": 1,
+            "moods": {
+                "sad": {
+                    "allow_exclamation": False,
+                    "allowed_emojis": [],
+                    "banned_words": {"ko": [], "en": ["cheer up"]},
+                },
+                "anxious": {
+                    "allow_exclamation": True,
+                    "allowed_emojis": ["\U0001F33F"],
+                    "banned_words": {"ko": [], "en": []},
+                },
+            },
+        }
+        errs = check_bundle(data, "en", self.small_counts, rules=rules)
+        self.assertEqual(len(errs), 3, errs)
+        self.assertTrue(any("exclamation mark not allowed" in e for e in errs), errs)
+        self.assertTrue(any("disallowed emoji" in e for e in errs), errs)
+        self.assertTrue(any("mood-banned word" in e for e in errs), errs)
+
+    def test_default_rules_file_loads(self) -> None:
+        rules = load_rules()
+        self.assertEqual(rules.get("version"), 1)
+        for mood in MOODS:
+            self.assertIn(mood, rules.get("moods", {}))
 
     def test_detects_missing_counts(self) -> None:
         data = _valid_bundle("en")

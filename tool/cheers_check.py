@@ -3,7 +3,8 @@
 
 Checks schema, per-mood tier minimum counts, per-mood minimum unique bases,
 max variations per base, grapheme cluster lengths, exact and normalized
-duplicates, forbidden words, dashes, and curly quotes.
+duplicates, global and per-mood forbidden words, exclamation rules,
+allowed emoji lists, dashes, and curly quotes.
 """
 import argparse
 import json
@@ -18,10 +19,12 @@ DEFAULT_MIN_COUNTS = {"low": 400, "high": 400, "full": 150, "complete": 50, "rar
 DEFAULT_MIN_BASES_PER_MOOD = 300
 MAX_GROUP_SIZE = 4  # 1 base + up to 3 text-play variations
 LENGTH_BOUNDS = {"ko": (2, 14), "en": (2, 20)}
+DEFAULT_RULES_PATH = Path(__file__).resolve().parent / "cheers_rules.json"
 
 DASH_RE = re.compile(r"[\u2013\u2014]")
 CURLY_RE = re.compile(r"[\u2018\u2019\u201c\u201d]")
 NORM_RE = re.compile(r"[\s\W_]+", re.UNICODE)
+EMOJI_CP_RE = re.compile(r"[\U0001F300-\U0001FAFF\u2600-\u27BF\u2B50\u2B06]")
 
 # Korean forbidden roots encoded as unicode escapes to keep Python source ASCII-clean.
 KO_BANNED = (
@@ -59,34 +62,60 @@ EN_BANNED_RE = re.compile(
 )
 
 
-def count_graphemes(text: str) -> int:
-    """Count extended-grapheme-like clusters without external dependencies."""
-    count = 0
+def split_graphemes(text: str) -> list[str]:
+    """Split text into extended-grapheme-like clusters without external packages."""
+    clusters: list[str] = []
     zwj_join = False
     ri_pending = False
     for ch in text:
         cp = ord(ch)
-        if ch == "\u200D":  # ZWJ joins next char to current cluster
+        if ch == "\u200D":
+            if clusters:
+                clusters[-1] += ch
             zwj_join = True
             ri_pending = False
             continue
         if zwj_join:
+            if clusters:
+                clusters[-1] += ch
             zwj_join = False
             continue
         if ch in ("\uFE0E", "\uFE0F") or 0x1F3FB <= cp <= 0x1F3FF:
+            if clusters:
+                clusters[-1] += ch
             continue
         if unicodedata.category(ch) in ("Mn", "Mc", "Me"):
+            if clusters:
+                clusters[-1] += ch
             continue
         if 0x1F1E6 <= cp <= 0x1F1FF:
-            if ri_pending:
+            if ri_pending and clusters:
+                clusters[-1] += ch
                 ri_pending = False
                 continue
             ri_pending = True
-            count += 1
+            clusters.append(ch)
             continue
         ri_pending = False
-        count += 1
-    return count
+        clusters.append(ch)
+    return clusters
+
+
+def count_graphemes(text: str) -> int:
+    return len(split_graphemes(text))
+
+
+def _is_emoji_cluster(cluster: str) -> bool:
+    return bool(EMOJI_CP_RE.search(cluster)) or any(
+        0x1F1E6 <= ord(ch) <= 0x1F1FF for ch in cluster
+    )
+
+
+def load_rules(path: Path = DEFAULT_RULES_PATH) -> dict:
+    if not path.is_file():
+        return {"version": 1, "moods": {}}
+    with path.open(encoding="utf-8") as fh:
+        return json.load(fh)
 
 
 def normalize_phrase(text: str) -> str:
@@ -113,6 +142,7 @@ def check_bundle(
     lang: str,
     min_counts: dict[str, int] | None = None,
     min_bases_per_mood: int | None = None,
+    rules: dict | None = None,
 ) -> list[str]:
     errors: list[str] = []
     if lang not in LENGTH_BOUNDS:
@@ -123,6 +153,8 @@ def check_bundle(
         if min_bases_per_mood is None and min_counts is None
         else (min_bases_per_mood or 0)
     )
+    active_rules = load_rules() if rules is None else rules
+    mood_rules = active_rules.get("moods", {})
     min_len, max_len = LENGTH_BOUNDS[lang]
 
     if data.get("version") != 1:
@@ -140,6 +172,21 @@ def check_bundle(
         if not isinstance(mood_obj, dict):
             errors.append(f"{lang}.{mood}: missing mood object")
             continue
+        rule = mood_rules.get(mood, {})
+        allow_exclamation = rule.get("allow_exclamation", True)
+        allowed_emojis = rule.get("allowed_emojis")
+        allowed_emoji_set = (
+            {e.replace("\uFE0F", "") for e in allowed_emojis} | set(allowed_emojis)
+            if isinstance(allowed_emojis, list)
+            else None
+        )
+        mood_banned = rule.get("banned_words", {}).get(lang, [])
+        en_mood_re = (
+            re.compile(r"\b(?:" + "|".join(re.escape(w) for w in mood_banned) + r")\b", re.I)
+            if lang == "en" and mood_banned
+            else None
+        )
+
         base_group_counts: dict[str, int] = {}
         standalone_bases = 0
 
@@ -176,11 +223,23 @@ def check_bundle(
                 else:
                     standalone_bases += 1
 
-                g_len = count_graphemes(item)
+                clusters = split_graphemes(item)
+                g_len = len(clusters)
                 if not (min_len <= g_len <= max_len):
                     errors.append(
                         f"{loc}: length {g_len} outside {min_len}..{max_len} ({item!r})"
                     )
+                if not allow_exclamation and ("!" in item or "\uff01" in item):
+                    errors.append(
+                        f"{loc}: exclamation mark not allowed in {mood} ({item!r})"
+                    )
+                if allowed_emoji_set is not None:
+                    for cl in clusters:
+                        if _is_emoji_cluster(cl) and cl not in allowed_emoji_set and cl.replace("\uFE0F", "") not in allowed_emoji_set:
+                            errors.append(
+                                f"{loc}: disallowed emoji {cl!r} in {mood} ({item!r})"
+                            )
+                            break
                 if DASH_RE.search(item):
                     errors.append(f"{loc}: contains dash ({item!r})")
                 if CURLY_RE.search(item):
@@ -189,6 +248,10 @@ def check_bundle(
                     errors.append(f"{loc}: contains forbidden word ({item!r})")
                 if lang == "en" and EN_BANNED_RE.search(item):
                     errors.append(f"{loc}: contains forbidden word ({item!r})")
+                if lang == "ko" and any(bad in item for bad in mood_banned):
+                    errors.append(f"{loc}: contains mood-banned word ({item!r})")
+                if en_mood_re is not None and en_mood_re.search(item):
+                    errors.append(f"{loc}: contains mood-banned word ({item!r})")
 
                 if item in seen_exact:
                     errors.append(
@@ -229,8 +292,14 @@ def main(argv: list[str] | None = None) -> int:
         default=["ko", "en"],
         help="Languages to validate",
     )
+    parser.add_argument(
+        "--rules",
+        default=str(DEFAULT_RULES_PATH),
+        help="Path to per-mood rules JSON",
+    )
     args = parser.parse_args(argv)
     root = Path(args.root)
+    rules = load_rules(Path(args.rules))
     all_errors: list[str] = []
     for lang in args.langs:
         path = root / "assets" / "cheers" / f"{lang}.json"
@@ -239,7 +308,7 @@ def main(argv: list[str] | None = None) -> int:
             continue
         with path.open(encoding="utf-8") as fh:
             data = json.load(fh)
-        all_errors.extend(check_bundle(data, lang))
+        all_errors.extend(check_bundle(data, lang, rules=rules))
 
     if all_errors:
         for err in all_errors[:40]:
