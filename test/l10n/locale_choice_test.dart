@@ -54,16 +54,13 @@ void main() {
 
   testWidgets('a pinned choice reaches the screen strings', (tester) async {
     await pumpWithChoice(tester, LocaleChoice.ko);
-    expect(find.text('\uC2DC\uC2A4\uD15C \uB530\uB984'), findsOneWidget);
+    expect(find.text('\uAE30\uAE30 \uC5B8\uC5B4'), findsOneWidget);
 
     await pumpWithChoice(tester, LocaleChoice.en);
-    expect(find.text('System default'), findsOneWidget);
+    expect(find.text('Device language'), findsOneWidget);
 
     await pumpWithChoice(tester, LocaleChoice.ja);
-    expect(
-      find.text('\u30B7\u30B9\u30C6\u30E0\u306B\u5F93\u3046'),
-      findsOneWidget,
-    );
+    expect(find.text('\u7AEF\u672B\u306E\u8A00\u8A9E'), findsOneWidget);
   });
 
   testWidgets('the system choice follows the device language', (tester) async {

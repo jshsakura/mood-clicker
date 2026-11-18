@@ -31,6 +31,7 @@ class _MoodClickerAppState extends State<MoodClickerApp> {
         listenable: Listenable.merge([
           widget.services.feel,
           widget.services.theme,
+          if (widget.services.language != null) widget.services.language!,
         ]),
         builder: (context, _) => MaterialApp(
           navigatorKey: _navigatorKey,
@@ -42,6 +43,7 @@ class _MoodClickerAppState extends State<MoodClickerApp> {
           themeAnimationDuration: Duration.zero,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
+          locale: widget.services.language?.value.locale,
           localeListResolutionCallback: (deviceLocales, supported) =>
               resolveAppLocale(deviceLocales ?? const [], supported),
           builder: (context, child) => MediaQuery.withClampedTextScaling(

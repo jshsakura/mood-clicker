@@ -154,7 +154,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get settings_language => '言語';
 
   @override
-  String get settings_languageSystem => 'システムに従う';
+  String get settings_languageSystem => '端末の言語';
 
   @override
   String get settings_languageKo => '한국어';
@@ -232,4 +232,175 @@ class AppLocalizationsJa extends AppLocalizations {
   String calendar_openDay(String date) {
     return '$dateを見る';
   }
+
+  @override
+  String get settings_time20 => '午後8時';
+
+  @override
+  String get settings_time21 => '午後9時';
+
+  @override
+  String get settings_time22 => '午後10時';
+
+  @override
+  String get settings_notifications => '通知';
+
+  @override
+  String get settings_tapping => 'たたく';
+
+  @override
+  String get settings_strengthWeak => 'やわらかく';
+
+  @override
+  String get settings_strengthNormal => 'ふつう';
+
+  @override
+  String get settings_strengthStrong => '強く';
+
+  @override
+  String get settings_soundPackBasic => '基本';
+
+  @override
+  String get settings_cheers => '応援メッセージ';
+
+  @override
+  String get settings_cheersSize => '文字の大きさ';
+
+  @override
+  String get settings_cheersNormal => 'ふつうの文字';
+
+  @override
+  String get settings_cheersLarge => '大きく';
+
+  @override
+  String get settings_shakeOnFull => 'いっぱいになったら画面を揺らす';
+
+  @override
+  String get settings_tiltToPour => '傾けてこぼす';
+
+  @override
+  String get settings_mindCare => '心のケア';
+
+  @override
+  String get settings_mindCareHelp => 'つらくなったとき';
+
+  @override
+  String get settings_mindCareCenter => '精神健康危機相談(韓国)';
+
+  @override
+  String get settings_mindCareCenterNote => '近くのこころの健康福祉センターにつながります';
+
+  @override
+  String get settings_mindCareSuicide => '自殺予防相談電話(韓国)';
+
+  @override
+  String get settings_mindCareKakao => 'カカオトーク相談マドゥルランド(韓国)';
+
+  @override
+  String get settings_mindCarePolice => '警察';
+
+  @override
+  String get settings_mindCareMedical => '救急医療';
+
+  @override
+  String get settings_map => '地図';
+
+  @override
+  String get settings_mapComment => 'ひと言も足す';
+
+  @override
+  String get settings_records => '記録';
+
+  @override
+  String get settings_export => '記録を書き出す';
+
+  @override
+  String get settings_deleteAll => 'すべての記録を消す';
+
+  @override
+  String get settings_deleteConfirmTitle => 'すべての記録を消します';
+
+  @override
+  String get settings_deleteConfirmBody =>
+      'カレンダーの記録、今日のひとこと、たたいた数がすべて消えます。元に戻せません。先に書き出しておけばあとで見られます。';
+
+  @override
+  String get settings_deleteConfirmAction => '消す';
+
+  @override
+  String get settings_about => '情報';
+
+  @override
+  String get settings_version => 'バージョン';
+
+  @override
+  String get settings_licenses => 'オープンソースライセンス';
+
+  @override
+  String get settings_privacy => 'プライバシーポリシー';
+
+  @override
+  String get settings_privacyPending => '準備中';
+
+  @override
+  String get settings_themeNote => '選ぶとすぐすべての画面に適用されます。';
+
+  @override
+  String get settings_vibrationDesc => 'たたくたびに、そしていっぱいになるときは強く鳴ります';
+
+  @override
+  String get settings_soundDesc => 'マナーモードでは鳴りません';
+
+  @override
+  String get settings_cheersDesc => 'たたいた場所に短い言葉が現れます';
+
+  @override
+  String get settings_shakeDesc => 'オフにすると揺れずに言葉だけ表示します';
+
+  @override
+  String get settings_pourDesc => '端末を傾けると水がこぼれ、たたいた数も減ります';
+
+  @override
+  String get settings_reminderDesc => '記録していない日に一度だけ知らせます';
+
+  @override
+  String get settings_mapContributeDesc => '約1km単位にまとめて送り、5人に満たない場所は表示しません';
+
+  @override
+  String get settings_mapCommentDesc => '用意された文から選んだ一言だけを送ります。書いた言葉は端末にだけ残ります';
+
+  @override
+  String get settings_exportDesc => 'カレンダーの記録を一つのファイルに保存します';
+
+  @override
+  String get settings_exportDone => '記録をファイルに保存しました';
+
+  @override
+  String get settings_mindCareRowDesc => '24時間話を聞いてくれる窓口につなぎます';
+
+  @override
+  String get settings_mindCareTitle => '一人で抱える必要はありません';
+
+  @override
+  String get settings_mindCareIntro =>
+      '今つらいなら、話を聞いてくれる人がいます。無料で、名前を言う必要もありません。';
+
+  @override
+  String get settings_mindCareSuicideNote => '24時間相談';
+
+  @override
+  String get settings_mindCareKakaoNote => '電話が難しければ文字で話せます。24時間';
+
+  @override
+  String get settings_mindCareFootnote =>
+      '危険なときは119か112に電話してください。このアプリは医療機器ではなく、診療の代わりにはなりません。';
+
+  @override
+  String get settings_close => '閉じる';
+
+  @override
+  String get settings_mindCareSosJapan => '#いのちSOS';
+
+  @override
+  String get settings_mindCareYorisoiJapan => 'よりそいホットライン';
 }

@@ -342,10 +342,24 @@ class _TapScreenState extends State<TapScreen>
                             onTap: _leave,
                           ),
                           const SizedBox(width: Space.md),
-                          Text(
-                            '${moodEmoji(widget.mood)} ${moodName(context, widget.mood)}',
-                            style: TypeScale.title.copyWith(color: p.ink),
+                          Expanded(
+                            child: Text(
+                              '${moodEmoji(widget.mood)} ${moodName(context, widget.mood)}',
+                              style: TypeScale.title.copyWith(color: p.ink),
+                            ),
                           ),
+                          if (_services.settingsBuilder != null) ...[
+                            const SizedBox(width: Space.md),
+                            PressableSurface.icon(
+                              icon: Icons.settings_outlined,
+                              semanticLabel: l10n.settings_title,
+                              onTap: () => Navigator.of(context).push(
+                                MaterialPageRoute<void>(
+                                  builder: _services.settingsBuilder!,
+                                ),
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),

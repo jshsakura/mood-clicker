@@ -292,7 +292,7 @@ abstract class AppLocalizations {
   /// **'오늘 기분은 어땠나요?'**
   String get reminder_title;
 
-  /// 저녁 알림의 본문입니다. 알림을 누르면 기분 고르기 화면으로 갑니다. 죄책감을 주는 말(어제 남기지 못했다, 연속 기록 따위)은 쓰지 않고, 잠금 화면에 나와도 괜찮은 문구만 둡니다.
+  /// 저녁 알림의 본문입니다. 알림을 누르면 기분 고르기 화면으로 갑니다.
   ///
   /// In ko, this message translates to:
   /// **'잠깐 들러 오늘 마음을 남겨 보세요'**
@@ -343,7 +343,7 @@ abstract class AppLocalizations {
   /// 언어 선택지입니다. 기기 언어를 따릅니다. 지원하지 않는 기기 언어는 영어로 보입니다.
   ///
   /// In ko, this message translates to:
-  /// **'시스템 따름'**
+  /// **'기기 언어'**
   String get settings_languageSystem;
 
   /// 언어 선택지입니다. 언어 이름은 언어마다 그 언어로 표기하므로 어떤 언어로 번역해도 한국어로 둡니다.
@@ -495,6 +495,342 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'{date} 보기'**
   String calendar_openDay(String date);
+
+  /// 저녁 알림 시각 선택지입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'오후 8시'**
+  String get settings_time20;
+
+  /// 저녁 알림 시각 선택지입니다. 기본값입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'오후 9시'**
+  String get settings_time21;
+
+  /// 저녁 알림 시각 선택지입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'오후 10시'**
+  String get settings_time22;
+
+  /// 설정의 알림 묶음 이름입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'알림'**
+  String get settings_notifications;
+
+  /// 설정의 두드리기 묶음 이름입니다. 진동, 소리, 응원 문구, 화면 흔들기, 기울여 쏟기가 여기에 듭니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'두드리기'**
+  String get settings_tapping;
+
+  /// 진동 세기 선택지입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'약하게'**
+  String get settings_strengthWeak;
+
+  /// 진동 세기 선택지입니다. 기본값입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'보통'**
+  String get settings_strengthNormal;
+
+  /// 진동 세기 선택지입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'세게'**
+  String get settings_strengthStrong;
+
+  /// 소리 묶음 선택지입니다. 지금은 이 한 벌만 있습니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'기본'**
+  String get settings_soundPackBasic;
+
+  /// 두드릴 때 뜨는 응원 문구를 켜고 끄는 항목입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'응원 문구'**
+  String get settings_cheers;
+
+  /// 응원 문구의 글자 크기를 고르는 항목의 이름입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'글자 크기'**
+  String get settings_cheersSize;
+
+  /// 응원 문구 글자 크기 선택지입니다. 기본값입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'보통 글씨'**
+  String get settings_cheersNormal;
+
+  /// 응원 문구 글자 크기 선택지입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'큰 글씨'**
+  String get settings_cheersLarge;
+
+  /// 채움이 끝까지 찼을 때 화면을 흔들지 고르는 항목입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'가득 찰 때 화면 흔들기'**
+  String get settings_shakeOnFull;
+
+  /// 기기를 기울여 채움을 쏟아 내는 놀이를 켜고 끄는 항목입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'기울여 쏟기'**
+  String get settings_tiltToPour;
+
+  /// 설정의 마음 돌봄 묶음 이름입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'마음 돌봄'**
+  String get settings_mindCare;
+
+  /// 누르면 위기 연락처 시트가 열리는 항목입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'마음이 많이 힘들 때'**
+  String get settings_mindCareHelp;
+
+  /// 위기 시트의 연락처 이름입니다. 번호 1577-0199 는 코드의 상수에서 옵니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'정신건강 위기상담'**
+  String get settings_mindCareCenter;
+
+  /// 위기 시트에서 109 와 1577-0199 아래에 붙는 안내입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'가까운 정신건강복지센터로 연결합니다'**
+  String get settings_mindCareCenterNote;
+
+  /// 위기 시트의 연락처 이름입니다. 번호 109 는 코드의 상수에서 옵니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'자살예방 상담전화'**
+  String get settings_mindCareSuicide;
+
+  /// 위기 시트의 참여 방법 이름입니다. 지금은 번호가 없어 눌러도 연결되지 않습니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'카카오톡 상담 마들랜'**
+  String get settings_mindCareKakao;
+
+  /// 위기 시트의 연락처 이름입니다. 번호 112 는 코드의 상수에서 옵니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'경찰'**
+  String get settings_mindCarePolice;
+
+  /// 위기 시트의 연락처 이름입니다. 번호 119 는 코드의 상수에서 옵니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'응급 의료'**
+  String get settings_mindCareMedical;
+
+  /// 설정의 지도 묶음 이름입니다. 3단계 기능입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'지도'**
+  String get settings_map;
+
+  /// 지도에 한 줄 문구도 함께 보낼지 고르는 항목입니다. 기본은 꺼짐입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'한마디도 보태기'**
+  String get settings_mapComment;
+
+  /// 설정의 기록 묶음 이름입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'기록'**
+  String get settings_records;
+
+  /// 누르면 기록 파일을 공유 시트로 내보냅니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'기록 내보내기'**
+  String get settings_export;
+
+  /// 누르면 확인 시트가 열리는 위험한 항목입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'모든 기록 지우기'**
+  String get settings_deleteAll;
+
+  /// 모든 기록 지우기의 확인 시트 제목입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'모든 기록을 지웁니다'**
+  String get settings_deleteConfirmTitle;
+
+  /// 모든 기록 지우기의 확인 시트 본문입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'달력의 기록, 오늘의 한마디, 두드린 수가 모두 사라집니다. 되돌릴 수 없습니다. 먼저 내보내 두면 나중에 다시 볼 수 있습니다.'**
+  String get settings_deleteConfirmBody;
+
+  /// 모든 기록 지우기의 확인 시트에서 실제로 지우는 버튼입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'지우기'**
+  String get settings_deleteConfirmAction;
+
+  /// 설정의 정보 묶음 이름입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'정보'**
+  String get settings_about;
+
+  /// 앱 버전 항목의 이름입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'버전'**
+  String get settings_version;
+
+  /// 누르면 오픈소스 라이선스 화면이 열립니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'오픈소스 라이선스'**
+  String get settings_licenses;
+
+  /// 개인정보 처리방침 항목의 이름입니다. 링크는 아직 준비 중입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'개인정보 처리방침'**
+  String get settings_privacy;
+
+  /// 개인정보 처리방침 항목 오른쪽에 보이는 값입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'준비 중입니다'**
+  String get settings_privacyPending;
+
+  /// 테마 카드 아래에 붙는 안내입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'고르면 바로 모든 화면에 적용됩니다.'**
+  String get settings_themeNote;
+
+  /// 진동 항목의 설명입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'두드릴 때마다, 그리고 가득 찰 때 더 크게 울립니다'**
+  String get settings_vibrationDesc;
+
+  /// 소리 항목의 설명입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'무음 모드에서는 나지 않습니다'**
+  String get settings_soundDesc;
+
+  /// 응원 문구 항목의 설명입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'두드린 자리에 짧은 말이 나타납니다'**
+  String get settings_cheersDesc;
+
+  /// 가득 찰 때 화면 흔들기의 설명입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'끄면 흔들림 없이 문구만 보여 줍니다'**
+  String get settings_shakeDesc;
+
+  /// 기울여 쏟기의 설명입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'폰을 기울이면 물이 넘친 만큼 쏟아지고 두드린 수도 줄어듭니다'**
+  String get settings_pourDesc;
+
+  /// 저녁 알림의 설명입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'아직 기록하지 않은 날 한 번만 알려 줍니다'**
+  String get settings_reminderDesc;
+
+  /// 지도에 내 기분 보태기의 설명입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'약 1km 단위로 묶어 보내고, 5명이 안 되는 곳은 보이지 않습니다'**
+  String get settings_mapContributeDesc;
+
+  /// 한마디도 보태기의 설명입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'준비된 문장 중에서 고른 한마디만 보냅니다. 직접 쓴 말은 기기에만 남습니다'**
+  String get settings_mapCommentDesc;
+
+  /// 기록 내보내기의 설명입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'달력의 기록을 파일 하나로 저장합니다'**
+  String get settings_exportDesc;
+
+  /// 내보내기를 마치고 잠깐 뜨는 알림입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'기록을 파일로 저장했습니다'**
+  String get settings_exportDone;
+
+  /// 마음이 많이 힘들 때 항목의 설명입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'24시간 이야기를 들어 주는 곳에 바로 연결합니다'**
+  String get settings_mindCareRowDesc;
+
+  /// 위기 시트의 제목입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'혼자 견디지 않아도 됩니다'**
+  String get settings_mindCareTitle;
+
+  /// 위기 시트의 첫 안내 문장입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'지금 많이 힘들다면 이야기를 들어 줄 사람이 있습니다. 무료이고, 이름을 말하지 않아도 됩니다.'**
+  String get settings_mindCareIntro;
+
+  /// 자살예방 상담전화 아래에 붙는 안내입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'24시간 상담'**
+  String get settings_mindCareSuicideNote;
+
+  /// 카카오톡 상담 마들랜 아래에 붙는 안내입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'전화가 어려우면 글로 이야기합니다. 24시간'**
+  String get settings_mindCareKakaoNote;
+
+  /// 위기 시트 맨 아래에 늘 보이는 안내입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'당장 위험하다면 119 또는 112에 전화합니다. 이 앱은 의료기기가 아니며 진료를 대신하지 않습니다.'**
+  String get settings_mindCareFootnote;
+
+  /// 위기 시트를 닫는 버튼입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'닫기'**
+  String get settings_close;
+
+  /// 기기 지역이 일본일 때 보이는 일본 상담 이름입니다. 번호는 코드의 상수에서 옵니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'#이노치SOS'**
+  String get settings_mindCareSosJapan;
+
+  /// 기기 지역이 일본일 때 보이는 일본 상담 이름입니다. 번호는 코드의 상수에서 옵니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'요리소이 상담전화(일본)'**
+  String get settings_mindCareYorisoiJapan;
 }
 
 class _AppLocalizationsDelegate

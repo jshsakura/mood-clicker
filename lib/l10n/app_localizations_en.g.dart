@@ -158,7 +158,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settings_language => 'Language';
 
   @override
-  String get settings_languageSystem => 'System default';
+  String get settings_languageSystem => 'Device language';
 
   @override
   String get settings_languageKo => '한국어';
@@ -236,4 +236,181 @@ class AppLocalizationsEn extends AppLocalizations {
   String calendar_openDay(String date) {
     return 'View $date';
   }
+
+  @override
+  String get settings_time20 => '8 PM';
+
+  @override
+  String get settings_time21 => '9 PM';
+
+  @override
+  String get settings_time22 => '10 PM';
+
+  @override
+  String get settings_notifications => 'Notifications';
+
+  @override
+  String get settings_tapping => 'Tapping';
+
+  @override
+  String get settings_strengthWeak => 'Gently';
+
+  @override
+  String get settings_strengthNormal => 'Normal';
+
+  @override
+  String get settings_strengthStrong => 'Strong';
+
+  @override
+  String get settings_soundPackBasic => 'Basic';
+
+  @override
+  String get settings_cheers => 'Cheer phrases';
+
+  @override
+  String get settings_cheersSize => 'Text size';
+
+  @override
+  String get settings_cheersNormal => 'Normal text';
+
+  @override
+  String get settings_cheersLarge => 'Large';
+
+  @override
+  String get settings_shakeOnFull => 'Shake the screen when full';
+
+  @override
+  String get settings_tiltToPour => 'Tilt to pour';
+
+  @override
+  String get settings_mindCare => 'Mind care';
+
+  @override
+  String get settings_mindCareHelp => 'When it feels heavy';
+
+  @override
+  String get settings_mindCareCenter => 'Mental health crisis line (Korea)';
+
+  @override
+  String get settings_mindCareCenterNote => 'Connects you to a nearby center';
+
+  @override
+  String get settings_mindCareSuicide => 'Suicide prevention line (Korea)';
+
+  @override
+  String get settings_mindCareKakao => 'KakaoTalk counseling Madellan (Korea)';
+
+  @override
+  String get settings_mindCarePolice => 'Police';
+
+  @override
+  String get settings_mindCareMedical => 'Emergency medical';
+
+  @override
+  String get settings_map => 'Map';
+
+  @override
+  String get settings_mapComment => 'Add a word too';
+
+  @override
+  String get settings_records => 'Records';
+
+  @override
+  String get settings_export => 'Export records';
+
+  @override
+  String get settings_deleteAll => 'Delete all records';
+
+  @override
+  String get settings_deleteConfirmTitle => 'Delete every record';
+
+  @override
+  String get settings_deleteConfirmBody =>
+      'The calendar, the day notes and every tap count disappear. This cannot be undone. Export first to keep a copy.';
+
+  @override
+  String get settings_deleteConfirmAction => 'Delete';
+
+  @override
+  String get settings_about => 'About';
+
+  @override
+  String get settings_version => 'Version';
+
+  @override
+  String get settings_licenses => 'Open source licenses';
+
+  @override
+  String get settings_privacy => 'Privacy policy';
+
+  @override
+  String get settings_privacyPending => 'Coming soon';
+
+  @override
+  String get settings_themeNote => 'Tap one and every screen changes at once.';
+
+  @override
+  String get settings_vibrationDesc =>
+      'Buzzes on every tap, and stronger when the gauge fills';
+
+  @override
+  String get settings_soundDesc => 'Stays silent while the device is muted';
+
+  @override
+  String get settings_cheersDesc => 'A short line appears where you tapped';
+
+  @override
+  String get settings_shakeDesc => 'Off means no shake, only the message';
+
+  @override
+  String get settings_pourDesc =>
+      'Tilting spills the water and lowers the count';
+
+  @override
+  String get settings_reminderDesc => 'Only on days without a record, once';
+
+  @override
+  String get settings_mapContributeDesc =>
+      'Sent as ~1km blocks; places under five people stay hidden';
+
+  @override
+  String get settings_mapCommentDesc =>
+      'Only a picked sentence is sent; anything written stays on the device';
+
+  @override
+  String get settings_exportDesc => 'Saves the calendar to one file';
+
+  @override
+  String get settings_exportDone => 'Saved the records to a file';
+
+  @override
+  String get settings_mindCareRowDesc =>
+      'Connects you to someone who listens, any hour';
+
+  @override
+  String get settings_mindCareTitle => 'You do not have to hold this alone';
+
+  @override
+  String get settings_mindCareIntro =>
+      'If today is heavy, someone is there to listen. It is free and you never have to give a name.';
+
+  @override
+  String get settings_mindCareSuicideNote => 'Open 24 hours';
+
+  @override
+  String get settings_mindCareKakaoNote =>
+      'When calls are hard, talk by text. Any hour';
+
+  @override
+  String get settings_mindCareFootnote =>
+      'In immediate danger call 119 or 112. This app is not a medical device and does not replace care from a doctor.';
+
+  @override
+  String get settings_close => 'Close';
+
+  @override
+  String get settings_mindCareSosJapan => '#Inochi SOS';
+
+  @override
+  String get settings_mindCareYorisoiJapan => 'Yorisoi Hotline (Japan)';
 }

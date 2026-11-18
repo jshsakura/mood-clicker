@@ -1,10 +1,21 @@
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../domain/day_key.dart';
 import '../domain/mood.dart';
 import '../domain/mood_journal.dart';
 import '../domain/mood_repository.dart';
 import '../domain/save_policy.dart';
+
+/// The one journal file of this app: the `<app support>/journal.json` of
+/// path_provider. The bootstrap, the screens and the settings export all go
+/// through it.
+Future<File> journalFile() async {
+  final folder = await getApplicationSupportDirectory();
+  return File('${folder.path}/journal.json');
+}
 
 /// The journal as the screens see it. It counts taps, decides when to write with [SavePolicy] and
 /// writes through the [MoodRepository]. Screens listen to it and call [recordTap] and friends.

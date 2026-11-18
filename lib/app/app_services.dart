@@ -9,6 +9,10 @@ import '../domain/cheer_picker.dart';
 import '../domain/feel_settings.dart';
 import '../domain/mood.dart';
 import '../feedback/feedback_controller.dart';
+import '../l10n/locale_choice.dart';
+import '../reminder/reminder_controller.dart';
+import '../settings/records_port.dart';
+import '../settings/settings_store.dart';
 import '../surfaces/native_surfaces.dart';
 import 'journal_store.dart';
 
@@ -26,6 +30,11 @@ class AppServices {
     required this.feel,
     required this.tilt,
     required this.theme,
+    this.language,
+    this.settingsStore,
+    this.reminder,
+    this.records,
+    this.appVersion,
     this.settingsBuilder,
     this.surfaces,
     DateTime Function()? now,
@@ -45,6 +54,22 @@ class AppServices {
 
   /// The theme the user picked. The settings screen changes it.
   final ValueNotifier<ThemeChoice> theme;
+
+  /// The language the user picked. The settings screen changes it. Null in
+  /// tests that do not care.
+  final ValueNotifier<LocaleChoice>? language;
+
+  /// The one settings store behind the settings screen. Null in tests.
+  final SettingsStore? settingsStore;
+
+  /// The evening reminder. Null in tests.
+  final ReminderController? reminder;
+
+  /// Records export and wipe. Null in tests.
+  final RecordsPort? records;
+
+  /// Shown in the About section. Null in tests.
+  final String? appVersion;
 
   /// The settings screen, built by whoever owns settings. Null hides the settings button.
   final WidgetBuilder? settingsBuilder;
