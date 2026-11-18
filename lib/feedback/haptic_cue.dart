@@ -141,6 +141,40 @@ class HapticCue {
     );
   }
 
+  /// Returns a copy with the intensity multiplied by [factor], the user's haptic strength.
+  /// Sharpness stays, so only how hard it hits changes.
+  HapticCue scaledByStrength(double factor) {
+    if (factor == 1) return this;
+    return HapticCue(
+      steps: steps,
+      ios: [
+        for (final e in ios)
+          IosHapticEvent(
+            e.type,
+            (e.intensity * factor).clamp(0.0, 1.0),
+            e.sharpness,
+            startMs: e.startMs,
+            durationMs: e.durationMs,
+          ),
+      ],
+      android: AndroidHaptic(
+        android.timings,
+        [
+          for (final a in android.amplitudes)
+            a == 0 ? 0 : (a * factor).round().clamp(1, 255),
+        ],
+        primitives: [
+          for (final p in android.primitives)
+            AndroidPrimitiveStep(
+              p.type,
+              (p.scale * factor).clamp(0.0, 1.0),
+              delayMs: p.delayMs,
+            ),
+        ],
+      ),
+    );
+  }
+
   Map<String, Object> toChannelMap() => {
     'ios': [for (final e in ios) e.toMap()],
     'android': android.toMap(),

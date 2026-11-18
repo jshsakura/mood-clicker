@@ -249,6 +249,10 @@ abstract final class FeedbackTuning {
   static const double fillSharpnessMin = 0.25;
   static const double fillSharpnessMax = 0.95;
 
+  /// Haptic intensity factor of the weak and strong settings. Normal is 1.
+  static const double hapticWeakScale = 0.6;
+  static const double hapticStrongScale = 1.4;
+
   /// Sudden acceleration delta (m/s^2) required to emit a liquid slosh signal.
   static const double shakeThresholdDelta = 14.0;
 

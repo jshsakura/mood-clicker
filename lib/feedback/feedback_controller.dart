@@ -60,6 +60,7 @@ class FeedbackController {
       if (kind == FeedbackKind.tap && fill != null) {
         haptic = haptic.scaledByFill(fill);
       }
+      haptic = haptic.scaledByStrength(_settings.hapticScale);
       _fire(() => haptics.play(haptic!, priority: isPriority));
     }
 

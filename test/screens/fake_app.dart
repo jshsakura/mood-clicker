@@ -14,6 +14,7 @@ import 'package:mood_clicker/domain/mood_journal.dart';
 import 'package:mood_clicker/domain/mood_repository.dart';
 import 'package:mood_clicker/feedback/feedback_controller.dart';
 import 'package:mood_clicker/l10n/app_localizations.g.dart';
+import 'package:mood_clicker/l10n/locale_choice.dart';
 import 'package:mood_clicker/l10n/app_localizations_ko.g.dart';
 
 import '../domain/cheer_fixtures.dart';
@@ -95,27 +96,36 @@ class TestApp {
     this.settingsBuilder,
     this.fakeSurfaces,
     CheerBook? book,
+    FeedbackController? feedback,
+    ValueNotifier<LocaleChoice>? language,
+    ValueNotifier<ThemeChoice>? theme,
+    ValueNotifier<FeelSettings>? feelNotifier,
+    ValueNotifier<bool>? mapView,
   }) : repository = repository ?? MemoryRepository(),
        clock = start ?? DateTime(2026, 11, 18, 12),
        haptics = FakeHaptics(),
        sound = FakeSound(),
-       feel = ValueNotifier(feel),
+       feel = feelNotifier ?? ValueNotifier(feel),
        tiltEvents = StreamController<double>.broadcast() {
     journal = JournalStore(this.repository);
     final store = MemoryDeckStore();
     services = AppServices(
       journal: journal,
-      feedback: FeedbackController(
-        haptics: haptics,
-        sound: sound,
-        clock: () => Duration(microseconds: clock.microsecondsSinceEpoch),
-      ),
+      feedback:
+          feedback ??
+          FeedbackController(
+            haptics: haptics,
+            sound: sound,
+            clock: () => Duration(microseconds: clock.microsecondsSinceEpoch),
+          ),
       loadCheers: (_) async => book ?? bookOf(20),
       cheerPicker: CheerPicker(Random(1)),
       deckStore: store,
       feel: this.feel,
       tilt: () => tiltEvents.stream,
-      theme: ValueNotifier(const ThemeChoice.named('light')),
+      theme: theme ?? ValueNotifier(const ThemeChoice.named('light')),
+      language: language,
+      mapView: mapView,
       settingsBuilder: settingsBuilder,
       surfaces: fakeSurfaces?.build(),
       now: () => clock,
