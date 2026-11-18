@@ -5,6 +5,7 @@
 ```bash
 tool/team/start.sh claude ui api       # 팀장 팬 1개와 작업자 ui, api. 작업자는 ../<저장소>-<이름> worktree 에서 시작
 tool/team/start.sh -n 3 codex          # 작업자 w1, w2, w3
+tool/team/start.sh claude ui=codex research=agy dev   # 이름=에이전트로 작업자마다 다른 제품. 팀장과 이름만 준 작업자는 첫 인자
 tool/team/start.sh -s team -b main claude ui   # 세션 이름, 분기 기준 지정
 tmux attach -t <세션>                  # 붙기. 다시 실행해도 있는 것은 만들지 않고 새 이름만 더합니다
 
