@@ -142,6 +142,30 @@ def _compile_en_ban_regex(words: list[str]) -> re.Pattern[str] | None:
     return re.compile(r"\b(?:" + "|".join(parts) + r")\b", re.I)
 
 
+_EN_SELF_HARM_RE = re.compile(
+    r"\b(?:hurt|harm|burn|cut)\s+(?:you|yourself|me|myself)\b", re.I
+)
+_EN_NEG_RE = re.compile(r"\b(?:not|don't|do not|never|no|without)\b", re.I)
+
+
+def _has_unnegated_self_harm(item: str, lang: str) -> bool:
+    if lang == "ko":
+        if any(w in item for w in ("\ud574\uce58", "\ud574\uccd0", "\ub2e4\uce58", "\ub2e4\uccd0", "\uc790\ud574")):
+            return not any(
+                neg in item for neg in ("\uc54a", "\uc548 ", "\ub9c8", "\ub9d0", "\uc5c6")
+            )
+    elif lang == "ja":
+        if "\u50b7\u3064\u3051" in item or "\u81ea\u50b7" in item:
+            return not any(
+                neg in item
+                for neg in ("\u306a\u3044", "\u306a\u304f", "\u305a", "\u306c", "\u306a\u3044\u3067")
+            )
+    elif lang == "en":
+        if _EN_SELF_HARM_RE.search(item):
+            return _EN_NEG_RE.search(item) is None
+    return False
+
+
 def _parse_item(item: object, loc: str) -> tuple[str | None, str | None, str | None]:
     if isinstance(item, str):
         return item, None, None
@@ -291,6 +315,8 @@ def check_bundle(
                     errors.append(f"{loc}: contains dash ({item!r})")
                 if CURLY_RE.search(item):
                     errors.append(f"{loc}: contains curly quote ({item!r})")
+                if _has_unnegated_self_harm(item, lang):
+                    errors.append(f"{loc}: unnegated self-harm phrase ({item!r})")
 
                 clean_text = _strip_punct_spaces(item)
                 if lang in ("ko", "ja"):
