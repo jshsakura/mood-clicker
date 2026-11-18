@@ -43,8 +43,17 @@ class WaterPainter extends CustomPainter {
       );
     }
     final dropPaint = Paint()..color = palette.fill;
+    final edgePaint = Paint()
+      ..color = palette.fillEdge
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = FillTuning.dropletBorder;
     for (final d in sim.droplets) {
       canvas.drawCircle(Offset(d.x, d.y), d.radius, dropPaint);
+      canvas.drawCircle(
+        Offset(d.x, d.y),
+        d.radius - FillTuning.dropletBorder / 2,
+        edgePaint,
+      );
     }
   }
 

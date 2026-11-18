@@ -142,5 +142,6 @@
   "settings_mapView": "Show map",
   "settings_mapViewDesc": "Shows a map button on the mood screen. Off hides it",
   "map_togetherSad": "You are not the only one feeling low today",
-  "map_togetherHappy": "Many people nearby feel good today"
+  "map_togetherHappy": "Many people nearby feel good today",
+  "tap_hint": "Tap anywhere"
 }

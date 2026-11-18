@@ -471,4 +471,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get map_togetherHappy => '今日は近くに気分のいい人がたくさんいます';
+
+  @override
+  String get tap_hint => '画面のどこでもタップします';
 }

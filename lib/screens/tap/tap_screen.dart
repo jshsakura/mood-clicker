@@ -123,6 +123,12 @@ class _TapScreenState extends State<TapScreen>
   /// The count block sits this far above the bottom edge, as in the canvas.
   static const double _countBottom = 48;
 
+  /// Vertical place of the hint: under the 200 px character slot of the canvas, 20 px gap.
+  static const double _hintAlignY = 0.3;
+
+  /// The header starts this far from the top edge, as in the canvas (it includes the status bar).
+  static const double _headerTop = 56;
+
   // --- each frame -------------------------------------------------------------------------
 
   void _onFrame(Duration elapsed) {
@@ -329,26 +335,56 @@ class _TapScreenState extends State<TapScreen>
                   top: 0,
                   left: 0,
                   right: 0,
-                  child: SafeArea(
-                    child: Padding(
-                      padding: const EdgeInsets.all(Space.lg),
-                      child: Row(
-                        children: [
-                          PressableSurface(
-                            kind: PressableKind.icon,
-                            semanticLabel: l10n.common_back,
-                            onTap: _leave,
-                            child: const Center(child: ChevronLeftIcon()),
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      Space.lg,
+                      max(
+                        _headerTop,
+                        MediaQuery.paddingOf(context).top + Space.sm,
+                      ),
+                      Space.lg,
+                      0,
+                    ),
+                    child: Row(
+                      children: [
+                        PressableSurface(
+                          kind: PressableKind.icon,
+                          semanticLabel: l10n.common_back,
+                          onTap: _leave,
+                          child: const Center(child: ChevronLeftIcon()),
+                        ),
+                        const SizedBox(width: Space.sm),
+                        Expanded(
+                          child: Text(
+                            moodName(context, widget.mood),
+                            style: TypeScale.title.copyWith(color: p.ink),
                           ),
-                          const SizedBox(width: Space.sm),
-                          Expanded(
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: ListenableBuilder(
+                      listenable: _services.journal,
+                      builder: (context, _) {
+                        final count = _services.journal.journal
+                            .dayOf(DayKey.of(_services.now()))
+                            .countOf(widget.mood);
+                        return Align(
+                          alignment: Alignment(0, _hintAlignY),
+                          child: Opacity(
+                            opacity: count > FillTuning.hintUntilCount ? 0 : 1,
                             child: Text(
-                              moodName(context, widget.mood),
-                              style: TypeScale.title.copyWith(color: p.ink),
+                              l10n.tap_hint,
+                              style: TypeScale.label.copyWith(
+                                color: p.inkMuted,
+                              ),
                             ),
                           ),
-                        ],
-                      ),
+                        );
+                      },
                     ),
                   ),
                 ),
