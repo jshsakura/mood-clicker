@@ -29,6 +29,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     required this.dawnYellow,
     required this.dawnMint,
     required this.dawnPeach,
+    required this.stamp,
   });
 
   final String name;
@@ -54,6 +55,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
   final Color dawnYellow;
   final Color dawnMint;
   final Color dawnPeach;
+  final Color stamp;
 
   @override
   AppPalette copyWith({
@@ -80,6 +82,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     Color? dawnYellow,
     Color? dawnMint,
     Color? dawnPeach,
+    Color? stamp,
   }) {
     return AppPalette(
       name: name ?? this.name,
@@ -105,6 +108,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
       dawnYellow: dawnYellow ?? this.dawnYellow,
       dawnMint: dawnMint ?? this.dawnMint,
       dawnPeach: dawnPeach ?? this.dawnPeach,
+      stamp: stamp ?? this.stamp,
     );
   }
 
@@ -135,6 +139,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
       dawnYellow: Color.lerp(dawnYellow, other.dawnYellow, t)!,
       dawnMint: Color.lerp(dawnMint, other.dawnMint, t)!,
       dawnPeach: Color.lerp(dawnPeach, other.dawnPeach, t)!,
+      stamp: Color.lerp(stamp, other.stamp, t)!,
     );
   }
 }
@@ -163,6 +168,7 @@ const AppPalette darkPalette = AppPalette(
   dawnYellow: Color(0xFF5C5330),
   dawnMint: Color(0xFF2F5A4D),
   dawnPeach: Color(0xFF6B4636),
+  stamp: Color(0xFFD2402E),
 );
 
 const AppPalette lightPalette = AppPalette(
@@ -189,6 +195,7 @@ const AppPalette lightPalette = AppPalette(
   dawnYellow: Color(0xFFFFF1B8),
   dawnMint: Color(0xFFCDEFE2),
   dawnPeach: Color(0xFFFFD9C7),
+  stamp: Color(0xFFD2402E),
 );
 
 const AppPalette pinkPalette = AppPalette(
@@ -215,6 +222,7 @@ const AppPalette pinkPalette = AppPalette(
   dawnYellow: Color(0xFFFFEAA8),
   dawnMint: Color(0xFFBFE8DC),
   dawnPeach: Color(0xFFFFC9BD),
+  stamp: Color(0xFFD2402E),
 );
 
 const List<AppPalette> allPalettes = [darkPalette, lightPalette, pinkPalette];
@@ -230,6 +238,7 @@ abstract final class Space {
   static const double snug = 10;
   static const double row = 14;
   static const double inset = 18;
+  static const double gutter = 20;
 }
 
 abstract final class Radii {
@@ -248,6 +257,9 @@ abstract final class TypeScale {
   static const TextStyle label = TextStyle(fontFamily: 'Pretendard', fontSize: 13, fontWeight: FontWeight.w400, height: 1.4);
   static const TextStyle count = TextStyle(fontFamily: 'Pretendard', fontSize: 56, fontWeight: FontWeight.w700, height: 1);
   static const TextStyle wordmark = TextStyle(fontFamily: 'Baloo2', fontSize: 40, fontWeight: FontWeight.w800, height: 1.1);
+  static const TextStyle caption = TextStyle(fontFamily: 'Pretendard', fontSize: 12, fontWeight: FontWeight.w400, height: 1.4);
+  static const TextStyle small = TextStyle(fontFamily: 'Pretendard', fontSize: 14, fontWeight: FontWeight.w400, height: 1.4);
+  static const TextStyle cell = TextStyle(fontFamily: 'Pretendard', fontSize: 15, fontWeight: FontWeight.w400, height: 1.2);
 }
 
 abstract final class Motion {

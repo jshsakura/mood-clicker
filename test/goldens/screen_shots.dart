@@ -40,6 +40,40 @@ MoodJournal sampleJournal(DateTime today) {
   return journal.withNote(DayKey.of(today), note: 'A slow walk helped.');
 }
 
+/// November 2026 as drawn in the approved calendar sketch: one mood per day, 60 taps or more is a
+/// full gauge (stamped), and day 13 is the picked one.
+MoodJournal calendarSketchJournal() {
+  var journal = MoodJournal.empty();
+  const days = <int, (Mood, int)>{
+    1: (Mood.happy, 35),
+    2: (Mood.excited, 58),
+    3: (Mood.sad, 20),
+    5: (Mood.happy, 50),
+    6: (Mood.angry, 55),
+    7: (Mood.happy, 12),
+    8: (Mood.excited, 60),
+    9: (Mood.happy, 44),
+    10: (Mood.anxious, 25),
+    12: (Mood.happy, 18),
+    13: (Mood.happy, 72),
+    14: (Mood.sad, 15),
+    15: (Mood.happy, 40),
+    16: (Mood.sad, 52),
+    17: (Mood.happy, 30),
+    18: (Mood.excited, 64),
+  };
+  days.forEach((day, entry) {
+    final at = DateTime(2026, 11, day, 9);
+    for (var i = 0; i < entry.$2; i++) {
+      journal = journal.withTap(entry.$1, at);
+    }
+  });
+  return journal
+      .withNote(DayKey.of(DateTime(2026, 11, 8)), note: 'Smiled today')
+      .withNote(DayKey.of(DateTime(2026, 11, 13)), note: 'Ate something good')
+      .withNote(DayKey.of(DateTime(2026, 11, 18)), note: 'Same again tomorrow');
+}
+
 /// English phrases that fit the layout. The shot is about the screen, not the real phrase pack.
 CheerBook shotBook() {
   const phrases = ['Nice!', 'Keep going', 'You got it', 'Yes'];
@@ -81,7 +115,18 @@ final shotScreens =
         act: (tester, app) async {},
       ),
       (name: 'mood_select', build: (_) => const MoodSelectScreen(), act: null),
-      (name: 'calendar', build: (_) => const CalendarScreen(), act: null),
+      (
+        name: 'calendar',
+        build: (app) {
+          app.journal.load(calendarSketchJournal());
+          return const CalendarScreen();
+        },
+        act: (tester, app) async {
+          await tester.pumpAndSettle();
+          await tester.tap(find.text('13'));
+          await tester.pumpAndSettle();
+        },
+      ),
       (
         name: 'day_detail',
         build: (app) => DayDetailScreen(day: DayKey.of(app.clock)),

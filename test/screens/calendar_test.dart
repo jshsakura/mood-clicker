@@ -1,10 +1,10 @@
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:mood_clicker/design/parts/mood_face.dart';
+import 'package:mood_clicker/design/parts/month_flow_bars.dart';
 import 'package:mood_clicker/design/parts/pressable_surface.dart';
 import 'package:mood_clicker/design/tokens.g.dart';
 import 'package:mood_clicker/domain/mood.dart';
@@ -126,7 +126,7 @@ void main() {
   );
 
   testWidgets(
-    'month chevrons sit beside the month label without round backgrounds and month flow chart renders',
+    'the arrows sit in the top row on round surfaces and the month flow bars render',
     (tester) async {
       final app = TestApp();
       app.journal.load(tapped(Mood.happy, DateTime(2026, 11, 3, 9), 5));
@@ -135,15 +135,22 @@ void main() {
       final nextButton = find.bySemanticsLabel(ko.calendar_nextMonth);
       expect(prevButton, findsOneWidget);
       expect(nextButton, findsOneWidget);
-      // They are focusable buttons now, but with no fill, so no round background shows.
+      // Like the sketch: the same round surface as the back button, no fill of their own.
       for (final button in [prevButton, nextButton]) {
         final surface = tester.widget<PressableSurface>(
           find.ancestor(of: button, matching: find.byType(PressableSurface)),
         );
-        expect(surface.color, Colors.transparent);
+        expect(surface.color, isNull);
       }
+      final back = tester.getTopLeft(find.bySemanticsLabel(ko.common_back));
+      final prev = tester.getTopLeft(prevButton);
+      final month = tester.getTopLeft(
+        find.text(DateFormat.MMMM('ko').format(DateTime(2026, 11))),
+      );
+      expect(prev.dy, back.dy, reason: 'one row with the back button');
+      expect(month.dy, greaterThan(prev.dy), reason: 'the month is below it');
       expect(find.text(ko.calendar_monthFlow), findsOneWidget);
-      expect(find.byType(BarChart), findsOneWidget);
+      expect(find.byType(MonthFlowBars), findsOneWidget);
     },
   );
 

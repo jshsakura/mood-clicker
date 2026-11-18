@@ -658,6 +658,15 @@
     "description": "달력 월간 막대그래프 오른쪽 보조 라벨입니다."
   },
   "calendar_tappedTimes": "{count}번 두드렸습니다",
+  "calendar_noteQuote": "“{note}”",
+  "@calendar_noteQuote": {
+    "description": "달력 아래 고른 날 카드에 보이는 오늘의 한마디입니다. 따옴표로 감쌉니다.",
+    "placeholders": {
+      "note": {
+        "type": "String"
+      }
+    }
+  },
   "@calendar_tappedTimes": {
     "description": "달력 아래 고른 날 카드의 두드린 수 문구입니다.",
     "placeholders": {

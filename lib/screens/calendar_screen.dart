@@ -1,16 +1,16 @@
 import 'dart:math' as math;
 
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 import '../app/app_services.dart';
 import '../design/app_theme.dart';
+import '../design/parts/calendar_day_cell.dart';
 import '../design/parts/calmap_marks.dart';
-import '../design/parts/day_shade.dart';
 import '../design/parts/line_icon.dart';
 import '../design/parts/mood_face.dart';
+import '../design/parts/month_flow_bars.dart';
 import '../design/parts/pressable_surface.dart';
 import '../design/tokens.g.dart';
 import '../domain/day_key.dart';
@@ -22,9 +22,9 @@ import '../l10n/date_labels.dart';
 import 'day_detail_screen.dart';
 import 'mood_labels.dart';
 
-/// Monthly calendar matching Calendar.dc.html with back-only top bar,
-/// month-adjacent plain chevrons + swipe navigation, table_calendar grid,
-/// fl_chart monthly flow bars, and selected-day summary card.
+/// Monthly calendar matching design/canvas/Calendar.dc.html: back and month arrows in the top row,
+/// the month with its counts, a day grid drawn with [CalendarDayCell], the monthly flow bars and
+/// the card of the picked day. table_calendar only does the paging, the swipe and the day taps.
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
 
@@ -38,6 +38,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   /// The first month the calendar shows.
   static final DateTime _firstMonth = DateTime(2020);
+
+  /// The gap between two rows of days, and the height of the weekday row: the weekday text, the
+  /// gap under it, less the room the first row already leaves above its circles.
+  static const double _rowGap = 8;
+  static const double _weekdayRowHeight = 23;
+  static const double _captionSpacing = 0.4;
 
   DateTime? _month;
   DayKey? _picked;
@@ -116,55 +122,80 @@ class _CalendarScreenState extends State<CalendarScreen> {
               locale.toLanguageTag(),
             ).format(month);
 
+            final dayTaps = [
+              for (var d = 1; d <= daysInMonth; d++)
+                journal
+                    .dayOf(DayKey.of(DateTime(month.year, month.month, d)))
+                    .total,
+            ];
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Padding(
                   padding: const EdgeInsets.fromLTRB(
-                    Space.lg,
-                    Space.lg,
-                    Space.lg,
+                    Space.md,
                     Space.sm,
+                    Space.md,
+                    0,
                   ),
                   child: Row(
                     children: [
                       PressableSurface.icon(
-                        icon: LineIcons.back,
+                        icon: LineIcons.chevronLeft,
                         semanticLabel: l10n.common_back,
                         onTap: () => Navigator.of(context).pop(),
                       ),
                       const Spacer(),
                       if (!isCurrentMonth)
-                        PressableSurface(
-                          kind: PressableKind.card,
-                          radius: Radii.pill,
-                          color: p.surface,
-                          semanticLabel: l10n.calendar_today,
-                          onTap: () {
-                            final current = DateTime(now.year, now.month);
-                            setState(() {
-                              _month = current;
-                              _picked = _defaultPicked(
-                                journal,
-                                current,
-                                services.now(),
-                              );
-                            });
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: Space.md,
-                              vertical: Space.xs,
-                            ),
-                            child: Text(
-                              l10n.calendar_today,
-                              style: TypeScale.label.copyWith(
-                                color: p.ink,
-                                fontWeight: FontWeight.w700,
+                        Padding(
+                          padding: const EdgeInsets.only(right: Space.sm),
+                          child: PressableSurface(
+                            kind: PressableKind.card,
+                            radius: Radii.pill,
+                            color: p.surface,
+                            semanticLabel: l10n.calendar_today,
+                            onTap: () {
+                              final current = DateTime(now.year, now.month);
+                              setState(() {
+                                _month = current;
+                                _picked = _defaultPicked(
+                                  journal,
+                                  current,
+                                  services.now(),
+                                );
+                              });
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: Space.md,
+                                vertical: Space.xs,
+                              ),
+                              child: Text(
+                                l10n.calendar_today,
+                                style: TypeScale.label.copyWith(
+                                  color: p.ink,
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
                             ),
                           ),
                         ),
+                      PressableSurface.icon(
+                        icon: LineIcons.chevronLeft,
+                        iconSize: 18,
+                        iconColor: isFirstMonth ? p.fillEdge : p.inkMuted,
+                        dimWhenOff: false,
+                        semanticLabel: l10n.calendar_prevMonth,
+                        onTap: isFirstMonth ? null : () => _move(services, -1),
+                      ),
+                      PressableSurface.icon(
+                        icon: LineIcons.chevronRight,
+                        iconSize: 18,
+                        iconColor: isCurrentMonth ? p.fillEdge : p.inkMuted,
+                        dimWhenOff: false,
+                        semanticLabel: l10n.calendar_nextMonth,
+                        onTap: isCurrentMonth ? null : () => _move(services, 1),
+                      ),
                     ],
                   ),
                 ),
@@ -172,16 +203,16 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   child: LayoutBuilder(
                     builder: (context, constraints) => SingleChildScrollView(
                       padding: const EdgeInsets.fromLTRB(
-                        Space.lg,
-                        Space.sm,
-                        Space.lg,
+                        Space.gutter,
                         Space.xl,
+                        Space.gutter,
+                        Space.xxl,
                       ),
                       child: ConstrainedBox(
                         constraints: BoxConstraints(
                           minHeight: math.max(
                             0,
-                            constraints.maxHeight - Space.sm - Space.xl,
+                            constraints.maxHeight - Space.xl - Space.xxl,
                           ),
                         ),
                         child: Column(
@@ -191,7 +222,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
-                                const SizedBox(height: Space.lg),
                                 Row(
                                   crossAxisAlignment: CrossAxisAlignment.end,
                                   mainAxisAlignment:
@@ -205,45 +235,16 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                           '${month.year}',
                                           style: TypeScale.label.copyWith(
                                             color: p.inkMuted,
+                                            letterSpacing: _captionSpacing,
                                           ),
                                         ),
-                                        Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            _PlainChevronButton(
-                                              icon: LineIcons.chevronLeft,
-                                              semanticLabel:
-                                                  l10n.calendar_prevMonth,
-                                              color: isFirstMonth
-                                                  ? p.fillEdge
-                                                  : p.inkMuted,
-                                              onTap: isFirstMonth
-                                                  ? null
-                                                  : () => _move(services, -1),
-                                            ),
-                                            Padding(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: Space.xs,
-                                                  ),
-                                              child: Text(
-                                                monthLabel,
-                                                style: TypeScale.display
-                                                    .copyWith(color: p.ink),
-                                              ),
-                                            ),
-                                            _PlainChevronButton(
-                                              icon: LineIcons.chevronRight,
-                                              semanticLabel:
-                                                  l10n.calendar_nextMonth,
-                                              color: isCurrentMonth
-                                                  ? p.fillEdge
-                                                  : p.inkMuted,
-                                              onTap: isCurrentMonth
-                                                  ? null
-                                                  : () => _move(services, 1),
-                                            ),
-                                          ],
+                                        Text(
+                                          monthLabel,
+                                          style: TypeScale.display.copyWith(
+                                            color: p.ink,
+                                            height: 1.15,
+                                            letterSpacing: -0.6,
+                                          ),
                                         ),
                                       ],
                                     ),
@@ -254,7 +255,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                           unit: l10n.calendar_daysUnit,
                                           label: l10n.calendar_recordedDays,
                                         ),
-                                        const SizedBox(width: Space.lg),
+                                        const SizedBox(width: Space.gutter),
                                         _StatColumn(
                                           value: stampedDays,
                                           unit: l10n.calendar_stampsUnit,
@@ -264,7 +265,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: Space.lg),
+                                const SizedBox(height: Space.xl),
                                 TableCalendar<void>(
                                   firstDay: firstCalendarDay,
                                   lastDay: lastCalendarDay,
@@ -274,8 +275,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                   sixWeekMonthsEnforced: false,
                                   availableGestures:
                                       AvailableGestures.horizontalSwipe,
-                                  rowHeight: 48,
-                                  daysOfWeekHeight: 24,
+                                  rowHeight: CalendarDayCell.size + _rowGap,
+                                  daysOfWeekHeight: _weekdayRowHeight,
                                   selectedDayPredicate: (d) =>
                                       d.year == picked.year &&
                                       d.month == picked.month &&
@@ -298,11 +299,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                     });
                                   },
                                   calendarBuilders: CalendarBuilders<void>(
-                                    dowBuilder: (context, day) => Center(
+                                    dowBuilder: (context, day) => Align(
+                                      alignment: Alignment.topCenter,
                                       child: Text(
                                         weekdays[day.weekday % 7],
-                                        style: TypeScale.label.copyWith(
+                                        style: TypeScale.caption.copyWith(
                                           color: p.faint,
+                                          letterSpacing: _captionSpacing,
                                         ),
                                       ),
                                     ),
@@ -313,7 +316,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                         (context, day, focusedDay) => _dayCell(
                                           context,
                                           services,
-                                          journal,
+                                          dayTaps,
+                                          maxTaps,
                                           day,
                                           effectivePicked: picked,
                                           isPicked: false,
@@ -323,7 +327,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                         _dayCell(
                                           context,
                                           services,
-                                          journal,
+                                          dayTaps,
+                                          maxTaps,
                                           day,
                                           effectivePicked: picked,
                                           isPicked: false,
@@ -333,7 +338,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                         (context, day, focusedDay) => _dayCell(
                                           context,
                                           services,
-                                          journal,
+                                          dayTaps,
+                                          maxTaps,
                                           day,
                                           effectivePicked: picked,
                                           isPicked: true,
@@ -344,14 +350,42 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                             const SizedBox.shrink(),
                                   ),
                                 ),
-                                const SizedBox(height: Space.lg),
-                                _MonthlyFlowChart(
-                                  month: month,
-                                  daysInMonth: daysInMonth,
-                                  maxTaps: maxTaps,
-                                  journal: journal,
-                                  picked: picked,
-                                  onPickDay: (d) {
+                                const SizedBox(height: Space.xl),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      l10n.calendar_monthFlow,
+                                      style: TypeScale.caption.copyWith(
+                                        color: p.faint,
+                                        letterSpacing: _captionSpacing,
+                                      ),
+                                    ),
+                                    Text(
+                                      l10n.calendar_tapsAxis,
+                                      style: TypeScale.caption.copyWith(
+                                        color: p.faint,
+                                        letterSpacing: _captionSpacing,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: Space.sm),
+                                MonthFlowBars(
+                                  taps: dayTaps,
+                                  picked:
+                                      picked.year == month.year &&
+                                          picked.month == month.month
+                                      ? picked.day
+                                      : null,
+                                  semanticLabel: (d) => l10n.calendar_openDay(
+                                    dayTitle(
+                                      locale,
+                                      DateTime(month.year, month.month, d),
+                                    ),
+                                  ),
+                                  onPick: (d) {
                                     final date = DateTime(
                                       month.year,
                                       month.month,
@@ -362,7 +396,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                     }
                                   },
                                 ),
-                                const SizedBox(height: Space.lg),
+                                const SizedBox(height: Space.xl),
                                 if (recordedDays == 0) ...[
                                   Text(
                                     l10n.calendar_emptyMonth,
@@ -371,7 +405,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                       color: p.inkMuted,
                                     ),
                                   ),
-                                  const SizedBox(height: Space.lg),
+                                  const SizedBox(height: Space.xl),
                                 ],
                               ],
                             ),
@@ -402,7 +436,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
   Widget _dayCell(
     BuildContext context,
     AppServices services,
-    MoodJournal journal,
+    List<int> dayTaps,
+    int maxTaps,
     DateTime day, {
     required DayKey effectivePicked,
     required bool isPicked,
@@ -412,62 +447,29 @@ class _CalendarScreenState extends State<CalendarScreen> {
     final l10n = AppLocalizations.of(context);
     final locale = Localizations.localeOf(context);
     final key = DayKey.of(day);
-    final record = journal.dayOf(key);
-    final taps = record.total;
+    final taps = dayTaps[day.day - 1];
     final isFuture = day.isAfter(services.now());
-    final isStamped = _isStamped(taps);
-    final fillColor = DayShade.fill(p, taps);
-    final textColor = isFuture
-        ? p.fillEdge
-        : (taps == 0 ? p.inkMuted : DayShade.onFill(p, taps));
-    final ringColor = isPicked ? p.ink : (isToday ? p.fillEdge : null);
-    final ringWidth = isPicked ? 1.5 : 1.0;
-
-    return Center(
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          DecoratedBox(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: ringColor != null
-                  ? Border.all(color: ringColor, width: ringWidth)
-                  : null,
-            ),
-            child: SizedBox.square(
-              dimension: 42,
-              child: PressableSurface(
-                kind: PressableKind.icon,
-                radius: Radii.pill,
-                color: fillColor,
-                semanticLabel: l10n.calendar_openDay(dayTitle(locale, day)),
-                onTap: isFuture
-                    ? null
-                    : () {
-                        if (effectivePicked == key) {
-                          _open(context, key);
-                        } else {
-                          setState(() => _picked = key);
-                        }
-                      },
-                child: Center(
-                  child: Text(
-                    '${day.day}',
-                    style: TypeScale.body.copyWith(
-                      color: textColor,
-                      fontWeight: isPicked || isToday
-                          ? FontWeight.w700
-                          : FontWeight.w400,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          if (isStamped)
-            const Positioned(right: -2, top: -2, child: SmallStampBadge()),
-        ],
+    return CalendarDayCell(
+      day: day.day,
+      look: CalendarDayLook.of(
+        p,
+        taps: taps,
+        maxTaps: maxTaps,
+        isPicked: isPicked,
+        isToday: isToday,
+        isFuture: isFuture,
       ),
+      stamped: _isStamped(taps),
+      semanticLabel: l10n.calendar_openDay(dayTitle(locale, day)),
+      onTap: isFuture
+          ? null
+          : () {
+              if (effectivePicked == key) {
+                _open(context, key);
+              } else {
+                setState(() => _picked = key);
+              }
+            },
     );
   }
 
@@ -475,32 +477,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
     Navigator.of(
       context,
     ).push(MaterialPageRoute<void>(builder: (_) => DayDetailScreen(day: key)));
-  }
-}
-
-class _PlainChevronButton extends StatelessWidget {
-  const _PlainChevronButton({
-    required this.icon,
-    required this.semanticLabel,
-    required this.color,
-    required this.onTap,
-  });
-
-  final LineIcons icon;
-  final String semanticLabel;
-  final Color color;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return PressableSurface.icon(
-      icon: icon,
-      iconSize: 18,
-      iconColor: color,
-      color: Colors.transparent,
-      semanticLabel: semanticLabel,
-      onTap: onTap,
-    );
   }
 }
 
@@ -526,7 +502,7 @@ class _StatColumn extends StatelessWidget {
             children: [
               TextSpan(
                 text: '$value',
-                style: TypeScale.title.copyWith(color: p.ink),
+                style: TypeScale.title.copyWith(color: p.ink, height: 1.2),
               ),
               if (unit.isNotEmpty)
                 TextSpan(
@@ -537,110 +513,6 @@ class _StatColumn extends StatelessWidget {
           ),
         ),
         Text(label, style: TypeScale.label.copyWith(color: p.inkMuted)),
-      ],
-    );
-  }
-}
-
-class _MonthlyFlowChart extends StatelessWidget {
-  const _MonthlyFlowChart({
-    required this.month,
-    required this.daysInMonth,
-    required this.maxTaps,
-    required this.journal,
-    required this.picked,
-    required this.onPickDay,
-  });
-
-  final DateTime month;
-  final int daysInMonth;
-  final int maxTaps;
-  final MoodJournal journal;
-  final DayKey picked;
-  final ValueChanged<int> onPickDay;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.palette;
-    final l10n = AppLocalizations.of(context);
-    final groups = <BarChartGroupData>[];
-    for (var d = 1; d <= daysInMonth; d++) {
-      final taps = journal
-          .dayOf(DayKey.of(DateTime(month.year, month.month, d)))
-          .total;
-      final isPicked =
-          picked.year == month.year &&
-          picked.month == month.month &&
-          picked.day == d;
-      final strength = taps / maxTaps;
-      final barHeight = taps > 0 ? math.max(3.0, strength * 40.0) : 2.0;
-      final barColor = taps == 0
-          ? p.line
-          : (isPicked ? p.ink : p.ink.withValues(alpha: 0.22));
-      groups.add(
-        BarChartGroupData(
-          x: d,
-          barRods: [
-            BarChartRodData(
-              toY: barHeight,
-              width: 6,
-              color: barColor,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(2),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              l10n.calendar_monthFlow,
-              style: TypeScale.label.copyWith(color: p.faint),
-            ),
-            Text(
-              l10n.calendar_tapsAxis,
-              style: TypeScale.label.copyWith(color: p.faint),
-            ),
-          ],
-        ),
-        const SizedBox(height: Space.sm),
-        SizedBox(
-          height: 44,
-          child: BarChart(
-            BarChartData(
-              maxY: 42,
-              minY: 0,
-              alignment: BarChartAlignment.spaceBetween,
-              groupsSpace: 2,
-              gridData: const FlGridData(show: false),
-              titlesData: const FlTitlesData(show: false),
-              borderData: FlBorderData(
-                show: true,
-                border: Border(bottom: BorderSide(color: p.line)),
-              ),
-              barTouchData: BarTouchData(
-                enabled: true,
-                touchTooltipData: BarTouchTooltipData(
-                  getTooltipItem: (group, groupIndex, rod, rodIndex) => null,
-                ),
-                touchCallback: (event, response) {
-                  if (event.isInterestedForInteractions &&
-                      response?.spot != null) {
-                    onPickDay(response!.spot!.touchedBarGroup.x);
-                  }
-                },
-              ),
-              barGroups: groups,
-            ),
-          ),
-        ),
       ],
     );
   }
@@ -657,34 +529,40 @@ class _SelectedDayCard extends StatelessWidget {
   final DayRecord record;
   final VoidCallback? onTap;
 
+  /// The stamp is taller than the row it sits in, so it hangs over by this much on each side.
+  static const double _stampOverhang = 8;
+
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
     final l10n = AppLocalizations.of(context);
     final locale = Localizations.localeOf(context);
-    final dateText = dayTitle(locale, DateTime(day.year, day.month, day.day));
+    final date = DateTime(day.year, day.month, day.day);
+    final dateText = dayWithWeekday(locale, date);
     final mood = record.dominantMood;
     final isStamped = record.total * GaugeTuning.stepPerTap >= 1.0 - 1e-9;
     final note = record.note;
 
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(Radii.card),
-        border: Border.all(color: p.line),
-      ),
-      child: PressableSurface(
-        kind: PressableKind.card,
-        radius: Radii.card,
-        color: p.ground,
-        semanticLabel: l10n.calendar_openDay(dateText),
-        onTap: onTap,
+    return PressableSurface(
+      kind: PressableKind.card,
+      radius: Radii.panel,
+      color: p.ground,
+      semanticLabel: l10n.calendar_openDay(dayTitle(locale, date)),
+      onTap: onTap,
+      dimWhenOff: false,
+      child: DecoratedBox(
+        position: DecorationPosition.foreground,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(Radii.panel),
+          border: Border.all(color: p.line),
+        ),
         child: Padding(
-          padding: const EdgeInsets.all(Space.lg),
+          padding: const EdgeInsets.all(Space.gutter),
           child: Row(
             children: [
               if (mood != null) ...[
                 MoodFace(mood: mood, size: 40),
-                const SizedBox(width: Space.md),
+                const SizedBox(width: Space.lg),
               ],
               Expanded(
                 child: Column(
@@ -700,7 +578,10 @@ class _SelectedDayCard extends StatelessWidget {
                       mood != null
                           ? moodName(context, mood)
                           : l10n.dayDetail_empty,
-                      style: TypeScale.title.copyWith(color: p.ink),
+                      style: TypeScale.title.copyWith(
+                        color: p.ink,
+                        letterSpacing: -0.3,
+                      ),
                     ),
                     if (record.total > 0) ...[
                       const SizedBox(height: Space.xs),
@@ -712,23 +593,31 @@ class _SelectedDayCard extends StatelessWidget {
                     if (note != null) ...[
                       const SizedBox(height: Space.xs),
                       Text(
-                        '"$note"',
+                        l10n.calendar_noteQuote(note),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TypeScale.label.copyWith(color: p.ink),
+                        style: TypeScale.small.copyWith(color: p.ink),
                       ),
                     ],
                   ],
                 ),
               ),
               if (isStamped) ...[
-                WellDoneStamp(
-                  line1: l10n.calendar_stampLine1,
-                  line2: l10n.calendar_stampLine2,
-                  semanticLabel: l10n.calendar_stamps,
+                const SizedBox(width: Space.lg),
+                SizedBox(
+                  width: WellDoneStamp.size,
+                  height: WellDoneStamp.size - 2 * _stampOverhang,
+                  child: OverflowBox(
+                    maxHeight: WellDoneStamp.size,
+                    child: WellDoneStamp(
+                      line1: l10n.calendar_stampLine1,
+                      line2: l10n.calendar_stampLine2,
+                      semanticLabel: l10n.calendar_stamps,
+                    ),
+                  ),
                 ),
-                const SizedBox(width: Space.sm),
               ],
+              const SizedBox(width: Space.lg),
               LineIcon(LineIcons.chevronRight, size: 18, color: p.faint),
             ],
           ),

@@ -30,6 +30,7 @@ class PressableSurface extends StatefulWidget {
     this.color,
     this.radius,
     this.selected,
+    this.dimWhenOff = true,
   });
 
   /// A 44 px circular icon button.
@@ -41,12 +42,14 @@ class PressableSurface extends StatefulWidget {
     double iconSize = 22,
     Color? iconColor,
     Color? color,
+    bool dimWhenOff = true,
   }) : this(
          key: key,
          kind: PressableKind.icon,
          onTap: onTap,
          semanticLabel: semanticLabel,
          color: color,
+         dimWhenOff: dimWhenOff,
          child: Center(
            child: Builder(
              builder: (context) =>
@@ -76,6 +79,10 @@ class PressableSurface extends StatefulWidget {
 
   /// Whether the surface is the chosen one of a group, told to screen readers. Null for none.
   final bool? selected;
+
+  /// Whether a switched off surface fades. A button that only rests (the next month arrow of the
+  /// current month) keeps its look and sets this to false.
+  final bool dimWhenOff;
 
   @override
   State<PressableSurface> createState() => _PressableSurfaceState();
@@ -189,7 +196,7 @@ class _PressableSurfaceState extends State<PressableSurface> {
           onTap: widget.onTap,
           child: AnimatedOpacity(
             duration: Motion.tap,
-            opacity: enabled ? 1 : disabledOpacity,
+            opacity: enabled || !widget.dimWhenOff ? 1 : disabledOpacity,
             child: AnimatedScale(
               duration: Motion.tap,
               curve: Curves.easeOut,

@@ -16,7 +16,7 @@ class SmallStampBadge extends StatelessWidget {
       angle: -14 * math.pi / 180,
       child: SizedBox.square(
         dimension: 16,
-        child: CustomPaint(painter: _SmallStampPainter(p.ground, p.error)),
+        child: CustomPaint(painter: _SmallStampPainter(p.ground, p.stamp)),
       ),
     );
   }
@@ -72,41 +72,22 @@ class WellDoneStamp extends StatelessWidget {
   final String line2;
   final String semanticLabel;
 
+  static const double size = 76;
+
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
     return Semantics(
       label: semanticLabel,
-      child: Transform.rotate(
-        angle: -12 * math.pi / 180,
-        child: Opacity(
-          opacity: 0.92,
-          child: SizedBox.square(
-            dimension: 76,
-            child: CustomPaint(
-              painter: _WellDoneStampPainter(p.error),
-              child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      line1,
-                      style: TypeScale.label.copyWith(
-                        color: p.error,
-                        fontWeight: FontWeight.w700,
-                        height: 1.15,
-                      ),
-                    ),
-                    Text(
-                      line2,
-                      style: TypeScale.label.copyWith(
-                        color: p.error,
-                        fontWeight: FontWeight.w700,
-                        height: 1.15,
-                      ),
-                    ),
-                  ],
-                ),
+      child: ExcludeSemantics(
+        child: Transform.rotate(
+          angle: -12 * math.pi / 180,
+          child: Opacity(
+            opacity: 0.92,
+            child: SizedBox.square(
+              dimension: size,
+              child: CustomPaint(
+                painter: _WellDoneStampPainter(p.stamp, line1, line2),
               ),
             ),
           ),
@@ -117,9 +98,17 @@ class WellDoneStamp extends StatelessWidget {
 }
 
 class _WellDoneStampPainter extends CustomPainter {
-  const _WellDoneStampPainter(this.color);
+  const _WellDoneStampPainter(this.color, this.line1, this.line2);
 
   final Color color;
+  final String line1;
+  final String line2;
+
+  // The ring is a circle of radius 34 drawn as a long dash, a short gap and a short dash that
+  // ends where the circle closes (dash array 180 4 40 3 of the sketch).
+  static const double _ringRadius = 34;
+  static const double _longDash = 180;
+  static const double _gap = 4;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -127,21 +116,55 @@ class _WellDoneStampPainter extends CustomPainter {
     final outer = Paint()
       ..color = color
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.4;
+      ..strokeWidth = 2.6;
     final inner = Paint()
       ..color = color
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.2;
+    final ring = Rect.fromCircle(center: center, radius: _ringRadius);
+    final circumference = 2 * math.pi * _ringRadius;
+    canvas.drawArc(ring, 0, _longDash / _ringRadius, false, outer);
+    final secondStart = (_longDash + _gap) / _ringRadius;
     canvas.drawArc(
-      Rect.fromCircle(center: center, radius: 34),
-      0.15,
-      math.pi * 1.82,
+      ring,
+      secondStart,
+      circumference / _ringRadius - secondStart,
       false,
       outer,
     );
     canvas.drawCircle(center, 28.5, inner);
+    _line(canvas, line1, center.dx, 35, 2);
+    _line(canvas, line2, center.dx, 52, 0.5);
+  }
+
+  /// Draws [text] centered on [x] with its baseline at [baseline].
+  void _line(
+    Canvas canvas,
+    String text,
+    double x,
+    double baseline,
+    double spacing,
+  ) {
+    final painter = TextPainter(
+      text: TextSpan(
+        text: text,
+        style: TypeScale.label.copyWith(
+          color: color,
+          fontSize: 15,
+          fontWeight: FontWeight.w700,
+          letterSpacing: spacing,
+          height: 1,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    final top =
+        baseline -
+        painter.computeDistanceToActualBaseline(TextBaseline.alphabetic);
+    painter.paint(canvas, Offset(x - painter.width / 2, top));
   }
 
   @override
-  bool shouldRepaint(_WellDoneStampPainter old) => old.color != color;
+  bool shouldRepaint(_WellDoneStampPainter old) =>
+      old.color != color || old.line1 != line1 || old.line2 != line2;
 }
