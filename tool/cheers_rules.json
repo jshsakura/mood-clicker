@@ -70,6 +70,8 @@
       "rare": 85
     },
     "min_bases_tier_moods": [
+      "happy",
+      "excited",
       "angry",
       "sad",
       "anxious"
@@ -77,8 +79,13 @@
   },
   "moods": {
     "happy": {
-      "max_exclamation": 2,
-      "allowed_emojis": null,
+      "max_exclamation": 1,
+      "allowed_emojis": [
+        "🙂",
+        "🌱",
+        "☀️",
+        "💧"
+      ],
       "allow_kaomoji": true,
       "allow_laughter": true,
       "banned_words": {
@@ -89,7 +96,15 @@
           "절대 잃지",
           "놓치지 마",
           "드디어 정상",
-          "우울에서 벗어"
+          "우울에서 벗어",
+          "상위 1%",
+          "누구보다",
+          "기분 100점",
+          "최고 등급",
+          "해금",
+          "저장 완료",
+          "+1",
+          "저장해"
         ],
         "en": [
           "always be happy",
@@ -97,7 +112,13 @@
           "never lose",
           "don't lose this",
           "finally normal",
-          "you should be happy"
+          "you should be happy",
+          "joy level",
+          "gold medal",
+          "keep smiling",
+          "best vibes only",
+          "saved this moment",
+          "+1"
         ],
         "ja": [
           "ずっと幸せ",
@@ -105,13 +126,27 @@
           "絶対失わない",
           "逃さないで",
           "やっと普通",
-          "幸せでいなきゃ"
+          "幸せでいなきゃ",
+          "上位1%",
+          "誰よりも",
+          "百点満点",
+          "最高ランク",
+          "解放",
+          "保存完了",
+          "保存！",
+          "+1"
         ]
-      }
+      },
+      "max_emojis": 1,
+      "allow_exclamation_with_emoji": false
     },
     "excited": {
-      "max_exclamation": 2,
-      "allowed_emojis": null,
+      "max_exclamation": 1,
+      "allowed_emojis": [
+        "🙂",
+        "✨",
+        "💧"
+      ],
       "allow_kaomoji": true,
       "allow_laughter": true,
       "banned_words": {
@@ -122,7 +157,18 @@
           "멈추지 마",
           "더 더",
           "뭐든 다 할 수",
-          "행복해야"
+          "행복해야",
+          "더 크게 질러",
+          "소리 질러",
+          "전력 질주",
+          "심장 박동 최고치",
+          "심장 멎을",
+          "상위 1%",
+          "누구보다",
+          "최고 등급",
+          "해금",
+          "저장 완료",
+          "+1"
         ],
         "en": [
           "explode",
@@ -130,7 +176,19 @@
           "don't stop",
           "push harder",
           "unstoppable",
-          "anything is possible"
+          "anything is possible",
+          "faster now",
+          "faster! faster",
+          "scream it out",
+          "louder! louder",
+          "stomp your feet",
+          "pulse at 200",
+          "pulse rising",
+          "heart beating fast",
+          "joy level",
+          "gold medal",
+          "saved this moment",
+          "+1"
         ],
         "ja": [
           "爆発",
@@ -139,9 +197,23 @@
           "止まらないで",
           "もっともっと",
           "なんでもできる",
-          "幸せでいなきゃ"
+          "幸せでいなきゃ",
+          "アクセル踏",
+          "大きく叫べ",
+          "叫び声上げ",
+          "最高潮へ駆け",
+          "心拍数最高値",
+          "上位1%",
+          "誰よりも",
+          "最高ランク",
+          "解放",
+          "保存完了",
+          "保存！",
+          "+1"
         ]
-      }
+      },
+      "max_emojis": 1,
+      "allow_exclamation_with_emoji": false
     },
     "angry": {
       "max_exclamation": 0,
