@@ -278,3 +278,76 @@
 3. **판단 없는 달력과 비교(Daylio·Bearable)**: 달력에서는 색·이모지 위주로 한 달 흐름을 보여 주고, 돌아보기에서도 조언 없이 사실 비교만 한 줄로 알려 줍니다.
 4. **감정 날씨형 익명 지도(The Mood Map·Moodi Map)**: 개인 점이나 장소 평점 대신 1~2km 동네 격자의 대표 기분과 행복/슬픔 비율만 보여 줍니다.
 5. **보편적인 산사 리추얼 감각(산사·마보)**: 캐릭터 힐링 콘셉트를 채택하더라도 특정 종교 색채를 빼고, 합장·자연 배경·고요한 상태 전환으로 "마음을 털어 내는 리추얼" 분위기만 취합니다.
+
+---
+
+## 6. iOS 배포(맥 없음), 탭 효과음(CC0), 캐릭터 애니메이션(Rive vs Lottie)
+
+확인일: 2026-11-18
+
+### 6.1 맥이 없는 상태에서 아이폰에 Flutter 앱 올리기 (TestFlight)
+
+맥이 없어도 **GitHub Actions macOS 러너**에서 `.ipa` 를 빌드해 **TestFlight 내부 테스트**로 사장님 아이폰에 올릴 수 있습니다.
+
+1. **필요한 애플 측 준비물**:
+   - **Apple Developer Program 유료 계정** (연 $99): TestFlight 사용에 필수입니다.
+   - **App Store Connect API Key** (`.p8` 파일, `Key ID`, `Issuer ID`): App Store Connect 의 `사용자 및 액세스 > 통합` 에서 **App Manager** 이상 권한으로 발급합니다. CI 에서 2단계 인증(2FA) 없이 업로드할 때 씁니다.
+   - **Apple Distribution 인증서(`.p12`)** 와 **App Store 프로비저닝 프로파일(`.mobileprovision`)**.
+2. **GitHub Actions -> TestFlight 빌드 절차**:
+   - `macos-latest` 러너에서 Flutter SDK 를 설정하고 `flutter build ipa --export-options-plist=...` 또는 `fastlane` (`build_app` + `upload_to_testflight`) 으로 아카이브 및 업로드를 수행합니다.
+3. **`fastlane match` 필요 여부**:
+   - **필수는 아닙니다.** 인증서(`.p12`)와 프로비저닝 프로파일(`.mobileprovision`)을 GitHub Secrets 에 Base64 로 넣어 CI 키체인에 설치하는 수동 방식이나, `xcodebuild -allowProvisioningUpdates` + API Key 조합도 가능합니다.
+   - 다만 인증서 만료·재발급과 팀 공유를 생각하면 `fastlane match` 가 편합니다. **맥 없이도** Linux/Windows 에서 `openssl` 로 개인키와 CSR 을 만든 뒤 Apple Developer 포털에서 `.cer` 을 내려받아 `.p12` 로 변환하고, match 전용 비공개 Git 저장소에 직접 올린 뒤 CI 에서 `readonly: true` 로 불러올 수 있습니다.
+4. **GitHub Actions macOS 러너 비용**:
+   - 공개(public) 저장소는 무료입니다.
+   - 비공개(private) 저장소는 표준 Linux(`$0.006/분`) 대비 **약 10배** 요율로 차감됩니다(`macos-latest` 표준 `$0.062/분`, 대형 러너 `$0.102/분`, 작업 시간은 1분 단위로 올림). GitHub Free 플랜은 월 `$12`(Pro/Team 은 월 `$18`) 무료 크레딧을 제공하므로, 파일럿 단계에서 수동 트리거(`workflow_dispatch`)나 태그 푸시 때만 iOS 빌드를 돌리면 무료 크레딧 안에서 충분히 감당할 수 있습니다.
+5. **사장님(내부 테스터) 초대 방식**:
+   - App Store Connect `사용자 및 액세스` 에 사장님 Apple ID 를 팀원(Account Holder, Admin, App Manager, Developer, Marketing 중 하나)으로 추가하고, TestFlight **내부 테스트(Internal Testing)** 그룹에 배정합니다.
+   - 내부 테스터는 앱당 최대 **100명**까지 가능하며, **Beta App Review(외부 심사) 없이** 업로드·처리 직후 TestFlight 앱에서 바로 설치할 수 있습니다(빌드 유효기간 90일).
+6. **안드로이드 `.apk` 직접 전달로 충분한가**:
+   - 파일럿·사내 확인 단계에서는 `flutter build apk --release`(또는 `--debug`) 로 만든 `.apk` 파일을 메신저나 드라이브로 직접 전달해 설치("출처를 알 수 없는 앱 허용")하는 것으로 충분합니다. Play Console 계정이나 심사 없이 즉시 동작합니다. 버전 관리나 자동 알림이 필요해지면 Firebase App Distribution(무료)을 붙이면 됩니다.
+
+출처 및 확인일 (2026-11-18):
+- Apple Developer Program 및 TestFlight 내부 테스트 안내: https://developer.apple.com/testflight/
+- GitHub Actions 요금 및 macOS 러너 분당 단가: https://docs.github.com/en/billing/managing-billing-for-github-actions/about-billing-for-github-actions
+- Fastlane `match` 공식 문서: https://docs.fastlane.tools/actions/match/
+- 맥 없이 OpenSSL 로 Distribution 인증서(`.p12`) 및 `match` 구성 참고: https://simondalvai.org/blog/fastlane-match-without-mac/
+
+### 6.2 탭 효과음 (상업 이용·재배포 가능한 CC0 출처 및 후보)
+
+파일럿 이후 회사에 코드를 넘기는 조건이므로, 상업 이용과 앱 번들 재배포가 자유로운 **CC0 1.0 (퍼블릭 도메인)** 음원을 우선 쓰는 것이 가장 안전합니다. (`docs/SPEC.md` 방침대로 출처와 라이선스는 `THIRD_PARTY_NOTICES` 에 남깁니다.)
+
+| 출처 | 라이선스 | 상업 이용·앱 번들 | 저작자 표기 의무 | 비고 |
+|---|---|---|---|---|
+| **Kenney.nl** (`Interface Sounds`, `UI Audio`, `Impact Sounds`, `RPG Audio`) | **CC0 1.0** | 가능 | 불필요(권장 사항) | 음질과 톤이 고르게 마스터링되어 있어 UI·타격음 조합에 가장 무난합니다. |
+| **Freesound.org** (`CC0` 필터) | 파일별 상이(**CC0**, CC-BY, CC-BY-NC) | CC0 만 조건 없이 가능 | CC0 불필요 / CC-BY **필수** | 반드시 검색 시 CC0 로 필터링하고, 원저작자가 타인의 저작물을 무단 업로드한 음원이 아닌지 확인해야 합니다. CC-BY-NC 는 상업 불가입니다. |
+
+기분별 효과음 후보:
+- **행복해요 (높고 맑은 톡)**: Kenney `Interface Sounds` / `UI Audio` 의 `click`, `pop`, `tap` 계열
+- **설레요 (방울 소리)**: Kenney `Interface Sounds` 의 `confirmation` / `tone` 계열 또는 Freesound CC0 `bell` / `chime`
+- **화나요 (낮은 북소리)**: Kenney `Impact Sounds` / `RPG Audio` 의 `thud` / `impact` 계열 또는 Freesound CC0 `low drum`
+- **슬퍼요 (낮은 물방울)**: Freesound CC0 `water drop` / `droplet` (짧은 단일 타격음)
+- **불안해요 (짧은 째깍)**: Kenney `Interface Sounds` 의 짧은 `switch` / `tick` 계열 또는 Freesound CC0 `clock tick`
+
+출처 및 확인일 (2026-11-18):
+- Kenney 오디오 에셋 (CC0): https://kenney.nl/assets?q=audio
+- Freesound 라이선스 안내: https://freesound.org/help/faq/#licenses
+
+### 6.3 캐릭터 애니메이션: Flutter 에서 Rive vs Lottie
+
+`docs/SPEC.md` 의 캐릭터 상태(`가만히`, `반응`, `합장`, `마무리`)와 초당 여러 번 두드리는 연타 상황을 기준으로 비교했습니다.
+
+| 비교 항목 | Rive (`rive` `0.14.11`) | Lottie (`lottie` `3.8.1`) |
+|---|---|---|
+| **런타임·번들 크기** | `rive_native` C++ 네이티브 바이너리를 포함하므로 앱 크기가 플랫폼별 수 MB 늘어납니다. 대신 `.riv` 에셋 파일 자체는 바이너리라 매우 작습니다. | **순수 Dart 구현**이라 네이티브 바이너리 증가가 거의 없습니다. 대신 JSON 에셋이 크면 앱 크기에 반영됩니다(dotLottie 압축으로 완화 가능). |
+| **상태 머신 지원** | **매우 강함.** Rive Editor 안에서 `가만히 -> 반응 -> 합장 -> 마무리` 상태 그래프와 트리거·숫자 입력(`채움` 값 연동)을 직접 설계합니다. Flutter 코드에서는 상태 이름·입력값만 바꿉니다. | 전통적으로 타임라인 재생 중심이라 구간(마커) 전환과 블렌딩을 Dart 코드로 직접 제어해야 합니다. (dotLottie/Lottie Creator 에서 기본 상태 머신이 추가되었으나 복합 캐릭터 제어는 Rive 가 더 성숙합니다.) |
+| **연타 중 성능** | 실시간 인터랙션용 바이너리 런타임(또는 Rive Renderer)이라 연타 중 트리거 반복 호출과 상태 전환 블렌딩이 부드럽습니다. | 복잡한 벡터 패스나 큰 JSON 은 저사양 안드로이드에서 프레임 드롭이 생길 수 있어 에셋 경량화가 중요합니다. |
+| **디자이너 작업 흐름** | **Rive Editor**(웹/데스크톱)에서 그리기·리깅·애니메이션·상태 머신을 한 번에 만듭니다. 내보내기 깨짐이 없으나 디자이너가 새 도구를 익혀야 합니다. | **After Effects**(Bodymovin) 또는 **Lottie Creator** 를 씁니다. 기존 모션 디자이너에게 익숙하지만 AE 기능 일부가 내보내기에서 누락될 수 있습니다. |
+
+정리:
+- 캐릭터가 연타(`반응`)와 `채움`(`합장`, `마무리`)에 실시간으로 반응해야 한다면 **Rive** 가 상태 머신과 연타 성능 면에서 유리합니다.
+- 디자이너가 After Effects 만 쓰고 상태 전환이 단순한 루프 교체 수준이라면 **Lottie** 도 가능합니다.
+
+출처 및 확인일 (2026-11-18):
+- `rive` 패키지 (pub.dev) 및 공식 문서: https://pub.dev/packages/rive , https://rive.app/docs/runtimes/flutter/flutter
+- `lottie` 패키지 (pub.dev): https://pub.dev/packages/lottie
