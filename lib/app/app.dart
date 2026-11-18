@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../design/app_theme.dart';
+import '../design/system_bars.dart';
 import '../design/theme_choice.dart';
 import '../l10n/app_localizations.g.dart';
 import '../l10n/locale_resolution.dart';
@@ -46,10 +48,15 @@ class _MoodClickerAppState extends State<MoodClickerApp> {
           locale: widget.services.language?.value.locale,
           localeListResolutionCallback: (deviceLocales, supported) =>
               resolveAppLocale(deviceLocales ?? const [], supported),
-          builder: (context, child) => MediaQuery.withClampedTextScaling(
-            minScaleFactor: widget.services.feel.value.textScale,
-            maxScaleFactor: 3,
-            child: SurfaceSync(navigatorKey: _navigatorKey, child: child!),
+          builder: (context, child) => AnnotatedRegion<SystemUiOverlayStyle>(
+            value: systemBarsFor(
+              paletteFor(widget.services.theme.value, platform),
+            ),
+            child: MediaQuery.withClampedTextScaling(
+              minScaleFactor: widget.services.feel.value.textScale,
+              maxScaleFactor: 3,
+              child: SurfaceSync(navigatorKey: _navigatorKey, child: child!),
+            ),
           ),
           home: const LoadingScreen(),
         ),
