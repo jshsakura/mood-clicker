@@ -426,3 +426,54 @@
 - Apple `NSLocationWhenInUseUsageDescription`: https://developer.apple.com/documentation/bundleresources/information_property_list/nslocationwheninuseusagedescription
 - Google Play Data safety 공식 가이드: https://support.google.com/googleplay/android-developer/answer/10787469
 - Android 대략적 위치(`ACCESS_COARSE_LOCATION`) 가이드: https://developer.android.com/develop/sensors-and-location/location/permissions
+
+---
+
+## 8. 기분별 진동 패턴 설계 및 Kenney CC0 효과음 후보
+
+확인일: 2026-11-18
+
+### 8.1 기분별 진동 패턴 설계 (iOS Core Haptics / Android VibrationEffect)
+
+Apple HIG(Playing haptics)에 따라 단발성 타격은 `transient`, 여운이 남는 진동은 `continuous` 로 두고 `intensity`(세기, `0.0~1.0`)와 `sharpness`(날카로움·질감, `0.0~1.0`)를 조합합니다. Android 는 API 30+ 지원 기기에서는 `VibrationEffect.Composition` 프리미티브(`PRIMITIVE_TICK`, `PRIMITIVE_CLICK`, `PRIMITIVE_THUD`)를 우선 쓰고, 일반 진폭 지원 기기(`hasAmplitudeControl() == true`, API 26+)는 `createWaveform(timings, amplitudes, -1)`(진폭 `0~255`)을 사용합니다.
+
+| 반응 / 기분 | 느낌 설명 | iOS Core Haptics (`intensity`, `sharpness`, 타입, 지속/간격) | Android `VibrationEffect` (`timings` ms / `amplitudes` 0~255 또는 Composition 프리미티브) |
+|---|---|---|---|
+| `tap` · **행복해요** | 가볍고 튀는 톡 | `transient`, `intensity: 0.55`, `sharpness: 0.85` (단발 1회) | 파형: `[0, 15]` / `[0, 140]` · Composition: `PRIMITIVE_TICK(0.65)` |
+| `tap` · **설레요** | 짧게 두 번 톡톡 | `transient` 2회, `intensity: 0.45 -> 0.65`, `sharpness: 0.75`, 간격 `45ms` (`t=0ms`, `45ms`) | 파형: `[0, 12, 35, 15]` / `[0, 110, 0, 165]` · Composition: `PRIMITIVE_TICK(0.5)` + 지연 `35ms` + `PRIMITIVE_CLICK(0.7)` |
+| `tap` · **화나요** | 무겁고 짧은 쿵 | `transient`, `intensity: 0.95`, `sharpness: 0.25` (낮은 sharpness 로 묵직한 타격) | 파형: `[0, 32]` / `[0, 245]` · Composition: `PRIMITIVE_THUD(0.95)` |
+| `tap` · **슬퍼요** | 부드럽고 긴 웅 | `continuous`, `intensity: 0.45`, `sharpness: 0.15`, 지속 `80ms` | 파형: `[0, 30, 50]` / `[0, 110, 65]` (부드러운 감쇠, 연타 시 이전 진동 덮어쓰기) |
+| `tap` · **불안해요** | 잘게 떨리는 진동 | `transient` 3회 연속, `intensity: 0.35`, `sharpness: 0.90`, 간격 `22ms` (`t=0, 22, 44ms`) | 파형: `[0, 10, 14, 10, 14, 10]` / `[0, 95, 0, 95, 0, 95]` · Composition: `PRIMITIVE_TICK(0.4)` 3회 (`14ms` 간격) |
+| `full` | 채움 끝까지 참 (길고 센 진동) | `continuous` (`intensity: 0.90`, `sharpness: 0.45`, 지속 `220ms`) + 종료 `transient` (`intensity: 1.0`, `sharpness: 0.80`, `t=230ms`) | 파형: `[0, 140, 30, 60]` / `[0, 220, 0, 255]` · Composition: `PRIMITIVE_THUD(0.85)` + `60ms` + `PRIMITIVE_CLICK(1.0)` |
+| `select` | 기분 배너 누름 (가벼운 선택) | `transient`, `intensity: 0.45`, `sharpness: 0.65` | 파형: `[0, 12]` / `[0, 115]` · Composition: `PRIMITIVE_CLICK(0.5)` |
+| `drop` | 채움 0으로 떨어짐 (아주 약한 진동) | `transient`, `intensity: 0.25`, `sharpness: 0.20` | 파형: `[0, 15]` / `[0, 60]` · Composition: `PRIMITIVE_LOW_TICK` 또는 `PRIMITIVE_TICK(0.25)` |
+
+참고:
+- `tap` 연타 시에는 `docs/SPEC.md` 초안대로 최소 `40ms` 간격으로 쓰로틀링합니다. `설레요`(총 47ms~60ms)와 `불안해요`(총 54ms~58ms)는 짧은 연타 시 이전 패턴이 끝나기 전에 새 패턴이 들어올 수 있으므로, 직전 패턴을 취소(cancel)하거나 최소 간격을 기분별 패턴 길이 이상으로 맞춥니다.
+
+#### Android 진폭 미지원 기기(`!vibrator.hasAmplitudeControl()`) 대체안
+1. **기본 진폭 + 짧은 온오프 `timings` 구분**: 진폭을 바꿀 수 없는 구형·보급형 기기에서는 `0` 이 아닌 진폭이 모두 최대 세기(100%)로 울립니다. `VibrationEffect.createWaveform(timings, -1)`(진폭 배열 없이 시간만 지정) 또는 `VibrationEffect.createOneShot(ms, VibrationEffect.DEFAULT_AMPLITUDE)` 로 바꾸고, 기분 차이는 펄스 길이와 횟수로만 구분합니다(예: 행복해요 `[0, 12]`, 설레요 `[0, 10, 40, 12]`, 화나요 `[0, 28]`, 슬퍼요 `[0, 45]`, 불안해요 `[0, 8, 18, 8]`, `drop` 은 생략하거나 `8ms` 1회).
+2. **`HapticFeedbackConstants` 대체**: `hasAmplitudeControl()` 이 거짓이거나 ERM 모터라 뭉개짐이 심할 때는 `View.performHapticFeedback()` 의 OS 기본 상수(`CLOCK_TICK` -> 가벼운 톡, `CONTEXT_CLICK` -> 선택, `LONG_PRESS` -> 묵직한 확인)로 내리는 편이 오히려 불쾌한 윙윙거림을 줄입니다.
+
+출처 및 확인일 (2026-11-18):
+- Apple HIG Playing haptics: https://developer.apple.com/design/human-interface-guidelines/playing-haptics
+- Android Haptics 설계 원칙 및 `VibrationEffect` / `Composition` / `hasAmplitudeControl()`: https://developer.android.com/develop/ui/views/haptics/haptics-principles , https://developer.android.com/develop/ui/views/haptics/custom-haptic-effects
+
+### 8.2 Kenney CC0 오디오 팩 효과음 후보 목록
+
+아래 파일들은 모두 **CC0 1.0** 라이선스로 상업 이용 및 앱 번들 재배포가 가능합니다. (실제 파일 다운로드는 하지 않았으며, 팩 목록에서 용도에 맞는 후보를 골랐습니다.)
+
+| 용도 | 느낌 | 추천 팩 이름 | 후보 파일 이름 | 팩 페이지 URL |
+|---|---|---|---|---|
+| `tap` · **행복해요** | 높고 맑은 톡 | **Interface Sounds** (또는 UI Audio) | `pluck_001.ogg`, `click_001.ogg` (`UI Audio` 는 `click1.ogg`) | https://kenney.nl/assets/interface-sounds , https://kenney.nl/assets/ui-audio |
+| `tap` · **설레요** | 방울 소리 | **Interface Sounds** | `glass_001.ogg`, `confirmation_001.ogg` | https://kenney.nl/assets/interface-sounds |
+| `tap` · **화나요** | 낮은 북소리 | **Impact Sounds** | `impactSoft_heavy_000.ogg`, `impactWood_heavy_000.ogg` | https://kenney.nl/assets/impact-sounds |
+| `tap` · **슬퍼요** | 낮은 물방울 | **Interface Sounds** | `drop_001.ogg`, `bong_001.ogg` | https://kenney.nl/assets/interface-sounds |
+| `tap` · **불안해요** | 짧은 째깍 | **Interface Sounds** | `tick_001.ogg`, `switch_001.ogg` | https://kenney.nl/assets/interface-sounds |
+| `full` | 채움 완료 짧은 효과음 | **Interface Sounds** | `confirmation_002.ogg`, `maximize_001.ogg` | https://kenney.nl/assets/interface-sounds |
+| `select` | 기분 배너 선택 작은 소리 | **Interface Sounds** | `select_001.ogg`, `switch_002.ogg` | https://kenney.nl/assets/interface-sounds |
+
+출처 및 확인일 (2026-11-18):
+- Kenney Interface Sounds: https://kenney.nl/assets/interface-sounds
+- Kenney UI Audio: https://kenney.nl/assets/ui-audio
+- Kenney Impact Sounds: https://kenney.nl/assets/impact-sounds
