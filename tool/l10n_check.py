@@ -7,14 +7,16 @@ Checks:
      the template.
   2. Every cheers file under assets/cheers matches the agreed shape:
      version 1, the five mood ids, and non-empty low/high/full phrase lists.
-     Phrase counts may differ per language; phrases longer than 12
-     characters only warn.
+     Phrase counts may differ per language. Phrase length is not judged here: the layout shrinks
+     any phrase to fit the screen, and tool/cheers_check.py owns the per-language length bounds.
 
   3. An en or ja file carries no Korean text (Hangul) in its values or phrases. A real exception,
      such as the name of a Korean institution, goes in tool/l10n_allow.json with a reason, one entry
      per ARB key (or per phrase text for a cheers file). An entry that is no longer needed is an error.
 
 Run: python3 tool/l10n_check.py    (pre-commit and CI run the same command)
+     --verbose lists every warning; by default warnings are one line per kind. Errors always
+     print in full.
 """
 import json
 import re
@@ -27,7 +29,6 @@ CHEERS_DIR = ROOT / "assets" / "cheers"
 TEMPLATE = "app_ko.arb"
 MOOD_IDS = ("happy", "excited", "angry", "sad", "anxious")
 STAGES = ("low", "high", "full")
-PHRASE_LIMIT = 12
 
 ALLOW_FILE = ROOT / "tool" / "l10n_allow.json"
 # Languages whose files must not contain Korean text.
@@ -136,10 +137,6 @@ def check_cheers_file(path, allowed=None):
                     errors.append(f"{name}: mood {mood_id} stage {stage} has a non-string phrase")
                     continue
                 texts[text] = text
-                if len(text) > PHRASE_LIMIT:
-                    warnings.append(
-                        f"{name}: mood {mood_id} stage {stage} phrase longer than {PHRASE_LIMIT} characters"
-                    )
     for mood_id in moods:
         if mood_id not in MOOD_IDS:
             errors.append(f"{name}: unknown mood {mood_id}")
@@ -188,10 +185,21 @@ def check_tree():
     return errors, warnings
 
 
-def main():
+def summarize_warnings(warnings, verbose):
+    """Lines to print for warnings given as (kind, detail): every one, or one line per kind."""
+    if verbose:
+        return [f"warning: {kind}: {detail}" for kind, detail in warnings]
+    counts = {}
+    for kind, _detail in warnings:
+        counts[kind] = counts.get(kind, 0) + 1
+    return [f"warning: {count} x {kind} (--verbose lists them)" for kind, count in counts.items()]
+
+
+def main(argv=None):
+    verbose = "--verbose" in (sys.argv[1:] if argv is None else argv)
     errors, warnings = check_tree()
-    for warning in warnings:
-        print(f"warning: {warning}", file=sys.stderr)
+    for line in summarize_warnings(warnings, verbose):
+        print(line, file=sys.stderr)
     if errors:
         print("Localization sources are inconsistent.", file=sys.stderr)
         for error in errors:
