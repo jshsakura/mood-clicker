@@ -59,6 +59,7 @@ tool/fl --version             # Flutter 3.44.0, Dart 3.12.0
 알아 둘 점이 네 가지 있습니다.
 
 - 패키지 캐시는 도커 볼륨 `mood-clicker-pub-cache` 에, Gradle 캐시는 작업 트리마다 `mood-clicker-gradle-<경로 해시 8자>` 볼륨에 쌓입니다. 두 번째 실행부터 빨라집니다. Gradle 은 캐시에 잠금을 걸어서 한 볼륨을 여러 빌드가 나눠 쓰면 서로 기다리다 시간 초과로 실패하기 때문에 트리마다 나눴습니다. 이름을 직접 정하려면 `FL_GRADLE_VOLUME=<이름>` 을 씁니다. 지우려면 `docker volume rm` 으로 지웁니다.
+- 안드로이드 NDK(약 1GB, 풀면 3GB)는 컨테이너가 매번 새로 받으면 느리고 중간에 끊기기 쉬워서, 작업 트리와 상관없이 볼륨 `mood-clicker-android-sdk` 하나를 `ndk` 폴더에만 얹어 한 번 받으면 계속 씁니다. 빌드를 처음 돌릴 때 `tool/fl_container.sh` 가 잠금을 걸고 받기 때문에 두 빌드가 동시에 시작해도 한 번만 받고, 끊기면 세 번까지 다시 시도합니다. 이름을 바꾸려면 `FL_ANDROID_SDK_VOLUME=<이름>` 을 씁니다.
 - 컨테이너는 root 로 돕니다. 그래서 스크립트가 끝날 때 저장소 안의 root 소유 파일을 내 계정 소유로 되돌립니다. 직접 `docker run` 으로 돌리면 이 정리가 빠집니다.
 - 이미지 이름은 `FLUTTER_IMAGE` 환경변수로 바꿀 수 있습니다. 버전을 올릴 때는 `tool/fl`, `tool/fl_dart`, `tool/setup.sh`, `.github/workflows/ci.yml`(컨테이너 이름과 `flutter-version`, 두 곳)을 함께 고칩니다.
 - 안드로이드 빌드는 처음 한 번 Android SDK 일부를 받습니다. 이번에 확인한 첫 빌드는 1분 40초쯤 걸렸고 결과물 `build/app/outputs/flutter-apk/app-debug.apk` 는 약 140MB 였습니다. 이 폴더는 git 이 무시합니다.

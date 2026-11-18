@@ -2,7 +2,8 @@
 # Run Flutter. The flutter on PATH is used when it is the pinned version (see tool/flutter_env.sh);
 # otherwise it runs in a docker image, so nothing has to be installed on the host.
 # FL_DOCKER=1 forces docker. Each working tree uses its own Gradle volume so parallel builds do not
-# wait on one lock; FL_GRADLE_VOLUME=<name> picks the volume by hand.
+# wait on one lock; FL_GRADLE_VOLUME=<name> picks the volume by hand. The Android NDK is one shared
+# volume (mood-clicker-android-sdk, FL_ANDROID_SDK_VOLUME to rename) so it is downloaded once.
 # Examples: tool/fl test, tool/fl analyze, tool/fl build apk --debug
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -21,6 +22,7 @@ exec docker run --rm ${TTY[@]+"${TTY[@]}"} \
   -v mood-clicker-pub-cache:/root/.pub-cache \
   -v "$(gradle_volume "$ROOT")":/root/.gradle \
   -w /app \
+  -v "$(android_sdk_volume)":/opt/android-sdk-linux/ndk \
   -e OWNER="$(id -u):$(id -g)" \
   "$FLUTTER_IMAGE" \
-  bash -c 'flutter "$@"; rc=$?; find /app -xdev -uid 0 -exec chown "$OWNER" {} + 2>/dev/null; exit $rc' -- "$@"
+  bash /app/tool/fl_container.sh "$@"

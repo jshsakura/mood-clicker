@@ -44,3 +44,10 @@ gradle_volume() {
   sum="$(printf '%s' "$1" | cksum | cut -d ' ' -f 1)"
   printf 'mood-clicker-gradle-%08x\n' "$sum"
 }
+
+# The docker volume that holds the Android NDK (about 1 GB), shared by every working tree so it is
+# downloaded once. Only the ndk folder is mounted: the rest of the SDK comes from the image.
+# FL_ANDROID_SDK_VOLUME overrides the name.
+android_sdk_volume() {
+  printf '%s\n' "${FL_ANDROID_SDK_VOLUME:-mood-clicker-android-sdk}"
+}
