@@ -18236,7 +18236,7 @@
         "Open palms flat",
         "Notice room temp",
         "Room is quiet here",
-        "Safe spot right now",
+        "Quiet spot right now",
         "No one touches here",
         "Allowed to rest",
         "Take one breath now",
@@ -18493,7 +18493,7 @@
         "Keep breath smooth",
         "Count four breathing",
         "Count five exhaling",
-        "Six counts blowing",
+        "Can rest hands now",
         "Keep beat steady",
         "Unrushed breathing",
         "Move heat downward",
@@ -18529,8 +18529,8 @@
         "Step by front door",
         "Check sky color",
         "Watch one cloud",
-        "Minimize open chats",
-        "Set status away",
+        "Soften jaw if tense",
+        "Can sip cool water",
         "Draft reply only",
         "Hands off send key",
         "Send tomorrow fine",
@@ -18583,7 +18583,7 @@
         "Feel steady rhythm",
         "Doing okay right",
         "Better than before",
-        "Ally is beside you",
+        "Can look out window",
         "Not fighting alone",
         "Breathing with you",
         "Tap both shoulders",
@@ -18610,7 +18610,7 @@
         "Watch chest drop",
         "Count down five",
         "Four three two one",
-        "Stay in safe room",
+        "Close chat if noisy",
         "Cool breeze helps",
         "Soft breath stays",
         "Slow pace wins",
@@ -18662,9 +18662,9 @@
         "Shoulders feel light",
         "Jaw feels softer now",
         "Hands stay open",
-        "Heart rate slowing",
-        "In for four counts",
-        "Out for six counts",
+        "Okay to step back",
+        "Can sit still a bit",
+        "Can walk slow a bit",
         "Three in, six out",
         "Steady even rhythm",
         "Long slow exhale",
@@ -18921,7 +18921,7 @@
         "Finish your water",
         "Open eyes slowly",
         "See the room again",
-        "Safe spot right here",
+        "Can cool hands down",
         "You are protected",
         "Anchor dropped deep",
         "Surface smooth again",
@@ -19232,11 +19232,11 @@
           "b": "anxious_l004"
         },
         {
-          "t": "Racing heart fits",
+          "t": "Okay to feel anxious",
           "b": "anxious_l005"
         },
         {
-          "t": "Body on high alert",
+          "t": "Normal to feel tense",
           "b": "anxious_l006"
         },
         {
@@ -19276,15 +19276,15 @@
           "b": "anxious_l015"
         },
         {
-          "t": "Safe in this chair",
+          "t": "Heavy days happen",
           "b": "anxious_l016"
         },
         {
-          "t": "Nothing urgent now",
+          "t": "Fine to feel shaky",
           "b": "anxious_l017"
         },
         {
-          "t": "This minute is okay",
+          "t": "Restless moods pass",
           "b": "anxious_l018"
         },
         {
@@ -19336,15 +19336,15 @@
           "b": "anxious_l030"
         },
         {
-          "t": "Chest feels fluttery",
+          "t": "Pause if you want",
           "b": "anxious_l031"
         },
         {
-          "t": "Brain scanning hard",
+          "t": "Can sip water now",
           "b": "anxious_l032"
         },
         {
-          "t": "Trying to guard you",
+          "t": "No need to drink yet",
           "b": "anxious_l033"
         },
         {
@@ -19352,7 +19352,7 @@
           "b": "anxious_l034"
         },
         {
-          "t": "Sitting safely here",
+          "t": "Look outside if nice",
           "b": "anxious_l035"
         },
         {
@@ -19432,7 +19432,7 @@
           "b": "anxious_l054"
         },
         {
-          "t": "Throat feels tight",
+          "t": "Can drop shoulders",
           "b": "anxious_l055"
         },
         {
@@ -19464,7 +19464,7 @@
           "b": "anxious_l062"
         },
         {
-          "t": "Chest feels heavy",
+          "t": "Can open both palms",
           "b": "anxious_l063"
         },
         {
@@ -19528,15 +19528,15 @@
           "b": "anxious_l078"
         },
         {
-          "t": "Breath is short now",
+          "t": "Can loosen your jaw",
           "b": "anxious_l079"
         },
         {
-          "t": "Breath sits high up",
+          "t": "Can soften your brow",
           "b": "anxious_l080"
         },
         {
-          "t": "Air comes in quick",
+          "t": "Feel feet if helpful",
           "b": "anxious_l081"
         },
         {
@@ -19584,7 +19584,7 @@
           "b": "anxious_l092"
         },
         {
-          "t": "This is anxiety",
+          "t": "Lean back if comfy",
           "b": "anxious_l093"
         },
         {
@@ -19672,7 +19672,7 @@
           "b": "anxious_l114"
         },
         {
-          "t": "Hard days do this",
+          "t": "Can breathe slow now",
           "b": "anxious_l115"
         },
         {
@@ -19924,7 +19924,7 @@
           "b": "anxious_l177"
         },
         {
-          "t": "Breath is shallow",
+          "t": "Short rest is fine",
           "b": "anxious_l178"
         },
         {
@@ -19960,7 +19960,7 @@
           "b": "anxious_l186"
         },
         {
-          "t": "Nerves are working",
+          "t": "Can try long exhale",
           "b": "anxious_l187"
         },
         {
@@ -19968,7 +19968,7 @@
           "b": "anxious_l188"
         },
         {
-          "t": "Tired nerves hurry",
+          "t": "Reply later if busy",
           "b": "anxious_l189"
         },
         {
@@ -19976,11 +19976,11 @@
           "b": "anxious_l190"
         },
         {
-          "t": "Nothing's wrong here",
+          "t": "No need to talk now",
           "b": "anxious_l191"
         },
         {
-          "t": "Nerves doing a job",
+          "t": "Pick one task if any",
           "b": "anxious_l192"
         },
         {
@@ -20380,7 +20380,7 @@
           "b": "anxious_l291"
         },
         {
-          "t": "Nobody needs you now",
+          "t": "Okay to leave undone",
           "b": "anxious_l292"
         },
         {
@@ -20420,7 +20420,7 @@
           "b": "anxious_l301"
         },
         {
-          "t": "Spine is on guard",
+          "t": "Pick one sound near",
           "b": "anxious_l302"
         },
         {
@@ -20440,7 +20440,7 @@
           "b": "anxious_l306"
         },
         {
-          "t": "Breath stays rough",
+          "t": "Spot a color if nice",
           "b": "anxious_l307"
         },
         {
@@ -20476,7 +20476,7 @@
           "b": "anxious_l315"
         },
         {
-          "t": "Worry shows you care",
+          "t": "Warm tea if you want",
           "b": "anxious_l316"
         },
         {
@@ -20564,7 +20564,7 @@
           "b": "anxious_l337"
         },
         {
-          "t": "Seated and safe here",
+          "t": "No tea needed either",
           "b": "anxious_l338"
         },
         {
@@ -20598,7 +20598,7 @@
       ],
       "high": [
         {
-          "t": "Longer exhale helps",
+          "t": "Okay to lie down now",
           "b": "anxious_h001"
         },
         {
@@ -20694,19 +20694,19 @@
           "b": "anxious_h024"
         },
         {
-          "t": "No race happening",
+          "t": "Okay to sit right up",
           "b": "anxious_h025"
         },
         {
-          "t": "Breath steadier",
+          "t": "Okay to walk slowly",
           "b": "anxious_h026"
         },
         {
-          "t": "Hands warming up",
+          "t": "Sigh if it helps now",
           "b": "anxious_h027"
         },
         {
-          "t": "Heart slowing down",
+          "t": "Quiet is okay too",
           "b": "anxious_h028"
         },
         {
@@ -20746,7 +20746,7 @@
           "b": "anxious_h037"
         },
         {
-          "t": "Six on the exhale",
+          "t": "Okay to want space",
           "b": "anxious_h038"
         },
         {
@@ -20782,11 +20782,11 @@
           "b": "anxious_h046"
         },
         {
-          "t": "Breathe slow in nose",
+          "t": "Can ask for help too",
           "b": "anxious_h047"
         },
         {
-          "t": "Slow exhale out",
+          "t": "No choice needed now",
           "b": "anxious_h048"
         },
         {
@@ -20886,11 +20886,11 @@
           "b": "anxious_h072"
         },
         {
-          "t": "Notice your pulse",
+          "t": "Take time deciding",
           "b": "anxious_h073"
         },
         {
-          "t": "Feel your wrist beat",
+          "t": "Slow today down okay",
           "b": "anxious_h074"
         },
         {
@@ -20906,39 +20906,39 @@
           "b": "anxious_h077"
         },
         {
-          "t": "Breathe in for four",
+          "t": "Clumsy is fine today",
           "b": "anxious_h078"
         },
         {
-          "t": "Out for six",
+          "t": "Name mood if helpful",
           "b": "anxious_h079"
         },
         {
-          "t": "Sigh out slowly",
+          "t": "Let feeling sit okay",
           "b": "anxious_h080"
         },
         {
-          "t": "Blow out a candle",
+          "t": "No need to force fix",
           "b": "anxious_h081"
         },
         {
-          "t": "Count the out breath",
+          "t": "Notice floor if nice",
           "b": "anxious_h082"
         },
         {
-          "t": "Pause after the out",
+          "t": "Touch cloth if comfy",
           "b": "anxious_h083"
         },
         {
-          "t": "Breathe low and slow",
+          "t": "Soften neck if stiff",
           "b": "anxious_h084"
         },
         {
-          "t": "Hum on the exhale",
+          "t": "Roll ankles if comfy",
           "b": "anxious_h085"
         },
         {
-          "t": "In, two, three, four",
+          "t": "Sit tall if it helps",
           "b": "anxious_h086"
         },
         {
@@ -20962,7 +20962,7 @@
           "b": "anxious_h091"
         },
         {
-          "t": "Count ten breaths",
+          "t": "Close door if noisy",
           "b": "anxious_h092"
         },
         {
@@ -20970,7 +20970,7 @@
           "b": "anxious_h093"
         },
         {
-          "t": "Sigh once, fully",
+          "t": "Dim lights if bright",
           "b": "anxious_h094"
         },
         {
@@ -21006,7 +21006,7 @@
           "b": "anxious_h102"
         },
         {
-          "t": "Whisper, I am here",
+          "t": "Play a song if cozy",
           "b": "anxious_h103"
         },
         {
@@ -21018,7 +21018,7 @@
           "b": "anxious_h105"
         },
         {
-          "t": "Rate it, one to ten",
+          "t": "Silence is fine too",
           "b": "anxious_h106"
         },
         {
@@ -21266,7 +21266,7 @@
           "b": "anxious_h167"
         },
         {
-          "t": "Nothing to fix now",
+          "t": "Enough as you are",
           "b": "anxious_h168"
         },
         {
@@ -21370,7 +21370,7 @@
           "b": "anxious_h193"
         },
         {
-          "t": "Write the worst case",
+          "t": "No need to scold you",
           "b": "anxious_h194"
         },
         {
@@ -21466,7 +21466,7 @@
           "b": "anxious_h217"
         },
         {
-          "t": "Check the lock, once",
+          "t": "Imperfect is okay",
           "b": "anxious_h218"
         },
         {
@@ -21506,11 +21506,11 @@
           "b": "anxious_h227"
         },
         {
-          "t": "Now is manageable",
+          "t": "Shrink today's list",
           "b": "anxious_h228"
         },
         {
-          "t": "Safe for this minute",
+          "t": "Pause when rushed",
           "b": "anxious_h229"
         },
         {
@@ -21518,7 +21518,7 @@
           "b": "anxious_h230"
         },
         {
-          "t": "It can wait a bit",
+          "t": "Busy mind is okay",
           "b": "anxious_h231"
         },
         {
@@ -21578,15 +21578,15 @@
           "b": "anxious_h245"
         },
         {
-          "t": "Right now, all fine",
+          "t": "Okay to feel scared",
           "b": "anxious_h246"
         },
         {
-          "t": "Check the door, once",
+          "t": "Human to feel this",
           "b": "anxious_h247"
         },
         {
-          "t": "See the room is calm",
+          "t": "Tend to you first",
           "b": "anxious_h248"
         },
         {
@@ -21602,7 +21602,7 @@
           "b": "anxious_h251"
         },
         {
-          "t": "Look around, safe",
+          "t": "Pick comfy seat now",
           "b": "anxious_h252"
         },
         {
@@ -21814,7 +21814,7 @@
           "b": "anxious_h304"
         },
         {
-          "t": "Count slow exhales",
+          "t": "Hug pillow if cozy",
           "b": "anxious_h305"
         },
         {
@@ -21900,15 +21900,15 @@
           "b": "anxious_f003"
         },
         {
-          "t": "Safe in this room",
+          "t": "Pull blanket if cold",
           "b": "anxious_f004"
         },
         {
-          "t": "Hands warm, loose",
+          "t": "Wear socks if chilly",
           "b": "anxious_f005"
         },
         {
-          "t": "Shoulders low now",
+          "t": "Try longer exhale",
           "b": "anxious_f006"
         },
         {
@@ -21920,7 +21920,7 @@
           "b": "anxious_f008"
         },
         {
-          "t": "Body settling down",
+          "t": "Out mouth if helpful",
           "b": "anxious_f009"
         },
         {
@@ -21936,11 +21936,11 @@
           "b": "anxious_f012"
         },
         {
-          "t": "Noise quieting down",
+          "t": "Keep your own rhythm",
           "b": "anxious_f013"
         },
         {
-          "t": "Easier breathing",
+          "t": "No fix required now",
           "b": "anxious_f014"
         },
         {
@@ -21952,7 +21952,7 @@
           "b": "anxious_f016"
         },
         {
-          "t": "Worry not steering",
+          "t": "Take extra time okay",
           "b": "anxious_f017"
         },
         {
@@ -21960,7 +21960,7 @@
           "b": "anxious_f018"
         },
         {
-          "t": "Safe and supported",
+          "t": "Clasp hands if comfy",
           "b": "anxious_f019"
         },
         {
@@ -21968,15 +21968,15 @@
           "b": "anxious_f020"
         },
         {
-          "t": "Gentle rhythm back",
+          "t": "Hands on lap if easy",
           "b": "anxious_f021"
         },
         {
-          "t": "More space in mind",
+          "t": "Open fists if curled",
           "b": "anxious_f022"
         },
         {
-          "t": "Steady heartbeat",
+          "t": "Blink slow if dry",
           "b": "anxious_f023"
         },
         {
@@ -21984,7 +21984,7 @@
           "b": "anxious_f024"
         },
         {
-          "t": "Back in your body",
+          "t": "Soften gaze if tired",
           "b": "anxious_f025"
         },
         {
@@ -21992,7 +21992,7 @@
           "b": "anxious_f026"
         },
         {
-          "t": "No clock pressure",
+          "t": "Zone out a moment",
           "b": "anxious_f027"
         },
         {
@@ -22000,67 +22000,67 @@
           "b": "anxious_f028"
         },
         {
-          "t": "Settled in now",
+          "t": "Walk slow if moving",
           "b": "anxious_f029"
         },
         {
-          "t": "Calm steady breath",
+          "t": "Sit still if resting",
           "b": "anxious_f030"
         },
         {
-          "t": "Quiet mind space",
+          "t": "Rest head on pillow",
           "b": "anxious_f031"
         },
         {
-          "t": "Jaw a little looser",
+          "t": "Wrap in soft quilt",
           "b": "anxious_f032"
         },
         {
-          "t": "Palms feel warmer",
+          "t": "Skip food if not yet",
           "b": "anxious_f033"
         },
         {
-          "t": "Knees are resting",
+          "t": "Cool sip if parched",
           "b": "anxious_f034"
         },
         {
-          "t": "Eyelids sit heavier",
+          "t": "Pick one small sense",
           "b": "anxious_f035"
         },
         {
-          "t": "Wrists hang loose",
+          "t": "Just one breath okay",
           "b": "anxious_f036"
         },
         {
-          "t": "Ankles feel planted",
+          "t": "This much is good",
           "b": "anxious_f037"
         },
         {
-          "t": "Forehead less tight",
+          "t": "Did fine today okay",
           "b": "anxious_f038"
         },
         {
-          "t": "Fingers uncurled",
+          "t": "Rest easy when ready",
           "b": "anxious_f039"
         },
         {
-          "t": "Neck has more length",
+          "t": "Stop here for today",
           "b": "anxious_f040"
         },
         {
-          "t": "Toes spread out",
+          "t": "Kindness helps today",
           "b": "anxious_f041"
         },
         {
-          "t": "Exhale runs longer",
+          "t": "Slow steps work fine",
           "b": "anxious_f042"
         },
         {
-          "t": "Slow in, slower out",
+          "t": "Shaky days happen",
           "b": "anxious_f043"
         },
         {
-          "t": "The sigh came easily",
+          "t": "Rest on shaky days",
           "b": "anxious_f044"
         },
         {
@@ -22168,7 +22168,7 @@
           "b": "anxious_f070"
         },
         {
-          "t": "One email can wait",
+          "t": "Tense body happens",
           "b": "anxious_f071"
         },
         {
@@ -22204,31 +22204,31 @@
           "b": "anxious_f079"
         },
         {
-          "t": "Tongue rests, soft",
+          "t": "Natural body signal",
           "b": "anxious_f080"
         },
         {
-          "t": "Temples softened",
+          "t": "Make room to pause",
           "b": "anxious_f081"
         },
         {
-          "t": "Belly moves itself",
+          "t": "Zero hurry right now",
           "b": "anxious_f082"
         },
         {
-          "t": "Shoulder blades wide",
+          "t": "No rushing yourself",
           "b": "anxious_f083"
         },
         {
-          "t": "Out breaths help",
+          "t": "No need to compare",
           "b": "anxious_f084"
         },
         {
-          "t": "Breath does its job",
+          "t": "Good just as you are",
           "b": "anxious_f085"
         },
         {
-          "t": "Lungs fill easily",
+          "t": "Give yourself margin",
           "b": "anxious_f086"
         },
         {
@@ -22260,7 +22260,7 @@
           "b": "anxious_f093"
         },
         {
-          "t": "Water sip helped",
+          "t": "Care for tired self",
           "b": "anxious_f094"
         },
         {
@@ -22276,7 +22276,7 @@
           "b": "anxious_f097"
         },
         {
-          "t": "Nothing due this sec",
+          "t": "Rest time if needed",
           "b": "anxious_f098"
         },
         {
@@ -22284,7 +22284,7 @@
           "b": "anxious_f099"
         },
         {
-          "t": "The loop loosens",
+          "t": "Gentle pause is okay",
           "b": "anxious_f100"
         },
         {
@@ -22316,7 +22316,7 @@
           "b": "anxious_f107"
         },
         {
-          "t": "A hand is available",
+          "t": "Can rest eyes a bit",
           "b": "anxious_f108"
         },
         {
@@ -22324,11 +22324,11 @@
           "b": "anxious_f109"
         },
         {
-          "t": "Support is in reach",
+          "t": "Can wiggle toes slow",
           "b": "anxious_f110"
         },
         {
-          "t": "This room is safe",
+          "t": "Can roll shoulders",
           "b": "anxious_f111"
         },
         {
@@ -22348,23 +22348,23 @@
           "b": "anxious_f115"
         },
         {
-          "t": "Hips sink into seat",
+          "t": "Can lean on wall",
           "b": "anxious_f116"
         },
         {
-          "t": "Ribs widen, settle",
+          "t": "Can drink warm water",
           "b": "anxious_f117"
         },
         {
-          "t": "Breathing on its own",
+          "t": "Can step into shade",
           "b": "anxious_f118"
         },
         {
-          "t": "One exhale landed",
+          "t": "Can sit on the floor",
           "b": "anxious_f119"
         },
         {
-          "t": "Chest rises, rests",
+          "t": "Can loosen your grip",
           "b": "anxious_f120"
         },
         {
@@ -22424,63 +22424,63 @@
           "b": "anxious_f134"
         },
         {
-          "t": "Hands resting in lap",
+          "t": "Okay to move slowly",
           "b": "anxious_f135"
         },
         {
-          "t": "Cheeks unclenched",
+          "t": "Okay to take a beat",
           "b": "anxious_f136"
         },
         {
-          "t": "Throat feels open",
+          "t": "Okay to pause tasks",
           "b": "anxious_f137"
         },
         {
-          "t": "Fists have opened",
+          "t": "Okay to feel tired",
           "b": "anxious_f138"
         },
         {
-          "t": "Calves let go",
+          "t": "No rush to decide",
           "b": "anxious_f139"
         },
         {
-          "t": "Lower back sinks",
+          "t": "No rush to finish",
           "b": "anxious_f140"
         },
         {
-          "t": "Scalp softens",
+          "t": "No need to push hard",
           "b": "anxious_f141"
         },
         {
-          "t": "Spine stacked, easy",
+          "t": "Can look at sky",
           "b": "anxious_f142"
         },
         {
-          "t": "Thumbs rest still",
+          "t": "Can watch clouds",
           "b": "anxious_f143"
         },
         {
-          "t": "Humming exhale",
+          "t": "Can rest your jaw",
           "b": "anxious_f144"
         },
         {
-          "t": "Slow count held",
+          "t": "Can drop your gaze",
           "b": "anxious_f145"
         },
         {
-          "t": "Longer out than in",
+          "t": "Can breathe softly",
           "b": "anxious_f146"
         },
         {
-          "t": "A yawn found you",
+          "t": "Can sit on bed",
           "b": "anxious_f147"
         },
         {
-          "t": "Sigh, and soften",
+          "t": "Can wrap in shawl",
           "b": "anxious_f148"
         },
         {
-          "t": "Held it, let it out",
+          "t": "Can hold warm tea",
           "b": "anxious_f149"
         },
         {
@@ -22496,31 +22496,31 @@
           "b": "anxious_f152"
         },
         {
-          "t": "This is nervousness",
+          "t": "Can skip tea too",
           "b": "anxious_f153"
         },
         {
-          "t": "It is called anxious",
+          "t": "Can take five mins",
           "b": "anxious_f154"
         },
         {
-          "t": "Jitters, and you",
+          "t": "Can delay a call",
           "b": "anxious_f155"
         },
         {
-          "t": "Breath found a pace",
+          "t": "Can rest your back",
           "b": "anxious_f156"
         },
         {
-          "t": "Cool air at the nose",
+          "t": "Can stretch ankles",
           "b": "anxious_f157"
         },
         {
-          "t": "You know this one",
+          "t": "Can open window",
           "b": "anxious_f158"
         },
         {
-          "t": "Edges are clear now",
+          "t": "Can shut window",
           "b": "anxious_f159"
         },
         {
@@ -22544,7 +22544,7 @@
           "b": "anxious_f164"
         },
         {
-          "t": "Steady enough now",
+          "t": "Can dim the screen",
           "b": "anxious_f165"
         },
         {
@@ -22552,7 +22552,7 @@
           "b": "anxious_f166"
         },
         {
-          "t": "Here is okay",
+          "t": "Can put phone down",
           "b": "anxious_f167"
         },
         {
@@ -22684,43 +22684,43 @@
           "b": "anxious_f199"
         },
         {
-          "t": "Tongue off the roof",
+          "t": "Can read one page",
           "b": "anxious_f200"
         },
         {
-          "t": "Knuckles unwhite",
+          "t": "Can skip reading too",
           "b": "anxious_f201"
         },
         {
-          "t": "Jaw unlocked",
+          "t": "Can just sit quiet",
           "b": "anxious_f202"
         },
         {
-          "t": "Brow smooths out",
+          "t": "Can listen to rain",
           "b": "anxious_f203"
         },
         {
-          "t": "Belly lets go",
+          "t": "Can enjoy silence",
           "b": "anxious_f204"
         },
         {
-          "t": "Pulse slower now",
+          "t": "Can take slow walk",
           "b": "anxious_f205"
         },
         {
-          "t": "Quiet in the chest",
+          "t": "Can stay indoors",
           "b": "anxious_f206"
         },
         {
-          "t": "Sigh on the way out",
+          "t": "Can rest tired feet",
           "b": "anxious_f207"
         },
         {
-          "t": "A softer breath came",
+          "t": "Okay to take break",
           "b": "anxious_f208"
         },
         {
-          "t": "Count of six, out",
+          "t": "Okay to go easy",
           "b": "anxious_f209"
         },
         {
@@ -22736,7 +22736,7 @@
           "b": "anxious_f212"
         },
         {
-          "t": "Eased by an inch",
+          "t": "Okay to feel slow",
           "b": "anxious_f213"
         },
         {
@@ -22744,7 +22744,7 @@
           "b": "anxious_f214"
         },
         {
-          "t": "Okay for this minute",
+          "t": "Okay to say later",
           "b": "anxious_f215"
         },
         {
@@ -22756,7 +22756,7 @@
           "b": "anxious_f217"
         },
         {
-          "t": "Looser than before",
+          "t": "Okay to rest eyes",
           "b": "anxious_f218"
         },
         {
@@ -22778,7 +22778,7 @@
           "b": "anxious_c003"
         },
         {
-          "t": "Hands open five sec",
+          "t": "No pressure today",
           "b": "anxious_c004"
         },
         {
@@ -22938,7 +22938,7 @@
           "b": "anxious_c043"
         },
         {
-          "t": "Breathe out for six",
+          "t": "Gentle pace is fine",
           "b": "anxious_c044"
         },
         {
@@ -22982,7 +22982,7 @@
           "b": "anxious_c054"
         },
         {
-          "t": "Breathe in 4, out 6",
+          "t": "Small steps are fine",
           "b": "anxious_c055"
         },
         {
@@ -23002,7 +23002,7 @@
           "b": "anxious_c059"
         },
         {
-          "t": "Light a candle",
+          "t": "Rest is allowed",
           "b": "anxious_c060"
         },
         {
@@ -23010,7 +23010,7 @@
           "b": "anxious_c061"
         },
         {
-          "t": "Open the door",
+          "t": "Can take off shoes",
           "b": "anxious_c062"
         },
         {
@@ -23046,7 +23046,7 @@
           "b": "anxious_c070"
         },
         {
-          "t": "Lie flat and exhale",
+          "t": "Can loosen belt now",
           "b": "anxious_c071"
         },
         {
@@ -23094,7 +23094,7 @@
           "b": "anxious_c082"
         },
         {
-          "t": "Step onto a balcony",
+          "t": "Can unbutton collar",
           "b": "anxious_c083"
         },
         {
@@ -23164,11 +23164,11 @@
           "b": "anxious_r008"
         },
         {
-          "t": "Held calm space",
+          "t": "Can close notebook",
           "b": "anxious_r009"
         },
         {
-          "t": "Safe in the present",
+          "t": "Can put pen down",
           "b": "anxious_r010"
         },
         {
@@ -23196,11 +23196,11 @@
           "b": "anxious_r016"
         },
         {
-          "t": "Present and steady",
+          "t": "Can set bag down",
           "b": "anxious_r017"
         },
         {
-          "t": "Peaceful breath won",
+          "t": "Can lean on desk",
           "b": "anxious_r018"
         },
         {
@@ -23264,7 +23264,7 @@
           "b": "anxious_r033"
         },
         {
-          "t": "You kept showing up",
+          "t": "Can touch cool wall",
           "b": "anxious_r034"
         },
         {
@@ -23324,7 +23324,7 @@
           "b": "anxious_r048"
         },
         {
-          "t": "Staying is not small",
+          "t": "Can rest on sofa",
           "b": "anxious_r049"
         },
         {
@@ -23364,7 +23364,7 @@
           "b": "anxious_r058"
         },
         {
-          "t": "You held steady",
+          "t": "Can lie on floor",
           "b": "anxious_r059"
         },
         {
@@ -23432,7 +23432,7 @@
           "b": "anxious_r075"
         },
         {
-          "t": "You sat it out",
+          "t": "Can close curtains",
           "b": "anxious_r076"
         },
         {

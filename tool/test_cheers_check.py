@@ -164,9 +164,59 @@ class CheersCheckTest(unittest.TestCase):
         # 5 moods * 5 tiers + 5 moods missing min bases + 1 total item count
         self.assertEqual(len(errs), len(MOODS) * len(TIERS) + len(MOODS) + 1)
 
+    def test_safety_rules_reject_assertions_and_allow_optional_suggestions(self) -> None:
+        rules = load_rules()
+        bad_cases = {
+            "ko": [
+                "\uc9c0\uae08 \uc774 \ubc29 \uc548\uc804\ud574",
+                "\uc2ec\uc7a5\uc774 \ube68\ub9ac \ub6f0\uc5b4",
+                "\uacc1\uc5d0 \uc788\uc5b4 \uc904\uac8c",
+                "\uc228\uc744 \uba48\ucdb0 \ubd10",
+                "\ub3c4\ub9dd\uce58\uc9c0 \uc54a\uace0 \uc798 \ubc84\ud17c\uc5b4",
+            ],
+            "en": [
+                "You are safe here",
+                "Heart beats so fast",
+                "Right here with you",
+                "Hold your breath now",
+                "Did not flee today",
+            ],
+            "ja": [
+                "ここは安全な場所",
+                "心臓が速く打つね",
+                "ずっとそばにいるよ",
+                "息を止めてみて",
+                "逃げずに耐え抜いた",
+            ],
+        }
+        good_cases = {
+            "ko": ["\uc5b4\uae68 \ub0b4\ub824 \ubd10\ub3c4 \ub3fc", "\ubb3c \ub9c8\uc154\ub3c4 \uc548 \ub9c8\uc154\ub3c4"],
+            "en": ["Can rest hands now", "Okay to pause here"],
+            "ja": ["肩を下ろしてもいい", "水は飲まなくてもいい"],
+        }
+        for lang in ("ko", "en", "ja"):
+            for mood in ("angry", "anxious"):
+                for phrase in bad_cases[lang]:
+                    data = _valid_bundle(lang)
+                    data["moods"][mood]["low"][0] = phrase
+                    errs = check_bundle(data, lang, self.small_counts, rules=rules)
+                    self.assertTrue(
+                        any("mood-banned" in e for e in errs),
+                        f"{lang}.{mood} should reject {phrase!r}, got {errs}",
+                    )
+                for phrase in good_cases[lang]:
+                    data = _valid_bundle(lang)
+                    data["moods"][mood]["low"][0] = phrase
+                    errs = check_bundle(data, lang, self.small_counts, rules=rules)
+                    self.assertEqual(
+                        [],
+                        errs,
+                        f"{lang}.{mood} should allow {phrase!r}, got {errs}",
+                    )
 
 
 BANNED_KO = "\uc6b0\uc6b8\uc99d"  # a clinical word the rules forbid in cheers
+
 ROOT = Path(__file__).resolve().parent.parent
 
 
