@@ -1,5 +1,11 @@
 /// Sound pack selection. Audio files live under `assets/sounds/<pack>/`.
-enum SoundPack { basic, soft }
+enum SoundPack {
+  basic,
+  soft;
+
+  /// Packs with bundled audio files ready to show in Settings.
+  static const List<SoundPack> available = [SoundPack.basic];
+}
 
 class FeedbackSettings {
   const FeedbackSettings({

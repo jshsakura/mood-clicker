@@ -3,9 +3,14 @@ import 'package:mood_clicker/feedback/ports.dart';
 
 class FakeHaptics implements HapticsPort {
   final List<HapticCue> played = [];
+  int cancelCount = 0;
 
   @override
-  Future<void> play(HapticCue cue) async => played.add(cue);
+  Future<void> play(HapticCue cue, {bool priority = false}) async =>
+      played.add(cue);
+
+  @override
+  void cancel() => cancelCount++;
 }
 
 class PlayedSound {

@@ -23,18 +23,18 @@ class SoloudSound implements SoundPort {
   late final SoundBank<AudioSource> _bank;
   bool _ready = false;
 
+  /// Per Apple's AVAudioSession.Category.ambient docs, ambient mixes with other
+  /// audio automatically and respects the hardware mute switch; setting
+  /// mixWithOthers explicitly is redundant.
+  static const audioSessionConfig = AudioSessionConfiguration(
+    avAudioSessionCategory: AVAudioSessionCategory.ambient,
+  );
+
   /// Preloads all sounds in the table across all packs. Call once after startup.
   Future<void> init() async {
     try {
       final session = await AudioSession.instance;
-      // ambient: stays silent when the iOS mute switch is on and mixes with other apps.
-      await session.configure(
-        const AudioSessionConfiguration(
-          avAudioSessionCategory: AVAudioSessionCategory.ambient,
-          avAudioSessionCategoryOptions:
-              AVAudioSessionCategoryOptions.mixWithOthers,
-        ),
-      );
+      await session.configure(audioSessionConfig);
       await SoLoud.instance.init();
       _ready = true;
     } catch (e) {
@@ -47,7 +47,7 @@ class SoloudSound implements SoundPort {
   @override
   Future<void> play(SoundCue cue, {double pitch = 1.0}) async {
     if (!_ready) return;
-    final source = _bank.sourceFor(cue);
+    final source = _bank.sourceForWithFallback(cue);
     if (source == null) return;
     try {
       final soloud = SoLoud.instance;
@@ -65,7 +65,7 @@ class SoloudSound implements SoundPort {
         for (final mood in feedbackMoodIds)
           ?FeedbackTable.of(kind, mood).soundId,
     };
-    for (final pack in SoundPack.values) {
+    for (final pack in SoundPack.available) {
       for (final id in ids) {
         yield SoundCue(pack, id);
       }

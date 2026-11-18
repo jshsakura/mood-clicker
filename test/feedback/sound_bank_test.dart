@@ -84,4 +84,20 @@ void main() {
     expect(bank.sourceFor(cue), isNull);
     expect(logs, isEmpty);
   });
+
+  test('falls back to basic pack when chosen pack is missing', () async {
+    const softCue = SoundCue(SoundPack.soft, 'tap_happy');
+    final bank = SoundBank<String>(
+      load: (path) async {
+        if (path.contains('/soft/')) throw FlutterError('no asset');
+        return 'src:$path';
+      },
+      log: logs.add,
+    );
+    await bank.preload([cue, softCue]);
+    expect(
+      bank.sourceForWithFallback(softCue),
+      'src:assets/sounds/basic/tap_happy.ogg',
+    );
+  });
 }
