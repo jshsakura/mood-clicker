@@ -259,3 +259,27 @@ abstract final class FeedbackTuning {
   /// Minimum interval between emitted slosh signals.
   static const Duration shakeCooldown = Duration(milliseconds: 450);
 }
+
+/// Numbers for the release flow of the heavy moods (angry, sad, anxious): when the gauge is full the
+/// screen does not celebrate. It lets the water go, washes the screen with dawn light and settles into
+/// breathing. Judge the feel on a real device and adjust only here.
+abstract final class ReleaseTuning {
+  /// From this level the gauge counts as approaching full.
+  static const double approachAt = 0.85;
+
+  /// The cleanse that starts the moment the gauge is full. Touch is locked for all of it.
+  static const Duration cleanse = Duration(milliseconds: 2500);
+
+  /// The quiet beat at the start of the settle, before the breathing ring shows (0.5 to 0.8 seconds).
+  static const Duration stillness = Duration(milliseconds: 650);
+
+  /// How long the dawn light takes to dissolve into the settled screen.
+  static const Duration crossfade = Duration(seconds: 3);
+
+  /// The breathing ring grows for this long, then shrinks for [exhale], and repeats.
+  static const Duration inhale = Duration(seconds: 4);
+  static const Duration exhale = Duration(seconds: 6);
+
+  /// How long the one line after the settle stays on screen.
+  static const Duration settleLineHold = Duration(seconds: 4);
+}

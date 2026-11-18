@@ -612,4 +612,20 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get settings_deleteFailed =>
       'Could not delete the records. Try again in a moment. Your records are unchanged.';
+
+  @override
+  String get release_settleAngry =>
+      'That was plenty of tapping. Shall we take a moment to breathe?';
+
+  @override
+  String get release_settleSad =>
+      'You made it this far. It\'s okay as you are right now.';
+
+  @override
+  String get release_settleAnxious =>
+      'It\'s okay to rest a little. You can follow the breath, or not.';
+
+  @override
+  String get release_breathingRing =>
+      'A circle that helps you pace your breath. Breathe in as it grows and out as it shrinks, or ignore it.';
 }

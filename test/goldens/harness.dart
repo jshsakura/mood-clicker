@@ -10,6 +10,7 @@ import 'package:mood_clicker/design/tokens.g.dart';
 import 'package:mood_clicker/l10n/app_localizations.g.dart';
 
 import '../screens/fake_app.dart';
+import 'release_part_shots.dart';
 import 'screen_shots.dart';
 
 /// The fonts the tests really load. They must match fonts in pubspec.yaml; a test reports a mismatch.
@@ -99,10 +100,13 @@ final goldenThemes = [for (final p in allPalettes) ThemeChoice.named(p.name)];
 
 /// One screen. Its name becomes the file name.
 class GoldenScreen {
-  const GoldenScreen(this.name, this.build, {this.act});
+  const GoldenScreen(this.name, this.build, {this.act, this.deviceNames});
 
   final String name;
   final Widget Function(ThemeChoice choice) build;
+
+  /// The devices to shoot on. Null means all of them.
+  final Set<String>? deviceNames;
 
   /// For a screen that never settles (the tap screen has a running ticker): it drives the screen
   /// to the state to shoot. The screen is then not pumped until it settles.
@@ -111,6 +115,7 @@ class GoldenScreen {
 
 /// The screens to render. Add one line when a screen is added.
 final goldenScreens = <GoldenScreen>[
+  ...releasePartShots,
   GoldenScreen(
     'token_preview',
     (choice) => TokenPreview(choice: choice, onChoice: (_) {}),

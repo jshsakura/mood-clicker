@@ -1179,6 +1179,30 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'기록을 지우지 못했습니다. 잠시 뒤 다시 시도해 주세요. 기록은 그대로 남아 있습니다.'**
   String get settings_deleteFailed;
+
+  /// 가득 찬 뒤 안착했을 때 화나요에 뜨는 한 줄입니다. 풀렸다고 단정하지 않고 숨 고르기를 권합니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'충분히 두드렸어요. 잠시 숨을 골라 볼까요?'**
+  String get release_settleAngry;
+
+  /// 가득 찬 뒤 안착했을 때 슬퍼요에 뜨는 한 줄입니다. 나아졌다고 하지 않고 지금 모습을 인정합니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'여기까지 왔어요. 지금 이대로도 괜찮아요.'**
+  String get release_settleSad;
+
+  /// 가득 찬 뒤 안착했을 때 불안해요에 뜨는 한 줄입니다. 숨 따라 하기를 강요하지 않습니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'잠시 쉬어 가도 괜찮아요. 숨을 따라 해도, 안 해도 됩니다.'**
+  String get release_settleAnxious;
+
+  /// 숨 고리의 스크린리더 설명입니다. 따라 하기를 권할 뿐 강요하지 않습니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'숨 고르기를 돕는 원입니다. 커질 때 들이쉬고 작아질 때 내쉬어도 좋고, 따라 하지 않아도 됩니다.'**
+  String get release_breathingRing;
 }
 
 class _AppLocalizationsDelegate
