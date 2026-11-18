@@ -362,7 +362,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get settings_mapContributeDesc =>
-      '약 1km 단위로 묶어 보내고, 5명이 안 되는 곳은 보이지 않습니다';
+      '약 5km² 넓이의 동네 칸으로 묶어 보내고, 5명이 안 되는 칸은 보이지 않습니다';
 
   @override
   String get settings_mapCommentDesc =>
@@ -414,7 +414,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get map_explain =>
-      '글씨는 사람들이 고른 한마디이고, 크기는 그 동네에서 두드린 수입니다. 약 1km 단위로 묶고, 5명이 안 되는 곳은 보이지 않습니다.';
+      '글씨는 사람들이 고른 한마디이고, 크기는 그 동네에서 두드린 수입니다. 약 5km² 넓이의 동네 칸으로 묶고, 5명이 안 되는 칸은 보이지 않습니다.';
 
   @override
   String get map_rangeToday => '오늘';

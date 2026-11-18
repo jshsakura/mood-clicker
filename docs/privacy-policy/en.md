@@ -28,7 +28,7 @@ This app is a journal for picking today's mood and leaving its size as a tap cou
 ## Notice for when the map arrives
 
 - There is no map feature today. When one is introduced, this policy will be updated and announced first.
-- When introduced, locations will be turned into grid cells of about 1km on the device and only the cell number is sent. Cells with fewer than five participants stay hidden from the map. Sharing a mood is used only by people who turn it on themselves.
+- When introduced, locations will be turned into neighbourhood cells of about 5km² on the device and only the cell number is sent. Cells with fewer than five participants stay hidden from the map. Sharing a mood is used only by people who turn it on themselves.
 
 ## About this app
 

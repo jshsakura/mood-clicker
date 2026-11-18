@@ -751,7 +751,7 @@ abstract class AppLocalizations {
   /// 지도에 내 기분 보태기의 설명입니다.
   ///
   /// In ko, this message translates to:
-  /// **'약 1km 단위로 묶어 보내고, 5명이 안 되는 곳은 보이지 않습니다'**
+  /// **'약 5km² 넓이의 동네 칸으로 묶어 보내고, 5명이 안 되는 칸은 보이지 않습니다'**
   String get settings_mapContributeDesc;
 
   /// 한마디도 보태기의 설명입니다.
@@ -844,10 +844,10 @@ abstract class AppLocalizations {
   /// **'고른 동네'**
   String get map_pickedPlace;
 
-  /// 지도 아래 시트의 설명입니다. 묶는 단위 1km 와 숨기는 기준 5명이 규칙과 같아야 합니다.
+  /// 지도 아래 시트의 설명입니다. 묶는 단위 약 5km²(H3 해상도 7) 와 숨기는 기준 5명이 규칙과 같아야 합니다.
   ///
   /// In ko, this message translates to:
-  /// **'글씨는 사람들이 고른 한마디이고, 크기는 그 동네에서 두드린 수입니다. 약 1km 단위로 묶고, 5명이 안 되는 곳은 보이지 않습니다.'**
+  /// **'글씨는 사람들이 고른 한마디이고, 크기는 그 동네에서 두드린 수입니다. 약 5km² 넓이의 동네 칸으로 묶고, 5명이 안 되는 칸은 보이지 않습니다.'**
   String get map_explain;
 
   /// 지도 위 범위 전환의 오늘 버튼입니다.

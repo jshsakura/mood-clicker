@@ -368,7 +368,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settings_mapContributeDesc =>
-      'Sent as ~1km blocks; places under five people stay hidden';
+      'Sent as neighbourhood cells of about 5km²; cells under five people stay hidden';
 
   @override
   String get settings_mapCommentDesc =>
@@ -422,7 +422,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get map_explain =>
-      'Each word is a line people picked, and its size is how much that place tapped. Places are grouped by about 1 km, and places with fewer than five people stay hidden.';
+      'Each word is a line people picked, and its size is how much that place tapped. Places are grouped into cells of about 5km², and cells with fewer than five people stay hidden.';
 
   @override
   String get map_rangeToday => 'Today';
