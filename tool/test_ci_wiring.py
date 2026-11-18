@@ -33,6 +33,19 @@ class Wiring(unittest.TestCase):
         check = ci[ci.index("  check:"):ci.index("  apple:")]
         self.assertIn("github.event.action != 'edited'", check)
 
+    def test_a_newer_push_cancels_the_older_run(self):
+        # Queued macOS jobs from stale commits were cancelled one by one and each sent a failure mail.
+        ci = read(".github/workflows/ci.yml")
+        top = ci[:ci.index("jobs:")]
+        self.assertRegex(top, r"concurrency:\s*\n\s+group: ci-\$\{\{ github\.event\.pull_request\.number \|\| github\.ref \}\}")
+        self.assertIn("cancel-in-progress: true", top)
+        # A text edit must not cancel the build of the same commit.
+        self.assertIn("github.event.action == 'edited'", top)
+
+    def test_the_apple_build_cannot_wait_forever(self):
+        ci = read(".github/workflows/ci.yml")
+        self.assertRegex(ci[ci.index("  apple:"):], r"timeout-minutes: \d+")
+
 
 if __name__ == "__main__":
     unittest.main()
