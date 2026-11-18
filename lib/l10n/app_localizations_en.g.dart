@@ -131,6 +131,12 @@ class AppLocalizationsEn extends AppLocalizations {
       'Location is needed to show moods around you';
 
   @override
+  String get reminder_title => 'How was your mood today?';
+
+  @override
+  String get reminder_body => 'Take a moment to tap it out';
+
+  @override
   String get settings_title => 'Settings';
 
   @override
@@ -174,6 +180,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settings_soundPack => 'Sound pack';
+
+  @override
+  String get settings_reminder => 'Evening reminder';
+
+  @override
+  String get settings_reminderTime => 'Reminder time';
 
   @override
   String get settings_mapContribute => 'Share my mood on the map';

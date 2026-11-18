@@ -127,6 +127,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get map_permissionReason => '近所の気分を見るには位置情報が必要です';
 
   @override
+  String get reminder_title => '今日の気分はどうでしたか？';
+
+  @override
+  String get reminder_body => 'ちょっとだけたたいてみませんか';
+
+  @override
   String get settings_title => '設定';
 
   @override
@@ -170,6 +176,12 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get settings_soundPack => 'サウンドセット';
+
+  @override
+  String get settings_reminder => '夜のリマインダー';
+
+  @override
+  String get settings_reminderTime => '通知の時刻';
 
   @override
   String get settings_mapContribute => '地図に自分の気分を足す';

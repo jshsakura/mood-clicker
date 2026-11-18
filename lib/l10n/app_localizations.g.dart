@@ -286,6 +286,18 @@ abstract class AppLocalizations {
   /// **'동네 기분 지도를 보려면 위치가 필요합니다'**
   String get map_permissionReason;
 
+  /// 저녁 알림의 제목입니다. 하루 한 번 정한 시각에 뜹니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'오늘 기분은 어땠나요?'**
+  String get reminder_title;
+
+  /// 저녁 알림의 본문입니다. 알림을 누르면 기분 고르기 화면으로 갑니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'잠깐 들어와 두드려 보세요'**
+  String get reminder_body;
+
   /// 설정 화면의 제목입니다.
   ///
   /// In ko, this message translates to:
@@ -375,6 +387,18 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'소리 묶음'**
   String get settings_soundPack;
+
+  /// 설정에서 저녁 알림을 켜고 끄는 항목의 이름입니다. 기본은 꺼짐입니다. 켤 때만 권한을 물어봅니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'저녁 알림'**
+  String get settings_reminder;
+
+  /// 저녁 알림이 울리는 시각을 고르는 항목의 이름입니다. 기본은 저녁 9시입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'알림 시각'**
+  String get settings_reminderTime;
 
   /// 설정에서 내 기분을 지도에 보내는지 고르는 항목입니다. 기본은 꺼짐이고 3단계에 켭니다.
   ///

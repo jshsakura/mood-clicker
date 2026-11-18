@@ -31,6 +31,8 @@
   "map_title": "近所の今日",
   "map_legendLine": "幸せ {happy}% · 悲しい {sad}%",
   "map_permissionReason": "近所の気分を見るには位置情報が必要です",
+  "reminder_title": "今日の気分はどうでしたか？",
+  "reminder_body": "ちょっとだけたたいてみませんか",
   "settings_title": "設定",
   "settings_theme": "テーマ",
   "settings_themeSystem": "システムに従う",
@@ -46,5 +48,7 @@
   "settings_vibrationStrength": "振動の強さ",
   "settings_sound": "サウンド",
   "settings_soundPack": "サウンドセット",
+  "settings_reminder": "夜のリマインダー",
+  "settings_reminderTime": "通知の時刻",
   "settings_mapContribute": "地図に自分の気分を足す"
 }

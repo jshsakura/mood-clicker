@@ -31,6 +31,8 @@
   "map_title": "Around me today",
   "map_legendLine": "Happy {happy}% · Sad {sad}%",
   "map_permissionReason": "Location is needed to show moods around you",
+  "reminder_title": "How was your mood today?",
+  "reminder_body": "Take a moment to tap it out",
   "settings_title": "Settings",
   "settings_theme": "Theme",
   "settings_themeSystem": "Follow system",
@@ -46,5 +48,7 @@
   "settings_vibrationStrength": "Vibration strength",
   "settings_sound": "Sound",
   "settings_soundPack": "Sound pack",
+  "settings_reminder": "Evening reminder",
+  "settings_reminderTime": "Reminder time",
   "settings_mapContribute": "Share my mood on the map"
 }

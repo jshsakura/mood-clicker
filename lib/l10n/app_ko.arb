@@ -145,6 +145,14 @@
   "@map_permissionReason": {
     "description": "지도 화면에서 위치 권한을 처음 요청할 때 함께 보여 주는 이유입니다. 앱 사용 중에만 물어봅니다."
   },
+  "reminder_title": "오늘 기분은 어땠나요?",
+  "@reminder_title": {
+    "description": "저녁 알림의 제목입니다. 하루 한 번 정한 시각에 뜹니다."
+  },
+  "reminder_body": "잠깐 들어와 두드려 보세요",
+  "@reminder_body": {
+    "description": "저녁 알림의 본문입니다. 알림을 누르면 기분 고르기 화면으로 갑니다."
+  },
   "settings_title": "설정",
   "@settings_title": {
     "description": "설정 화면의 제목입니다."
@@ -204,6 +212,14 @@
   "settings_soundPack": "소리 묶음",
   "@settings_soundPack": {
     "description": "두드릴 때 나는 소리 묶음을 고르는 항목의 이름입니다."
+  },
+  "settings_reminder": "저녁 알림",
+  "@settings_reminder": {
+    "description": "설정에서 저녁 알림을 켜고 끄는 항목의 이름입니다. 기본은 꺼짐입니다. 켤 때만 권한을 물어봅니다."
+  },
+  "settings_reminderTime": "알림 시각",
+  "@settings_reminderTime": {
+    "description": "저녁 알림이 울리는 시각을 고르는 항목의 이름입니다. 기본은 저녁 9시입니다."
   },
   "settings_mapContribute": "지도에 내 기분 보태기",
   "@settings_mapContribute": {
