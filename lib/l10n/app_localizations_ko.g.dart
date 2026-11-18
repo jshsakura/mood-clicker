@@ -127,6 +127,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get map_permissionReason => '동네 기분 지도를 보려면 위치가 필요합니다';
 
   @override
+  String get reminder_title => '오늘 기분은 어땠나요?';
+
+  @override
+  String get reminder_body => '잠깐 들어와 두드려 보세요';
+
+  @override
   String get settings_title => '설정';
 
   @override
@@ -170,6 +176,12 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get settings_soundPack => '소리 묶음';
+
+  @override
+  String get settings_reminder => '저녁 알림';
+
+  @override
+  String get settings_reminderTime => '알림 시각';
 
   @override
   String get settings_mapContribute => '지도에 내 기분 보태기';
