@@ -27,7 +27,7 @@ void main() {
     ]) {
       expect(find.text(name), findsOneWidget);
     }
-    expect(find.text('2'), findsOneWidget);
+    expect(find.text(ko.tap_todayCount(2)), findsOneWidget);
   });
 
   testWidgets(
@@ -69,11 +69,12 @@ void main() {
         MoodJournal.empty().withTap(Mood.happy, app.clock),
       );
       await tester.pumpWidget(app.wrap(const LoadingScreen()));
-      expect(find.text('Unknown'), findsOneWidget);
+      expect(find.textContaining('Unknown'), findsOneWidget);
+      expect(find.text(ko.loading_message), findsOneWidget);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 600));
       expect(find.byType(MoodSelectScreen), findsOneWidget);
-      expect(find.text('1'), findsOneWidget);
+      expect(find.text(ko.tap_todayCount(1)), findsOneWidget);
     },
   );
 
