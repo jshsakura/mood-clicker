@@ -69,6 +69,9 @@ void main() {
 
   group('stage', () {
     final t0 = DateTime(2026, 11, 18, 12);
+    // Taps needed to fill the gauge, and to reach half of it.
+    final full = (1 / GaugeTuning.stepPerTap).round();
+    final half = full ~/ 2;
     FillGauge taps(int n) {
       var g = const FillGauge.empty();
       for (var i = 0; i < n; i++) {
@@ -79,24 +82,24 @@ void main() {
 
     test('follows the level: below half, half or more, full, complete', () {
       expect(CheerStage.of(taps(1), t0), CheerStage.low);
-      expect(CheerStage.of(taps(19), t0), CheerStage.low);
-      expect(CheerStage.of(taps(20), t0), CheerStage.high);
-      expect(CheerStage.of(taps(39), t0), CheerStage.high);
+      expect(CheerStage.of(taps(half - 1), t0), CheerStage.low);
+      expect(CheerStage.of(taps(half), t0), CheerStage.high);
+      expect(CheerStage.of(taps(full - 1), t0), CheerStage.high);
       // The tap that fills the gauge is the complete moment; later taps are plain full.
-      expect(CheerStage.of(taps(40), t0), CheerStage.complete);
-      expect(CheerStage.of(taps(41), t0), CheerStage.full);
+      expect(CheerStage.of(taps(full), t0), CheerStage.complete);
+      expect(CheerStage.of(taps(full + 1), t0), CheerStage.full);
     });
 
     test('complete is only for the one tap that fills the gauge', () {
       var gauge = const FillGauge.empty();
       final stages = <CheerStage>[];
-      for (var i = 0; i < 45; i++) {
+      for (var i = 0; i < full + 5; i++) {
         gauge = gauge.tap(t0);
         stages.add(CheerStage.of(gauge, t0));
       }
       expect(stages.where((s) => s == CheerStage.complete), hasLength(1));
-      expect(stages[39], CheerStage.complete);
-      expect(stages.skip(40), everyElement(CheerStage.full));
+      expect(stages[full - 1], CheerStage.complete);
+      expect(stages.skip(full), everyElement(CheerStage.full));
     });
   });
 
@@ -239,7 +242,7 @@ void main() {
     test('the stage of a gauge is never rare', () {
       var gauge = const FillGauge.empty();
       final t = DateTime(2026, 11, 18, 12);
-      for (var i = 0; i < 45; i++) {
+      for (var i = 0; i < 65; i++) {
         gauge = gauge.tap(t);
         expect(CheerStage.of(gauge, t), isNot(CheerStage.rare));
       }
@@ -251,5 +254,70 @@ void main() {
     expect(CheerKind.rare.lifetime, const Duration(milliseconds: 1400));
     expect(CheerKind.complete.lifetime, const Duration(milliseconds: 1700));
     expect(CheerTuning.rareChance, 0.025);
+  });
+
+  group('entries with a base id', () {
+    test('an entry may be {t, b}; the text is shown and the base is kept', () {
+      final moods = moodsWith(2);
+      (moods['happy']! as Map<String, Object?>)['low'] = [
+        'plain',
+        {'t': 'Yay!', 'b': 'yay'},
+        {'t': 'Yay yay', 'b': 'yay'},
+        {'t': 'No base'},
+      ];
+      final book = CheerBook.parse(fileOf(moods)).book;
+      expect(book.bundle(Mood.happy, CheerStage.low), [
+        'plain',
+        'Yay!',
+        'Yay yay',
+        'No base',
+      ]);
+      expect(book.bases(Mood.happy, CheerStage.low), [
+        null,
+        'yay',
+        'yay',
+        null,
+      ]);
+    });
+
+    test('the length warning and the repeat warning use the text', () {
+      final moods = moodsWith(2);
+      (moods['happy']! as Map<String, Object?>)['low'] = [
+        {'t': 'x' * 13, 'b': 'a'},
+        {'t': 'same', 'b': 'a'},
+        {'t': 'same', 'b': 'b'},
+      ];
+      final warnings = CheerBook.parse(fileOf(moods)).warnings;
+      expect(warnings.where((w) => w.contains('longer')), hasLength(1));
+      expect(warnings.where((w) => w.contains('repeated')), hasLength(1));
+    });
+
+    test(
+      'a bad entry is refused: no text, blank text, wrong types, blank base',
+      () {
+        for (final bad in <Object?>[
+          {'b': 'x'},
+          {'t': '  ', 'b': 'x'},
+          {'t': 5},
+          {'t': 'ok', 'b': 5},
+          {'t': 'ok', 'b': ' '},
+          7,
+          <Object?>[],
+        ]) {
+          final moods = moodsWith(2);
+          (moods['happy']! as Map<String, Object?>)['low'] = ['fine', bad];
+          expect(
+            () => CheerBook.parse(fileOf(moods)),
+            throwsFormatException,
+            reason: '$bad',
+          );
+        }
+      },
+    );
+
+    test('plain strings still give no base', () {
+      final book = bookOf(2);
+      expect(book.bases(Mood.sad, CheerStage.low), [null, null]);
+    });
   });
 }

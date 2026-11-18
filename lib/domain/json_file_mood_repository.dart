@@ -13,7 +13,10 @@ class JsonFileMoodRepository implements MoodRepository {
 
   final File file;
 
-  static const int _version = 1;
+  /// Version 2 puts each day's moods under `moods` so a day can also carry a note. Version 1
+  /// files (a day is just its moods) are still read.
+  static const int _version = 2;
+  static const int _oldestReadable = 1;
 
   /// Makes every temp file name unique in this process, across all repositories.
   static int _nextTemp = 0;
@@ -102,36 +105,41 @@ class JsonFileMoodRepository implements MoodRepository {
     'days': {
       for (final record in journal.days)
         record.day.toString(): {
-          for (final mood in Mood.values)
-            if (record.tallies[mood] case final tally?)
-              mood.id: {
-                'count': tally.count,
-                'lastTapAt': tally.lastTapAt.toUtc().toIso8601String(),
-                'order': tally.lastOrder,
-              },
+          'moods': {
+            for (final mood in Mood.values)
+              if (record.tallies[mood] case final tally?)
+                mood.id: {
+                  'count': tally.count,
+                  'lastTapAt': tally.lastTapAt.toUtc().toIso8601String(),
+                  'order': tally.lastOrder,
+                },
+          },
+          if (record.note != null) 'note': record.note,
+          if (record.notePresetId != null) 'presetId': record.notePresetId,
         },
     },
   };
 
   MoodJournal _decode(Object? root) {
     final map = _asMap(root, 'file root');
-    if (map['version'] != _version) {
-      throw FormatException('unsupported version: ${map['version']}');
+    final version = map['version'];
+    if (version is! int || version < _oldestReadable || version > _version) {
+      throw FormatException('unsupported version: $version');
     }
     final days = _asMap(map['days'], 'days');
     return MoodJournal([
-      for (final MapEntry(:key, :value) in days.entries) _decodeDay(key, value),
+      for (final MapEntry(:key, :value) in days.entries)
+        _decodeDay(key, value, version),
     ]);
   }
 
-  DayRecord _decodeDay(String key, Object? value) {
+  DayRecord _decodeDay(String key, Object? value, int version) {
     final day =
         DayKey.tryParse(key) ?? (throw FormatException('bad day key: $key'));
+    final entry = _asMap(value, key);
+    final moods = version == 1 ? entry : _asMap(entry['moods'], '$key/moods');
     final raws = <Mood, ({int count, DateTime at, int? order})>{};
-    for (final MapEntry(key: moodId, value: raw) in _asMap(
-      value,
-      key,
-    ).entries) {
+    for (final MapEntry(key: moodId, value: raw) in moods.entries) {
       final mood =
           Mood.byId(moodId) ?? (throw FormatException('unknown mood: $moodId'));
       final tally = _asMap(raw, '$key/$moodId');
@@ -150,7 +158,29 @@ class JsonFileMoodRepository implements MoodRepository {
       }
       raws[mood] = (count: count, at: parsed, order: order as int?);
     }
-    return DayRecord(day, _withOrder(raws));
+    final (note, presetId) = version == 1
+        ? (null, null)
+        : _decodeNote(key, entry);
+    return DayRecord(day, _withOrder(raws), note: note, notePresetId: presetId);
+  }
+
+  (String?, String?) _decodeNote(String key, Map<String, Object?> entry) {
+    final note = entry['note'];
+    final presetId = entry['presetId'];
+    if (note != null && note is! String) {
+      throw FormatException('bad note at $key');
+    }
+    if (presetId != null && presetId is! String) {
+      throw FormatException('bad preset id at $key');
+    }
+    try {
+      return (
+        DayRecord.cleanNote(note as String?),
+        DayRecord.checkPresetId(presetId as String?),
+      );
+    } on ArgumentError {
+      throw FormatException('invalid note or preset id at $key');
+    }
   }
 
   /// Uses the saved tap order. A file from before tap order existed has none, so the order is

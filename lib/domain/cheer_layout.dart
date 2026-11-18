@@ -88,8 +88,8 @@ abstract final class CheerLayout {
     );
   }
 
-  /// The font size for a phrase. It grows with the fill level, the complete phrase has its own
-  /// size, and any phrase is shrunk until its box fits in [CheerTuning.maxWidthShare] of
+  /// The font size for a phrase. It grows with the fill level (18 + level^1.3 * 42), a rare one is
+  /// 6 bigger, the complete phrase has its own size, and any phrase is shrunk until its box fits in [CheerTuning.maxWidthShare] of
   /// [screenWidth].
   static double fontSizeFor({
     required double level,
@@ -97,16 +97,22 @@ abstract final class CheerLayout {
     required int length,
     required double screenWidth,
   }) {
-    final wanted = kind == CheerKind.complete
-        ? CheerTuning.fontSizeComplete
-        : CheerTuning.fontSizeBase +
-              level.clamp(0.0, 1.0) * CheerTuning.fontSizePerFill;
+    final wanted = switch (kind) {
+      CheerKind.complete => CheerTuning.fontSizeComplete,
+      CheerKind.normal => _levelSize(level),
+      CheerKind.rare => _levelSize(level) + CheerTuning.fontSizeRareBonus,
+    };
     final room =
         screenWidth * CheerTuning.maxWidthShare - CheerTuning.boxPadding;
     if (length <= 0 || room <= 0) return wanted;
     final fits = room / (length * CheerTuning.widthPerSize);
     return fits < wanted ? fits : wanted;
   }
+
+  static double _levelSize(double level) =>
+      CheerTuning.fontSizeBase +
+      pow(level.clamp(0.0, 1.0), CheerTuning.fontSizeExponent) *
+          CheerTuning.fontSizeSpan;
 
   /// How far up a phrase of the given age has floated, in pixels.
   static double riseAt(Duration age, {CheerKind kind = CheerKind.normal}) {

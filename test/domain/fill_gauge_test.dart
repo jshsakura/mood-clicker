@@ -106,8 +106,12 @@ void main() {
   test('emptiesAt is when decay reaches zero', () {
     final gauge = const FillGauge.empty().tap(t0);
     final decayMs = (step / decay * 1000).round();
-    expect(gauge.emptiesAt, at(grace + decayMs));
-    expect(gauge.valueAt(gauge.emptiesAt!), 0);
+    final empties = gauge.emptiesAt!;
+    expect(
+      empties.difference(at(grace + decayMs)).inMicroseconds.abs(),
+      lessThan(1000),
+    );
+    expect(gauge.valueAt(empties), closeTo(0, 1e-6));
     expect(const FillGauge.empty().emptiesAt, isNull);
   });
 
@@ -149,6 +153,6 @@ void main() {
   });
 
   test('the display follow time is a plain tuning constant', () {
-    expect(GaugeTuning.displayFollow, const Duration(milliseconds: 220));
+    expect(GaugeTuning.displayFollow, const Duration(milliseconds: 420));
   });
 }

@@ -37,15 +37,17 @@ enum CheerStage {
   static CheerStage of(FillGauge gauge, DateTime now) {
     if (gauge.justFilled) return CheerStage.complete;
     if (gauge.isFullAt(now)) return CheerStage.full;
-    return gauge.valueAt(now) < 0.5 ? CheerStage.low : CheerStage.high;
+    // A small tolerance so that 30 taps of 1/60 count as half despite float rounding.
+    return gauge.valueAt(now) < 0.5 - 1e-9 ? CheerStage.low : CheerStage.high;
   }
 }
 
 /// Cheer phrases for one language: a bundle per mood and stage.
 class CheerBook {
-  CheerBook._(this._bundles, this._fingerprints);
+  CheerBook._(this._bundles, this._bases, this._fingerprints);
 
   final Map<(Mood, CheerStage), List<String>> _bundles;
+  final Map<(Mood, CheerStage), List<String?>> _bases;
   final Map<(Mood, CheerStage), String> _fingerprints;
 
   /// The stage whose bundle is really used. `complete` falls back to `full` and `rare` to `high`
@@ -57,6 +59,12 @@ class CheerBook {
 
   List<String> bundle(Mood mood, CheerStage stage) =>
       _bundles[(mood, effectiveStage(mood, stage))] ?? const [];
+
+  /// The base sentence id of each phrase of a bundle (same order as [bundle]), or null for a
+  /// phrase written as a plain string. Variants of one base sentence share an id, so a caller can
+  /// avoid showing two variants of the same base one after another.
+  List<String?> bases(Mood mood, CheerStage stage) =>
+      _bases[(mood, effectiveStage(mood, stage))] ?? const [];
 
   /// A short value that changes whenever the phrases of this bundle change. A saved deck is only
   /// reused while it still matches.
@@ -85,6 +93,7 @@ class CheerBook {
       }
     }
     final bundles = <(Mood, CheerStage), List<String>>{};
+    final bases = <(Mood, CheerStage), List<String?>>{};
     final fingerprints = <(Mood, CheerStage), String>{};
     final warnings = <String>[];
     for (final mood in Mood.values) {
@@ -95,14 +104,18 @@ class CheerBook {
             stage == CheerStage.complete || stage == CheerStage.rare;
         if (optional && entry[stage.id] == null) continue;
         final where = '${mood.id}/${stage.id}';
-        final phrases = _phrases(entry[stage.id], where);
+        final items = _items(entry[stage.id], where);
+        final phrases = [for (final item in items) item.text];
         warnings.addAll(_warningsFor(where, phrases));
         bundles[(mood, stage)] = List.unmodifiable(phrases);
+        bases[(mood, stage)] = List.unmodifiable([
+          for (final item in items) item.base,
+        ]);
         fingerprints[(mood, stage)] = _fingerprintOf(phrases);
       }
     }
     return CheerParse(
-      CheerBook._(bundles, fingerprints),
+      CheerBook._(bundles, bases, fingerprints),
       List.unmodifiable(warnings),
     );
   }
@@ -141,17 +154,27 @@ class CheerBook {
     return '${phrases.length}:${hash.toRadixString(16)}';
   }
 
-  static List<String> _phrases(Object? raw, String where) {
+  /// An entry is a plain string, or `{"t": "text", "b": "base id"}` where `b` is optional.
+  static List<({String text, String? base})> _items(Object? raw, String where) {
     if (raw is! List || raw.isEmpty) {
       throw FormatException('empty or missing bundle: $where');
     }
-    return [
-      for (final item in raw)
-        if (item is String && item.trim().isNotEmpty)
-          item
-        else
-          throw FormatException('bad phrase in $where'),
-    ];
+    return [for (final item in raw) _item(item, where)];
+  }
+
+  static ({String text, String? base}) _item(Object? item, String where) {
+    if (item is String && item.trim().isNotEmpty) {
+      return (text: item, base: null);
+    }
+    if (item is Map) {
+      final text = item['t'];
+      final base = item['b'];
+      final baseOk = base == null || (base is String && base.trim().isNotEmpty);
+      if (text is String && text.trim().isNotEmpty && baseOk) {
+        return (text: text, base: base as String?);
+      }
+    }
+    throw FormatException('bad phrase in $where');
   }
 }
 

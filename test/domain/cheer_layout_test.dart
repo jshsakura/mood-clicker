@@ -138,12 +138,20 @@ void main() {
       screenWidth: width,
     );
 
-    test('grows from 30 to 60 with the fill', () {
-      expect(size(0), 30);
-      expect(size(0.5), 45);
+    test('grows from 18 to 60 with the fill, slowly at first', () {
+      expect(size(0), 18);
+      expect(size(0.5), closeTo(35.05, 0.01));
       expect(size(1), 60);
       expect(size(2), 60);
-      expect(size(-1), 30);
+      expect(size(-1), 18);
+      expect(size(0.25), lessThan(25));
+    });
+
+    test('a rare phrase is 6 bigger', () {
+      expect(size(0, kind: CheerKind.rare, width: 1000), 24);
+      expect(size(1, kind: CheerKind.rare, width: 1000), 66);
+      // On a 400 px screen the 60 percent cap holds it back: 4 characters fit at 60.
+      expect(size(1, kind: CheerKind.rare), 60);
     });
 
     test('the complete phrase is 76', () {
@@ -161,7 +169,7 @@ void main() {
     );
 
     test('a phrase that already fits keeps its size', () {
-      expect(size(0.5, length: 2, width: 400), 45);
+      expect(size(0.5, length: 2, width: 400), closeTo(35.05, 0.01));
     });
 
     test('the complete phrase is also kept inside 60 percent', () {
