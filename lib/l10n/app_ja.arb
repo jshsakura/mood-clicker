@@ -145,5 +145,17 @@
   "map_togetherSad": "今日、心が沈んでいるのはあなただけではありません",
   "map_togetherHappy": "今日は近くに気分のいい人がたくさんいます",
   "moodSelect_title": "今日の気分は",
-  "loading_message": "記録を読み込んでいます"
+  "loading_message": "記録を読み込んでいます",
+  "calendar_recordedDays": "記録",
+  "calendar_stamps": "スタンプ",
+  "calendar_daysUnit": "日",
+  "calendar_stampsUnit": "回",
+  "calendar_monthFlow": "今月の流れ",
+  "calendar_tapsAxis": "タップ数",
+  "calendar_tappedTimes": "{count}回タップしました",
+  "calendar_stampLine1": "よくでき",
+  "calendar_stampLine2": "ました",
+  "dayDetail_moodHeading": "この日の気分",
+  "dayDetail_dominantCaption": "一番多くタップした気分です",
+  "dayDetail_weekReview": "今週のふり返り"
 }

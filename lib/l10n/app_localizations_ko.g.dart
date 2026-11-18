@@ -488,4 +488,42 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get loading_message => '기록을 불러오는 중입니다';
+
+  @override
+  String get calendar_recordedDays => '기록';
+
+  @override
+  String get calendar_stamps => '도장';
+
+  @override
+  String get calendar_daysUnit => '일';
+
+  @override
+  String get calendar_stampsUnit => '번';
+
+  @override
+  String get calendar_monthFlow => '이달의 흐름';
+
+  @override
+  String get calendar_tapsAxis => '두드린 수';
+
+  @override
+  String calendar_tappedTimes(int count) {
+    return '$count번 두드렸습니다';
+  }
+
+  @override
+  String get calendar_stampLine1 => '참 잘';
+
+  @override
+  String get calendar_stampLine2 => '했어요';
+
+  @override
+  String get dayDetail_moodHeading => '이날의 기분';
+
+  @override
+  String get dayDetail_dominantCaption => '가장 많이 두드린 기분입니다';
+
+  @override
+  String get dayDetail_weekReview => '이번 주 돌아보기';
 }

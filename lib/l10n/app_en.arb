@@ -145,5 +145,17 @@
   "map_togetherSad": "You are not the only one feeling low today",
   "map_togetherHappy": "Many people nearby feel good today",
   "moodSelect_title": "How are you feeling today?",
-  "loading_message": "Loading your records"
+  "loading_message": "Loading your records",
+  "calendar_recordedDays": "Recorded",
+  "calendar_stamps": "Stamps",
+  "calendar_daysUnit": "d",
+  "calendar_stampsUnit": "",
+  "calendar_monthFlow": "Monthly flow",
+  "calendar_tapsAxis": "Taps",
+  "calendar_tappedTimes": "{count} taps",
+  "calendar_stampLine1": "Well",
+  "calendar_stampLine2": "done",
+  "dayDetail_moodHeading": "Mood of the day",
+  "dayDetail_dominantCaption": "Most tapped mood",
+  "dayDetail_weekReview": "This week"
 }
