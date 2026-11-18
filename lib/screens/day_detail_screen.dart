@@ -42,7 +42,7 @@ class DayDetailScreen extends StatelessWidget {
             final maxCount = Mood.values
                 .map(record.countOf)
                 .fold(0, (a, b) => a > b ? a : b);
-            final note = record.note;
+            final note = shownNote(l10n, record);
 
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,

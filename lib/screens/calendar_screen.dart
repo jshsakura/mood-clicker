@@ -21,6 +21,7 @@ import '../l10n/app_localizations.g.dart';
 import '../l10n/date_labels.dart';
 import 'day_detail_screen.dart';
 import 'mood_labels.dart';
+import 'tap/note_sheet.dart';
 
 /// Monthly calendar matching design/canvas/Calendar.dc.html: back and month arrows in the top row,
 /// the month with its counts, a day grid drawn with [CalendarDayCell], the monthly flow bars and
@@ -532,6 +533,9 @@ class _SelectedDayCard extends StatelessWidget {
   /// The stamp is taller than the row it sits in, so it hangs over by this much on each side.
   static const double _stampOverhang = 8;
 
+  /// A longer note is cut after this many lines.
+  static const int _noteLines = 2;
+
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
@@ -541,7 +545,7 @@ class _SelectedDayCard extends StatelessWidget {
     final dateText = dayWithWeekday(locale, date);
     final mood = record.dominantMood;
     final isStamped = record.total * GaugeTuning.stepPerTap >= 1.0 - 1e-9;
-    final note = record.note;
+    final note = shownNote(l10n, record);
 
     return PressableSurface(
       kind: PressableKind.card,
@@ -594,7 +598,7 @@ class _SelectedDayCard extends StatelessWidget {
                       const SizedBox(height: Space.xs),
                       Text(
                         l10n.calendar_noteQuote(note),
-                        maxLines: 1,
+                        maxLines: _noteLines,
                         overflow: TextOverflow.ellipsis,
                         style: TypeScale.small.copyWith(color: p.ink),
                       ),

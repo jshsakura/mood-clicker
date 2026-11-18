@@ -22,6 +22,14 @@ String notePresetText(AppLocalizations l10n, String id) => switch (id) {
   _ => l10n.note_presetRest,
 };
 
+/// The note of [record] as it is shown now. A ready-made sentence follows the language of the
+/// app, whatever language it was saved in. A note the user wrote or changed is shown as it is.
+String? shownNote(AppLocalizations l10n, DayRecord record) {
+  final id = record.notePresetId;
+  if (id != null && record.note != null) return notePresetText(l10n, id);
+  return record.note;
+}
+
 /// Asks for the note of [day]. The user can skip. Saving writes the note at once. The sheet starts
 /// with the line already on that day, so it also edits. [afterComplete] adds the line that says why
 /// the sheet opened: the gauge was filled.
@@ -71,6 +79,7 @@ class _NoteSheet extends StatefulWidget {
 
 class _NoteSheetState extends State<_NoteSheet> {
   late final TextEditingController _controller;
+  bool _controllerReady = false;
   String? _presetId;
   String? _presetText;
   bool _saving = false;
@@ -80,9 +89,17 @@ class _NoteSheetState extends State<_NoteSheet> {
   void initState() {
     super.initState();
     final record = widget.existing;
-    _controller = TextEditingController(text: record.note ?? '');
     _presetId = record.notePresetId;
-    _presetText = record.note;
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_controllerReady) return;
+    _controllerReady = true;
+    final text = shownNote(AppLocalizations.of(context), widget.existing);
+    _controller = TextEditingController(text: text ?? '');
+    _presetText = text;
   }
 
   @override

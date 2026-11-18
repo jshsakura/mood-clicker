@@ -70,7 +70,11 @@ MoodJournal calendarSketchJournal() {
   });
   return journal
       .withNote(DayKey.of(DateTime(2026, 11, 8)), note: 'Smiled today')
-      .withNote(DayKey.of(DateTime(2026, 11, 13)), note: 'Ate something good')
+      .withNote(
+        DayKey.of(DateTime(2026, 11, 13)),
+        note: 'Something to be thankful for',
+        presetId: 'thanks',
+      )
       .withNote(DayKey.of(DateTime(2026, 11, 18)), note: 'Same again tomorrow');
 }
 
