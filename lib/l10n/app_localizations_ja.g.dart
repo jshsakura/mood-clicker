@@ -361,7 +361,8 @@ class AppLocalizationsJa extends AppLocalizations {
   String get settings_reminderDesc => '記録していない日に一度だけ知らせます';
 
   @override
-  String get settings_mapContributeDesc => '約1km単位にまとめて送り、5人に満たない場所は表示しません';
+  String get settings_mapContributeDesc =>
+      '約5km²の広さの近所のマスにまとめて送り、5人に満たないマスは表示しません';
 
   @override
   String get settings_mapCommentDesc => '用意された文から選んだ一言だけを送ります。書いた言葉は端末にだけ残ります';
@@ -412,7 +413,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get map_explain =>
-      '文字は人が選んだひとことで、大きさはその場所で押した数です。約1km単位でまとめ、5人に満たない場所は表示されません。';
+      '文字は人が選んだひとことで、大きさはその場所で押した数です。約5km²の広さのマスにまとめ、5人に満たないマスは表示されません。';
 
   @override
   String get map_rangeToday => '今日';
