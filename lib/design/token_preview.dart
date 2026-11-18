@@ -8,7 +8,7 @@ import 'theme_choice.dart';
 import 'tokens.g.dart';
 
 /// 디자인 토큰과 화면 부품을 한 화면에 늘어놓는다.
-/// 디자이너가 tokens.json 을 고친 결과를 바로 확인하는 곳이다.
+/// 디자이너가 design/tokens 를 고친 결과를 바로 확인하는 곳이다.
 class TokenPreview extends StatelessWidget {
   const TokenPreview({super.key, required this.choice, required this.onChoice});
 
