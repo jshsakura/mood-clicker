@@ -56,7 +56,9 @@ void main() {
     });
 
     test('the drawings are the paths of the approved screens', () {
-      expect(_svg('back'), contains('M15 5l-7 7 7 7'));
+      // Back is an arrow with a shaft, so it never reads as the month chevron.
+      expect(_svg('back'), contains('M19 12H5M11 6l-6 6 6 6'));
+      expect(_svg('back_heavy'), contains('M19 12H5M11 6l-6 6 6 6'));
       expect(_svg('map'), contains('M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2z'));
       expect(
         _svg('calendar'),

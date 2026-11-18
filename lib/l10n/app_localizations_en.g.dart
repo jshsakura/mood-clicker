@@ -535,4 +535,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dayDetail_weekReview => 'This week';
+
+  @override
+  String get settings_exportEmpty => 'There are no records to export yet';
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mood_clicker/domain/mood.dart';
 import 'package:mood_clicker/domain/mood_journal.dart';
@@ -91,5 +92,27 @@ void main() {
     await tester.pump(const Duration(milliseconds: 600));
     expect(find.byType(MoodSelectScreen), findsOneWidget);
     expect(app.repository.saved, isEmpty);
+  });
+
+  testWidgets('the settings button opens from the keyboard', (tester) async {
+    final app = TestApp(
+      settingsBuilder: (_) => const Scaffold(body: Text('settings page')),
+    );
+    await tester.pumpWidget(app.wrap(const MoodSelectScreen()));
+    // The header order is map, calendar, settings.
+    for (var i = 0; i < 3; i++) {
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    }
+    await tester.pump();
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.text('settings page'), findsOneWidget);
+  });
+
+  testWidgets('the title sits under the date line', (tester) async {
+    final app = TestApp();
+    await tester.pumpWidget(app.wrap(const MoodSelectScreen()));
+    expect(find.text(ko.moodSelect_title), findsOneWidget);
   });
 }

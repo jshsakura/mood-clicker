@@ -1047,6 +1047,12 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'이번 주 돌아보기'**
   String get dayDetail_weekReview;
+
+  /// 내보낼 기록 파일이 없을 때 잠깐 뜨는 알림입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'내보낼 기록이 아직 없습니다'**
+  String get settings_exportEmpty;
 }
 
 class _AppLocalizationsDelegate

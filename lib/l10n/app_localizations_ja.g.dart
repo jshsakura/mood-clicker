@@ -525,4 +525,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get dayDetail_weekReview => '今週のふり返り';
+
+  @override
+  String get settings_exportEmpty => '書き出せる記録がまだありません';
 }

@@ -526,4 +526,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get dayDetail_weekReview => '이번 주 돌아보기';
+
+  @override
+  String get settings_exportEmpty => '내보낼 기록이 아직 없습니다';
 }

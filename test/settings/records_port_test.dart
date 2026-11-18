@@ -21,15 +21,18 @@ void main() {
     await tmp.delete(recursive: true);
   });
 
-  DeviceRecordsPort port() => DeviceRecordsPort(
+  DeviceRecordsPort port({bool completes = true}) => DeviceRecordsPort(
     journalFile: () async => file,
-    shareFiles: (paths) async => shared.addAll(paths),
+    shareFiles: (paths) async {
+      shared.addAll(paths);
+      return completes;
+    },
   );
 
   test('an empty app has no record today and nothing to export', () async {
     final empty = port();
     expect(await empty.hasRecordToday(), isFalse);
-    expect(await empty.exportJournal(), isNull);
+    expect(await empty.exportJournal(), ExportOutcome.nothing);
     expect(shared, isEmpty);
   });
 
@@ -46,10 +49,21 @@ void main() {
     await repository.save(
       MoodJournal.empty().withTap(Mood.sad, DateTime.now()),
     );
-    final path = await port().exportJournal();
-    expect(path, file.path);
+    final outcome = await port().exportJournal();
+    expect(outcome, ExportOutcome.shared);
     expect(shared, [file.path]);
     expect(await File(file.path).exists(), isTrue);
+  });
+
+  test('a dismissed share sheet is reported as cancelled', () async {
+    final repository = JsonFileMoodRepository(file);
+    await repository.save(
+      MoodJournal.empty().withTap(Mood.sad, DateTime.now()),
+    );
+    expect(
+      await port(completes: false).exportJournal(),
+      ExportOutcome.cancelled,
+    );
   });
 
   test('deleteAll removes the journal file', () async {

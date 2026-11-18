@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mood_clicker/design/app_theme.dart';
 import 'package:mood_clicker/design/parts/line_icon.dart';
@@ -130,5 +131,64 @@ void main() {
       tester.widget<AnimatedScale>(find.byType(AnimatedScale)).duration,
       Motion.tap,
     );
+  });
+
+  testWidgets('Tab reaches a surface, Enter runs it and a ring shows', (
+    tester,
+  ) async {
+    var taps = 0;
+    await tester.pumpWidget(
+      host(
+        PressableSurface(
+          kind: PressableKind.card,
+          onTap: () => taps++,
+          semanticLabel: 'go',
+          child: const SizedBox(width: 200, height: 80),
+        ),
+      ),
+    );
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.pump();
+    final ring = find.byWidgetPredicate(
+      (w) =>
+          w is DecoratedBox &&
+          w.decoration is ShapeDecoration &&
+          ((w.decoration as ShapeDecoration).shape as OutlinedBorder)
+                  .side
+                  .width ==
+              2,
+    );
+    expect(ring, findsOneWidget);
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pump();
+    expect(taps, 1);
+  });
+
+  testWidgets('a switched off surface is faded and skipped by Tab', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      host(
+        const PressableSurface(
+          kind: PressableKind.card,
+          onTap: null,
+          child: SizedBox(width: 200, height: 80),
+        ),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 200));
+    final opacity = tester.widget<AnimatedOpacity>(
+      find
+          .descendant(
+            of: find.byType(PressableSurface),
+            matching: find.byType(AnimatedOpacity),
+          )
+          .first,
+    );
+    expect(opacity.opacity, lessThan(1));
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.pump();
+    // Only the route scope holds focus: no surface took it.
+    expect(FocusManager.instance.primaryFocus, isA<FocusScopeNode>());
   });
 }
