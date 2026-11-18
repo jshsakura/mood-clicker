@@ -711,3 +711,13 @@ Flutter 앱이 웹앱처럼 어색해 보이지 않고 iOS·Android·macOS 에�
 - Google Play 스토어 등록정보 그래픽·텍스트·IARC 연령 등급: https://support.google.com/googleplay/android-developer/answer/9866151 , https://support.google.com/googleplay/android-developer/answer/9859655
 - Android 적응형 아이콘 및 단색 테마 아이콘: https://developer.android.com/develop/ui/views/launch/icon_design_adaptive
 - `flutter_launcher_icons` / `flutter_native_splash`: https://pub.dev/packages/flutter_launcher_icons , https://pub.dev/packages/flutter_native_splash
+
+---
+
+## 14. 앱 아이콘 시안 (`design/concepts/icon/`)
+
+확인일: 2026-11-18
+
+13절 규격에 맞춰 두 가지 방향(A: 둥근 도형 캐릭터 얼굴, B: Baloo 2 ExtraBold `M` + `#F2A900` 노란 점)의 아이콘 시안을 `design/concepts/icon/` 에 제작했습니다.
+
+- 구성: 방향별 `ios-1024.png`(`1024x1024` 알파 없음), `foreground.png`(`432x432` 투명 배경, `66dp` 안전 영역 준수), `monochrome.png`(`432x432` 단색), `preview-48.png`(`48x48` 미리보기) 및 `design/concepts/icon/README.md` (배경색 `#FFFFFF`, 도구·상업 이용 안내).
