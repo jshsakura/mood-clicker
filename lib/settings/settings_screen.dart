@@ -13,6 +13,7 @@ import '../reminder/reminder_controller.dart';
 import '../reminder/reminder_port.dart';
 import 'crisis_contacts.dart';
 import 'records_port.dart';
+import 'privacy_screen.dart';
 import 'settings.dart';
 import 'settings_store.dart';
 
@@ -277,7 +278,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 _LinkRow(
                   label: l10n.settings_privacy,
-                  value: l10n.settings_privacyPending,
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const PrivacyScreen(),
+                    ),
+                  ),
                 ),
               ],
             ),

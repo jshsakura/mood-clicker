@@ -344,9 +344,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settings_privacy => 'Privacy policy';
 
   @override
-  String get settings_privacyPending => 'Coming soon';
-
-  @override
   String get settings_themeNote => 'Tap one and every screen changes at once.';
 
   @override

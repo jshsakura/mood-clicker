@@ -79,7 +79,11 @@ flutter:
   # Per-language cheer phrase packs (loaded through lib/l10n/asset_paths.dart) and sound packs.
   # List each pack folder here too; a listed folder that does not exist fails the build.
   # Stamp folders are listed here once real artwork lands.
+  # The privacy policy shown in Settings, one markdown file per language.
   assets:
+    - docs/privacy-policy/ko.md
+    - docs/privacy-policy/en.md
+    - docs/privacy-policy/ja.md
     - assets/cheers/ko.json
     - assets/cheers/en.json
     - assets/cheers/ja.json

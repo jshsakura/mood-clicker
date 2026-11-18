@@ -101,7 +101,6 @@
   "settings_version": "Version",
   "settings_licenses": "Open source licenses",
   "settings_privacy": "Privacy policy",
-  "settings_privacyPending": "Coming soon",
   "settings_themeNote": "Tap one and every screen changes at once.",
   "settings_vibrationDesc": "Buzzes on every tap, and stronger when the gauge fills",
   "settings_soundDesc": "Stays silent while the device is muted",
