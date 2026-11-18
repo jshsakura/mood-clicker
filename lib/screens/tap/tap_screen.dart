@@ -6,6 +6,8 @@ import 'package:flutter/scheduler.dart';
 
 import '../../app/app_services.dart';
 import '../../design/app_theme.dart';
+import '../../design/parts/line_icon.dart';
+import '../../design/parts/mood_face.dart';
 import '../../design/parts/pressable_surface.dart';
 import '../../design/parts/water_painter.dart';
 import '../../design/parts/water_sim.dart';
@@ -337,21 +339,31 @@ class _TapScreenState extends State<TapScreen>
                       child: Row(
                         children: [
                           PressableSurface.icon(
-                            icon: Icons.arrow_back,
+                            icon: LineIcons.back,
                             semanticLabel: l10n.common_back,
                             onTap: _leave,
                           ),
                           const SizedBox(width: Space.md),
                           Expanded(
-                            child: Text(
-                              '${moodEmoji(widget.mood)} ${moodName(context, widget.mood)}',
-                              style: TypeScale.title.copyWith(color: p.ink),
+                            child: Row(
+                              children: [
+                                MoodFace(mood: widget.mood, size: 28),
+                                const SizedBox(width: Space.sm),
+                                Flexible(
+                                  child: Text(
+                                    moodName(context, widget.mood),
+                                    style: TypeScale.title.copyWith(
+                                      color: p.ink,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                           if (_services.settingsBuilder != null) ...[
                             const SizedBox(width: Space.md),
                             PressableSurface.icon(
-                              icon: Icons.settings_outlined,
+                              icon: LineIcons.settings,
                               semanticLabel: l10n.settings_title,
                               onTap: () => Navigator.of(context).push(
                                 MaterialPageRoute<void>(

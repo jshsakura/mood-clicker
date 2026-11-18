@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../app_theme.dart';
 import '../tokens.g.dart';
+import 'line_icon.dart';
 
 /// How a pressable surface looks and how far it shrinks while pressed.
 enum PressableKind {
@@ -33,15 +34,22 @@ class PressableSurface extends StatefulWidget {
   /// A 44 px circular icon button.
   PressableSurface.icon({
     Key? key,
-    required IconData icon,
+    required LineIcons icon,
     required VoidCallback? onTap,
     required String semanticLabel,
+    double iconSize = 22,
+    Color? iconColor,
   }) : this(
          key: key,
          kind: PressableKind.icon,
          onTap: onTap,
          semanticLabel: semanticLabel,
-         child: _IconFace(icon),
+         child: Center(
+           child: Builder(
+             builder: (context) =>
+                 LineIcon(icon, size: iconSize, color: iconColor),
+           ),
+         ),
        );
 
   /// The size of an icon button.
@@ -136,14 +144,4 @@ class _PressableSurfaceState extends State<PressableSurface> {
       ),
     );
   }
-}
-
-class _IconFace extends StatelessWidget {
-  const _IconFace(this.icon);
-
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) =>
-      Center(child: Icon(icon, size: 22, color: context.palette.ink));
 }

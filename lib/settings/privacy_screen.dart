@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
 import '../design/app_theme.dart';
+import '../design/parts/line_icon.dart';
 import '../design/parts/pressable_surface.dart';
 import '../design/tokens.g.dart';
 import '../l10n/app_localizations.g.dart';
@@ -66,7 +67,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
               child: Row(
                 children: [
                   PressableSurface.icon(
-                    icon: Icons.arrow_back,
+                    icon: LineIcons.backHeavy,
                     semanticLabel: l10n.common_back,
                     onTap: () => Navigator.of(context).maybePop(),
                   ),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../app/app_services.dart';
 import '../design/app_theme.dart';
 import '../design/parts/day_shade.dart';
+import '../design/parts/line_icon.dart';
 import '../design/parts/pressable_surface.dart';
 import '../design/tokens.g.dart';
 import '../domain/day_key.dart';
@@ -56,13 +57,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 Row(
                   children: [
                     PressableSurface.icon(
-                      icon: Icons.arrow_back,
+                      icon: LineIcons.back,
                       semanticLabel: l10n.common_back,
                       onTap: () => Navigator.of(context).pop(),
                     ),
                     const Spacer(),
                     PressableSurface.icon(
-                      icon: Icons.chevron_left,
+                      icon: LineIcons.chevronLeft,
                       semanticLabel: l10n.calendar_prevMonth,
                       onTap: () => _move(services, -1),
                     ),
@@ -75,7 +76,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       ),
                     ),
                     PressableSurface.icon(
-                      icon: Icons.chevron_right,
+                      icon: LineIcons.chevronRight,
                       semanticLabel: l10n.calendar_nextMonth,
                       onTap: isCurrentMonth ? null : () => _move(services, 1),
                     ),

@@ -88,11 +88,30 @@ class _LoadingScreenState extends State<LoadingScreen> {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       body: Center(
-        child: Text(
-          AppLocalizations.of(context).appName,
-          style: TypeScale.wordmark.copyWith(color: p.ink),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text.rich(
+              TextSpan(
+                text: l10n.appName,
+                children: [
+                  TextSpan(
+                    text: '.',
+                    style: TextStyle(color: p.faint),
+                  ),
+                ],
+              ),
+              style: TypeScale.wordmark.copyWith(color: p.ink),
+            ),
+            const SizedBox(height: Space.lg),
+            Text(
+              l10n.loading_message,
+              style: TypeScale.label.copyWith(color: p.inkMuted),
+            ),
+          ],
         ),
       ),
     );

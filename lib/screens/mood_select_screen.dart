@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../app/app_services.dart';
 import '../design/app_theme.dart';
+import '../design/parts/line_icon.dart';
 import '../design/parts/mood_banner.dart';
 import '../design/parts/pressable_surface.dart';
 import '../design/tokens.g.dart';
@@ -42,30 +43,38 @@ class MoodSelectScreen extends StatelessWidget {
             final today = DayKey.of(services.now());
             final record = services.journal.journal.dayOf(today);
             return Padding(
-              padding: const EdgeInsets.all(Space.lg),
+              padding: const EdgeInsets.fromLTRB(
+                Space.xl,
+                Space.lg,
+                Space.xl,
+                Space.xxl,
+              ),
               child: Column(
                 children: [
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Expanded(
-                        child: Text(
-                          '${l10n.moodSelect_today} ${dayTitle(locale, services.now())}',
-                          style: TypeScale.title.copyWith(color: p.ink),
-                        ),
-                      ),
-                      PressableSurface.icon(
-                        icon: Icons.calendar_month_outlined,
-                        semanticLabel: l10n.moodSelect_openCalendar,
-                        onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            builder: (_) => const CalendarScreen(),
-                          ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              dayWithWeekday(locale, services.now()),
+                              style: TypeScale.label.copyWith(
+                                color: p.inkMuted,
+                              ),
+                            ),
+                            const SizedBox(height: Space.xs),
+                            Text(
+                              l10n.moodSelect_title,
+                              style: TypeScale.display.copyWith(color: p.ink),
+                            ),
+                          ],
                         ),
                       ),
                       if (services.mapView.value) ...[
-                        const SizedBox(width: Space.sm),
                         PressableSurface.icon(
-                          icon: Icons.map_outlined,
+                          icon: LineIcons.map,
                           semanticLabel: l10n.map_openLabel,
                           onTap: () => Navigator.of(context).push(
                             MaterialPageRoute<void>(
@@ -75,11 +84,21 @@ class MoodSelectScreen extends StatelessWidget {
                             ),
                           ),
                         ),
+                        const SizedBox(width: Space.xs),
                       ],
+                      PressableSurface.icon(
+                        icon: LineIcons.calendar,
+                        semanticLabel: l10n.moodSelect_openCalendar,
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => const CalendarScreen(),
+                          ),
+                        ),
+                      ),
                       if (services.settingsBuilder != null) ...[
-                        const SizedBox(width: Space.sm),
+                        const SizedBox(width: Space.xs),
                         PressableSurface.icon(
-                          icon: Icons.settings_outlined,
+                          icon: LineIcons.settings,
                           semanticLabel: l10n.settings_title,
                           onTap: () => Navigator.of(context).push(
                             MaterialPageRoute<void>(
@@ -90,13 +109,13 @@ class MoodSelectScreen extends StatelessWidget {
                       ],
                     ],
                   ),
-                  const SizedBox(height: Space.lg),
+                  const SizedBox(height: Space.xl),
                   for (final mood in Mood.values) ...[
                     Expanded(
                       child: MoodBanner(
                         label: moodName(context, mood),
-                        emoji: moodEmoji(mood),
-                        todayCount: record.countOf(mood),
+                        mood: mood,
+                        countLabel: l10n.tap_todayCount(record.countOf(mood)),
                         onTap: () => _open(context, mood),
                       ),
                     ),

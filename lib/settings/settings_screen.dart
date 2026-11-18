@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../design/app_theme.dart';
+import '../design/parts/line_icon.dart';
+import '../design/parts/mood_face.dart';
 import '../design/parts/pressable_surface.dart';
 import '../design/theme_choice.dart';
 import '../design/tokens.g.dart';
 import '../domain/feel_settings.dart';
+import '../domain/mood.dart';
 import '../feedback/feedback_settings.dart';
 import '../l10n/app_localizations.g.dart';
 import '../l10n/locale_choice.dart';
@@ -367,7 +370,7 @@ class _Header extends StatelessWidget {
     return Row(
       children: [
         PressableSurface.icon(
-          icon: Icons.arrow_back,
+          icon: LineIcons.backHeavy,
           semanticLabel: AppLocalizations.of(context).common_back,
           onTap: () => Navigator.of(context).maybePop(),
         ),
@@ -730,23 +733,26 @@ class _ThemeCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  AppLocalizations.of(context).moodSelect_today,
-                  style: TypeScale.label.copyWith(
+                  AppLocalizations.of(context).moodSelect_title,
+                  style: TypeScale.body.copyWith(
                     color: preview.ink,
+                    fontSize: 15,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
                 const SizedBox(height: Space.xs),
                 _MiniRow(
+                  mood: Mood.happy,
                   color: preview.happy,
                   line: preview.line,
-                  face: preview.ink,
+                  surface: preview.surface,
                 ),
                 const SizedBox(height: Space.xs),
                 _MiniRow(
+                  mood: Mood.sad,
                   color: preview.sad,
                   line: preview.line,
-                  face: preview.ink,
+                  surface: preview.surface,
                 ),
               ],
             ),
@@ -758,7 +764,7 @@ class _ThemeCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 if (selected) ...[
-                  Icon(Icons.check, size: 16, color: palette.ink),
+                  LineIcon(LineIcons.check, size: 16, color: palette.ink),
                   const SizedBox(width: Space.xs),
                 ],
                 Text(
@@ -778,11 +784,17 @@ class _ThemeCard extends StatelessWidget {
 }
 
 class _MiniRow extends StatelessWidget {
-  const _MiniRow({required this.color, required this.line, required this.face});
+  const _MiniRow({
+    required this.mood,
+    required this.color,
+    required this.line,
+    required this.surface,
+  });
 
+  final Mood mood;
   final Color color;
   final Color line;
-  final Color face;
+  final Color surface;
 
   @override
   Widget build(BuildContext context) {
@@ -790,12 +802,12 @@ class _MiniRow extends StatelessWidget {
       height: 26,
       padding: const EdgeInsets.symmetric(horizontal: Space.sm),
       decoration: BoxDecoration(
-        color: context.palette.surface,
+        color: surface,
         borderRadius: BorderRadius.circular(Radii.button - 4),
       ),
       child: Row(
         children: [
-          Icon(Icons.mood, size: 16, color: color),
+          MoodFace(mood: mood, size: 16, color: color),
           const SizedBox(width: Space.sm),
           Expanded(
             child: Container(
@@ -863,7 +875,11 @@ class _LinkRow extends StatelessWidget {
                   ),
                 if (onTap != null) ...[
                   const SizedBox(width: Space.sm),
-                  Icon(Icons.chevron_right, size: 16, color: palette.inkMuted),
+                  LineIcon(
+                    LineIcons.chevronRightHeavy,
+                    size: 16,
+                    color: palette.faint,
+                  ),
                 ],
               ],
             ),

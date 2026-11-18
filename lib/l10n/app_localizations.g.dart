@@ -957,6 +957,18 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'오늘 기분이 좋은 사람이 가까이에 많습니다'**
   String get map_togetherHappy;
+
+  /// 기분 고르기 화면의 큰 제목입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'오늘 기분은'**
+  String get moodSelect_title;
+
+  /// 첫 화면에서 기록을 읽는 동안 로고 아래에 보이는 문구입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'기록을 불러오는 중입니다'**
+  String get loading_message;
 }
 
 class _AppLocalizationsDelegate

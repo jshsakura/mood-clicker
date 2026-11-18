@@ -644,5 +644,13 @@
   },
   "@map_togetherHappy": {
     "description": "지도 아래 시트 제목입니다. 비율 표시를 공통성 문구로 고르고, 그 범위에서 행복한 쪽이 더 많을 때 씁니다. 숫자와 순위를 쓰지 않습니다."
+  },
+  "moodSelect_title": "오늘 기분은",
+  "@moodSelect_title": {
+    "description": "기분 고르기 화면의 큰 제목입니다."
+  },
+  "loading_message": "기록을 불러오는 중입니다",
+  "@loading_message": {
+    "description": "첫 화면에서 기록을 읽는 동안 로고 아래에 보이는 문구입니다."
   }
 }
