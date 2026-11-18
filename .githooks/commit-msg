@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# 커밋 메시지 형식(feat: …)과 개인정보를 확인한다.
+set -euo pipefail
+ROOT="$(git rev-parse --show-toplevel)"
+FIRST=$(grep -v '^#' "$1" | head -1)
+if ! printf '%s' "$FIRST" | grep -qE '^(feat|fix|refactor|docs|test|chore|perf|ci)(\([a-z0-9-]+\))?!?: .+'; then
+  echo "커밋 메시지 첫 줄은 '<type>: <설명>' 형식입니다. type: feat fix refactor docs test chore perf ci" >&2
+  exit 1
+fi
+python3 "$ROOT/tool/privacy_scan.py" --message "$1"

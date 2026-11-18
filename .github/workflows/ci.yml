@@ -1,0 +1,37 @@
+name: ci
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    container: ghcr.io/cirruslabs/flutter:3.44.0
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: 개인정보 검사
+        if: github.event_name == 'pull_request'
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          python3 tool/privacy_scan.py --range "origin/${{ github.base_ref }}..HEAD"
+      - run: python3 -m unittest discover -s tool -p 'test_*.py'
+      - run: flutter pub get
+      - run: dart format --output=none --set-exit-if-changed lib test
+      - run: flutter analyze
+      - run: flutter test
+      - run: flutter build apk --debug
+  apple:
+    needs: check
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.44.0
+      - run: flutter pub get
+      - run: flutter build ios --debug --no-codesign
+      - run: flutter build macos --debug

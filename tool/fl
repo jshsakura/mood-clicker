@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Flutter 를 도커 안에서 돌린다. 호스트에 SDK 를 깔지 않는다.
+# 예: tool/fl test, tool/fl analyze, tool/fl build apk --debug
+set -euo pipefail
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+IMAGE="${FLUTTER_IMAGE:-ghcr.io/cirruslabs/flutter:3.44.0}"
+TTY=()
+[ -t 1 ] && TTY=(-t)
+exec docker run --rm "${TTY[@]}" \
+  -v "$ROOT":/app \
+  -v mood-clicker-pub-cache:/root/.pub-cache \
+  -v mood-clicker-gradle:/root/.gradle \
+  -w /app \
+  -e OWNER="$(id -u):$(id -g)" \
+  "$IMAGE" \
+  bash -c 'flutter "$@"; rc=$?; find /app -xdev -uid 0 -exec chown "$OWNER" {} + 2>/dev/null; exit $rc' -- "$@"

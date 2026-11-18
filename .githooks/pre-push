@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# main 으로 바로 올리지 않는다. 올릴 커밋 전체를 다시 검사하고 테스트를 돌린다.
+set -euo pipefail
+ROOT="$(git rev-parse --show-toplevel)"
+cd "$ROOT"
+ZERO=0000000000000000000000000000000000000000
+while read -r _local_ref local_sha remote_ref remote_sha; do
+  [ "$local_sha" = "$ZERO" ] && continue
+  case "$remote_ref" in
+    refs/heads/main|refs/heads/master)
+      echo "main 으로 바로 올리지 않습니다. 브랜치를 올리고 PR 로 합칩니다." >&2
+      exit 1 ;;
+  esac
+  if [ "$remote_sha" = "$ZERO" ]; then
+    BASE=$(git merge-base "$local_sha" origin/main 2>/dev/null || git rev-list --max-parents=0 "$local_sha" | tail -1)
+  else
+    BASE=$remote_sha
+  fi
+  echo "▶ 올릴 커밋 개인정보 검사"
+  python3 tool/privacy_scan.py --range "$BASE..$local_sha"
+done
+echo "▶ 테스트"
+tool/test.sh
+echo "✓ pre-push 통과"

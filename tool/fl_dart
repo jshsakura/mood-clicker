@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# dart 명령을 도커 안의 Flutter SDK 로 돌린다. 예: tool/fl_dart format lib test
+set -euo pipefail
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+IMAGE="${FLUTTER_IMAGE:-ghcr.io/cirruslabs/flutter:3.44.0}"
+exec docker run --rm -v "$ROOT":/app -v mood-clicker-pub-cache:/root/.pub-cache -w /app \
+  -e OWNER="$(id -u):$(id -g)" "$IMAGE" \
+  bash -c 'dart "$@"; rc=$?; find /app -xdev -uid 0 -exec chown "$OWNER" {} + 2>/dev/null; exit $rc' -- "$@"

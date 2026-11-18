@@ -1,0 +1,22 @@
+{
+  "extraKnownMarketplaces": {
+    "pstack-claude": {
+      "source": { "source": "github", "repo": "michael-denyer/pstack-claude" }
+    },
+    "claude-community": {
+      "source": { "source": "github", "repo": "anthropics/claude-plugins-community" }
+    }
+  },
+  "enabledPlugins": {
+    "pstack@pstack-claude": true,
+    "eli5@claude-community": true
+  },
+  "permissions": {
+    "allow": [
+      "Bash(tool/fl:*)",
+      "Bash(tool/fl_dart:*)",
+      "Bash(python3 tool/privacy_scan.py:*)",
+      "Bash(python3 -m unittest:*)"
+    ]
+  }
+}

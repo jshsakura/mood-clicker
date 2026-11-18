@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# 커밋 전에 개인정보, 서버 정보, 비밀 파일을 막고 다트 코드의 형식과 분석을 확인한다.
+# 설치: tool/setup.sh   (한 번만)
+set -euo pipefail
+ROOT="$(git rev-parse --show-toplevel)"
+cd "$ROOT"
+
+echo "▶ 개인정보와 비밀 파일 검사"
+python3 tool/privacy_scan.py --staged
+
+DART=$(git diff --cached --name-only --diff-filter=ACMR -- '*.dart' || true)
+if [ -n "$DART" ]; then
+  echo "▶ dart format, flutter analyze"
+  # shellcheck disable=SC2086
+  tool/fl_dart format --output=none --set-exit-if-changed $DART \
+    || { echo "형식이 맞지 않습니다. tool/fl_dart format lib test 를 돌린 뒤 다시 스테이징합니다." >&2; exit 1; }
+  tool/fl analyze --no-pub
+fi
+echo "✓ pre-commit 통과"
