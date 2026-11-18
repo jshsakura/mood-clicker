@@ -161,8 +161,11 @@ class CheersCheckTest(unittest.TestCase):
     def test_detects_missing_counts(self) -> None:
         data = _valid_bundle("en")
         errs = check_bundle(data, "en")
-        # 5 moods * 5 tiers + 5 moods missing min bases + 1 total item count
-        self.assertEqual(len(errs), len(MOODS) * len(TIERS) + len(MOODS) + 1)
+        # 5 moods * 5 tiers + 5 moods missing min bases + 1 total item count + 3 calm moods * 5 tiers min bases
+        self.assertEqual(
+            len(errs),
+            len(MOODS) * len(TIERS) + len(MOODS) + 1 + 3 * len(TIERS),
+        )
 
     def test_safety_rules_reject_assertions_and_allow_optional_suggestions(self) -> None:
         rules = load_rules()
@@ -242,6 +245,35 @@ class CheersCheckTest(unittest.TestCase):
                     errs,
                     f"{lang}.{mood} should allow {good[lang]!r}, got {errs}",
                 )
+
+    def test_per_tier_unique_base_minimums_pass_exact_and_fail_short(self) -> None:
+        tier_mins = {"low": 2, "high": 2, "full": 1, "complete": 1, "rare": 1}
+        data = _valid_bundle("en")
+        self.assertEqual(
+            [],
+            check_bundle(
+                data,
+                "en",
+                min_counts=self.small_counts,
+                min_bases_per_tier=tier_mins,
+            ),
+        )
+        # Adding a variation under the same base 'b' does not add a new unique base.
+        short_data = _valid_bundle("en")
+        short_data["moods"]["angry"]["low"] = [
+            {"t": "Okay one", "b": "b1"},
+            {"t": "Okay one again", "b": "b1"},
+        ]
+        errs = check_bundle(
+            short_data,
+            "en",
+            min_counts=self.small_counts,
+            min_bases_per_tier=tier_mins,
+        )
+        self.assertTrue(
+            any("en.angry.low:" in e and "short by 1" in e for e in errs),
+            errs,
+        )
 
 
 BANNED_KO = "\uc6b0\uc6b8\uc99d"  # a clinical word the rules forbid in cheers

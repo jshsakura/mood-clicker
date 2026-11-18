@@ -188,6 +188,7 @@ def check_bundle(
     min_bases_per_mood: int | None = None,
     rules: dict | None = None,
     min_total: int | None = None,
+    min_bases_per_tier: dict[str, int] | None = None,
 ) -> list[str]:
     errors: list[str] = []
     if lang not in LENGTH_BOUNDS:
@@ -204,7 +205,17 @@ def check_bundle(
         else (min_total or 0)
     )
     active_rules = load_rules() if rules is None else rules
-    global_banned = active_rules.get("global", {}).get("banned_words", {}).get(lang, [])
+    global_rules = active_rules.get("global", {})
+    global_banned = global_rules.get("banned_words", {}).get(lang, [])
+    if min_bases_per_tier is not None:
+        tier_base_mins = min_bases_per_tier
+        tier_base_moods = set(MOODS)
+    elif min_counts is None:
+        tier_base_mins = global_rules.get("min_bases_per_tier", {})
+        tier_base_moods = set(global_rules.get("min_bases_tier_moods", []))
+    else:
+        tier_base_mins = {}
+        tier_base_moods = set()
     en_global_re = _compile_en_ban_regex(global_banned) if lang == "en" else None
     mood_rules = active_rules.get("moods", {})
     min_len, max_len = LENGTH_BOUNDS[lang]
@@ -257,6 +268,7 @@ def check_bundle(
                 errors.append(
                     f"{lang}.{mood}.{tier}: expected >= {req}, got {len(arr)}"
                 )
+            tier_bases: set[str] = set()
             for idx, raw in enumerate(arr):
                 loc = f"{lang}.{mood}.{tier}[{idx}]"
                 item, base_id, parse_err = _parse_item(raw, loc)
@@ -355,6 +367,19 @@ def check_bundle(
                         )
                 elif norm:
                     seen_norm[norm] = (loc, base_id)
+                if base_id is not None:
+                    tier_bases.add(f"b:{base_id}")
+                elif norm:
+                    tier_bases.add(f"n:{norm}")
+
+            if mood in tier_base_moods:
+                req_tier_bases = int(tier_base_mins.get(tier, 0))
+                if len(tier_bases) < req_tier_bases:
+                    short = req_tier_bases - len(tier_bases)
+                    errors.append(
+                        f"{lang}.{mood}.{tier}: expected >= {req_tier_bases} unique bases, "
+                        f"got {len(tier_bases)} (short by {short})"
+                    )
 
         total_bases = len(base_group_counts) + standalone_bases
         if total_bases < req_bases:
