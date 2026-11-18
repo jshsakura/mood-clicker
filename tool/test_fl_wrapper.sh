@@ -113,6 +113,22 @@ run fl test
 expect_log "^docker run"
 expect_no_log "^flutter"
 
+new_case "fl caps docker tests and analysis at 4g with no extra swap"
+run fl test
+expect_log "^docker run .*--memory 4g --memory-swap 4g .*test"
+new_case "fl analyze gets the same cap"
+run fl analyze
+expect_log "^docker run .*--memory 4g --memory-swap 4g .*analyze"
+
+new_case "FL_TEST_MEMORY changes the cap"
+FL_TEST_MEMORY=6g run fl test
+expect_log "^docker run .*--memory 6g --memory-swap 6g"
+
+new_case "fl does not cap builds, Gradle asks for more"
+run fl build apk --debug
+expect_log "^docker run"
+expect_no_log "--memory"
+
 new_case "FL_DOCKER=1 forces docker"
 fake_flutter "$PINNED"
 FL_DOCKER=1 run fl test
