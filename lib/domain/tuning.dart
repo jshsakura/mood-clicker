@@ -82,10 +82,9 @@ abstract final class CheerTuning {
   static const int spotColumns = 5;
   static const int spotRows = 9;
 
-  /// Phrases are dealt from a shuffled deck. When a deck runs out, the next one is shuffled so
-  /// that the last this many phrases of the old deck stay out of the first this many of the new
-  /// one. For a small bundle the number is half of its size.
-  static const int deckTailSize = 50;
+  /// A base sentence does not come again within the last this many bases shown (across moods
+  /// and stages). For a bundle with fewer bases the window is half of them.
+  static const int recentBases = 60;
 
   /// A phrase file larger than this is refused (bytes).
   static const int maxFileBytes = 1024 * 1024;
