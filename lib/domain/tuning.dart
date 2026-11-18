@@ -65,3 +65,12 @@ abstract final class CheerTuning {
   /// Longer phrases get a warning when a phrase file is loaded.
   static const int maxPhraseLength = 12;
 }
+
+/// Numbers for haptic and sound feedback.
+abstract final class FeedbackTuning {
+  /// Minimum interval between actual platform haptic calls across all requests.
+  static const Duration minHapticGap = Duration(milliseconds: 40);
+
+  /// Pitch jitter range around the original pitch (1.0 +/- this value).
+  static const double pitchJitter = 0.03;
+}

@@ -1,10 +1,13 @@
 import 'dart:math';
 
+import 'package:audio_session/audio_session.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mood_clicker/domain/tuning.dart';
 import 'package:mood_clicker/feedback/feedback_controller.dart';
 import 'package:mood_clicker/feedback/feedback_kind.dart';
 import 'package:mood_clicker/feedback/feedback_settings.dart';
 import 'package:mood_clicker/feedback/feedback_table.dart';
+import 'package:mood_clicker/feedback/soloud_sound.dart';
 
 import 'fakes.dart';
 
@@ -171,6 +174,46 @@ void main() {
     });
   });
 
+  group('priority and cancel', () {
+    test('full haptic wins when tap and full arrive at the same moment', () {
+      final c = make();
+      c.trigger(FeedbackKind.tap, 'happy');
+      c.trigger(FeedbackKind.full, 'happy');
+      expect(
+        haptics.played.last,
+        FeedbackTable.of(FeedbackKind.full, 'happy').haptic,
+      );
+    });
+
+    test('haptics off cancels scheduled next haptic step', () {
+      final c = make();
+      c.trigger(FeedbackKind.tap, 'excited');
+      c.settings = c.settings.copyWith(hapticsOn: false);
+      expect(haptics.cancelCount, 1);
+    });
+
+    test('uses FeedbackTuning.minHapticGap for global throttle', () {
+      expect(minHapticGap, FeedbackTuning.minHapticGap);
+    });
+  });
+
+  group('audio session and sound packs', () {
+    test('iOS audio session uses ambient without explicit mixWithOthers', () {
+      expect(
+        SoloudSound.audioSessionConfig.avAudioSessionCategory,
+        AVAudioSessionCategory.ambient,
+      );
+      expect(
+        SoloudSound.audioSessionConfig.avAudioSessionCategoryOptions,
+        isNull,
+      );
+    });
+
+    test('soft pack is hidden from available packs until files exist', () {
+      expect(SoundPack.available, [SoundPack.basic]);
+    });
+  });
+
   group('failures never reach the caller', () {
     test('a haptic port that throws does not stop the sound', () {
       final c = FeedbackController(
@@ -188,5 +231,6 @@ void main() {
 
 class _ThrowingHaptics extends FakeHaptics {
   @override
-  Future<void> play(cue) => throw StateError('no motor');
+  Future<void> play(cue, {bool priority = false}) =>
+      throw StateError('no motor');
 }

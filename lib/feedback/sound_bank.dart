@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import 'feedback_settings.dart';
 import 'ports.dart';
 
 typedef SoundLoader<T> = Future<T> Function(String assetPath);
@@ -47,6 +48,14 @@ class SoundBank<T extends Object> {
 
   /// Returns the preloaded sound source, or null if unavailable.
   T? sourceFor(SoundCue cue) => _sources[cue];
+
+  /// Returns the source for [cue], falling back to [fallback] pack when missing.
+  T? sourceForWithFallback(
+    SoundCue cue, {
+    SoundPack fallback = SoundPack.basic,
+  }) =>
+      _sources[cue] ??
+      (cue.pack == fallback ? null : _sources[SoundCue(fallback, cue.id)]);
 
   Future<T?> _loadFirst(SoundCue cue) async {
     for (final ext in extensions) {

@@ -20,7 +20,8 @@ class SoundCue {
 }
 
 abstract interface class HapticsPort {
-  Future<void> play(HapticCue cue);
+  Future<void> play(HapticCue cue, {bool priority = false});
+  void cancel();
 }
 
 abstract interface class SoundPort {

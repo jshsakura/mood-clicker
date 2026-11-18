@@ -11,16 +11,21 @@ void main() {
   late List<Completer<void>> waits;
   late SystemHaptics haptics;
 
+  late Duration now;
+
   setUp(() {
     fired = [];
     waits = [];
+    now = const Duration(seconds: 10);
+    SystemHaptics.resetGlobalGapForTest();
     haptics = SystemHaptics(
       fire: (s) async => fired.add(s),
       delay: (d) {
         final c = Completer<void>();
         waits.add(c);
-        return c.future;
+        return c.future.then((_) => now += d);
       },
+      clock: () => now,
     );
   });
 
@@ -46,6 +51,7 @@ void main() {
     final first = haptics.play(cue(FeedbackKind.tap, 'anxious'));
     await Future<void>.delayed(Duration.zero);
     expect(fired, hasLength(1));
+    now += const Duration(milliseconds: 45);
     await haptics.play(cue(FeedbackKind.tap, 'angry'));
     waits.first.complete();
     await first;
@@ -59,5 +65,37 @@ void main() {
       log: (_) {},
     );
     await h.play(cue(FeedbackKind.tap, 'happy'));
+  });
+
+  test('enforces a single global minimum gap across requests', () async {
+    var now = const Duration(seconds: 10);
+    SystemHaptics.resetGlobalGapForTest();
+    final a = SystemHaptics(
+      fire: (s) async => fired.add(s),
+      delay: (_) async {},
+      clock: () => now,
+    );
+    final b = SystemHaptics(
+      fire: (s) async => fired.add(s),
+      delay: (_) async {},
+      clock: () => now,
+    );
+    await a.play(cue(FeedbackKind.tap, 'happy'));
+    now += const Duration(milliseconds: 20);
+    await b.play(cue(FeedbackKind.select, 'happy'));
+    expect(fired, hasLength(1));
+    now += const Duration(milliseconds: 25);
+    await b.play(cue(FeedbackKind.select, 'happy'));
+    expect(fired, hasLength(2));
+  });
+
+  test('cancel stops scheduled next steps', () async {
+    final first = haptics.play(cue(FeedbackKind.tap, 'excited'));
+    await Future<void>.delayed(Duration.zero);
+    expect(fired, hasLength(1));
+    haptics.cancel();
+    waits.single.complete();
+    await first;
+    expect(fired, hasLength(1));
   });
 }
