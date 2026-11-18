@@ -290,4 +290,83 @@ void main() {
       expect(picker.pick(bookOf(4), Mood.happy, CheerStage.low), isNotEmpty);
     });
   });
+
+  group('draw', () {
+    test('the complete stage is always the complete kind, never rare', () {
+      final picker = CheerPicker(_Rolls([0.0, 0.0, 0.0], Random(1)));
+      for (var i = 0; i < 3; i++) {
+        final draw = picker.draw(bookOf(4), Mood.happy, CheerStage.complete);
+        expect(draw.kind, CheerKind.complete);
+        expect(draw.phrase, startsWith('0c'));
+      }
+    });
+
+    test('a roll under 2.5 percent is a rare phrase from the rare bundle', () {
+      final picker = CheerPicker(_Rolls([0.024], Random(2)));
+      final draw = picker.draw(bookOf(4), Mood.happy, CheerStage.high);
+      expect(draw.kind, CheerKind.rare);
+      expect(draw.phrase, startsWith('0r'));
+    });
+
+    test(
+      'a rare phrase uses the high bundle when the file has no rare one',
+      () {
+        final picker = CheerPicker(_Rolls([0.0], Random(3)));
+        final book = CheerBook.parse(fileOf(moodsWith(4, rare: false))).book;
+        final draw = picker.draw(book, Mood.happy, CheerStage.low);
+        expect(draw.kind, CheerKind.rare);
+        expect(draw.phrase, startsWith('0h'));
+      },
+    );
+
+    test(
+      'a roll at or over 2.5 percent is an ordinary phrase of the stage',
+      () {
+        final picker = CheerPicker(_Rolls([0.025, 0.5, 0.99], Random(4)));
+        final book = bookOf(4);
+        for (final stage in [
+          CheerStage.low,
+          CheerStage.high,
+          CheerStage.full,
+        ]) {
+          final draw = picker.draw(book, Mood.sad, stage);
+          expect(draw.kind, CheerKind.normal);
+          expect(draw.phrase, startsWith('3${stage.id[0]}'));
+        }
+      },
+    );
+
+    test('about 2.5 percent of many taps are rare', () {
+      final picker = CheerPicker(Random(5));
+      final book = bookOf(50);
+      var rare = 0;
+      const taps = 20000;
+      for (var i = 0; i < taps; i++) {
+        if (picker.draw(book, Mood.happy, CheerStage.low).kind ==
+            CheerKind.rare) {
+          rare++;
+        }
+      }
+      expect(rare / taps, inInclusiveRange(0.018, 0.032));
+    });
+  });
+}
+
+/// A Random whose doubles come from a list (then from [_base]); shuffles and ints use [_base].
+class _Rolls implements Random {
+  _Rolls(this._rolls, this._base);
+
+  final List<double> _rolls;
+  final Random _base;
+  int _next = 0;
+
+  @override
+  double nextDouble() =>
+      _next < _rolls.length ? _rolls[_next++] : _base.nextDouble();
+
+  @override
+  int nextInt(int max) => _base.nextInt(max);
+
+  @override
+  bool nextBool() => _base.nextBool();
 }

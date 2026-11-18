@@ -117,4 +117,156 @@ void main() {
     expect(record.tallies[Mood.happy]!.lastOrder, 3);
     expect(record.tallies[Mood.sad]!.lastOrder, 2);
   });
+
+  group('note of the day', () {
+    test('a new record has no note and no preset', () {
+      final record = DayRecord.empty(day);
+      expect(record.note, isNull);
+      expect(record.notePresetId, isNull);
+    });
+
+    test(
+      'withNote sets a trimmed note and a preset id, leaving the old record alone',
+      () {
+        final old = DayRecord.empty(day).withTap(Mood.happy, t0);
+        final next = old.withNote(note: '  good day  ', presetId: 'good_day');
+        expect(next.note, 'good day');
+        expect(next.notePresetId, 'good_day');
+        expect(old.note, isNull);
+        expect(next.countOf(Mood.happy), 1);
+      },
+    );
+
+    test('a blank note becomes no note', () {
+      final record = DayRecord.empty(day).withNote(note: '   ');
+      expect(record.note, isNull);
+    });
+
+    test('a note may be exactly 40 characters, 41 is refused', () {
+      expect(DayRecord.empty(day).withNote(note: 'a' * 40).note, hasLength(40));
+      expect(
+        () => DayRecord.empty(day).withNote(note: 'a' * 41),
+        throwsArgumentError,
+      );
+    });
+
+    test('characters are counted as people see them, not as code units', () {
+      final forty = '\u{1F600}' * 40;
+      expect(DayRecord.empty(day).withNote(note: forty).note, forty);
+      expect(
+        () => DayRecord.empty(day).withNote(note: '\u{1F600}' * 41),
+        throwsArgumentError,
+      );
+    });
+
+    test('line breaks and control characters are refused', () {
+      for (final bad in ['a\nb', 'a\rb', 'a\tb', 'a\u0000b']) {
+        expect(
+          () => DayRecord.empty(day).withNote(note: bad),
+          throwsArgumentError,
+          reason: bad,
+        );
+      }
+    });
+
+    test('a preset id must be a short lowercase id', () {
+      for (final ok in ['a', 'good_day', 'p12', 'x' * 32]) {
+        expect(DayRecord.empty(day).withNote(presetId: ok).notePresetId, ok);
+      }
+      for (final bad in ['', 'Good', 'a b', 'a-b', 'x' * 33, '\ud55c\uae00']) {
+        expect(
+          () => DayRecord.empty(day).withNote(presetId: bad),
+          throwsArgumentError,
+          reason: bad,
+        );
+      }
+    });
+
+    test('withNote replaces both values, so clearing is possible', () {
+      final set = DayRecord.empty(day).withNote(note: 'hi', presetId: 'hello');
+      final cleared = set.withNote();
+      expect(cleared.note, isNull);
+      expect(cleared.notePresetId, isNull);
+    });
+
+    test('taps keep the note', () {
+      final record = DayRecord.empty(
+        day,
+      ).withNote(note: 'hi', presetId: 'hello').withTap(Mood.sad, t0);
+      expect(record.note, 'hi');
+      expect(record.notePresetId, 'hello');
+    });
+
+    test(
+      'the note is asked for once: only after filling the gauge and while there is none',
+      () {
+        final record = DayRecord.empty(day).withTap(Mood.happy, t0);
+        expect(record.shouldAskNote(filledThisVisit: true), isTrue);
+        expect(record.shouldAskNote(filledThisVisit: false), isFalse);
+        expect(
+          record.withNote(note: 'x').shouldAskNote(filledThisVisit: true),
+          isFalse,
+        );
+        expect(
+          record.withNote(presetId: 'x').shouldAskNote(filledThisVisit: true),
+          isFalse,
+        );
+      },
+    );
+  });
+
+  group('spilled taps', () {
+    test('take taps off one mood and leave the others', () {
+      final record = tapAll([
+        (Mood.happy, 0),
+        (Mood.happy, 1),
+        (Mood.happy, 2),
+        (Mood.sad, 3),
+      ]);
+      final next = record.withTapsRemoved(Mood.happy, 2);
+      expect(next.countOf(Mood.happy), 1);
+      expect(next.countOf(Mood.sad), 1);
+      expect(record.countOf(Mood.happy), 3);
+    });
+
+    test('never go below zero, and an emptied mood leaves the record', () {
+      final record = tapAll([(Mood.happy, 0), (Mood.sad, 1)]);
+      final next = record.withTapsRemoved(Mood.happy, 5);
+      expect(next.countOf(Mood.happy), 0);
+      expect(next.tallies.containsKey(Mood.happy), isFalse);
+      expect(next.dominantMood, Mood.sad);
+    });
+
+    test(
+      'removing from a mood with no taps, or zero taps, changes nothing',
+      () {
+        final record = tapAll([(Mood.happy, 0)]);
+        expect(identical(record.withTapsRemoved(Mood.sad, 3), record), isTrue);
+        expect(
+          identical(record.withTapsRemoved(Mood.happy, 0), record),
+          isTrue,
+        );
+      },
+    );
+
+    test('a negative count is refused', () {
+      expect(
+        () => tapAll([(Mood.happy, 0)]).withTapsRemoved(Mood.happy, -1),
+        throwsArgumentError,
+      );
+    });
+
+    test('tap order and the note are kept', () {
+      final record = tapAll([
+        (Mood.happy, 0),
+        (Mood.happy, 1),
+        (Mood.sad, 2),
+      ]).withNote(note: 'hi', presetId: 'hello');
+      final next = record.withTapsRemoved(Mood.happy, 1);
+      expect(next.tallies[Mood.sad]!.lastOrder, 3);
+      expect(next.tallies[Mood.happy]!.lastOrder, 2);
+      expect(next.note, 'hi');
+      expect(next.notePresetId, 'hello');
+    });
+  });
 }

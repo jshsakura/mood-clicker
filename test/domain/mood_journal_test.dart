@@ -49,4 +49,58 @@ void main() {
       throwsArgumentError,
     );
   });
+
+  group('note', () {
+    final at = DateTime(2026, 11, 18, 12);
+
+    test(
+      'is saved on an existing day and the other days stay as they were',
+      () {
+        final journal = MoodJournal.empty()
+            .withTap(Mood.happy, at)
+            .withTap(Mood.sad, at.add(const Duration(days: 1)));
+        final next = journal.withNote(
+          DayKey.of(at),
+          note: 'hi',
+          presetId: 'hello',
+        );
+        expect(next.dayOf(DayKey.of(at)).note, 'hi');
+        expect(next.dayOf(DayKey.of(at)).notePresetId, 'hello');
+        expect(next.days, hasLength(2));
+        expect(journal.dayOf(DayKey.of(at)).note, isNull);
+      },
+    );
+
+    test('cannot be put on a day with no taps', () {
+      expect(
+        () => MoodJournal.empty().withNote(DayKey.of(at), note: 'hi'),
+        throwsArgumentError,
+      );
+    });
+  });
+
+  group('spilled taps', () {
+    final at = DateTime(2026, 11, 18, 12);
+
+    test('are taken off the day and mood given', () {
+      final journal = MoodJournal.empty()
+          .withTap(Mood.happy, at)
+          .withTap(Mood.happy, at)
+          .withTap(Mood.sad, at);
+      final next = journal.withTapsRemoved(DayKey.of(at), Mood.happy, 1);
+      expect(next.dayOf(DayKey.of(at)).countOf(Mood.happy), 1);
+      expect(next.dayOf(DayKey.of(at)).countOf(Mood.sad), 1);
+    });
+
+    test('on a day with no record change nothing', () {
+      final journal = MoodJournal.empty();
+      expect(
+        identical(
+          journal.withTapsRemoved(DayKey.of(at), Mood.happy, 1),
+          journal,
+        ),
+        isTrue,
+      );
+    });
+  });
 }

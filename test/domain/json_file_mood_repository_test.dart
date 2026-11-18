@@ -284,4 +284,82 @@ void main() {
       );
     });
   });
+
+  group('note of the day on disk', () {
+    final tapAt = DateTime(2026, 11, 18, 12);
+    MoodJournal withNote() => MoodJournal.empty()
+        .withTap(Mood.happy, tapAt)
+        .withNote(DayKey.of(tapAt), note: 'a good one', presetId: 'good_day');
+
+    test('survives a save and load', () async {
+      final repo = JsonFileMoodRepository(file);
+      await repo.save(withNote());
+      final record = loaded(await repo.load()).dayOf(DayKey.of(tapAt));
+      expect(record.note, 'a good one');
+      expect(record.notePresetId, 'good_day');
+      expect(record.countOf(Mood.happy), 1);
+    });
+
+    test('a day without a note writes no note keys', () async {
+      final repo = JsonFileMoodRepository(file);
+      await repo.save(MoodJournal.empty().withTap(Mood.happy, tapAt));
+      final text = await file.readAsString();
+      expect(text, isNot(contains('note')));
+    });
+
+    test('the same note is skipped as an identical write', () async {
+      final repo = JsonFileMoodRepository(file);
+      await repo.save(withNote());
+      expect(await repo.save(withNote()), isFalse);
+    });
+
+    test('a changed note is written', () async {
+      final repo = JsonFileMoodRepository(file);
+      await repo.save(withNote());
+      final other = withNote().withNote(DayKey.of(tapAt), note: 'changed');
+      expect(await repo.save(other), isTrue);
+    });
+
+    test('a file saved before notes existed still loads', () async {
+      await file.parent.create(recursive: true);
+      await file.writeAsString(
+        '{"version":1,"days":{"2026-11-18":'
+        '{"happy":{"count":2,"lastTapAt":"2026-11-18T03:00:00.000Z","order":1}}}}',
+      );
+      final record = loaded(
+        await JsonFileMoodRepository(file).load(),
+      ).days.single;
+      expect(record.countOf(Mood.happy), 2);
+      expect(record.note, isNull);
+    });
+
+    test('a note that is too long, or a bad preset id, fails the load', () async {
+      await file.parent.create(recursive: true);
+      Future<void> check(String note, String preset) async {
+        await file.writeAsString(
+          '{"version":2,"days":{"2026-11-18":{"moods":'
+          '{"happy":{"count":1,"lastTapAt":"2026-11-18T03:00:00.000Z","order":1}},'
+          '"note":"$note","presetId":"$preset"}}}',
+        );
+        expect(
+          await JsonFileMoodRepository(file).load(),
+          isA<LoadFailed>(),
+          reason: '$note/$preset',
+        );
+      }
+
+      await check('a' * 41, 'ok');
+      await check('fine', 'Bad Id');
+    });
+
+    test('a note given as something other than text fails the load', () async {
+      await file.parent.create(recursive: true);
+      await file.writeAsString(
+        '{"version":2,"days":{"2026-11-18":{"moods":'
+        '{"happy":{"count":1,"lastTapAt":"2026-11-18T03:00:00.000Z","order":1}},'
+        '"note":5}}}',
+      );
+      expect(await JsonFileMoodRepository(file).load(), isA<LoadFailed>());
+    });
+  });
 }
