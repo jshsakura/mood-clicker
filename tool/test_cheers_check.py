@@ -12,7 +12,7 @@ def _valid_bundle(lang: str) -> dict:
     n = 0
     for mood in MOODS:
         moods[mood] = {}
-        for tier, count in (("low", 2), ("high", 2), ("full", 1), ("complete", 1)):
+        for tier, count in (("low", 2), ("high", 2), ("full", 1), ("complete", 1), ("rare", 1)):
             items = []
             for _ in range(count):
                 n += 1
@@ -22,7 +22,7 @@ def _valid_bundle(lang: str) -> dict:
 
 
 class CheersCheckTest(unittest.TestCase):
-    small_counts = {"low": 2, "high": 2, "full": 1, "complete": 1}
+    small_counts = {"low": 2, "high": 2, "full": 1, "complete": 1, "rare": 1}
 
     def test_valid_bundles_pass(self) -> None:
         self.assertEqual(check_bundle(_valid_bundle("ko"), "ko", self.small_counts), [])

@@ -12,8 +12,8 @@ import sys
 from pathlib import Path
 
 MOODS = ("happy", "excited", "angry", "sad", "anxious")
-TIERS = ("low", "high", "full", "complete")
-DEFAULT_MIN_COUNTS = {"low": 400, "high": 400, "full": 150, "complete": 50}
+TIERS = ("low", "high", "full", "complete", "rare")
+DEFAULT_MIN_COUNTS = {"low": 400, "high": 400, "full": 150, "complete": 50, "rare": 60}
 LENGTH_BOUNDS = {"ko": (2, 12), "en": (2, 18)}
 
 DASH_RE = re.compile(r"[\u2013\u2014]")
