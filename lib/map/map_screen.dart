@@ -40,6 +40,7 @@ class _MapScreenState extends State<MapScreen> {
   MapSnapshot? _snapshot;
   H3CellId? _picked;
   bool _started = false;
+  bool _sheetOpen = true;
 
   @override
   void didChangeDependencies() {
@@ -79,11 +80,17 @@ class _MapScreenState extends State<MapScreen> {
             fit: StackFit.expand,
             children: [
               Positioned.fill(
-                child: CustomPaint(
-                  painter: _GroundPainter(
-                    dot: p.mapLine,
-                    center: center,
-                    unit: unit,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.translucent,
+                  onTap: () {
+                    if (_picked != null) setState(() => _picked = null);
+                  },
+                  child: CustomPaint(
+                    painter: _GroundPainter(
+                      dot: p.mapLine,
+                      center: center,
+                      unit: unit,
+                    ),
                   ),
                 ),
               ),
@@ -101,51 +108,59 @@ class _MapScreenState extends State<MapScreen> {
               Positioned(
                 left: center.dx,
                 top: center.dy,
-                child: Semantics(
-                  label: l10n.map_you,
-                  child: FractionalTranslation(
-                    translation: const Offset(-0.5, -0.5),
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        DecoratedBox(
-                          decoration: BoxDecoration(
-                            color: p.ink.withValues(alpha: 0.08),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const SizedBox.square(dimension: Space.xxxl),
-                        ),
-                        DecoratedBox(
-                          decoration: BoxDecoration(
-                            color: p.ink,
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: p.mapGround,
-                              width: Space.xs,
+                child: IgnorePointer(
+                  child: Semantics(
+                    label: l10n.map_you,
+                    child: FractionalTranslation(
+                      translation: const Offset(-0.5, -0.5),
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          DecoratedBox(
+                            decoration: BoxDecoration(
+                              color: p.ink.withValues(alpha: 0.08),
+                              shape: BoxShape.circle,
                             ),
+                            child: const SizedBox.square(dimension: Space.xxxl),
                           ),
-                          child: const SizedBox.square(dimension: Space.xl),
-                        ),
-                      ],
+                          DecoratedBox(
+                            decoration: BoxDecoration(
+                              color: p.ink,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: p.mapGround,
+                                width: Space.xs,
+                              ),
+                            ),
+                            child: const SizedBox.square(dimension: Space.xl),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
-              SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.all(Space.lg),
-                  child: Row(
-                    children: [
-                      PressableSurface.icon(
-                        icon: LineIcons.back,
-                        semanticLabel: MaterialLocalizations.of(
-                          context,
-                        ).backButtonTooltip,
-                        onTap: () => Navigator.of(context).maybePop(),
-                      ),
-                      const Spacer(),
-                      _RangeSwitch(range: _range, onPick: _setRange),
-                    ],
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: SafeArea(
+                  bottom: false,
+                  child: Padding(
+                    padding: const EdgeInsets.all(Space.lg),
+                    child: Row(
+                      children: [
+                        PressableSurface.icon(
+                          icon: LineIcons.back,
+                          semanticLabel: MaterialLocalizations.of(
+                            context,
+                          ).backButtonTooltip,
+                          onTap: () => Navigator.of(context).maybePop(),
+                        ),
+                        const Spacer(),
+                        _RangeSwitch(range: _range, onPick: _setRange),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -158,6 +173,11 @@ class _MapScreenState extends State<MapScreen> {
                   picked: _picked,
                   ratio: widget.ratio,
                   justRecorded: widget.justRecorded,
+                  isSample:
+                      (widget.source ?? AppScope.of(context).mapSource)
+                          is SampleMapSource,
+                  open: _sheetOpen,
+                  onToggle: () => setState(() => _sheetOpen = !_sheetOpen),
                 ),
               ),
             ],
@@ -374,28 +394,39 @@ class _Sheet extends StatelessWidget {
     required this.picked,
     required this.ratio,
     required this.justRecorded,
+    required this.isSample,
+    required this.open,
+    required this.onToggle,
   });
 
   final MapSnapshot? snapshot;
   final H3CellId? picked;
   final RatioPolicy ratio;
   final Mood? justRecorded;
+  final bool isSample;
+  final bool open;
+  final VoidCallback onToggle;
 
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
     final l10n = AppLocalizations.of(context);
     final snap = snapshot;
+    final isEmpty = snap != null && snap.cells.isEmpty;
     MapCell? cell;
     for (final c in snap?.cells ?? const <MapCell>[]) {
       if (c.id == picked) cell = c;
     }
-    final showRatio = ratio.visible(justRecorded);
+    final showRatio = !isEmpty && ratio.visible(justRecorded);
     final share = cell?.happyShare ?? snap?.happyShare;
     final String? where;
     final String headline;
     final String? line;
-    if (cell != null) {
+    if (isEmpty) {
+      where = l10n.map_nearby;
+      headline = l10n.map_empty;
+      line = null;
+    } else if (cell != null) {
       where = l10n.map_pickedPlace;
       headline = '"${wordText(l10n, cell.word)}"';
       line = l10n.map_tapsLine(cell.taps);
@@ -427,66 +458,89 @@ class _Sheet extends StatelessWidget {
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(
+          padding: EdgeInsets.fromLTRB(
             Space.xl,
             Space.md,
             Space.xl,
-            Space.xl,
+            open ? Space.xl : Space.md,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Center(
-                child: DecoratedBox(
-                  decoration: ShapeDecoration(
-                    color: p.line,
-                    shape: const StadiumBorder(),
-                  ),
-                  child: const SizedBox(
-                    width: Space.xxl + Space.xs,
-                    height: Space.xs,
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: onToggle,
+                onVerticalDragEnd: (details) {
+                  final v = details.primaryVelocity ?? 0;
+                  if (open && v > 120) onToggle();
+                  if (!open && v < -120) onToggle();
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: Space.xs),
+                  child: Center(
+                    child: DecoratedBox(
+                      decoration: ShapeDecoration(
+                        color: p.line,
+                        shape: const StadiumBorder(),
+                      ),
+                      child: const SizedBox(
+                        width: Space.xxl + Space.xs,
+                        height: Space.xs,
+                      ),
+                    ),
                   ),
                 ),
               ),
-              const SizedBox(height: Space.lg),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (where != null)
+              if (open) ...[
+                const SizedBox(height: Space.md),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (where != null)
+                            Text(
+                              where,
+                              style: TypeScale.label.copyWith(
+                                color: p.inkMuted,
+                              ),
+                            ),
                           Text(
-                            where,
-                            style: TypeScale.label.copyWith(color: p.inkMuted),
+                            headline,
+                            style: TypeScale.title.copyWith(color: p.ink),
                           ),
-                        Text(
-                          headline,
-                          style: TypeScale.title.copyWith(color: p.ink),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                  if (line != null)
-                    Text(
-                      line,
-                      style: TypeScale.label.copyWith(color: p.inkMuted),
-                    ),
+                    if (line != null)
+                      Text(
+                        line,
+                        style: TypeScale.label.copyWith(color: p.inkMuted),
+                      ),
+                  ],
+                ),
+                if (showRatio &&
+                    ratio.style == RatioStyle.percent &&
+                    share != null) ...[
+                  const SizedBox(height: Space.lg),
+                  _RatioBar(happyShare: share),
                 ],
-              ),
-              if (showRatio &&
-                  ratio.style == RatioStyle.percent &&
-                  share != null) ...[
+                if (isSample && !isEmpty) ...[
+                  const SizedBox(height: Space.md),
+                  Text(
+                    l10n.map_sampleNotice,
+                    style: TypeScale.label.copyWith(color: p.ink2),
+                  ),
+                ],
                 const SizedBox(height: Space.lg),
-                _RatioBar(happyShare: share),
+                Text(
+                  l10n.map_explain,
+                  style: TypeScale.label.copyWith(color: p.inkMuted),
+                ),
               ],
-              const SizedBox(height: Space.lg),
-              Text(
-                l10n.map_explain,
-                style: TypeScale.label.copyWith(color: p.inkMuted),
-              ),
             ],
           ),
         ),

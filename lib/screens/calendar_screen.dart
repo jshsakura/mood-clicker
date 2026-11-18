@@ -33,6 +33,9 @@ class CalendarScreen extends StatefulWidget {
 }
 
 class _CalendarScreenState extends State<CalendarScreen> {
+  // Pending final stamp rule: single threshold constant.
+  static const double _stampFullRatio = 1.0 - 1e-9;
+
   DateTime? _month;
   DayKey? _picked;
 
@@ -41,7 +44,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
     return _month ?? DateTime(now.year, now.month);
   }
 
-  bool _isStamped(int taps) => taps * GaugeTuning.stepPerTap >= 1.0 - 1e-9;
+  bool _isStamped(int taps) => taps * GaugeTuning.stepPerTap >= _stampFullRatio;
 
   void _move(AppServices services, int by) {
     final shown = _shown(services);
@@ -108,206 +111,275 @@ class _CalendarScreenState extends State<CalendarScreen> {
               locale.toLanguageTag(),
             ).format(month);
 
-            return LayoutBuilder(
-              builder: (context, constraints) => SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(
-                  Space.lg,
-                  Space.lg,
-                  Space.lg,
-                  Space.xl,
-                ),
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    minHeight: math.max(
-                      0,
-                      constraints.maxHeight - Space.lg - Space.xl,
-                    ),
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    Space.lg,
+                    Space.lg,
+                    Space.lg,
+                    Space.sm,
                   ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                  child: Row(
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: PressableSurface.icon(
-                              icon: LineIcons.back,
-                              semanticLabel: l10n.common_back,
-                              onTap: () => Navigator.of(context).pop(),
-                            ),
-                          ),
-                          const SizedBox(height: Space.lg),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    '${month.year}',
-                                    style: TypeScale.label.copyWith(
-                                      color: p.inkMuted,
-                                    ),
-                                  ),
-                                  Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      _PlainChevronButton(
-                                        icon: LineIcons.chevronLeft,
-                                        semanticLabel: l10n.calendar_prevMonth,
-                                        color: p.inkMuted,
-                                        onTap: () => _move(services, -1),
-                                      ),
-                                      Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: Space.xs,
-                                        ),
-                                        child: Text(
-                                          monthLabel,
-                                          style: TypeScale.display.copyWith(
-                                            color: p.ink,
-                                          ),
-                                        ),
-                                      ),
-                                      _PlainChevronButton(
-                                        icon: LineIcons.chevronRight,
-                                        semanticLabel: l10n.calendar_nextMonth,
-                                        color: isCurrentMonth
-                                            ? p.fillEdge
-                                            : p.inkMuted,
-                                        onTap: isCurrentMonth
-                                            ? null
-                                            : () => _move(services, 1),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                              Row(
-                                children: [
-                                  _StatColumn(
-                                    value: recordedDays,
-                                    unit: l10n.calendar_daysUnit,
-                                    label: l10n.calendar_recordedDays,
-                                  ),
-                                  const SizedBox(width: Space.lg),
-                                  _StatColumn(
-                                    value: stampedDays,
-                                    unit: l10n.calendar_stampsUnit,
-                                    label: l10n.calendar_stamps,
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: Space.lg),
-                          TableCalendar<void>(
-                            firstDay: firstCalendarDay,
-                            lastDay: lastCalendarDay,
-                            focusedDay: month,
-                            headerVisible: false,
-                            startingDayOfWeek: StartingDayOfWeek.sunday,
-                            sixWeekMonthsEnforced: false,
-                            availableGestures:
-                                AvailableGestures.horizontalSwipe,
-                            rowHeight: 48,
-                            daysOfWeekHeight: 24,
-                            selectedDayPredicate: (d) =>
-                                d.year == picked.year &&
-                                d.month == picked.month &&
-                                d.day == picked.day,
-                            enabledDayPredicate: (d) =>
-                                d.year == month.year && d.month == month.month,
-                            onPageChanged: (focused) {
-                              final next = DateTime(
-                                focused.year,
-                                focused.month,
+                      PressableSurface.icon(
+                        icon: LineIcons.back,
+                        semanticLabel: l10n.common_back,
+                        onTap: () => Navigator.of(context).pop(),
+                      ),
+                      const Spacer(),
+                      if (!isCurrentMonth)
+                        PressableSurface(
+                          kind: PressableKind.card,
+                          radius: Radii.pill,
+                          color: p.surface,
+                          semanticLabel: l10n.calendar_today,
+                          onTap: () {
+                            final current = DateTime(now.year, now.month);
+                            setState(() {
+                              _month = current;
+                              _picked = _defaultPicked(
+                                journal,
+                                current,
+                                services.now(),
                               );
-                              setState(() {
-                                _month = next;
-                                _picked = _defaultPicked(
-                                  journal,
-                                  next,
-                                  services.now(),
-                                );
-                              });
-                            },
-                            calendarBuilders: CalendarBuilders<void>(
-                              dowBuilder: (context, day) => Center(
-                                child: Text(
-                                  weekdays[day.weekday % 7],
-                                  style: TypeScale.label.copyWith(
-                                    color: p.faint,
-                                  ),
-                                ),
+                            });
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: Space.md,
+                              vertical: Space.xs,
+                            ),
+                            child: Text(
+                              l10n.calendar_today,
+                              style: TypeScale.label.copyWith(
+                                color: p.ink,
+                                fontWeight: FontWeight.w700,
                               ),
-                              outsideBuilder: (context, day, focusedDay) =>
-                                  const SizedBox.shrink(),
-                              defaultBuilder: (context, day, focusedDay) =>
-                                  _dayCell(
-                                    context,
-                                    services,
-                                    journal,
-                                    day,
-                                    effectivePicked: picked,
-                                    isPicked: false,
-                                    isToday: false,
-                                  ),
-                              todayBuilder: (context, day, focusedDay) =>
-                                  _dayCell(
-                                    context,
-                                    services,
-                                    journal,
-                                    day,
-                                    effectivePicked: picked,
-                                    isPicked: false,
-                                    isToday: true,
-                                  ),
-                              selectedBuilder: (context, day, focusedDay) =>
-                                  _dayCell(
-                                    context,
-                                    services,
-                                    journal,
-                                    day,
-                                    effectivePicked: picked,
-                                    isPicked: true,
-                                    isToday: isSameDay(day, now),
-                                  ),
-                              disabledBuilder: (context, day, focusedDay) =>
-                                  const SizedBox.shrink(),
                             ),
                           ),
-                          const SizedBox(height: Space.lg),
-                          _MonthlyFlowChart(
-                            month: month,
-                            daysInMonth: daysInMonth,
-                            maxTaps: maxTaps,
-                            journal: journal,
-                            picked: picked,
-                            onPickDay: (d) {
-                              final date = DateTime(month.year, month.month, d);
-                              if (!date.isAfter(now)) {
-                                setState(() => _picked = DayKey.of(date));
-                              }
-                            },
-                          ),
-                          const SizedBox(height: Space.lg),
-                        ],
-                      ),
-                      _SelectedDayCard(
-                        day: picked,
-                        record: pickedRecord,
-                        onTap: pickedDateIsFuture(picked, now)
-                            ? null
-                            : () => _open(context, picked),
-                      ),
+                        ),
                     ],
                   ),
                 ),
-              ),
+                Expanded(
+                  child: LayoutBuilder(
+                    builder: (context, constraints) => SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(
+                        Space.lg,
+                        Space.sm,
+                        Space.lg,
+                        Space.xl,
+                      ),
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minHeight: math.max(
+                            0,
+                            constraints.maxHeight - Space.sm - Space.xl,
+                          ),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                const SizedBox(height: Space.lg),
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          '${month.year}',
+                                          style: TypeScale.label.copyWith(
+                                            color: p.inkMuted,
+                                          ),
+                                        ),
+                                        Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            _PlainChevronButton(
+                                              icon: LineIcons.chevronLeft,
+                                              semanticLabel:
+                                                  l10n.calendar_prevMonth,
+                                              color: p.inkMuted,
+                                              onTap: () => _move(services, -1),
+                                            ),
+                                            Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: Space.xs,
+                                                  ),
+                                              child: Text(
+                                                monthLabel,
+                                                style: TypeScale.display
+                                                    .copyWith(color: p.ink),
+                                              ),
+                                            ),
+                                            _PlainChevronButton(
+                                              icon: LineIcons.chevronRight,
+                                              semanticLabel:
+                                                  l10n.calendar_nextMonth,
+                                              color: isCurrentMonth
+                                                  ? p.fillEdge
+                                                  : p.inkMuted,
+                                              onTap: isCurrentMonth
+                                                  ? null
+                                                  : () => _move(services, 1),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                    Row(
+                                      children: [
+                                        _StatColumn(
+                                          value: recordedDays,
+                                          unit: l10n.calendar_daysUnit,
+                                          label: l10n.calendar_recordedDays,
+                                        ),
+                                        const SizedBox(width: Space.lg),
+                                        _StatColumn(
+                                          value: stampedDays,
+                                          unit: l10n.calendar_stampsUnit,
+                                          label: l10n.calendar_stamps,
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: Space.lg),
+                                TableCalendar<void>(
+                                  firstDay: firstCalendarDay,
+                                  lastDay: lastCalendarDay,
+                                  focusedDay: month,
+                                  headerVisible: false,
+                                  startingDayOfWeek: StartingDayOfWeek.sunday,
+                                  sixWeekMonthsEnforced: false,
+                                  availableGestures:
+                                      AvailableGestures.horizontalSwipe,
+                                  rowHeight: 48,
+                                  daysOfWeekHeight: 24,
+                                  selectedDayPredicate: (d) =>
+                                      d.year == picked.year &&
+                                      d.month == picked.month &&
+                                      d.day == picked.day,
+                                  enabledDayPredicate: (d) =>
+                                      d.year == month.year &&
+                                      d.month == month.month,
+                                  onPageChanged: (focused) {
+                                    final next = DateTime(
+                                      focused.year,
+                                      focused.month,
+                                    );
+                                    setState(() {
+                                      _month = next;
+                                      _picked = _defaultPicked(
+                                        journal,
+                                        next,
+                                        services.now(),
+                                      );
+                                    });
+                                  },
+                                  calendarBuilders: CalendarBuilders<void>(
+                                    dowBuilder: (context, day) => Center(
+                                      child: Text(
+                                        weekdays[day.weekday % 7],
+                                        style: TypeScale.label.copyWith(
+                                          color: p.faint,
+                                        ),
+                                      ),
+                                    ),
+                                    outsideBuilder:
+                                        (context, day, focusedDay) =>
+                                            const SizedBox.shrink(),
+                                    defaultBuilder:
+                                        (context, day, focusedDay) => _dayCell(
+                                          context,
+                                          services,
+                                          journal,
+                                          day,
+                                          effectivePicked: picked,
+                                          isPicked: false,
+                                          isToday: false,
+                                        ),
+                                    todayBuilder: (context, day, focusedDay) =>
+                                        _dayCell(
+                                          context,
+                                          services,
+                                          journal,
+                                          day,
+                                          effectivePicked: picked,
+                                          isPicked: false,
+                                          isToday: true,
+                                        ),
+                                    selectedBuilder:
+                                        (context, day, focusedDay) => _dayCell(
+                                          context,
+                                          services,
+                                          journal,
+                                          day,
+                                          effectivePicked: picked,
+                                          isPicked: true,
+                                          isToday: isSameDay(day, now),
+                                        ),
+                                    disabledBuilder:
+                                        (context, day, focusedDay) =>
+                                            const SizedBox.shrink(),
+                                  ),
+                                ),
+                                const SizedBox(height: Space.lg),
+                                _MonthlyFlowChart(
+                                  month: month,
+                                  daysInMonth: daysInMonth,
+                                  maxTaps: maxTaps,
+                                  journal: journal,
+                                  picked: picked,
+                                  onPickDay: (d) {
+                                    final date = DateTime(
+                                      month.year,
+                                      month.month,
+                                      d,
+                                    );
+                                    if (!date.isAfter(now)) {
+                                      setState(() => _picked = DayKey.of(date));
+                                    }
+                                  },
+                                ),
+                                const SizedBox(height: Space.lg),
+                                if (recordedDays == 0) ...[
+                                  Text(
+                                    l10n.calendar_emptyMonth,
+                                    textAlign: TextAlign.center,
+                                    style: TypeScale.body.copyWith(
+                                      color: p.inkMuted,
+                                    ),
+                                  ),
+                                  const SizedBox(height: Space.lg),
+                                ],
+                              ],
+                            ),
+                            _SelectedDayCard(
+                              day: picked,
+                              record: pickedRecord,
+                              onTap: pickedDateIsFuture(picked, now)
+                                  ? null
+                                  : () => _open(context, picked),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             );
           },
         ),

@@ -522,4 +522,22 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get dayDetail_weekReview => '今週のふり返り';
+
+  @override
+  String get calendar_today => '今日';
+
+  @override
+  String get calendar_emptyMonth => '今月の記録はありません';
+
+  @override
+  String get dayDetail_addNote => 'ひとことを残す';
+
+  @override
+  String get dayDetail_editNote => 'ひとことを直す';
+
+  @override
+  String get map_empty => '近くにまだ記録がありません';
+
+  @override
+  String get map_sampleNotice => '現在は見本マップを表示しています';
 }

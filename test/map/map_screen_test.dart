@@ -233,5 +233,84 @@ void main() {
       await tester.pump();
       expect(find.byType(MapScreen), findsOneWidget);
     });
+
+    testWidgets(
+      'back button and range toggle sit in the top row under SafeArea',
+      (tester) async {
+        tester.view.physicalSize = const Size(390, 844);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() {
+          tester.view.resetPhysicalSize();
+          tester.view.resetDevicePixelRatio();
+        });
+        final app = TestApp();
+        await tester.pumpWidget(
+          app.wrap(
+            MediaQuery(
+              data: const MediaQueryData(
+                size: Size(390, 844),
+                padding: EdgeInsets.only(top: 44),
+              ),
+              child: MapScreen(source: _FixedSource(_snapshot())),
+            ),
+          ),
+        );
+        final backRect = tester.getRect(find.bySemanticsLabel(ko.common_back));
+        final todayRect = tester.getRect(find.text(ko.map_rangeToday));
+        final weekRect = tester.getRect(find.text(ko.map_rangeWeek));
+        expect(backRect.top, greaterThanOrEqualTo(44));
+        expect(backRect.bottom, lessThan(140));
+        expect(backRect.left, lessThan(60));
+        expect(todayRect.top, greaterThanOrEqualTo(44));
+        expect(todayRect.bottom, lessThan(140));
+        expect(weekRect.right, greaterThan(330));
+      },
+    );
+
+    testWidgets('empty map and SampleMapSource show distinct notices', (
+      tester,
+    ) async {
+      final app = TestApp();
+      await tester.pumpWidget(
+        app.wrap(
+          MapScreen(
+            source: _FixedSource(MapSnapshot(viewer: _id(0), cells: const [])),
+          ),
+        ),
+      );
+      await tester.pump();
+      expect(find.text(ko.map_empty), findsOneWidget);
+
+      await tester.pumpWidget(
+        app.wrap(
+          const MapScreen(key: ValueKey('sample'), source: SampleMapSource()),
+        ),
+      );
+      await tester.pump();
+      expect(find.text(ko.map_sampleNotice), findsOneWidget);
+    });
+
+    testWidgets('sheet handle collapses and expands the sheet', (tester) async {
+      await _pump(tester);
+      expect(find.text(ko.map_explain), findsOneWidget);
+      await tester.tap(find.byType(GestureDetector).last);
+      await tester.pump();
+      expect(find.text(ko.map_explain), findsNothing);
+      await tester.tap(find.byType(GestureDetector).last);
+      await tester.pump();
+      expect(find.text(ko.map_explain), findsOneWidget);
+    });
+
+    testWidgets('tapping empty background clears picked neighborhood', (
+      tester,
+    ) async {
+      await _pump(tester);
+      await tester.tap(find.text(ko.map_wordRest));
+      await tester.pump();
+      expect(find.text(ko.map_pickedPlace), findsOneWidget);
+      await tester.tapAt(const Offset(20, 200));
+      await tester.pump();
+      expect(find.text(ko.map_pickedPlace), findsNothing);
+    });
   });
 }

@@ -523,4 +523,22 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get dayDetail_weekReview => '이번 주 돌아보기';
+
+  @override
+  String get calendar_today => '오늘';
+
+  @override
+  String get calendar_emptyMonth => '이달에는 기록이 없습니다';
+
+  @override
+  String get dayDetail_addNote => '한마디 남기기';
+
+  @override
+  String get dayDetail_editNote => '한마디 고치기';
+
+  @override
+  String get map_empty => '아직 주변에 남긴 기록이 없습니다';
+
+  @override
+  String get map_sampleNotice => '지금은 둘러보기용 표본 지도입니다';
 }
