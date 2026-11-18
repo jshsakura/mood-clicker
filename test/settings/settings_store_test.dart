@@ -18,6 +18,23 @@ class MemorySettingsStore implements SettingsStore {
 }
 
 void main() {
+  test(
+    'a person who saved the basic pack keeps it, a new one gets the default',
+    () async {
+      SharedPreferences.setMockInitialValues({'settings.soundPack': 'basic'});
+      final saved = SharedPreferencesSettingsStore(
+        await SharedPreferences.getInstance(),
+      );
+      expect((await saved.read()).soundPack, SoundPack.basic);
+      SharedPreferences.setMockInitialValues({});
+      final fresh = SharedPreferencesSettingsStore(
+        await SharedPreferences.getInstance(),
+      );
+      expect((await fresh.read()).soundPack, SoundPack.defaultPack);
+      expect(SoundPack.defaultPack, SoundPack.pentatonic);
+    },
+  );
+
   test('defaults cover every section', () {
     const settings = Settings();
     expect(settings.theme, 'light');
@@ -25,7 +42,7 @@ void main() {
     expect(settings.hapticsOn, isTrue);
     expect(settings.hapticStrength, HapticStrength.normal);
     expect(settings.soundOn, isTrue);
-    expect(settings.soundPack, SoundPack.basic);
+    expect(settings.soundPack, SoundPack.pentatonic);
     expect(settings.cheersOn, isTrue);
     expect(settings.cheerSize, CheerSize.normal);
     expect(settings.shakeOnFull, isTrue);

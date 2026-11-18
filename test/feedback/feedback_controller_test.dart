@@ -32,8 +32,12 @@ void main() {
   late FakeSound sound;
   late Duration now;
 
+  /// The sounds of these tests are the basic pack's, so the pack is named here and not left to
+  /// the default.
   FeedbackController make({
-    FeedbackSettings settings = const FeedbackSettings(),
+    FeedbackSettings settings = const FeedbackSettings(
+      soundPack: SoundPack.basic,
+    ),
     Random? random,
   }) {
     return FeedbackController(
