@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>달력</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Song+Myung&display=block">
+<style>
+@font-face{font-family:Pretendard;src:url(/_blob/eac3a98fdd643af8c80b7f3daead90fa);font-weight:400}
+@font-face{font-family:Pretendard;src:url(/_blob/6dd9f1d0495ff325d173b1d71cb974c9);font-weight:700}
+body{margin:0}
+a,button{-webkit-tap-highlight-color:transparent;outline:none}
+a:focus-visible,button:focus-visible{outline:2px solid #16161A;outline-offset:2px}
+.press{transition:transform 90ms ease-out,filter 90ms ease-out}.press:active{transform:scale(0.98);filter:brightness(0.94)}.tap{transition:transform 90ms ease-out,filter 90ms ease-out}.tap:active{transform:scale(0.92);filter:brightness(0.9)}
+
+a{color:inherit;text-decoration:none}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; padding: 56px 20px 32px; background: {{p.ground}}; color: {{p.ink}}; font-family: Pretendard, system-ui, sans-serif; display: flex; flex-direction: column; gap: 24px">
+<div style="display: flex; align-items: center; margin: 0 -8px">
+<a class="tap" href="MoodPicker.dc.html" aria-label="뒤로" style="border-radius: 999px; background: {{p.surface}}; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="{{p.ink}}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg>
+</a>
+<div style="flex-grow: 1"></div>
+<button class="tap" type="button" aria-label="지난달" style="border-radius: 999px; width: 44px; height: 44px; border: 0; background: {{p.surface}}; display: flex; align-items: center; justify-content: center; cursor: pointer">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{{p.inkMuted}}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>
+</button>
+<button class="tap" type="button" aria-label="다음 달" style="border-radius: 999px; width: 44px; height: 44px; border: 0; background: {{p.surface}}; display: flex; align-items: center; justify-content: center; cursor: pointer">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{{p.fillEdge}}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>
+</button>
+</div>
+<div style="display: flex; align-items: flex-end; justify-content: space-between">
+<div>
+<div style="font-size: 13px; color: {{p.inkMuted}}; letter-spacing: 0.4px">2026</div>
+<div style="font-size: 34px; font-weight: 700; line-height: 1.15; letter-spacing: -0.6px">11월</div>
+</div>
+<div style="display: flex; gap: 20px; text-align: right">
+<div><div style="font-size: 22px; font-weight: 700; line-height: 1.2">14<span style="font-size: 13px; font-weight: 400; color: {{p.inkMuted}}">일</span></div><div style="font-size: 13px; color: {{p.inkMuted}}">기록</div></div>
+<div><div style="font-size: 22px; font-weight: 700; line-height: 1.2">3<span style="font-size: 13px; font-weight: 400; color: {{p.inkMuted}}">번</span></div><div style="font-size: 13px; color: {{p.inkMuted}}">도장</div></div>
+</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); text-align: center; font-size: 12px; color: {{p.faint}}; letter-spacing: 0.4px">
+<div>일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div>토</div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); row-gap: 8px">
+<sc-for list="{{cells}}" as="c" hint-placeholder-count="35">
+<div style="display: flex; justify-content: center; visibility: {{c.vis}}">
+<button class="tap" type="button" onClick="{{c.pick}}" aria-label="{{c.aria}}" aria-pressed="{{c.pressed}}" style="position: relative; width: 42px; height: 42px; border: 0; padding: 0; border-radius: 999px; background: {{c.bg}}; box-shadow: {{c.ring}}; color: {{c.numColor}}; font-size: 15px; font-weight: {{c.weight}}; cursor: {{c.cursor}}">
+{{c.day}}
+<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" style="position: absolute; right: -3px; top: -3px; transform: rotate(-14deg); opacity: {{c.stamp}}"><circle cx="8" cy="8" r="6.6" fill="{{p.ground}}" stroke="#D2402E" stroke-width="1.3"></circle><circle cx="8" cy="8" r="4.4" fill="none" stroke="#D2402E" stroke-width="0.8"></circle><path d="M5.6 8.2l1.6 1.5 3.2-3.3" fill="none" stroke="#D2402E" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+</button>
+</div>
+</sc-for>
+</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; justify-content: space-between; font-size: 12px; color: {{p.faint}}; letter-spacing: 0.4px"><div>이달의 흐름</div><div>두드린 수</div></div>
+<div style="display: flex; align-items: flex-end; gap: 3px; height: 40px; border-bottom: 1px solid {{p.line}}">
+<sc-for list="{{bars}}" as="b" hint-placeholder-count="30">
+<div style="flex: 1 1 0; height: {{b.h}}; background: {{b.color}}; border-radius: 2px 2px 0 0; opacity: {{b.op}}"></div>
+</sc-for>
+</div>
+</div>
+<a class="press" href="DayDetail.dc.html" style="position: relative; margin-top: auto; padding: 20px; border-radius: 20px; border: 1px solid {{p.line}}; display: flex; align-items: center; gap: 16px; overflow: hidden">
+<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="{{sel.color}}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0"><circle cx="12" cy="12" r="10"></circle><path d="M9 10h.01M15 10h.01" stroke-width="2.4"></path><path d="{{sel.brow}}"></path><path d="{{sel.mouth}}"></path></svg>
+<div style="flex-grow: 1; display: flex; flex-direction: column; gap: 4px">
+<div style="font-size: 13px; color: {{p.inkMuted}}">{{sel.date}}</div>
+<div style="font-size: 22px; font-weight: 700; letter-spacing: -0.3px">{{sel.label}}</div>
+<div style="font-size: 13px; color: {{p.ink2}}">{{sel.taps}}번 두드렸습니다</div>
+<div style="font-size: 14px; display: {{sel.noteDisp}}">“{{sel.note}}”</div>
+</div>
+<div aria-label="{{sel.stampAria}}" style="width: 76px; height: 76px; margin: -8px 0; flex-shrink: 0; transform: rotate(-12deg); opacity: {{sel.stamp}}">
+<svg width="76" height="76" viewBox="0 0 76 76" aria-hidden="true">
+<circle cx="38" cy="38" r="34" fill="none" stroke="#D2402E" stroke-width="2.6" stroke-dasharray="180 4 40 3"></circle>
+<circle cx="38" cy="38" r="28.5" fill="none" stroke="#D2402E" stroke-width="1.2"></circle>
+<text x="38" y="35" text-anchor="middle" font-family="Gungsuh, GungSeo, 궁서, 'Song Myung', serif" font-size="15" fill="#D2402E" letter-spacing="2">참 잘</text>
+<text x="38" y="52" text-anchor="middle" font-family="Gungsuh, GungSeo, 궁서, 'Song Myung', serif" font-size="15" fill="#D2402E" letter-spacing="0.5">했어요</text>
+</svg>
+</div>
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{{p.faint}}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0"><path d="M9 6l6 6-6 6"></path></svg>
+</a>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+// 테마 색. design/tokens.json 의 값과 같다. 설정에서 고른 테마는 이 브라우저에 기억되고 모든 화면이 같이 바뀐다
+const PALETTES = {
+  light: { id: 'light', ground: '#FFFFFF', surface: '#F5F5F7', line: '#E8E8EC', ink: '#16161A', ink2: '#3A3A42', inkMuted: '#62626C', muted: '#62626C', faint: '#A0A0AA', fill: '#EDEDF0', fillEdge: '#C8C8D0', mapLine: '#D4D4DC', happy: '#B07A00', sad: '#4C6FE0', error: '#C93A2F', inkRgb: '22,22,26' },
+  dark: { id: 'dark', ground: '#121216', surface: '#222228', line: '#383840', ink: '#ECECF0', ink2: '#C8C8D0', inkMuted: '#A0A0AA', muted: '#A0A0AA', faint: '#6E6E78', fill: '#2A2A30', fillEdge: '#4A4A52', mapLine: '#383840', happy: '#FFC23D', sad: '#7A9CFF', error: '#F0685C', inkRgb: '236,236,240' },
+  pink: { id: 'pink', ground: '#FFF1F5', surface: '#FFFFFF', line: '#F6D3DF', ink: '#3A1E2B', ink2: '#5A3445', inkMuted: '#80505F', muted: '#80505F', faint: '#B08392', fill: '#FF8FB8', fillEdge: '#FF5C9A', mapLine: '#F2C2D3', happy: '#D9407A', sad: '#7B68E8', error: '#C93A2F', inkRgb: '58,30,43' }
+};
+function themeChoice() {
+  try { return localStorage.getItem('mc-theme') || 'light'; } catch (e) { return 'light'; }
+}
+function themePalette(forced) {
+  let id = forced || themeChoice();
+  if (id === 'system') id = typeof matchMedia !== 'undefined' && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  return PALETTES[id] || PALETTES.light;
+}
+function appSettings() {
+  try { return JSON.parse(localStorage.getItem('mc-settings') || '{}'); } catch (e) { return {}; }
+}
+let P = themePalette();
+
+class Component extends DCLogic {
+constructor(props) {
+super(props);
+this.state = { picked: 13 };
+}
+renderVals() {
+    P = themePalette(this.props && this.props.theme);
+    return Object.assign({ p: P }, this.renderVals0());
+  }
+  renderVals0() {
+const tint = { h: '242,169,0', s: '76,111,224' };
+const solid = { h: P.happy, s: P.sad };
+const labels = { happy: '행복해요', excited: '설레요', angry: '화나요', sad: '슬퍼요', anxious: '불안해요' };
+const side = { happy: 'h', excited: 'h', angry: 's', sad: 's', anxious: 's' };
+// [대표 기분, 두드린 수, 게이지를 끝까지 채웠는가]
+const days = {
+1: ['happy', 96], 2: ['excited', 210], 3: ['sad', 64], 5: ['happy', 120], 6: ['angry', 180],
+7: ['happy', 40], 8: ['excited', 260, true], 9: ['happy', 150], 10: ['anxious', 88],
+12: ['happy', 70], 13: ['happy', 272, true], 14: ['sad', 52], 15: ['happy', 110],
+16: ['sad', 140], 17: ['happy', 90], 18: ['excited', 240, true]
+};
+const WEEKDAY = ['일', '월', '화', '수', '목', '금', '토'];
+// 끝까지 채운 날 남긴 오늘의 한마디
+const NOTES = { 8: '오늘은 웃었다', 13: '맛있는 걸 먹었다', 18: '내일도 이렇게' };
+const smile = 'M8 14.5c1 1.3 2.3 2 4 2s3-.7 4-2';
+const frown = 'M8 17c1-1.3 2.3-2 4-2s3 .7 4 2';
+const FACE = { happy: ['', smile], excited: ['M7.5 7.5l2-1M16.5 7.5l-2-1', 'M8 13.5h8c0 2.4-1.8 4-4 4s-4-1.6-4-4z'], angry: ['M7.5 7.5l3 1.5M16.5 7.5l-3 1.5', frown], sad: ['M8 9l2.5-1.2M16 9l-2.5-1.2', frown], anxious: ['', 'M8 15.5c.7-.7 1.3-.7 2 0s1.3.7 2 0 1.3-.7 2 0 1.3.7 2 0'] };
+const TODAY = 18;
+const MAX = 272;
+const cells = [];
+const bars = [];
+for (let d = 1; d <= 35; d++) {
+const inMonth = d <= 30;
+const rec = inMonth ? days[d] : null;
+const k = rec ? side[rec[0]] : null;
+const strength = rec ? rec[1] / MAX : 0;
+const picked = this.state.picked === d;
+cells.push({
+day: inMonth ? String(d) : '',
+vis: inMonth ? 'visible' : 'hidden',
+aria: inMonth ? '11월 ' + d + '일' + (rec ? ' ' + labels[rec[0]] + (rec[2] ? ', 도장' : '') : ' 기록 없음') : '',
+pressed: picked ? 'true' : 'false',
+bg: rec ? 'rgba(' + P.inkRgb + ',' + (0.05 + strength * 0.22).toFixed(2) + ')' : 'transparent',
+ring: picked ? 'inset 0 0 0 1.5px ' + P.ink : (d === TODAY ? 'inset 0 0 0 1px ' + P.fillEdge : 'none'),
+weight: d === TODAY || picked ? '700' : '400',
+numColor: d > TODAY ? P.fillEdge : (rec ? P.ink : P.faint),
+stamp: rec && rec[2] ? '1' : '0',
+cursor: rec ? 'pointer' : 'default',
+pick: () => { if (rec) this.setState({ picked: d }); }
+});
+if (inMonth) {
+bars.push({
+h: rec ? Math.max(3, Math.round(strength * 40)) + 'px' : '2px',
+color: rec ? P.ink : P.line,
+op: this.state.picked === d ? '1' : (rec ? '0.22' : '1')
+});
+}
+}
+const pd = this.state.picked;
+const pr = days[pd];
+const sel = {
+date: '11월 ' + pd + '일 ' + WEEKDAY[(pd - 1) % 7] + '요일',
+label: labels[pr[0]],
+brow: FACE[pr[0]][0], mouth: FACE[pr[0]][1],
+color: solid[side[pr[0]]],
+taps: String(pr[1]),
+stamp: pr[2] ? '0.92' : '0',
+note: NOTES[pd] || '', noteDisp: NOTES[pd] ? 'block' : 'none',
+stampAria: pr[2] ? '게이지를 끝까지 채운 날입니다' : ''
+};
+return { cells, bars, sel };
+}
+}
+</script>
+</body>
+</html>
