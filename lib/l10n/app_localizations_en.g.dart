@@ -18,12 +18,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get common_cancel => 'Cancel';
 
   @override
-  String get common_on => 'On';
-
-  @override
-  String get common_off => 'Off';
-
-  @override
   String get loading_brokenTitle => 'Your records are damaged';
 
   @override
@@ -32,9 +26,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get loading_startNew => 'Start anew';
-
-  @override
-  String get moodSelect_today => 'Today';
 
   @override
   String get moodSelect_moodHappy => 'Happy';
@@ -176,19 +167,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settings_vibration => 'Vibration';
 
   @override
-  String get settings_vibrationStrength => 'Vibration strength';
-
-  @override
   String get settings_sound => 'Sound';
 
   @override
-  String get settings_soundPack => 'Sound pack';
-
-  @override
   String get settings_reminder => 'Evening reminder';
-
-  @override
-  String get settings_reminderTime => 'Reminder time';
 
   @override
   String get settings_mapContribute => 'Share my mood on the map';
@@ -272,9 +254,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settings_cheers => 'Cheer phrases';
-
-  @override
-  String get settings_cheersSize => 'Text size';
 
   @override
   String get settings_cheersNormal => 'Normal text';

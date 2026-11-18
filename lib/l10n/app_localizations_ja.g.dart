@@ -18,12 +18,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get common_cancel => 'キャンセル';
 
   @override
-  String get common_on => 'オン';
-
-  @override
-  String get common_off => 'オフ';
-
-  @override
   String get loading_brokenTitle => '記録が壊れています';
 
   @override
@@ -31,9 +25,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get loading_startNew => 'やり直す';
-
-  @override
-  String get moodSelect_today => '今日';
 
   @override
   String get moodSelect_moodHappy => '幸せ';
@@ -172,19 +163,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get settings_vibration => '振動';
 
   @override
-  String get settings_vibrationStrength => '振動の強さ';
-
-  @override
   String get settings_sound => 'サウンド';
 
   @override
-  String get settings_soundPack => 'サウンドセット';
-
-  @override
   String get settings_reminder => '夜のリマインダー';
-
-  @override
-  String get settings_reminderTime => '通知の時刻';
 
   @override
   String get settings_mapContribute => '地図に自分の気分を足す';
@@ -268,9 +250,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get settings_cheers => '応援メッセージ';
-
-  @override
-  String get settings_cheersSize => '文字の大きさ';
 
   @override
   String get settings_cheersNormal => 'ふつうの文字';

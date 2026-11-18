@@ -18,12 +18,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get common_cancel => '취소';
 
   @override
-  String get common_on => '켜기';
-
-  @override
-  String get common_off => '끄기';
-
-  @override
   String get loading_brokenTitle => '기록이 깨졌습니다';
 
   @override
@@ -31,9 +25,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get loading_startNew => '새로 시작합니다';
-
-  @override
-  String get moodSelect_today => '오늘';
 
   @override
   String get moodSelect_moodHappy => '행복해요';
@@ -172,19 +163,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get settings_vibration => '진동';
 
   @override
-  String get settings_vibrationStrength => '진동 세기';
-
-  @override
   String get settings_sound => '소리';
 
   @override
-  String get settings_soundPack => '소리 묶음';
-
-  @override
   String get settings_reminder => '저녁 알림';
-
-  @override
-  String get settings_reminderTime => '알림 시각';
 
   @override
   String get settings_mapContribute => '지도에 내 기분 보태기';
@@ -268,9 +250,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get settings_cheers => '응원 문구';
-
-  @override
-  String get settings_cheersSize => '글자 크기';
 
   @override
   String get settings_cheersNormal => '보통 글씨';

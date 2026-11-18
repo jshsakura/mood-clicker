@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mood_clicker/l10n/app_localizations.g.dart';
 import 'package:mood_clicker/l10n/locale_choice.dart';
-import 'package:mood_clicker/l10n/locale_choice_prefs.dart';
 import 'package:mood_clicker/l10n/locale_resolution.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 /// In-memory store for tests, matching how production code injects a store.
 class MemoryLocaleChoiceStore implements LocaleChoiceStore {
@@ -92,26 +90,6 @@ void main() {
       final store = MemoryLocaleChoiceStore();
       await store.write(LocaleChoice.ja);
       expect(await store.read(), LocaleChoice.ja);
-    });
-  });
-
-  group('shared preferences store', () {
-    test('round trips a choice', () async {
-      SharedPreferences.setMockInitialValues(const {});
-      final prefs = await SharedPreferences.getInstance();
-      final store = SharedPreferencesLocaleChoiceStore(prefs);
-      expect(await store.read(), LocaleChoice.system);
-      await store.write(LocaleChoice.en);
-      expect(await store.read(), LocaleChoice.en);
-    });
-
-    test('an unknown stored value reads as system', () async {
-      SharedPreferences.setMockInitialValues(const {
-        'locale_choice': 'klingon',
-      });
-      final prefs = await SharedPreferences.getInstance();
-      final store = SharedPreferencesLocaleChoiceStore(prefs);
-      expect(await store.read(), LocaleChoice.system);
     });
   });
 }

@@ -13,11 +13,6 @@ void main() {
         isNotEmpty,
         reason: '$locale settings_reminder',
       );
-      expect(
-        l10n.settings_reminderTime,
-        isNotEmpty,
-        reason: '$locale settings_reminderTime',
-      );
     }
   });
 

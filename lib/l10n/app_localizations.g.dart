@@ -118,18 +118,6 @@ abstract class AppLocalizations {
   /// **'취소'**
   String get common_cancel;
 
-  /// 설정 항목을 켜는 선택지입니다.
-  ///
-  /// In ko, this message translates to:
-  /// **'켜기'**
-  String get common_on;
-
-  /// 설정 항목을 끄는 선택지입니다.
-  ///
-  /// In ko, this message translates to:
-  /// **'끄기'**
-  String get common_off;
-
   /// 로딩 화면에서 저장된 기록을 읽지 못했을 때 띄우는 대화 상자의 제목입니다.
   ///
   /// In ko, this message translates to:
@@ -147,12 +135,6 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'새로 시작합니다'**
   String get loading_startNew;
-
-  /// 기분 고르기 화면 맨 위 날짜 옆에 붙는 짧은 이름입니다.
-  ///
-  /// In ko, this message translates to:
-  /// **'오늘'**
-  String get moodSelect_today;
 
   /// 기분 이름입니다. 기분 고르기 배너와 두드리기 화면 제목에 씁니다. 행복 쪽입니다.
   ///
@@ -376,35 +358,17 @@ abstract class AppLocalizations {
   /// **'진동'**
   String get settings_vibration;
 
-  /// 진동 세기를 고르는 항목의 이름입니다. 세기 조절이 되는 기기에서만 씁니다.
-  ///
-  /// In ko, this message translates to:
-  /// **'진동 세기'**
-  String get settings_vibrationStrength;
-
   /// 설정에서 소리 항목의 이름입니다.
   ///
   /// In ko, this message translates to:
   /// **'소리'**
   String get settings_sound;
 
-  /// 두드릴 때 나는 소리 묶음을 고르는 항목의 이름입니다.
-  ///
-  /// In ko, this message translates to:
-  /// **'소리 묶음'**
-  String get settings_soundPack;
-
   /// 설정에서 저녁 알림을 켜고 끄는 항목의 이름입니다. 기본은 꺼짐입니다. 켤 때만 권한을 물어봅니다.
   ///
   /// In ko, this message translates to:
   /// **'저녁 알림'**
   String get settings_reminder;
-
-  /// 저녁 알림이 울리는 시각을 고르는 항목의 이름입니다. 기본은 저녁 9시입니다.
-  ///
-  /// In ko, this message translates to:
-  /// **'알림 시각'**
-  String get settings_reminderTime;
 
   /// 설정에서 내 기분을 지도에 보내는지 고르는 항목입니다. 기본은 꺼짐이고 3단계에 켭니다.
   ///
@@ -567,12 +531,6 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'응원 문구'**
   String get settings_cheers;
-
-  /// 응원 문구의 글자 크기를 고르는 항목의 이름입니다.
-  ///
-  /// In ko, this message translates to:
-  /// **'글자 크기'**
-  String get settings_cheersSize;
 
   /// 응원 문구 글자 크기 선택지입니다. 기본값입니다.
   ///

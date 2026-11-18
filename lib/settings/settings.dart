@@ -88,15 +88,6 @@ class Settings {
     hapticScale: hapticStrength.scale,
   );
 
-  Settings fromFeel(FeelSettings feel) {
-    return copyWith(
-      shakeOnFull: feel.screenShake,
-      cheersOn: feel.cheerPhrases,
-      cheerSize: feel.largeText ? CheerSize.large : CheerSize.normal,
-      tiltToPour: feel.tiltSpill,
-    );
-  }
-
   Settings copyWith({
     String? theme,
     LocaleChoice? language,
