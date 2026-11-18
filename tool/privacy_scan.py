@@ -8,6 +8,7 @@
 찾은 값은 출력하지 않는다. 파일:줄과 종류만 알린다.
 정말 괜찮은 줄이면 그 줄에 `privacy-ok` 를 적는다.
 """
+import codecs
 import ipaddress
 import re
 import subprocess
@@ -42,10 +43,11 @@ IP_OK = [ipaddress.ip_network(n) for n in (
     "1.1.1.1/32", "1.0.0.1/32", "8.8.8.8/32", "8.8.4.4/32",
 )]
 PRIVATE = [ipaddress.ip_network(n) for n in ("10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "100.64.0.0/10")]
+URL_OR_PORT = re.compile(r"://|:\d{2,5}\b")
 VERSION_CONTEXT = re.compile(r"\bversion\b|\bv(?=\d)|\bbuild\b", re.I)
 IPV6 = re.compile(r"(?<![\w:.])([0-9a-fA-F]{0,4}(?::[0-9a-fA-F]{0,4}){2,7})(?![\w:])")
 INTERNAL_HOST = re.compile(
-    r"\b[a-z0-9-]+\.(lan|local|internal|intranet|corp|localdomain|home\.arpa)(?![\w.-])", re.I
+    r"\b[a-z0-9-]+\.(lan|local|internal|intranet|corp|localdomain|home\.arpa)(?!\.?[\w-])", re.I
 )
 NET_CONTEXT = re.compile(r"://|\b(host|ip|addr|address|server|endpoint|connect|curl|ssh|ping)\b|:\d{2,5}\b", re.I)
 TAILNET = re.compile(r"\.ts\.net\b")
@@ -55,7 +57,7 @@ HOME_OK = {"user", "runner", "node", "ubuntu", "app", "me", "you", "example", "u
 SHA_CONTEXT = re.compile(r"commit|\bsha|\brev\b|revision|checkout|github\.com|git\b|@", re.I)
 SHA256_CONTEXT = re.compile(r"sha-?256", re.I)
 HEX = re.compile(r"(?<![0-9a-fA-F])[0-9a-f]{40,}(?![0-9a-fA-F])")
-SECRET = re.compile(r"(api[_-]?key|secret|token|password)\s*[:=]\s*['\"]([A-Za-z0-9_\-./+=]{20,})['\"]", re.I)
+SECRET = re.compile(r"(api[_-]?key|secret|token|password)['\"]?\s*[:=]\s*['\"]([A-Za-z0-9_\-./+=]{20,})['\"]", re.I)
 KNOWN_KEY = re.compile(r"AIza[0-9A-Za-z_\-]{35}|AKIA[0-9A-Z]{16}|gh[pousr]_[0-9A-Za-z]{36}|-----BEGIN [A-Z ]*PRIVATE KEY")
 # 소수점 넷째 자리(약 10m) 이상인 위도, 경도 쌍. 실제 집이나 동네를 가리킬 수 있다.
 COORD = re.compile(r"(?<![\w.])-?\d{1,2}\.\d{4,}\s*,\s*-?\d{1,3}\.\d{4,}(?![\d])")
@@ -84,7 +86,8 @@ def ip_findings(line):
             continue
         net = NET_CONTEXT.search(line)
         if any(ip in n for n in PRIVATE):
-            if parts[3] not in (0, 255) and (net or not VERSION_CONTEXT.search(line)):
+            versionish = VERSION_CONTEXT.search(line) and not URL_OR_PORT.search(line)
+            if parts[3] not in (0, 255) and not versionish:
                 return ["IP"]
         elif ip.is_global and net:
             return ["IP"]
@@ -95,7 +98,7 @@ def ip_findings(line):
             continue
         if ip in ipaddress.ip_network("2001:db8::/32") or ip.is_loopback or ip.is_unspecified:
             continue
-        if ip.is_private and not ip.is_reserved or ip.is_link_local or (ip.is_global and NET_CONTEXT.search(line)):
+        if ip.is_private and not ip.is_reserved or ip.is_link_local or (ip.is_global and not ip.is_reserved and NET_CONTEXT.search(line)):
             return ["IP"]
     return []
 
@@ -134,24 +137,42 @@ def findings_in_line(line):
 def diff_path(header):
     path = header[4:]
     if path.startswith('"') and path.endswith('"'):
-        path = path[1:-1].encode("latin-1", "backslashreplace").decode("unicode_escape").encode("latin-1").decode("utf-8", "replace")
+        # git 은 특수 문자를 C 식 이스케이프(\" \t \354)로 감싼다. 바이트로 풀어 UTF-8 로 읽는다.
+        path = codecs.escape_decode(path[1:-1].encode("utf-8"))[0].decode("utf-8", "replace")
     return path[2:] if path.startswith("b/") else path
 
 
-def scan_diff(diff):
-    hits, path, lineno = [], "?", 0
+HUNK = re.compile(r"^@@ -\d+(?:,(\d+))? \+(\d+)(?:,(\d+))? @@")
+
+
+def diff_lines(diff):
+    """(경로, 줄 번호, 추가된 줄) 을 낸다. 헝크의 줄 수를 세어서, 내용이 '+++ ' 로 시작해도 헤더로 착각하지 않는다."""
+    path, lineno, old_left, new_left = "?", 0, 0, 0
     for raw in diff.splitlines():
+        if old_left or new_left:
+            if raw.startswith("-"):
+                old_left -= 1
+            elif raw.startswith("+"):
+                new_left -= 1
+                lineno += 1
+                yield path, lineno, raw[1:]
+            elif not raw.startswith("\\"):
+                old_left, new_left, lineno = old_left - 1, new_left - 1, lineno + 1
+            continue
         if raw.startswith("+++ "):
             path = diff_path(raw)
-            continue
-        if raw.startswith("@@"):
-            m = re.search(r"\+(\d+)", raw)
-            lineno = int(m.group(1)) - 1 if m else 0
-            continue
-        if raw.startswith("-"):
-            continue
-        lineno += 1
-        if not raw.startswith("+") or "privacy-ok" in raw:
+        m = HUNK.match(raw)
+        if m:
+            old_left = int(m.group(1) if m.group(1) is not None else 1)
+            new_left = int(m.group(3) if m.group(3) is not None else 1)
+            lineno = int(m.group(2)) - 1
+
+
+def scan_diff(diff):
+    hits = []
+    for path, lineno, line in diff_lines(diff):
+        raw = "+" + line
+        if "privacy-ok" in raw:
             continue
         partial = SKIP_PATH.search(path) or len(raw) > GENERATED_LINE
         kinds = strong_findings(raw[1:]) if partial else findings_in_line(raw[1:])
@@ -198,14 +219,24 @@ def names_z(out):
 SCISSORS = re.compile(r"^# -+ >8 -+$")
 
 
-def message_text(raw):
-    """git 이 지울 주석 줄도 본다. cleanup=verbatim 이면 그대로 남기 때문이다. 가위 줄 아래만 뺀다."""
+def message_text(raw, stop_at_scissors=True):
+    """git 이 지울 주석 줄도 본다. cleanup=verbatim 이면 그대로 남기 때문이다.
+    가위 줄 아래는 git 이 지울 때만 뺀다."""
     lines = []
     for line in raw.splitlines():
-        if SCISSORS.match(line):
+        if stop_at_scissors and SCISSORS.match(line):
             break
         lines.append(line)
     return "\n".join(lines)
+
+
+def scissors_apply():
+    r = subprocess.run(["git", "config", "commit.cleanup"], capture_output=True, text=True)
+    return r.stdout.strip() not in ("verbatim", "whitespace")
+
+
+# 병합 커밋은 기본 git log -p 에 diff 가 안 나온다. 첫 부모 기준 diff 로 병합에서만 생긴 변경도 본다.
+MERGES = "--diff-merges=first-parent"
 
 
 def main(argv):
@@ -214,12 +245,12 @@ def main(argv):
         return report(scan_files(names) + scan_diff(git("diff", "--cached", "-U0", "--no-color")))
     if len(argv) == 2 and argv[0] == "--message":
         with open(argv[1], encoding="utf-8", errors="ignore") as f:
-            return report(scan_text("커밋 메시지", message_text(f.read())))
+            return report(scan_text("커밋 메시지", message_text(f.read(), scissors_apply())))
     if len(argv) == 2 and argv[0] == "--range":
         # 끝점끼리 비교하면 중간 커밋에서 넣었다 지운 것이 안 보인다. 커밋마다 본다.
         rng = argv[1]
-        names = names_z(git("log", "--name-only", "-z", "--diff-filter=ACMR", "--format=", rng))
-        hits = scan_files(names) + scan_diff(git("log", "-p", "-U0", "--no-color", "--format=", rng))
+        names = names_z(git("log", MERGES, "--name-only", "-z", "--diff-filter=ACMR", "--format=", rng))
+        hits = scan_files(names) + scan_diff(git("log", MERGES, "-p", "-U0", "--no-color", "--format=", rng))
         return report(hits + scan_text("커밋 메시지", git("log", "--format=%B", rng)))
     print(__doc__, file=sys.stderr)
     return 2

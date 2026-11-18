@@ -170,5 +170,53 @@ class ClosesReviewGaps(unittest.TestCase):
         self.assertEqual(0, repo.scan("--message", "MSG").returncode)
 
 
+class ClosesSecondReview(unittest.TestCase):
+    def test_range_sees_leak_added_only_in_merge_commit(self):
+        repo = Repo()
+        base = repo.git("rev-parse", "HEAD")
+        repo.git("switch", "-q", "-c", "side")
+        repo.commit("side.txt", "x\n", "chore: side")
+        repo.git("switch", "-q", "main")
+        repo.commit("main.txt", "y\n", "chore: main")
+        repo.git("merge", "-q", "--no-commit", "side")
+        repo.write("android/key.properties", "storePassword=x\n")
+        repo.write("notes.txt", f"mail {EMAIL}\n")
+        repo.git("add", "-A")
+        repo.git("commit", "-q", "-m", "chore: merge")
+        result = repo.scan("--range", f"{base}..HEAD")
+        self.assertEqual(1, result.returncode)
+        self.assertIn("key.properties", result.stderr)
+        self.assertIn("notes.txt", result.stderr)
+
+    def test_flags_password_in_json(self):
+        secret = "Ab3" + "xY9qLm2" + "Pz7WkR4tQ2v"
+        self.assertIn("비밀값", findings_in_line(f'  "password": "{secret}",'))
+
+    def test_quoted_korean_path_with_double_quote_does_not_crash(self):
+        repo = Repo()
+        repo.write('메모 "1".txt', "plain line\n")
+        repo.git("add", "-A")
+        result = repo.scan("--staged")
+        self.assertEqual(0, result.returncode, result.stderr)
+
+    def test_verbatim_cleanup_scans_below_scissors(self):
+        repo = Repo()
+        repo.git("config", "commit.cleanup", "verbatim")
+        repo.write("MSG", f"feat: x\n# ------------------------ >8 ------------------------\n{EMAIL}\n")
+        self.assertEqual(1, repo.scan("--message", "MSG").returncode)
+
+    def test_internal_host_with_trailing_dot(self):
+        self.assertIn("내부 호스트", findings_in_line(f"server: {INTERNAL_HOST}."))
+
+    def test_cpp_scope_and_server_version_are_not_addresses(self):
+        self.assertEqual([], findings_in_line("server = a::b;"))
+        self.assertEqual([], findings_in_line("Server version 10.2.3.4"))
+        self.assertIn("IP", findings_in_line("server version at http://" + LAN_IP))
+
+    def test_content_line_shaped_like_file_header_is_still_scanned(self):
+        diff = f"+++ b/a.txt\n@@ -0,0 +1,2 @@\n+++ b/x {API_KEY}\n+ok\n"
+        self.assertEqual(["a.txt:1 키"], scan_diff(diff))
+
+
 if __name__ == "__main__":
     unittest.main()

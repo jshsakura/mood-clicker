@@ -13,7 +13,7 @@ pstack 의 unslop(글), deslop(코드) 스킬 규칙 가운데 기계로 판정�
 import re
 import sys
 
-from privacy_scan import diff_path, git, message_text
+from privacy_scan import MERGES, diff_lines, git, message_text, scissors_apply
 
 JUDGED = re.compile(r"\.(md|txt|dart|py|sh|ya?ml|json)$|(^|/)\.githooks/[^/]+$")
 NOT_JUDGED = re.compile(
@@ -66,21 +66,10 @@ def kind_of(path):
 
 
 def scan_diff(diff):
-    hits, path, lineno = [], "?", 0
-    for raw in diff.splitlines():
-        if raw.startswith("+++ "):
-            path = diff_path(raw)
-            continue
-        if raw.startswith("@@"):
-            m = re.search(r"\+(\d+)", raw)
-            lineno = int(m.group(1)) - 1 if m else 0
-            continue
-        if raw.startswith("-"):
-            continue
-        lineno += 1
-        if not raw.startswith("+") or not JUDGED.search(path) or NOT_JUDGED.search(path):
-            continue
-        hits += [f"{path}:{lineno} {k}" for k in findings_in_line(raw[1:], kind_of(path))]
+    hits = []
+    for path, lineno, line in diff_lines(diff):
+        if JUDGED.search(path) and not NOT_JUDGED.search(path):
+            hits += [f"{path}:{lineno} {k}" for k in findings_in_line(line, kind_of(path))]
     return hits
 
 
@@ -107,10 +96,10 @@ def main(argv):
         return report(scan_diff(git("diff", "--cached", "-U0", "--no-color")))
     if len(argv) == 2 and argv[0] == "--message":
         with open(argv[1], encoding="utf-8", errors="ignore") as f:
-            return report(scan_message(message_text(f.read())))
+            return report(scan_message(message_text(f.read(), scissors_apply())))
     if len(argv) == 2 and argv[0] == "--range":
         rng = argv[1]
-        hits = scan_diff(git("log", "-p", "-U0", "--no-color", "--format=", rng))
+        hits = scan_diff(git("log", MERGES, "-p", "-U0", "--no-color", "--format=", rng))
         return report(hits + scan_message(git("log", "--format=%B", rng)))
     print(__doc__, file=sys.stderr)
     return 2
