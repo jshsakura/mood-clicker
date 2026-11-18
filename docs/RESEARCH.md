@@ -538,3 +538,57 @@ Flutter 앱이 웹앱처럼 어색해 보이지 않고 iOS·Android·macOS 에�
 - Flutter Android Edge-to-Edge (`SystemUiMode.edgeToEdge`): https://docs.flutter.dev/release/breaking-changes/android-15-edge-to-edge
 - Flutter `TextScaler`, `AdaptiveTextSelectionToolbar`, `ScrollViewKeyboardDismissBehavior`, `PlatformMenuBar`: https://api.flutter.dev/flutter/painting/TextScaler-class.html , https://api.flutter.dev/flutter/material/AdaptiveTextSelectionToolbar-class.html , https://api.flutter.dev/flutter/widgets/ScrollViewKeyboardDismissBehavior.html , https://api.flutter.dev/flutter/widgets/PlatformMenuBar-class.html
 - Flutter 접근성 (`Semantics`, 가이드라인 테스트): https://docs.flutter.dev/ui/accessibility-and-localization/accessibility
+
+---
+
+## 10. 기존 프로젝트(`freetv`, `oc-cookingfoil`, `oc-cookingfoil-client`) 최적화 이식 후보
+
+확인일: 2026-11-18
+
+세 프로젝트의 코드와 커밋 이력을 읽고, 현재 기기 안 저장 단계와 3단계(Supabase + 지도 타일)에 그대로 옮길 수 있는 최적화만 골랐습니다.
+
+### 10.1 앱 시작 속도 및 첫 화면 깜빡임
+
+1. **디스크 캐시 선로딩 후 백그라운드 갱신 (Warm-Restart Cache)**
+   - **원래 위치**: `oc-cookingfoil/src/meta/library-cache.js:14-22`, `freetv/www/app/main.js:866-867`
+   - **왜 그렇게 했는지**: `oc-cookingfoil` 은 직렬화 결과와 ETag 를 디스크에 저장해 두고 재시작 첫 요청에 즉시 응답한 뒤 백그라운드에서 새 목록으로 교체합니다(`library-cache.js:14-18`). `freetv`(`f8e407e`) 역시 하루 이내에 저장된 필터 목록이 있으면 시작 화면을 막지 않고 바로 그린 뒤 뒤에서 새 목록을 받습니다.
+   - **우리 앱에서 쓸 곳**: 1단계 로딩 화면(최소 대기 시간 없음)에서 SQLite `DayRecord` 를 즉시 읽어 기분 고르기 화면으로 넘어가고, 3단계 지도 화면도 마지막 격자 요약 캐시를 먼저 그린 뒤 Supabase 최신 집계를 받아 덮어씁니다.
+
+2. **새 카드·이미지의 페이드 인과 재진입 애니메이션 방지**
+   - **원래 위치**: `freetv/www/app/styles.css:35-37` (커밋 `422c0c5`)
+   - **왜 그렇게 했는지**: 목록에 카드가 추가될 때 화면 전체 진입 애니메이션이 다시 돌거나 흰 바탕 이미지가 한 번에 뜨면 화면이 번쩍이는 깜빡임이 생깁니다. 추가되는 항목은 즉시 배치하고 이미지만 짧게 페이드 인하도록 고쳤습니다.
+   - **우리 앱에서 쓸 곳**: 달력 월 전환이나 3단계 지도 타일·캐릭터 에셋 로드 시 전체 화면 전환 애니메이션이 재실행되지 않게 고정하고, 타일·이미지 등장만 부드럽게 페이드 인합니다.
+
+3. **프레임당 빌드·렌더링 예산 제한 (중복 재계산 방지)**
+   - **원래 위치**: `oc-cookingfoil-client/source/ui/Application.cpp`·`UpdatesScreen.cpp` (커밋 `d11a3d2`), `oc-cookingfoil-client/source/ui/Images.cpp:18-80`
+   - **왜 그렇게 했는지**: 한 프레임 안에서 목록 배지·행 계산을 여러 번 반복하거나 4K 이미지를 원본 해상도 그대로 디코딩하면 프레임 드롭이 납니다(`d11a3d2` 로 프레임당 목록 재구성을 1회로 줄이고 텍스처 업로드를 프레임당 4ms 이내로 제한, `Images.cpp:22-79` 로 화면 크기 이상 디코딩 차단).
+   - **우리 앱에서 쓸 곳**: 120Hz 기기 연타 중(`두드리기` 화면)에는 입자·채움 애니메이션만 다시 그리고 달력·통계 계산을 매 프레임 돌리지 않습니다. 추후 캐릭터·배경 이미지를 넣을 때도 화면 해상도에 맞춰 디코딩 크기(`cacheWidth`/`cacheHeight`)를 제한합니다.
+
+### 10.2 저장소 쓰기 및 배터리
+
+4. **내용이 같으면 디스크·DB 쓰기 생략 (No-Op Write Skip)**
+   - **원래 위치**: `oc-cookingfoil-client/source/core/DownloadStore.cpp:285-289, 387, 425` (커밋 `5c696e0`)
+   - **왜 그렇게 했는지**: 매번 전체 파일을 덮어쓰거나 변경 없는 행을 지우고 다시 넣으면 플래시 저장소 마모와 배터리·I/O 낭비가 커집니다. 이전 저장본과 바이트(또는 SHA-256/dirty 플래그)가 같으면 쓰기 트랜잭션 자체를 건너뛰도록 했습니다.
+   - **우리 앱에서 쓸 곳**: `docs/SPEC.md` 의 `두드리기` 화면은 2초마다, 화면 이탈 시, 백그라운드 전환 시 SQLite 에 씁니다. 두드림이 없었거나 직전 저장 이후 `count` 가 변하지 않았으면 2초 타이머가 돌아도 SQLite 쓰기를 아예 생략합니다.
+
+### 10.3 네트워크 요청 (3단계 Supabase·지도 타일용)
+
+5. **동일 키 동시 요청 합치기 (In-Flight Single-Flight)**
+   - **원래 위치**: `freetv/www/shared/flights.js:7-38` (커밋 `7e4f09c`), `oc-cookingfoil/src/meta/library-cache.js:23-25` (커밋 `eb679209`)
+   - **왜 그렇게 했는지**: 같은 키에 대해 캐시 미스가 동시에 여러 번 일어나면 같은 데이터를 중복 요청·중복 압축하게 됩니다. 진행 중인 Promise(Future)를 맵에 걸어 두고 동시 호출자가 하나를 공유하게 했습니다.
+   - **우리 앱에서 쓸 곳**: 3단계 지도 이동 시 같은 격자 범위나 타일 요청이 겹칠 때 중복 Supabase RPC 호출을 1회로 합칩니다.
+
+6. **화면 이탈 시 요청 취소 및 250ms 디바운스**
+   - **원래 위치**: `freetv/www/app/screen-load.js:6-28` (커밋 `7e4f09c`)
+   - **왜 그렇게 했는지**: 메뉴를 스쳐 지나갈 때마다 네트워크 요청을 보내면 트래픽과 배터리가 낭비됩니다. 화면 전환 뒤 `250ms` 기다렸다가 요청을 시작하고, 그사이 다른 화면으로 넘어가면 이전 `AbortController` 를 취소합니다.
+   - **우리 앱에서 쓸 곳**: 3단계 지도에서 사용자가 지도를 빠르게 드래그·줌할 때 `250ms` 디바운스 후 Supabase 격자 집계를 요청하고, 이전 영역의 미완료 요청은 취소(`CancelToken` 등)합니다.
+
+7. **원점별 레이트리밋·거부 홀드 (Origin Hold)**
+   - **원래 위치**: `freetv/www/shared/origin-hold.js:6-70` (커밋 `eb8c6d0`)
+   - **왜 그렇게 했는지**: `429`(또는 `503 Retry-After`)·`403`·`451` 이 뜬 서버에 재시도를 퍼부으면 차단이 길어지고 배터리만 닳습니다. 원점별로 `Retry-After`(최대 10분) 또는 기본 홀드 시간 동안 요청을 기기 안에서 즉시 차단하고, 거부 상태는 재시작 후에도 유지합니다.
+   - **우리 앱에서 쓸 곳**: 3단계에서 OpenFreeMap·Stadia Maps·Supabase 가 `429` 나 `503 Retry-After` 를 주면, 지도 타일과 API 모두 일정 시간 재요청을 멈추고 사용자에게 안내합니다.
+
+8. **폴링 지수 백오프 및 상한 정지 / 첫 DNS 지연 1회 재시도**
+   - **원래 위치**: `oc-cookingfoil-client/source/ui/Pairing.cpp:33-38` (커밋 `0379025`, 5초 시작 -> 2배씩 증가해 최대 1분 -> 10분 후 정지), `oc-cookingfoil-client/source/ui/Application.cpp:1097` (커밋 `2f636d2`)
+   - **왜 그렇게 했는지**: 고정 간격 폴링은 배터리를 소모하고, 첫 연결에서 DNS 해석만 느려 타임아웃이 났을 때 바로 실패 처리하면 첫인상이 나빠집니다.
+   - **우리 앱에서 쓸 곳**: 3단계 지도 주기적 새로고침이나 기분 업로드 재시도에 지수 백오프(예: 5초 -> 10초 -> 20초, 상한)와 백그라운드 일시정지를 적용하고, 첫 네트워크 연결 타임아웃 시 1회 재시도합니다.
