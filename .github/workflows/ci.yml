@@ -41,7 +41,17 @@ jobs:
       - run: python3 tool/gen_tokens.py --check
       - run: dart format --output=none --set-exit-if-changed $(find lib test -name '*.dart' ! -name '*.g.dart')
       - run: flutter analyze
-      - run: flutter test
+      - run: flutter test --exclude-tags golden
+      # Compares screen pictures with the committed goldens. Same as tool/shots.sh --check locally.
+      - name: Compare screen pictures
+        run: flutter test --tags golden test/goldens
+      - name: Upload diff pictures
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: golden-diffs
+          path: test/goldens/failures/
+          if-no-files-found: ignore
       - run: flutter build apk --debug
       - uses: actions/upload-artifact@v4
         with:

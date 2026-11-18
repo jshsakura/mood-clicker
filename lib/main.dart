@@ -14,7 +14,7 @@ class MoodClickerApp extends StatefulWidget {
 }
 
 class _MoodClickerAppState extends State<MoodClickerApp> {
-  ThemeChoice _choice = ThemeChoice.light;
+  ThemeChoice _choice = const ThemeChoice.named('light');
 
   @override
   Widget build(BuildContext context) {
@@ -24,6 +24,8 @@ class _MoodClickerAppState extends State<MoodClickerApp> {
       title: 'Mood Clicker',
       debugShowCheckedModeBanner: false,
       theme: buildTheme(palette),
+      // Like a system dark switch, a theme change is immediate. An animation would blend colors mid-frame and break contrast.
+      themeAnimationDuration: Duration.zero,
       home: TokenPreview(
         choice: _choice,
         onChoice: (c) => setState(() => _choice = c),

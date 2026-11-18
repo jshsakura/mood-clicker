@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mood_clicker/design/app_theme.dart';
+import 'package:mood_clicker/design/theme_choice.dart';
+import 'package:mood_clicker/design/token_preview.dart';
 import 'package:mood_clicker/design/tokens.g.dart';
 import 'package:mood_clicker/main.dart';
 
@@ -21,10 +23,34 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(const MoodClickerApp());
-    for (final name in ['light', 'dark', 'pink']) {
+    for (final name in allPalettes.map((p) => p.name)) {
       await tester.tap(find.text(name));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
     }
+  });
+
+  testWidgets('a button is shown for system and for every palette', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const MoodClickerApp());
+    for (final label in ['system', ...allPalettes.map((p) => p.name)]) {
+      expect(find.text(label), findsOneWidget, reason: label);
+    }
+  });
+
+  testWidgets('a palette added later shows up as a button', (tester) async {
+    final mint = lightPalette.copyWith(name: 'mint');
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildTheme(lightPalette),
+        home: TokenPreview(
+          choice: ThemeChoice.system,
+          choices: ThemeChoice.fromPalettes([...allPalettes, mint]),
+          onChoice: (_) {},
+        ),
+      ),
+    );
+    expect(find.text('mint'), findsOneWidget);
   });
 }
