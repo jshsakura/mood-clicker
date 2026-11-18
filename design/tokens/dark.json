@@ -1,0 +1,74 @@
+{
+  "$extensions": {
+    "app": {
+      "brightness": "dark"
+    }
+  },
+  "color": {
+    "ground": {
+      "$type": "color",
+      "$value": "#121216",
+      "$description": "화면 바탕"
+    },
+    "surface": {
+      "$type": "color",
+      "$value": "#222228",
+      "$description": "카드, 배너 바탕"
+    },
+    "line": {
+      "$type": "color",
+      "$value": "#383840",
+      "$description": "테두리, 구분선"
+    },
+    "ink": {
+      "$type": "color",
+      "$value": "#ECECF0",
+      "$description": "본문 글자"
+    },
+    "inkMuted": {
+      "$type": "color",
+      "$value": "#A0A0AA",
+      "$description": "보조 글자"
+    },
+    "accent": {
+      "$type": "color",
+      "$value": "#FFC23D",
+      "$description": "강조, 선택됨"
+    },
+    "onAccent": {
+      "$type": "color",
+      "$value": "#16161A",
+      "$description": "강조 위의 글자"
+    },
+    "happy": {
+      "$type": "color",
+      "$value": "#FFC23D",
+      "$description": "행복 쪽 기분"
+    },
+    "sad": {
+      "$type": "color",
+      "$value": "#7A9CFF",
+      "$description": "슬픔 쪽 기분"
+    },
+    "fill": {
+      "$type": "color",
+      "$value": "#FFC23D",
+      "$description": "두드리기 채움"
+    },
+    "mapGround": {
+      "$type": "color",
+      "$value": "#121216",
+      "$description": "지도 바탕"
+    },
+    "mapLine": {
+      "$type": "color",
+      "$value": "#383840",
+      "$description": "지도 길, 경계선"
+    },
+    "error": {
+      "$type": "color",
+      "$value": "#F0685C",
+      "$description": "오류"
+    }
+  }
+}

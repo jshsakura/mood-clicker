@@ -1,5 +1,5 @@
 // 생성 파일이다. 손대지 않는다.
-// design/tokens.json 을 고친 뒤 python3 tool/gen_tokens.py 를 돌린다.
+// design/tokens/*.json 을 고친 뒤 python3 tool/gen_tokens.py 를 돌린다.
 // ignore_for_file: lines_longer_than_80_chars
 import 'package:flutter/material.dart';
 

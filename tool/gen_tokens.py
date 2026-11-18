@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""design/tokens.json 에서 lib/design/tokens.g.dart 를 만든다.
+"""design/tokens/*.json 에서 lib/design/tokens.g.dart 를 만든다.
 
   python3 tool/gen_tokens.py           만든다
-  python3 tool/gen_tokens.py --check   만든 파일이 tokens.json 과 맞는지만 본다 (훅, CI)
+  python3 tool/gen_tokens.py --check   만든 파일이 토큰과 맞는지만 본다 (훅, CI)
 
-디자이너는 tokens.json 만 고친다. 색을 새로 넣으면 모든 테마에 같은 이름으로 넣어야 한다.
+토큰은 Tokens Studio 의 세트 구성을 따른다. core.json 은 공통 값, 나머지 파일 하나가 테마 하나다.
+디자이너는 이 파일들만 고친다. 색을 새로 넣으면 모든 테마에 같은 이름으로 넣어야 한다.
 """
 import json
 import re
@@ -12,7 +13,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-SRC = ROOT / "design" / "tokens.json"
+SRC = ROOT / "design" / "tokens"
 OUT = ROOT / "lib" / "design" / "tokens.g.dart"
 
 HEX = re.compile(r"^#([0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$")
@@ -25,10 +26,26 @@ class TokenError(ValueError):
     pass
 
 
+REF = re.compile(r"^\{([A-Za-z0-9_.]+)\}$")
+
+
 def value(tok, where):
     if not isinstance(tok, dict) or "$value" not in tok:
         raise TokenError(f"{where}: $value 가 없습니다")
     return tok["$value"]
+
+
+def resolve(v, core, where):
+    """'{font.family}' 같은 참조를 core 의 값으로 바꾼다."""
+    m = REF.match(v) if isinstance(v, str) else None
+    if not m:
+        return v
+    node = core
+    for part in m.group(1).split("."):
+        if not isinstance(node, dict) or part not in node:
+            raise TokenError(f"{where}: 참조 {v} 를 찾지 못했습니다")
+        node = node[part]
+    return value(node, where)
 
 
 def ident(name, where):
@@ -47,7 +64,10 @@ def color(tok, where):
 
 
 def number(tok, where):
-    v = value(tok, where)
+    return plain_number(value(tok, where), where)
+
+
+def plain_number(v, where):
     if isinstance(v, str) and v.endswith("px"):
         v = v[:-2]
     try:
@@ -67,17 +87,20 @@ def num(x):
     return str(int(x)) if float(x).is_integer() else repr(float(x))
 
 
-def palettes(colors):
-    if not isinstance(colors, dict) or not colors:
-        raise TokenError("color: 테마가 하나도 없습니다")
-    themes = {}
-    for theme, body in colors.items():
-        ident(theme, f"color.{theme}")
-        if body.get("brightness") not in ("light", "dark"):
-            raise TokenError(f"color.{theme}.brightness: light 나 dark 여야 합니다")
+def palettes(theme_docs):
+    if not theme_docs:
+        raise TokenError("테마 파일이 하나도 없습니다")
+    themes, bright = {}, {}
+    for theme, doc in theme_docs.items():
+        ident(theme, f"{theme}.json")
+        b = (((doc.get("$extensions") or {}).get("app")) or {}).get("brightness")
+        if b not in ("light", "dark"):
+            raise TokenError(f"{theme}.json: $extensions.app.brightness 는 light 나 dark 여야 합니다")
+        bright[theme] = b
+        body = doc.get("color") or {}
         themes[theme] = {
-            ident(k, f"color.{theme}.{k}"): color(v, f"color.{theme}.{k}")
-            for k, v in body.items() if k != "brightness"
+            ident(k, f"{theme}.color.{k}"): color(v, f"{theme}.color.{k}")
+            for k, v in body.items()
         }
     first, *rest = themes
     keys = list(themes[first])
@@ -85,10 +108,10 @@ def palettes(colors):
         missing, extra = set(keys) - set(themes[t]), set(themes[t]) - set(keys)
         if missing or extra:
             raise TokenError(
-                f"color.{t}: 테마마다 색 이름이 같아야 합니다. "
+                f"{t}.json: 테마마다 색 이름이 같아야 합니다. "
                 f"빠진 것 {sorted(missing) or '없음'}, 남는 것 {sorted(extra) or '없음'}"
             )
-    return keys, themes, {t: colors[t]["brightness"] for t in themes}
+    return keys, themes, bright
 
 
 def palette_class(keys):
@@ -136,10 +159,14 @@ class AppPalette extends ThemeExtension<AppPalette> {{
 
 
 def render(tokens):
-    keys, themes, bright = palettes(tokens.get("color"))
+    """tokens = {"core": {...}, "dark": {...}, ...}. core 외의 키가 테마다."""
+    core = tokens.get("core")
+    if not isinstance(core, dict):
+        raise TokenError("core.json 이 없습니다")
+    keys, themes, bright = palettes({k: v for k, v in tokens.items() if k != "core"})
     out = [
         "// 생성 파일이다. 손대지 않는다.",
-        "// design/tokens.json 을 고친 뒤 python3 tool/gen_tokens.py 를 돌린다.",
+        "// design/tokens/*.json 을 고친 뒤 python3 tool/gen_tokens.py 를 돌린다.",
         "// ignore_for_file: lines_longer_than_80_chars",
         "import 'package:flutter/material.dart';",
         "",
@@ -154,46 +181,57 @@ def render(tokens):
     out.append("const List<AppPalette> allPalettes = [" + ", ".join(f"{t}Palette" for t in themes) + "];\n")
 
     for group, cls in (("space", "Space"), ("radius", "Radii")):
-        items = tokens.get(group) or {}
+        items = core.get(group) or {}
         lines = "\n".join(
             f"  static const double {ident(k, f'{group}.{k}')} = {num(number(v, f'{group}.{k}'))};"
             for k, v in items.items()
         )
         out.append(f"abstract final class {cls} {{\n{lines}\n}}\n")
 
-    family = value((tokens.get("font") or {}).get("family"), "font.family")
     styles = []
-    for k, v in (tokens.get("type") or {}).items():
-        where = f"type.{k}"
+    for k, v in (core.get("type") or {}).items():
+        where = f"core.type.{k}"
         spec = value(v, where)
-        weight = int(spec.get("fontWeight", 400))
+        family = resolve(spec.get("fontFamily", "{font.family}"), core, f"{where}.fontFamily")
+        try:
+            weight = int(str(spec.get("fontWeight", "400")))
+        except ValueError:
+            weight = -1
         if weight not in WEIGHTS:
             raise TokenError(f"{where}.fontWeight: 100 단위로 100~900 입니다")
+        size = plain_number(spec.get("fontSize"), f"{where}.fontSize")
+        lh = str(spec.get("lineHeight", "1.2"))
+        height = plain_number(lh[:-1], f"{where}.lineHeight") / 100 if lh.endswith("%") else plain_number(lh, f"{where}.lineHeight")
         styles.append(
             f"  static const TextStyle {ident(k, where)} = TextStyle(fontFamily: '{family}', "
-            f"fontSize: {num(spec['fontSize'])}, fontWeight: FontWeight.w{weight}, "
-            f"height: {num(spec.get('lineHeight', 1.2))});"
+            f"fontSize: {num(size)}, fontWeight: FontWeight.w{weight}, "
+            f"height: {num(height)});"
         )
     out.append("abstract final class TypeScale {\n" + "\n".join(styles) + "\n}\n")
 
     motion = "\n".join(
         f"  static const Duration {ident(k, f'motion.{k}')} = Duration(milliseconds: {millis(v, f'motion.{k}')});"
-        for k, v in (tokens.get("motion") or {}).items()
+        for k, v in (core.get("motion") or {}).items()
     )
     out.append(f"abstract final class Motion {{\n{motion}\n}}\n")
     return "\n".join(out)
 
 
+def load(src=SRC):
+    files = sorted(src.glob("*.json"))
+    return {f.stem: json.loads(f.read_text(encoding="utf-8")) for f in files}
+
+
 def main(argv):
     try:
-        text = render(json.loads(SRC.read_text(encoding="utf-8")))
+        text = render(load())
     except (TokenError, json.JSONDecodeError, KeyError) as e:
-        print(f"design/tokens.json 오류: {e}", file=sys.stderr)
+        print(f"design/tokens 오류: {e}", file=sys.stderr)
         return 1
     if argv == ["--check"]:
         current = OUT.read_text(encoding="utf-8") if OUT.exists() else ""
         if current != text:
-            print("lib/design/tokens.g.dart 가 design/tokens.json 과 다릅니다. "
+            print("lib/design/tokens.g.dart 가 design/tokens 와 다릅니다. "
                   "python3 tool/gen_tokens.py 를 돌린 뒤 둘 다 커밋합니다.", file=sys.stderr)
             return 1
         return 0

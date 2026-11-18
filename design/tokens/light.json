@@ -1,0 +1,61 @@
+{
+  "$extensions": {
+    "app": {
+      "brightness": "light"
+    }
+  },
+  "color": {
+    "ground": {
+      "$type": "color",
+      "$value": "#F6F6F8"
+    },
+    "surface": {
+      "$type": "color",
+      "$value": "#FFFFFF"
+    },
+    "line": {
+      "$type": "color",
+      "$value": "#E2E2E8"
+    },
+    "ink": {
+      "$type": "color",
+      "$value": "#16161A"
+    },
+    "inkMuted": {
+      "$type": "color",
+      "$value": "#62626C"
+    },
+    "accent": {
+      "$type": "color",
+      "$value": "#FFC23D"
+    },
+    "onAccent": {
+      "$type": "color",
+      "$value": "#16161A"
+    },
+    "happy": {
+      "$type": "color",
+      "$value": "#F2A900"
+    },
+    "sad": {
+      "$type": "color",
+      "$value": "#4C6FE0"
+    },
+    "fill": {
+      "$type": "color",
+      "$value": "#FFC23D"
+    },
+    "mapGround": {
+      "$type": "color",
+      "$value": "#F6F6F8"
+    },
+    "mapLine": {
+      "$type": "color",
+      "$value": "#D4D4DC"
+    },
+    "error": {
+      "$type": "color",
+      "$value": "#D9473B"
+    }
+  }
+}
