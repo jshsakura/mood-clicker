@@ -6,14 +6,14 @@ The rest (passive voice, filler, needless defensive code) stays a review step wi
 
   slop_scan.py --staged          staged changes (pre-commit)
   slop_scan.py --message FILE    commit message (commit-msg)
-  slop_scan.py --range A..B      every commit in the range and its message (pre-push, CI)
+  slop_scan.py --range A..B      what the range lands (net diff) and every commit message (pre-push, CI)
 
 Put `slop-ok` on a line only when it is really needed.
 """
 import re
 import sys
 
-from privacy_scan import MERGES, NO_RENAMES, diff_lines, git, message_text
+from privacy_scan import NO_RENAMES, diff_lines, git, message_text
 
 JUDGED = re.compile(r"\.(md|txt|dart|py|sh|ya?ml|json)$|(^|/)\.githooks/[^/]+$")
 NOT_JUDGED = re.compile(
@@ -136,7 +136,10 @@ def main(argv):
             return report(scan_message(message_text(f.read())))
     if len(argv) == 2 and argv[0] == "--range":
         rng = argv[1]
-        hits = scan_diff(git("log", MERGES, NO_RENAMES, "-p", "-U0", "--no-color", "--format=", rng))
+        # Style is judged by what the range lands (its net diff), so a tell fixed later in the range passes.
+        # Messages stay per commit. History leaks are privacy_scan's job, which still reads every commit.
+        net = rng.replace("...", "..").replace("..", "...", 1) if ".." in rng else rng
+        hits = scan_diff(git("diff", NO_RENAMES, "-U0", "--no-color", net))
         return report(hits + scan_message(git("log", "--format=%B", rng)))
     print(__doc__, file=sys.stderr)
     return 2

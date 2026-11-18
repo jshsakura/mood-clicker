@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../app_theme.dart';
 import '../tokens.g.dart';
 
-/// 두드리기 화면에서 아래부터 차오르는 채움. [level] 은 0에서 1 사이다.
+/// The fill that rises from the bottom of the tap screen. [level] is between 0 and 1.
 class FillGaugeView extends StatelessWidget {
   const FillGaugeView({super.key, required this.level, this.child});
 

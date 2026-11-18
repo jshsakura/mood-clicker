@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- 안드로이드 12 이상은 windowBackground 가 아니라 SplashScreen API 가 시작 화면을 그린다. -->
+    <!-- On Android 12 and later the SplashScreen API draws the launch screen, not windowBackground. -->
     <style name="LaunchTheme" parent="@android:style/Theme.Black.NoTitleBar">
         <item name="android:windowSplashScreenBackground">@color/splash_background</item>
         <item name="android:windowBackground">@drawable/launch_background</item>

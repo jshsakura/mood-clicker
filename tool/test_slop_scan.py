@@ -92,6 +92,54 @@ class ClosesThirdReview(unittest.TestCase):
         self.assertEqual(1, r.returncode, r.stderr)
 
 
+class JudgesARangeByItsResult(unittest.TestCase):
+    """Style is about what lands, so a range is judged by its net diff, not by each commit."""
+
+    def setUp(self):
+        self.repo_dir = tempfile.TemporaryDirectory()
+        self.d = Path(self.repo_dir.name)
+        self.git("init", "-q", "-b", "main")
+        self.git("config", "user.email", "dev@example.com")
+        self.git("config", "user.name", "dev")
+        (self.d / "lib").mkdir()
+        self.commit("lib/a.dart", "void a() {}\n", "chore: base")
+        self.git("branch", "base")
+
+    def tearDown(self):
+        self.repo_dir.cleanup()
+
+    def git(self, *a):
+        return subprocess.run(["git", *a], cwd=self.d, check=True, capture_output=True, text=True)
+
+    def commit(self, path, text, message):
+        (self.d / path).write_text(text)
+        self.git("add", "-A")
+        self.git("commit", "-q", "-m", message)
+
+    def scan_range(self):
+        env = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
+        return subprocess.run([sys.executable, str(SCANNER), "--range", "base..HEAD"], cwd=self.d, capture_output=True, text=True, env=env)
+
+    def test_a_tell_fixed_later_in_the_range_passes(self):
+        self.commit("lib/a.dart", "void a() {} // \ud55c\uae00\n", "chore: add a comment")
+        self.commit("lib/a.dart", "void a() {} // english\n", "fix: move the comment to English")
+        r = self.scan_range()
+        self.assertEqual(0, r.returncode, r.stderr)
+
+    def test_a_tell_left_at_the_end_fails(self):
+        self.commit("lib/a.dart", "void a() {} // \ud55c\uae00\n", "chore: add a comment")
+        r = self.scan_range()
+        self.assertEqual(1, r.returncode, r.stderr)
+        self.assertIn("lib/a.dart:1", r.stderr)
+
+    def test_commit_messages_are_still_checked_one_by_one(self):
+        self.commit("lib/a.dart", "void b() {}\n", "chore: tidy \u2014 then more")
+        self.commit("lib/a.dart", "void c() {}\n", "chore: tidy again")
+        r = self.scan_range()
+        self.assertEqual(1, r.returncode, r.stderr)
+        self.assertIn("commit message", r.stderr)
+
+
 class KeepsTheStyleFlat(unittest.TestCase):
     """Design rule: no gradients, blurred shadows or glows. Banned names are built from pieces so this file stays clean."""
 

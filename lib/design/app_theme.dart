@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 import 'tokens.g.dart';
 
-/// 팔레트 하나로 앱 전체의 ThemeData 를 만든다.
-/// 화면 코드는 색을 직접 쓰지 않고 `context.palette` 와 TypeScale 을 쓴다.
+/// Builds the app-wide ThemeData from one palette.
+/// Screen code never names colors directly; it uses `context.palette` and TypeScale.
 ThemeData buildTheme(AppPalette p) {
   final scheme = ColorScheme(
     brightness: p.brightness,

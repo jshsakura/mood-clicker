@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../app_theme.dart';
 import '../tokens.g.dart';
 
-/// 기분 고르기 화면의 큰 배너 한 줄.
+/// One large banner row on the mood picker screen.
 class MoodBanner extends StatelessWidget {
   const MoodBanner({
     super.key,
