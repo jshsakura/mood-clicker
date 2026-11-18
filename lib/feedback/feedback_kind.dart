@@ -11,4 +11,7 @@ enum FeedbackKind {
 
   /// Played when the fill gauge drops back to zero.
   drop,
+
+  /// Played when a rare cheer phrase appears.
+  rare,
 }

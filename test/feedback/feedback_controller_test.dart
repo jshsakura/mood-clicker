@@ -195,6 +195,27 @@ void main() {
     test('uses FeedbackTuning.minHapticGap for global throttle', () {
       expect(minHapticGap, FeedbackTuning.minHapticGap);
     });
+
+    test('tap scales haptic intensity and sharpness with fill', () {
+      final c = make();
+      c.trigger(FeedbackKind.tap, 'happy', fill: 0.0);
+      now += const Duration(milliseconds: 50);
+      c.trigger(FeedbackKind.tap, 'happy', fill: 1.0);
+      expect(
+        haptics.played[0].ios.first.intensity,
+        lessThan(haptics.played[1].ios.first.intensity),
+      );
+    });
+
+    test('rare haptic plays with priority even right after tap', () {
+      final c = make();
+      c.trigger(FeedbackKind.tap, 'happy');
+      c.trigger(FeedbackKind.rare, 'happy');
+      expect(
+        haptics.played.last,
+        FeedbackTable.of(FeedbackKind.rare, 'happy').haptic,
+      );
+    });
   });
 
   group('audio session and sound packs', () {

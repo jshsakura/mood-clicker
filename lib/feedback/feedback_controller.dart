@@ -48,15 +48,19 @@ class FeedbackController {
   Duration? _lastHaptic;
 
   /// Triggers feedback without throwing errors to the caller.
-  void trigger(FeedbackKind kind, String moodId) {
+  /// When [kind] is [FeedbackKind.tap] and [fill] is given, scales intensity and sharpness.
+  void trigger(FeedbackKind kind, String moodId, {double? fill}) {
     final entry = FeedbackTable.of(kind, moodId);
 
-    final haptic = entry.haptic;
-    final isPriority = kind == FeedbackKind.full;
+    var haptic = entry.haptic;
+    final isPriority = kind == FeedbackKind.full || kind == FeedbackKind.rare;
     if (_settings.hapticsOn &&
         haptic != null &&
         _hapticAllowed(priority: isPriority)) {
-      _fire(() => haptics.play(haptic, priority: isPriority));
+      if (kind == FeedbackKind.tap && fill != null) {
+        haptic = haptic.scaledByFill(fill);
+      }
+      _fire(() => haptics.play(haptic!, priority: isPriority));
     }
 
     final soundId = entry.soundId;
