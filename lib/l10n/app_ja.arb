@@ -101,7 +101,6 @@
   "settings_version": "バージョン",
   "settings_licenses": "オープンソースライセンス",
   "settings_privacy": "プライバシーポリシー",
-  "settings_privacyPending": "準備中",
   "settings_themeNote": "選ぶとすぐすべての画面に適用されます。",
   "settings_vibrationDesc": "たたくたびに、そしていっぱいになるときは強く鳴ります",
   "settings_soundDesc": "マナーモードでは鳴りません",

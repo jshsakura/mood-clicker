@@ -340,9 +340,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get settings_privacy => 'プライバシーポリシー';
 
   @override
-  String get settings_privacyPending => '準備中';
-
-  @override
   String get settings_themeNote => '選ぶとすぐすべての画面に適用されます。';
 
   @override

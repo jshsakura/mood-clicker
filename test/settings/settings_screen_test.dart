@@ -12,6 +12,7 @@ import 'package:mood_clicker/reminder/reminder_controller.dart';
 import 'package:mood_clicker/reminder/reminder_port.dart';
 import 'package:mood_clicker/reminder/reminder_settings.dart';
 import 'package:mood_clicker/settings/crisis_contacts.dart';
+import 'package:mood_clicker/settings/privacy_screen.dart';
 import 'package:mood_clicker/settings/records_port.dart';
 import 'package:mood_clicker/settings/settings.dart';
 import 'package:mood_clicker/settings/settings_screen.dart';
@@ -153,7 +154,6 @@ void main() {
     expect(find.text(l10n.settings_mindCare), findsOneWidget);
     expect(find.text(l10n.settings_records), findsOneWidget);
     expect(find.text(l10n.settings_about), findsOneWidget);
-    expect(find.text(l10n.settings_privacyPending), findsOneWidget);
   });
 
   testWidgets('tapping a theme card persists it and moves the app notifier', (
@@ -323,6 +323,15 @@ void main() {
     await tester.pumpAndSettle();
     expect(harness.records.exports, 1);
     expect(find.text(l10n.settings_exportDone), findsOneWidget);
+  });
+
+  testWidgets('the privacy row opens the policy screen', (tester) async {
+    final harness = Harness();
+    await pumpScreen(tester, harness: harness);
+    final l10n = lookupAppLocalizations(const Locale('ko'));
+    await tester.tap(find.text(l10n.settings_privacy));
+    await tester.pumpAndSettle();
+    expect(find.byType(PrivacyScreen), findsOneWidget);
   });
 
   testWidgets('the about section shows the version and opens licenses', (

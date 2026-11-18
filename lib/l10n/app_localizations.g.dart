@@ -706,12 +706,6 @@ abstract class AppLocalizations {
   /// **'개인정보 처리방침'**
   String get settings_privacy;
 
-  /// 개인정보 처리방침 항목 오른쪽에 보이는 값입니다.
-  ///
-  /// In ko, this message translates to:
-  /// **'준비 중입니다'**
-  String get settings_privacyPending;
-
   /// 테마 카드 아래에 붙는 안내입니다.
   ///
   /// In ko, this message translates to:

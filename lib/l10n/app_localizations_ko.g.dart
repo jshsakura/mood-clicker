@@ -340,9 +340,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get settings_privacy => '개인정보 처리방침';
 
   @override
-  String get settings_privacyPending => '준비 중입니다';
-
-  @override
   String get settings_themeNote => '고르면 바로 모든 화면에 적용됩니다.';
 
   @override
