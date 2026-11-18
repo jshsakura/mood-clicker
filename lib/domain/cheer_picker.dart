@@ -6,114 +6,70 @@ import 'cheer.dart';
 import 'mood.dart';
 import 'tuning.dart';
 
-/// One shuffled pass over a bundle. `order` holds indexes into the bundle.
-class _Deck {
-  const _Deck(this.fingerprint, this.order, this.position);
-
-  final String fingerprint;
-  final List<int> order;
-  final int position;
-
-  bool get isUsedUp => position >= order.length;
-
-  _Deck advanced() => _Deck(fingerprint, order, position + 1);
-
-  Map<String, Object?> toJson() => {
-    'fp': fingerprint,
-    'order': order,
-    'pos': position,
-  };
-
-  /// Null unless the data is a real deck: a permutation of 0..n-1 and a position inside it.
-  static _Deck? fromJson(Object? raw) {
-    if (raw is! Map) return null;
-    final fp = raw['fp'];
-    final order = raw['order'];
-    final pos = raw['pos'];
-    if (fp is! String || order is! List || order.isEmpty || pos is! int) {
-      return null;
-    }
-    if (pos < 0 || pos > order.length) return null;
-    final seen = <int>{};
-    for (final item in order) {
-      if (item is! int || item < 0 || item >= order.length || !seen.add(item)) {
-        return null;
-      }
-    }
-    return _Deck(fp, List.unmodifiable(order.cast<int>()), pos);
-  }
-}
-
-/// Where each bundle's deck stands. An immutable value that can be saved and restored.
+/// The base sentences shown most recently, oldest first, across every mood and stage. An
+/// immutable value that can be saved and restored.
 class CheerDeckSnapshot {
-  const CheerDeckSnapshot._(this._decks);
+  const CheerDeckSnapshot._(this._recent);
 
-  const CheerDeckSnapshot.empty() : _decks = const {};
+  const CheerDeckSnapshot.empty() : _recent = const [];
 
-  final Map<String, _Deck> _decks;
+  final List<String> _recent;
 
-  Map<String, Object?> toJson() => {
-    'version': 1,
-    'decks': {for (final e in _decks.entries) e.key: e.value.toJson()},
-  };
+  Map<String, Object?> toJson() => {'version': 2, 'recent': _recent};
 
-  /// Never throws. Anything that does not look right is dropped, so a damaged file only costs a
-  /// fresh shuffle.
+  /// Never throws. Anything that does not look right is dropped, so a damaged file (or an old
+  /// one) only costs a fresh start.
   factory CheerDeckSnapshot.fromJson(Object? raw) {
-    if (raw is! Map || raw['version'] != 1) {
+    if (raw is! Map || raw['version'] != 2) {
       return const CheerDeckSnapshot.empty();
     }
-    final decks = raw['decks'];
-    if (decks is! Map) return const CheerDeckSnapshot.empty();
-    final out = <String, _Deck>{};
-    for (final MapEntry(:key, :value) in decks.entries) {
-      if (key is! String || !_isKnownKey(key)) continue;
-      final deck = _Deck.fromJson(value);
-      if (deck != null) out[key] = deck;
-    }
-    return CheerDeckSnapshot._(Map.unmodifiable(out));
-  }
-
-  static bool _isKnownKey(String key) {
-    final parts = key.split('/');
-    return parts.length == 2 &&
-        Mood.byId(parts[0]) != null &&
-        CheerStage.values.any((s) => s.id == parts[1]);
+    final recent = raw['recent'];
+    if (recent is! List) return const CheerDeckSnapshot.empty();
+    final out = [
+      for (final item in recent)
+        if (item is String && item.isNotEmpty) item,
+    ];
+    final from = max(0, out.length - CheerTuning.recentBases);
+    return CheerDeckSnapshot._(List.unmodifiable(out.sublist(from)));
   }
 }
 
-/// Deals one phrase per tap from a shuffled deck per mood and stage. No phrase comes twice until
-/// the whole bundle has been used. When a deck runs out it is reshuffled, and the last
-/// [CheerTuning.deckTailSize] phrases of the old deck (half the bundle for a small one) stay out
-/// of the first that many of the new deck. The position can be saved and restored.
+/// Deals one phrase per tap. A bundle is a set of base sentences, each with its variants
+/// ("good", "good~~", "good!!" are one base). A tap picks a base, then one of its variants at
+/// random, so variants of one sentence never show up as different sentences.
+///
+/// A base does not come again within the last [CheerTuning.recentBases] bases shown, or within
+/// half the bundle's bases when that is fewer. The memory is shared by every mood and stage and
+/// can be saved and restored, so it lasts across app runs. A phrase written as a plain string is
+/// its own base.
 class CheerPicker {
   CheerPicker(
     this._random, {
     CheerDeckSnapshot saved = const CheerDeckSnapshot.empty(),
-  }) : _decks = {...saved._decks};
+  }) : _recent = [...saved._recent];
 
-  /// Opens a picker with the position saved in [store]. A missing or damaged file gives a fresh
+  /// Opens a picker with the memory saved in [store]. A missing or damaged file gives a fresh
   /// one.
   static Future<CheerPicker> open(Random random, CheerDeckStore store) async =>
       CheerPicker(random, saved: await store.load());
 
   final Random _random;
-  final Map<String, _Deck> _decks;
+  final List<String> _recent;
   int _revision = 0;
   int _savedRevision = 0;
 
-  /// True when picks have been made since the position was last saved.
+  /// True when picks have been made since the memory was last saved.
   bool get isDirty => _revision != _savedRevision;
 
   CheerDeckSnapshot snapshot() =>
-      CheerDeckSnapshot._(Map.unmodifiable({..._decks}));
+      CheerDeckSnapshot._(List.unmodifiable([..._recent]));
 
   Map<String, Object?> snapshotJson() => snapshot().toJson();
 
   static CheerDeckSnapshot snapshotFromJson(Object? raw) =>
       CheerDeckSnapshot.fromJson(raw);
 
-  /// Saves the position if it changed. Returns true when something was written. A failed save
+  /// Saves the memory if it changed. Returns true when something was written. A failed save
   /// is silent: the picker keeps working and stays dirty for the next try.
   Future<bool> persist(CheerDeckStore store) async {
     if (!isDirty) return false;
@@ -129,17 +85,31 @@ class CheerPicker {
     if (bundle.isEmpty) {
       throw StateError('no phrases for ${mood.id}/${used.id}');
     }
-    final key = '${mood.id}/${used.id}';
-    final fingerprint = book.fingerprint(mood, used);
-    var deck = _decks[key];
-    if (deck == null || deck.fingerprint != fingerprint || deck.isUsedUp) {
-      final matching = deck != null && deck.fingerprint == fingerprint;
-      deck = _newDeck(bundle.length, fingerprint, matching ? deck : null);
+    final bases = book.bases(mood, used);
+    // Variants of one base, in the order the bundle lists them.
+    final groups = <String, List<String>>{};
+    for (var i = 0; i < bundle.length; i++) {
+      final base = i < bases.length ? bases[i] : null;
+      (groups[base ?? bundle[i]] ??= []).add(bundle[i]);
     }
-    final chosen = bundle[deck.order[deck.position]];
-    _decks[key] = deck.advanced();
+    final keys = groups.keys.toList();
+    final keep = min(CheerTuning.recentBases, keys.length ~/ 2);
+    final blocked = keep == 0
+        ? const <String>{}
+        : _recent.sublist(max(0, _recent.length - keep)).toSet();
+    final fresh = [
+      for (final key in keys)
+        if (!blocked.contains(key)) key,
+    ];
+    final from = fresh.isEmpty ? keys : fresh;
+    final key = from[_random.nextInt(from.length)];
+    _recent.add(key);
+    if (_recent.length > CheerTuning.recentBases) {
+      _recent.removeRange(0, _recent.length - CheerTuning.recentBases);
+    }
     _revision++;
-    return chosen;
+    final variants = groups[key]!;
+    return variants[_random.nextInt(variants.length)];
   }
 
   /// Decides what one tap shows. The complete stage is always the complete phrase. Any other tap
@@ -152,23 +122,6 @@ class CheerPicker {
       return CheerDraw(pick(book, mood, CheerStage.rare), CheerKind.rare);
     }
     return CheerDraw(pick(book, mood, stage), CheerKind.normal);
-  }
-
-  _Deck _newDeck(int size, String fingerprint, _Deck? previous) {
-    final keep = min(CheerTuning.deckTailSize, size ~/ 2);
-    final tail = previous == null || keep == 0
-        ? const <int>[]
-        : previous.order.sublist(previous.order.length - keep);
-    final tailSet = tail.toSet();
-    final rest = [
-      for (var i = 0; i < size; i++)
-        if (!tailSet.contains(i)) i,
-    ]..shuffle(_random);
-    // The first `keep` places come from phrases the old deck did not end with. Everything after
-    // them, including the old tail, is shuffled together.
-    final head = rest.take(keep).toList();
-    final later = [...rest.skip(keep), ...tail]..shuffle(_random);
-    return _Deck(fingerprint, List.unmodifiable([...head, ...later]), 0);
   }
 }
 

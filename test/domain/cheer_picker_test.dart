@@ -18,205 +18,233 @@ void main() {
     CheerStage stage = CheerStage.low,
   }) => [for (var i = 0; i < count; i++) picker.pick(book, mood, stage)];
 
-  group('deck', () {
-    test('uses every phrase once before any repeats', () {
+  /// A file where every stage of every mood has [bases] base sentences with three variants each.
+  CheerBook variantBook(int bases) {
+    Map<String, Object?> stageOf(Mood mood, CheerStage stage) => {
+      stage.id: [
+        for (var b = 0; b < bases; b++)
+          for (final mark in ['', '~~', '!!'])
+            {
+              't': '${mood.id}-${stage.id}-$b$mark',
+              'b': '${mood.id}-${stage.id}-$b',
+            },
+      ],
+    };
+    return CheerBook.parse(
+      fileOf({
+        for (final mood in Mood.values)
+          mood.id: {
+            for (final stage in CheerStage.values) ...stageOf(mood, stage),
+          },
+      }),
+    ).book;
+  }
+
+  String baseOf(String phrase) =>
+      phrase.replaceAll('~', '').replaceAll('!', '');
+
+  group('base deck', () {
+    test('a base is picked first, then one of its variants', () {
+      final book = variantBook(80);
       final picker = CheerPicker(Random(1));
-      final book = bookOf(10);
-      final picks = pickMany(picker, book, 10);
-      expect(picks.toSet(), hasLength(10));
-    });
-
-    test('every deck is a full pass, deck after deck', () {
-      final picker = CheerPicker(Random(2));
-      final book = bookOf(37);
-      final picks = pickMany(picker, book, 37 * 6);
-      for (var d = 0; d < 6; d++) {
-        expect(
-          picks.sublist(d * 37, (d + 1) * 37).toSet(),
-          hasLength(37),
-          reason: 'deck $d',
-        );
+      final seen = <String>{};
+      for (var i = 0; i < 400; i++) {
+        seen.add(picker.pick(book, Mood.happy, CheerStage.low));
       }
+      expect(seen.any((p) => p.endsWith('~~')), isTrue);
+      expect(seen.any((p) => p.endsWith('!!')), isTrue);
+      expect(seen.any((p) => !p.endsWith('~') && !p.endsWith('!')), isTrue);
     });
 
-    test('the last 50 of a deck stay out of the first 50 of the next', () {
-      final picker = CheerPicker(Random(3));
-      final book = bookOf(200);
-      final picks = pickMany(picker, book, 200 * 5);
-      for (var d = 0; d < 4; d++) {
-        final tail = picks
-            .sublist((d + 1) * 200 - CheerTuning.deckTailSize, (d + 1) * 200)
-            .toSet();
-        final head = picks.sublist(
-          (d + 1) * 200,
-          (d + 1) * 200 + CheerTuning.deckTailSize,
+    test('in 300 picks no base comes again within a window of 60', () {
+      final book = variantBook(130);
+      final picker = CheerPicker(Random(2));
+      final bases = [
+        for (var i = 0; i < 300; i++)
+          baseOf(picker.pick(book, Mood.happy, CheerStage.low)),
+      ];
+      for (var i = 0; i < bases.length; i++) {
+        final from = max(0, i - CheerTuning.recentBases);
+        expect(
+          bases.sublist(from, i),
+          isNot(contains(bases[i])),
+          reason: 'pick $i repeats a base of the last 60',
         );
-        expect(head.where(tail.contains), isEmpty, reason: 'boundary $d');
       }
     });
 
     test(
-      'a small bundle keeps half of the last deck away from the next start',
+      'variants of one base are never shown back to back as different sentences',
       () {
-        // 7 phrases: the tail kept apart is 3, so the next deck opens with 3 phrases not in it.
-        final picker = CheerPicker(Random(4));
-        final book = bookOf(7);
-        final picks = pickMany(picker, book, 7 * 40);
-        for (var d = 0; d < 39; d++) {
-          final tail = picks.sublist((d + 1) * 7 - 3, (d + 1) * 7).toSet();
-          final head = picks.sublist((d + 1) * 7, (d + 1) * 7 + 3);
-          expect(head.where(tail.contains), isEmpty, reason: 'boundary $d');
+        final book = variantBook(10);
+        final picker = CheerPicker(Random(3));
+        var last = '';
+        for (var i = 0; i < 200; i++) {
+          final base = baseOf(picker.pick(book, Mood.happy, CheerStage.low));
+          expect(base, isNot(last));
+          last = base;
         }
       },
     );
 
-    test('the same phrase never comes twice in a row, even across decks', () {
-      for (final size in [2, 3, 5, 8, 9, 60]) {
-        final picker = CheerPicker(Random(size));
-        final book = bookOf(size);
-        final picks = pickMany(picker, book, size * 30);
-        for (var i = 1; i < picks.length; i++) {
-          expect(picks[i], isNot(picks[i - 1]), reason: 'size $size, pick $i');
+    test('the window is half the bases for a small bundle', () {
+      final book = variantBook(10);
+      final picker = CheerPicker(Random(4));
+      final bases = [
+        for (var i = 0; i < 300; i++)
+          baseOf(picker.pick(book, Mood.happy, CheerStage.low)),
+      ];
+      for (var i = 5; i < bases.length; i++) {
+        expect(bases.sublist(i - 5, i), isNot(contains(bases[i])));
+      }
+    });
+
+    test(
+      'when the bases run out the next round never starts with the tail of the last',
+      () {
+        final book = variantBook(8);
+        final picker = CheerPicker(Random(5));
+        final bases = [
+          for (var i = 0; i < 400; i++)
+            baseOf(picker.pick(book, Mood.happy, CheerStage.low)),
+        ];
+        // 8 bases: every window of 4 picks has 4 different bases, round after round.
+        for (var i = 0; i + 4 <= bases.length; i++) {
+          expect(bases.sublist(i, i + 4).toSet(), hasLength(4));
+        }
+        // And every base still comes.
+        expect(bases.toSet(), hasLength(8));
+      },
+    );
+
+    test('a plain string is its own base', () {
+      final book = bookOf(10);
+      final picker = CheerPicker(Random(6));
+      final picks = pickMany(picker, book, 200);
+      for (var i = 5; i < picks.length; i++) {
+        expect(picks.sublist(i - 5, i), isNot(contains(picks[i])));
+      }
+      expect(picks.toSet(), hasLength(10));
+    });
+
+    test('a bundle of one still answers', () {
+      final picker = CheerPicker(Random(7));
+      final book = bookOf(1);
+      expect(pickMany(picker, book, 3), hasLength(3));
+    });
+
+    test('the memory is shared by every mood and stage', () {
+      final book = variantBook(30);
+      final picker = CheerPicker(Random(8));
+      picker.pick(book, Mood.happy, CheerStage.low);
+      picker.pick(book, Mood.sad, CheerStage.high);
+      picker.pick(book, Mood.angry, CheerStage.complete);
+      expect(picker.snapshotJson()['recent'], hasLength(3));
+    });
+
+    test('complete and rare use the same way', () {
+      final book = variantBook(40);
+      final picker = CheerPicker(Random(9));
+      for (final stage in [CheerStage.complete, CheerStage.rare]) {
+        final bases = [
+          for (var i = 0; i < 100; i++)
+            baseOf(picker.pick(book, Mood.happy, stage)),
+        ];
+        for (var i = 20; i < bases.length; i++) {
+          expect(bases.sublist(i - 20, i), isNot(contains(bases[i])));
         }
       }
     });
 
-    test('a bundle of one still answers', () {
-      final picker = CheerPicker(Random(5));
-      final book = bookOf(1);
-      expect(pickMany(picker, book, 5), everyElement('0l0'));
+    test('the same seed gives the same order, another seed another', () {
+      final book = bookOf(30);
+      final a = pickMany(CheerPicker(Random(10)), book, 30);
+      expect(pickMany(CheerPicker(Random(10)), book, 30), a);
+      expect(pickMany(CheerPicker(Random(11)), book, 30), isNot(a));
     });
 
-    test('decks are separate per mood and per stage', () {
-      final picker = CheerPicker(Random(6));
-      final book = bookOf(6);
-      final happyLow = pickMany(picker, book, 3);
-      final sadHigh = pickMany(
-        picker,
-        book,
-        6,
-        mood: Mood.sad,
-        stage: CheerStage.high,
+    test('complete falls back to the full bundle when the file has none', () {
+      final book = CheerBook.parse(fileOf(moodsWith(6, complete: false))).book;
+      final picker = CheerPicker(Random(12));
+      expect(
+        picker.pick(book, Mood.happy, CheerStage.complete),
+        startsWith('0f'),
       );
-      expect(happyLow, everyElement(startsWith('0l')));
-      expect(sadHigh, everyElement(startsWith('3h')));
-      expect(sadHigh.toSet(), hasLength(6));
-      // The happy/low deck was not disturbed by the other pulls.
-      final restOfHappyLow = pickMany(picker, book, 3);
-      expect({...happyLow, ...restOfHappyLow}, hasLength(6));
     });
 
-    test('the same seed gives the same order', () {
-      List<String> run() => pickMany(CheerPicker(Random(7)), bookOf(30), 90);
-      expect(run(), run());
-    });
-
-    test('different seeds give different orders', () {
-      final a = pickMany(CheerPicker(Random(8)), bookOf(30), 30);
-      final b = pickMany(CheerPicker(Random(9)), bookOf(30), 30);
-      expect(a, isNot(b));
-    });
-
-    test('complete falls back to the full deck when the file has none', () {
-      final picker = CheerPicker(Random(10));
-      final book = bookOf(5, complete: false);
-      final picks = [
-        picker.pick(book, Mood.happy, CheerStage.full),
-        picker.pick(book, Mood.happy, CheerStage.complete),
-        picker.pick(book, Mood.happy, CheerStage.full),
-        picker.pick(book, Mood.happy, CheerStage.complete),
-        picker.pick(book, Mood.happy, CheerStage.full),
-      ];
-      expect(picks.toSet(), hasLength(5));
-      expect(picks, everyElement(startsWith('0f')));
-    });
-
-    test('complete uses its own deck when the file has one', () {
-      final picker = CheerPicker(Random(11));
-      final book = bookOf(4);
-      final picks = pickMany(picker, book, 4, stage: CheerStage.complete);
-      expect(picks.toSet(), hasLength(4));
-      expect(picks, everyElement(startsWith('0c')));
+    test('complete uses its own bundle when the file has one', () {
+      final picker = CheerPicker(Random(13));
+      expect(
+        picker.pick(bookOf(6), Mood.happy, CheerStage.complete),
+        startsWith('0c'),
+      );
     });
   });
 
-  group('saved position', () {
-    test('a new picker carries on with the unused part of the deck', () {
-      final book = bookOf(10);
-      final first = CheerPicker(Random(12));
-      final seen = pickMany(first, book, 4);
-
+  group('saved memory', () {
+    test('a new picker carries on with what was shown', () {
+      final book = variantBook(130);
+      final first = CheerPicker(Random(14));
+      final seen = [
+        for (var i = 0; i < 40; i++)
+          baseOf(first.pick(book, Mood.happy, CheerStage.low)),
+      ];
       final second = CheerPicker(Random(99), saved: first.snapshot());
-      final rest = pickMany(second, book, 6);
-      expect({...seen, ...rest}, hasLength(10));
+      final next = [
+        for (var i = 0; i < 60; i++)
+          baseOf(second.pick(book, Mood.happy, CheerStage.low)),
+      ];
+      final all = [...seen, ...next];
+      for (var i = 40; i < all.length; i++) {
+        expect(all.sublist(max(0, i - 60), i), isNot(contains(all[i])));
+      }
     });
 
     test('the snapshot survives a JSON round trip', () {
-      final book = bookOf(10);
-      final first = CheerPicker(Random(13));
-      final seen = pickMany(first, book, 7);
+      final book = variantBook(130);
+      final first = CheerPicker(Random(15));
+      final seen = [
+        for (var i = 0; i < 30; i++)
+          baseOf(first.pick(book, Mood.happy, CheerStage.low)),
+      ];
       final saved = CheerPicker.snapshotFromJson(first.snapshotJson());
       final second = CheerPicker(Random(98), saved: saved);
-      expect({...seen, ...pickMany(second, book, 3)}, hasLength(10));
+      final next = baseOf(second.pick(book, Mood.happy, CheerStage.low));
+      expect(seen, isNot(contains(next)));
     });
 
-    test('a changed phrase file starts a fresh shuffle without error', () {
-      final first = CheerPicker(Random(14));
-      pickMany(first, bookOf(10), 4);
-      final other = CheerBook.parse(
-        fileOf({
-          for (final mood in Mood.values)
-            mood.id: {
-              for (final stage in CheerStage.values)
-                stage.id: [
-                  for (var i = 0; i < 10; i++)
-                    'new-${mood.index}${stage.id[0]}$i',
-                ],
-            },
-        }),
-      ).book;
-      final second = CheerPicker(Random(15), saved: first.snapshot());
-      expect(pickMany(second, other, 10).toSet(), hasLength(10));
+    test('only the last 60 are kept', () {
+      final picker = CheerPicker(Random(16));
+      final book = variantBook(100);
+      for (var i = 0; i < 150; i++) {
+        picker.pick(book, Mood.happy, CheerStage.low);
+      }
+      expect(picker.snapshotJson()['recent'] as List, hasLength(60));
     });
 
-    test('garbage saved state is ignored', () {
+    test('garbage and old saved state is ignored', () {
       final garbage = <Object?>[
         null,
         'text',
         {'version': 9},
-        {'version': 1, 'decks': 'x'},
+        {'version': 1, 'decks': {}},
+        {'version': 2, 'recent': 'x'},
         {
-          'version': 1,
-          'decks': {
-            'happy/low': {'fp': 1, 'order': 'x', 'pos': 'y'},
-            'sad/low': {
-              'fp': 'a',
-              'order': [0, 0, 1],
-              'pos': 99,
-            },
-            'nope/low': {
-              'fp': 'a',
-              'order': [0],
-              'pos': 0,
-            },
-          },
+          'version': 2,
+          'recent': [1, null, ''],
         },
       ];
       for (final g in garbage) {
         final picker = CheerPicker(
-          Random(16),
+          Random(17),
           saved: CheerPicker.snapshotFromJson(g),
         );
-        expect(
-          pickMany(picker, bookOf(5), 5).toSet(),
-          hasLength(5),
-          reason: '$g',
-        );
+        expect(pickMany(picker, bookOf(5), 5), hasLength(5), reason: '$g');
       }
     });
 
     test('is dirty after a pick and clean after being saved', () {
-      final picker = CheerPicker(Random(17));
+      final picker = CheerPicker(Random(18));
       expect(picker.isDirty, isFalse);
       picker.pick(bookOf(3), Mood.happy, CheerStage.low);
       expect(picker.isDirty, isTrue);
@@ -238,7 +266,7 @@ void main() {
         Random(18),
         JsonFileCheerDeckStore(file),
       );
-      expect(pickMany(picker, bookOf(4), 4).toSet(), hasLength(4));
+      expect(pickMany(picker, bookOf(4), 4), hasLength(4));
     });
 
     test('persist writes only when something changed', () async {
@@ -253,7 +281,7 @@ void main() {
       expect(await picker.persist(store), isFalse);
     });
 
-    test('the position carries over an app restart', () async {
+    test('the memory carries over an app restart', () async {
       final book = bookOf(12);
       final store = JsonFileCheerDeckStore(file);
       final first = await CheerPicker.open(Random(20), store);
@@ -264,8 +292,8 @@ void main() {
         Random(77),
         JsonFileCheerDeckStore(file),
       );
-      final rest = pickMany(second, book, 7);
-      expect({...seen, ...rest}, hasLength(12));
+      // 12 bases: the window is 6, so none of the 5 just shown comes first.
+      expect(seen, isNot(contains(pickMany(second, book, 1).single)));
     });
 
     test('a corrupt file opens as a fresh picker', () async {
@@ -274,7 +302,7 @@ void main() {
         Random(21),
         JsonFileCheerDeckStore(file),
       );
-      expect(pickMany(picker, bookOf(4), 4).toSet(), hasLength(4));
+      expect(pickMany(picker, bookOf(4), 4), hasLength(4));
     });
 
     test('a failed save is silent and keeps the picker dirty', () async {
