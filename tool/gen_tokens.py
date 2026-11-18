@@ -4,8 +4,9 @@
   python3 tool/gen_tokens.py           generate the files
   python3 tool/gen_tokens.py --check   only verify that the files match the tokens (hook, CI)
 
-Generated files: lib/design/tokens.g.dart and the native splash color (the Android colors.xml,
-the iOS color set, and the fallback color in LaunchScreen.storyboard). The splash is always light,
+Generated files: lib/design/tokens.g.dart and the native colors: the splash color (the Android colors.xml,
+the iOS color set, and the fallback color in LaunchScreen.storyboard) and the home screen widget colors
+(widget_ground, widget_ink and widget_line in the same colors.xml, ios/MoodWidget/WidgetColors.g.swift). The splash is always light,
 because the app starts in light even when the OS is dark, so it follows light.ground only.
 --check also verifies that the Android styles and the iOS storyboard really use those colors.
 
@@ -39,6 +40,8 @@ SPLASH_FILES = {
     "android_light": Path("android/app/src/main/res/values/colors.xml"),
     "ios_colorset": Path("ios/Runner/Assets.xcassets/SplashBackground.colorset/Contents.json"),
     "ios_storyboard": Path("ios/Runner/Base.lproj/LaunchScreen.storyboard"),
+    # Colors of the home screen widgets (white tone: light.ground, light.ink and light.line).
+    "ios_widget_colors": Path("ios/MoodWidget/WidgetColors.g.swift"),
 }
 
 HEX = re.compile(r"#([0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})")
@@ -513,25 +516,50 @@ def render(tokens):
     return "\n".join(out)
 
 
-def splash_ground(tokens, theme):
-    """RRGGBB of theme.ground for the splash. The splash background must be opaque."""
+def opaque_rgb(tokens, theme, name):
+    """RRGGBB of theme.color.<name> for native files. Native splash and widget colors must be opaque."""
     sets = token_sets(tokens)
     doc = sets.get(theme)
-    ground = doc.get("color", {}).get("ground") if isinstance(doc, dict) else None
-    if ground is None:
-        raise TokenError(f"{theme}.color.ground is missing, so there is no splash color")
-    argb = color_argb(ground, f"{theme}.color.ground")
+    token = doc.get("color", {}).get(name) if isinstance(doc, dict) else None
+    if token is None:
+        raise TokenError(f"{theme}.color.{name} is missing, so there is no native color")
+    argb = color_argb(token, f"{theme}.color.{name}")
     if argb[:2] != "FF":
-        raise TokenError(f"{theme}.color.ground: the splash background must be opaque")
+        raise TokenError(f"{theme}.color.{name}: native splash and widget colors must be opaque")
     return argb[2:]
 
 
-def android_colors_xml(theme, rgb):
+def splash_ground(tokens, theme):
+    """RRGGBB of theme.ground for the splash. The splash background must be opaque."""
+    return opaque_rgb(tokens, theme, "ground")
+
+
+def android_colors_xml(theme, rgb, ink_rgb, line_rgb):
     return (
         '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n'
-        f"    <!-- Generated file. Do not edit. tool/gen_tokens.py writes it from {theme}.color.ground "
-        "in design/tokens.json. -->\n"
-        f'    <color name="splash_background">#{rgb}</color>\n</resources>\n'
+        f"    <!-- Generated file. Do not edit. tool/gen_tokens.py writes it from {theme}.color.ground and "
+        f"{theme}.color.ink in design/tokens.json. -->\n"
+        f'    <color name="splash_background">#{rgb}</color>\n'
+        f'    <color name="widget_ground">#{rgb}</color>\n'
+        f'    <color name="widget_ink">#{ink_rgb}</color>\n'
+        f'    <color name="widget_line">#{line_rgb}</color>\n</resources>\n'
+    )
+
+
+def swift_widget_colors(ground_rgb, ink_rgb, line_rgb):
+    def color(rgb):
+        r, g, b = (int(rgb[i:i + 2], 16) for i in (0, 2, 4))
+        return f"Color(red: {r}.0 / 255, green: {g}.0 / 255, blue: {b}.0 / 255)"
+
+    return (
+        "// Generated file. Do not edit.\n"
+        "// Edit design/tokens.json, then run python3 tool/gen_tokens.py.\n"
+        "import SwiftUI\n\n"
+        "enum WidgetColors {\n"
+        f"    static let ground = {color(ground_rgb)}\n"
+        f"    static let ink = {color(ink_rgb)}\n"
+        f"    static let line = {color(line_rgb)}\n"
+        "}\n"
     )
 
 
@@ -610,9 +638,10 @@ def ios_storyboard(storyboard, light_rgb):
 
 def splash_outputs(tokens, storyboard):
     """{repo-relative path: content}. The splash color comes from light.ground."""
-    light = splash_ground(tokens, "light")
+    light, ink, line = (opaque_rgb(tokens, "light", n) for n in ("ground", "ink", "line"))
     return {
-        SPLASH_FILES["android_light"]: android_colors_xml("light", light),
+        SPLASH_FILES["android_light"]: android_colors_xml("light", light, ink, line),
+        SPLASH_FILES["ios_widget_colors"]: swift_widget_colors(light, ink, line),
         SPLASH_FILES["ios_colorset"]: ios_color_set(light),
         SPLASH_FILES["ios_storyboard"]: ios_storyboard(storyboard, light),
     }
