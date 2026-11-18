@@ -43,6 +43,23 @@ DYNAMIC_CAST = re.compile(r"\bas\s+dynamic\b")
 # Code and comments are English only. Korean belongs in docs (.md), translations (.arb) and token data (.json).
 HANGUL = re.compile(r"[\u1100-\u11ff\u3130-\u318f\uac00-\ud7a3]")
 CODE_KINDS = ("dart", "dart-test", "code")
+# Flat style (docs/DESIGN.md): no gradients, blurred shadows or glows. A nonzero elevation casts a shadow too.
+FLAT_BANNED = re.compile(
+    r"\b(?:Linear|Radial|Sweep)Gradient\b|(?<![\w.])Gradient\s*\(|\bBoxShadow\b|(?<![\w.])Shadow\s*\("
+    r"|\bImageFilter\.blur\b|\bBackdropFilter\b|\bMaskFilter\.blur\b"
+)
+ELEVATION = re.compile(r"(?<![\w.])elevation\s*:\s*([^,)\s;]+)")
+FLAT_ELEVATION_OK = {"0", "0.0"}
+# The first string of test(...), testWidgets(...) and group(...) is a name, not code.
+TEST_NAME = re.compile(r"""\b(?:test|testWidgets|group)\(\s*(?:'[^']*'|"[^"]*")""")
+TRAILING_COMMENT = re.compile(r"(?<!:)//.*$")
+
+
+def breaks_flat_style(line):
+    code = TRAILING_COMMENT.sub("", TEST_NAME.sub("", line))
+    if FLAT_BANNED.search(code):
+        return True
+    return any(m.group(1) not in FLAT_ELEVATION_OK for m in ELEVATION.finditer(code))
 
 
 def findings_in_line(line, kind):
@@ -67,6 +84,8 @@ def findings_in_line(line, kind):
             out.append("debug print")
         if DYNAMIC_CAST.search(line):
             out.append("dynamic cast")
+    if kind in ("dart", "dart-test") and not DART_COMMENT.match(line) and breaks_flat_style(line):
+        out.append("flat style")
     return out
 
 
@@ -102,7 +121,8 @@ def report(hits):
         print(f"  {h}", file=sys.stderr)
     print(
         "Replace dashes with a period or a joined sentence, curly quotes with straight ones, drop decorative emoji, "
-        "remove debug prints, and write code and comments in English. Mark a line slop-ok only when really needed.",
+        "remove debug prints, keep the style flat (no gradients, shadows, blurs or elevation), and write code and comments in English. "
+        "Mark a line slop-ok only when really needed.",
         file=sys.stderr,
     )
     return 1
