@@ -5,7 +5,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from gen_tokens import IDENT, OUT, SRC, TokenError, load, parse_json, render, token_sets
+from gen_tokens import (
+    IDENT, OUT, REQUIRED_COLORS, REQUIRED_CORE, SRC, TokenError, load, parse_json, render, token_sets,
+)
 
 BASE = load()
 THEMES = [k for k in BASE if k != "core"]
@@ -242,10 +244,16 @@ class Names(RefusesWith):
                     self.assertRefuses(t, word)
 
     def test_font_family_cannot_break_out_of_the_dart_string(self):
-        for bad in ["O'Neil", "a\\b", "a\nb", "a\rb", "Cost$", "tab\tfont", "", "  ", 3, None]:
+        for bad in ["a\\b", "a\nb", "a\rb", "Cost$", "tab\tfont", "", "  ", 3, None]:
             with self.subTest(bad=bad):
                 t = edited(lambda t: t["core"]["font"]["family"].update({"$value": bad}))
                 self.assertRefuses(t, "font.family")
+
+    def test_apostrophe_in_a_font_name_is_escaped(self):
+        t = edited(lambda t: t["core"]["font"]["family"].update({"$value": "O'Neil Sans"}))
+        out = render(t)
+        self.assertIn("fontFamily: 'O\\x27Neil Sans'", out)
+        self.assertNotIn("O'Neil", out)
 
     def test_font_family_with_spaces_is_fine(self):
         t = edited(lambda t: t["core"]["font"]["family"].update({"$value": "Noto Sans KR"}))
@@ -426,7 +434,210 @@ class SingleFile(RefusesWith):
         self.assertEqual(render(c), render(BASE))
 
 
+CORE_GROUPS = ("space", "radius", "type", "motion", "font")
+BAD_GROUPS = [None, {}, [], 0, "", False, "x", 5, {"$type": "dimension"}, {"$description": "비었음"}]
+
+
+class RequiredGroups(RefusesWith):
+    def test_core_groups_cannot_be_null_empty_or_not_objects(self):
+        for group in CORE_GROUPS:
+            for bad in BAD_GROUPS:
+                with self.subTest(group=group, bad=bad):
+                    self.assertRefuses(edited(lambda t: t["core"].update({group: bad})), group)
+
+    def test_core_groups_cannot_be_missing(self):
+        for group in CORE_GROUPS:
+            with self.subTest(group):
+                self.assertRefuses(edited(lambda t: t["core"].pop(group)), group)
+
+    def test_color_group_cannot_be_null_empty_or_missing_in_any_theme(self):
+        for theme in THEMES:
+            for bad in BAD_GROUPS:
+                with self.subTest(theme=theme, bad=bad):
+                    self.assertRefuses(edited(lambda t: t[theme].update({"color": bad})), theme)
+            with self.subTest(theme=theme, bad="missing"):
+                self.assertRefuses(edited(lambda t: t[theme].pop("color")), theme)
+
+    def test_a_set_that_is_null_or_not_an_object_is_refused(self):
+        for name in ("core", *THEMES):
+            for bad in (None, [], 0, "x"):
+                with self.subTest(name=name, bad=bad):
+                    self.assertRefuses(edited(lambda t: t.update({name: bad})), name)
+
+    def test_names_the_app_uses_cannot_go_missing(self):
+        for group, names in REQUIRED_CORE.items():
+            for name in names:
+                with self.subTest(group=group, name=name):
+                    self.assertRefuses(edited(lambda t: t["core"][group].pop(name)), name)
+
+    def test_colors_the_app_uses_cannot_go_missing_from_any_theme(self):
+        for theme in THEMES:
+            for name in REQUIRED_COLORS:
+                with self.subTest(theme=theme, name=name):
+                    self.assertRefuses(edited(lambda t: t[theme]["color"].pop(name)), name)
+
+    def test_required_names_match_what_lib_uses(self):
+        classes = {"Space": "space", "Radii": "radius", "TypeScale": "type", "Motion": "motion"}
+        used = {g: set() for g in classes.values()}
+        root = Path(__file__).resolve().parent.parent
+        for f in [*(root / "lib").rglob("*.dart"), *(root / "test").rglob("*.dart")]:
+            if f.name == "tokens.g.dart":
+                continue
+            for m in re.finditer(r"\b(Space|Radii|TypeScale|Motion)\.(\w+)", f.read_text(encoding="utf-8")):
+                used[classes[m[1]]].add(m[2])
+        for group, names in used.items():
+            self.assertLessEqual(names, set(REQUIRED_CORE[group]), f"{group}: REQUIRED_CORE 에 더하세요")
+
+    def test_extra_names_are_fine(self):
+        t = edited(lambda t: t["core"]["space"].update({"huge": {"$type": "dimension", "$value": "96px"}}))
+        self.assertIn("static const double huge = 96;", render(t))
+
+
+class NullAndInheritedTypes(RefusesWith):
+    def test_an_explicit_null_type_is_refused(self):
+        spots = {
+            "light.color.ink": lambda t: t["light"]["color"]["ink"].update({"$type": None}),
+            "space.xs": lambda t: t["core"]["space"]["xs"].update({"$type": None}),
+            "radius.card": lambda t: t["core"]["radius"]["card"].update({"$type": None}),
+            "motion.tap": lambda t: t["core"]["motion"]["tap"].update({"$type": None}),
+            "type.body": lambda t: t["core"]["type"]["body"].update({"$type": None}),
+            "font.family": lambda t: t["core"]["font"]["family"].update({"$type": None}),
+        }
+        for where, change in spots.items():
+            with self.subTest(where):
+                self.assertRefuses(edited(change), where)
+
+    def test_a_group_type_must_match_the_slot(self):
+        for group, wrong in (("space", "color"), ("radius", "duration"), ("type", "dimension"),
+                             ("motion", "dimension"), ("font", "color"), ("space", None), ("space", 3)):
+            with self.subTest(group=group, wrong=wrong):
+                t = edited(lambda t: t["core"][group].update({"$type": wrong}))
+                self.assertRefuses(t, group)
+        t = edited(lambda t: t["dark"]["color"].update({"$type": "dimension"}))
+        self.assertRefuses(t, "dark")
+
+    def test_a_matching_group_type_is_fine_and_is_not_a_token_name(self):
+        def add(t):
+            for group, typ in (("space", "dimension"), ("radius", "dimension"), ("type", "typography"),
+                               ("motion", "duration"), ("font", "fontFamily")):
+                t["core"][group]["$type"] = typ
+            for theme in THEMES:
+                t[theme]["color"]["$type"] = "color"
+                t[theme]["color"]["$description"] = "메모"
+        self.assertEqual(render(edited(add)), render(BASE))
+
+    def test_tokens_inherit_the_group_type(self):
+        def add(t):
+            t["core"]["space"]["$type"] = "dimension"
+            for tok in t["core"]["space"].values():
+                if isinstance(tok, dict):
+                    tok.pop("$type", None)
+        self.assertEqual(render(edited(add)), render(BASE))
+
+    def test_a_token_type_that_differs_from_the_group_is_refused(self):
+        def add(t):
+            t["core"]["space"]["$type"] = "dimension"
+            t["core"]["space"]["xs"]["$type"] = "color"
+        self.assertRefuses(edited(add), "space.xs")
+
+
+class Letters(RefusesWith):
+    def test_misspelt_typography_field_is_refused(self):
+        t = edited(lambda t: t["core"]["type"]["body"]["$value"].update({"fontWeigth": "700"}))
+        self.assertRefuses(t, "fontWeigth")
+
+    def test_fields_tokens_studio_adds_are_ignored(self):
+        extra = {"paragraphSpacing": "0", "paragraphIndent": "0", "textCase": "none", "textDecoration": "none"}
+        t = edited(lambda t: t["core"]["type"]["body"]["$value"].update(extra))
+        self.assertEqual(render(t), render(BASE))
+
+    def test_letter_spacing_becomes_a_text_style_field(self):
+        cases = {"-0.5px": "-0.5", "2px": "2", 1: "1", "0": "0"}
+        for given, shown in cases.items():
+            with self.subTest(given):
+                t = edited(lambda t: t["core"]["type"]["body"]["$value"].update({"letterSpacing": given}))
+                self.assertIn(f"height: 1.5, letterSpacing: {shown});", render(t))
+        t = edited(lambda t: t["core"]["type"]["body"]["$value"].update(
+            {"letterSpacing": {"value": 1.5, "unit": "px"}}))
+        self.assertIn("height: 1.5, letterSpacing: 1.5);", render(t))
+
+    def test_bad_letter_spacing_is_refused(self):
+        for bad in (True, float("nan"), float("inf"), "x", "1em", "", None, {"value": 1, "unit": "rem"}):
+            with self.subTest(bad=bad):
+                t = edited(lambda t: t["core"]["type"]["body"]["$value"].update({"letterSpacing": bad}))
+                self.assertRefuses(t, "type.body.letterSpacing")
+
+    def test_without_letter_spacing_the_output_has_none(self):
+        self.assertNotIn("letterSpacing", render(BASE))
+
+
+class StaticNames(RefusesWith):
+    OK = ["name", "type", "t", "other", "copyWith", "lerp", "required", "static", "get", "brightness"]
+    BAD = ["hashCode", "toString", "runtimeType", "noSuchMethod", *DART_RESERVED]
+
+    def token(self, group):
+        return {
+            "space": {"$type": "dimension", "$value": "4px"},
+            "radius": {"$type": "dimension", "$value": "4px"},
+            "motion": {"$type": "duration", "$value": "10ms"},
+            "type": copy.deepcopy(BASE["core"]["type"]["body"]),
+        }[group]
+
+    def test_only_real_collisions_are_refused_outside_the_palette(self):
+        for group in ("space", "radius", "motion", "type"):
+            for name in self.OK:
+                with self.subTest(group=group, ok=name):
+                    t = edited(lambda t: t["core"][group].update({name: self.token(group)}))
+                    self.assertIn(f" {name} = ", render(t))
+            for name in self.BAD:
+                with self.subTest(group=group, bad=name):
+                    t = edited(lambda t: t["core"][group].update({name: self.token(group)}))
+                    self.assertRefuses(t, name)
+
+    def test_palette_names_stay_strict(self):
+        for name in ("type", "t", "other", "required", "name"):
+            def add(t):
+                for theme in THEMES:
+                    t[theme]["color"][name] = {"$type": "color", "$value": "#112233"}
+            with self.subTest(name):
+                self.assertRefuses(edited(add), name)
+
+
+class DurationLimits(RefusesWith):
+    def test_one_hour_is_the_ceiling(self):
+        ok = ["3600000ms", {"value": 3600000, "unit": "ms"}, {"value": 3600, "unit": "s"}]
+        for good in ok:
+            with self.subTest(good=good):
+                t = edited(lambda t: t["core"]["motion"]["tap"].update({"$value": good}))
+                self.assertIn("tap = Duration(milliseconds: 3600000)", render(t))
+        too_long = ["3600001ms", "99999999999999999999ms", {"value": 3600001, "unit": "ms"},
+                    {"value": 3601, "unit": "s"}, {"value": 1e308, "unit": "ms"},
+                    {"value": 1e308, "unit": "s"}, {"value": 10**400, "unit": "s"}]
+        for bad in too_long:
+            with self.subTest(bad=bad):
+                t = edited(lambda t: t["core"]["motion"]["tap"].update({"$value": bad}))
+                self.assertRefuses(t, "motion.tap")
+
+    def test_a_tiny_positive_value_that_rounds_to_zero_is_refused(self):
+        for bad in ({"value": 1e-9, "unit": "ms"}, {"value": 1e-9, "unit": "s"},
+                    {"value": 5e-7, "unit": "ms"}, {"value": 0.4, "unit": "ms"}):
+            with self.subTest(bad=bad):
+                t = edited(lambda t: t["core"]["motion"]["tap"].update({"$value": bad}))
+                self.assertRefuses(t, "motion.tap")
+
+    def test_zero_in_every_form_is_fine(self):
+        for good in ("0ms", {"value": 0, "unit": "ms"}, {"value": 0.0, "unit": "s"}, {"value": -0.0, "unit": "ms"}):
+            with self.subTest(good=good):
+                t = edited(lambda t: t["core"]["motion"]["tap"].update({"$value": good}))
+                self.assertIn("tap = Duration(milliseconds: 0)", render(t))
+
+
 class Output(unittest.TestCase):
+    def test_header_points_at_the_single_token_file(self):
+        out = render(BASE)
+        self.assertIn("// design/tokens.json 을 고친 뒤 python3 tool/gen_tokens.py 를 돌린다.", out)
+        self.assertNotIn("design/tokens/", out)
+
     def test_checked_in_output_is_exactly_what_the_tokens_render(self):
         self.assertEqual(OUT.read_text(encoding="utf-8"), render(BASE))
 

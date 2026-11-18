@@ -57,7 +57,7 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
-  # 글꼴 이름은 design/tokens/core.json 의 font.family, font.brand 와 같아야 한다.
+  # 글꼴 이름은 design/tokens.json 의 core 세트 font.family, font.brand 와 같아야 한다.
   fonts:
     - family: Pretendard
       fonts:

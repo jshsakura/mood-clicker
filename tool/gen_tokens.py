@@ -30,6 +30,7 @@ IDENT = re.compile(r"[a-z][A-Za-z0-9]*")
 DURATION = re.compile(r"(\d+)ms", re.ASCII)
 NUMBER = re.compile(r"\d+(?:\.\d+)?", re.ASCII)
 SIZE = re.compile(r"(\d+(?:\.\d+)?)(?:px)?", re.ASCII)
+SIGNED_SIZE = re.compile(r"(-?\d+(?:\.\d+)?)(?:px)?", re.ASCII)
 PERCENT = re.compile(r"(\d+(?:\.\d+)?)%", re.ASCII)
 WEIGHTS = {100, 200, 300, 400, 500, 600, 700, 800, 900}
 
@@ -43,17 +44,46 @@ TYPE_OF = {
     "font": "fontFamily",
 }
 
-# 다트 예약어와, 생성하는 클래스의 멤버나 매개변수와 겹쳐 코드가 깨지는 이름.
-RESERVED = frozenset(
+# 다트 언어의 예약어. 식별자로 쓸 수 없다.
+DART_WORDS = frozenset(
     """assert break case catch class const continue default do else enum extends false final
     finally for if in is new null rethrow return super switch this throw true try var void while
-    with
-    abstract as covariant deferred dynamic export extension external factory function get hide
+    with""".split()
+)
+
+# 클래스의 static 멤버가 Object 의 인스턴스 멤버와 이름이 같으면 다트가 거절한다.
+OBJECT_MEMBERS = frozenset({"hashCode", "toString", "runtimeType", "noSuchMethod"})
+
+# 간격, 둥글기, 움직임, 글자 이름은 static 멤버라 이 둘만 피하면 된다.
+STATIC_RESERVED = DART_WORDS | OBJECT_MEMBERS
+
+# 색 이름은 AppPalette 의 필드이자 copyWith, lerp 의 매개변수라 더 많은 이름과 겹친다.
+PALETTE_RESERVED = DART_WORDS | OBJECT_MEMBERS | frozenset(
+    """abstract as covariant deferred dynamic export extension external factory function get hide
     implements import interface late library mixin on operator part required set show static
     sync typedef async await yield base sealed
-    name brightness type other t copyWith lerp hashCode runtimeType toString noSuchMethod
-    debugFillProperties toDiagnosticsNode""".split()
+    name brightness type other t copyWith lerp debugFillProperties toDiagnosticsNode""".split()
 )
+
+# 앱 코드(lib, test)가 쓰는 이름. 빠지면 앱이 컴파일되지 않으므로 생성 전에 거절한다.
+# tool/test_gen_tokens.py 가 lib 의 실제 참조가 여기 들어 있는지 지킨다.
+REQUIRED_CORE = {
+    "space": ("sm", "md", "lg", "xl", "xxl", "xxxl"),
+    "radius": ("card", "button", "pill"),
+    "type": ("display", "title", "body", "label", "count"),
+    "motion": ("fillRise",),
+    "font": ("family",),
+}
+REQUIRED_COLORS = (
+    "accent", "error", "fill", "ground", "happy", "ink", "inkMuted",
+    "line", "mapLine", "onAccent", "sad", "surface",
+)
+
+# 글자 토큰이 받는 필드. Tokens Studio 가 덧붙이는 것은 알지만 쓰지 않으므로 건너뛴다.
+TYPOGRAPHY_FIELDS = frozenset({"fontFamily", "fontSize", "fontWeight", "lineHeight", "letterSpacing"})
+TOKENS_STUDIO_EXTRAS = frozenset({"paragraphSpacing", "paragraphIndent", "textCase", "textDecoration"})
+
+MAX_MS = 3_600_000  # 한 시간
 
 
 class TokenError(ValueError):
@@ -94,17 +124,28 @@ def value(tok, where):
 
 def check_type(tok, group, where):
     expected = TYPE_OF[group]
-    got = tok.get("$type") if isinstance(tok, dict) else None
-    if got is not None and got != expected:
-        raise TokenError(f"{where}: $type 은 '{expected}' 여야 합니다 (지금 '{got}')")
+    if isinstance(tok, dict) and "$type" in tok and tok["$type"] != expected:
+        raise TokenError(f"{where}: $type 은 '{expected}' 여야 합니다 (지금 {tok['$type']!r})")
 
 
-def group_of(doc, name, where):
-    g = doc.get(name, {})
-    g = {} if g is None else g
+def group_items(parent, name, where, required=()):
+    """묶음 안의 토큰만 돌려준다. 묶음에 붙은 $type, $description 같은 $ 키는 토큰이 아니라 뺀다.
+
+    묶음이 없거나 null 이거나 객체가 아니거나 비었으면, 앱이 쓰는 이름이 빠졌으면 거절한다.
+    묶음의 $type 은 그 자리의 기대값과 같아야 하고, 그 아래 토큰이 이를 물려받는다.
+    """
+    g = parent.get(name) if isinstance(parent, dict) else None
     if not isinstance(g, dict):
-        raise TokenError(f"{where}: {name} 는 객체여야 합니다")
-    return g
+        raise TokenError(f"{where}: {name} 묶음이 없거나 객체가 아닙니다")
+    if "$type" in g and g["$type"] != TYPE_OF[name]:
+        raise TokenError(f"{where}.{name}: 묶음의 $type 은 '{TYPE_OF[name]}' 여야 합니다 (지금 {g['$type']!r})")
+    items = {k: v for k, v in g.items() if not k.startswith("$")}
+    if not items:
+        raise TokenError(f"{where}: {name} 묶음이 비어 있습니다")
+    missing = [k for k in required if k not in items]
+    if missing:
+        raise TokenError(f"{where}.{name}: 앱이 쓰는 이름이 빠졌습니다 {missing}")
+    return items
 
 
 def resolve(v, core, where):
@@ -121,10 +162,10 @@ def resolve(v, core, where):
     return value(node, where)
 
 
-def ident(name, where, reserved=True):
+def ident(name, where, banned=STATIC_RESERVED):
     if not IDENT.fullmatch(name):
         raise TokenError(f"{where}: 이름 '{name}' 은 소문자로 시작하는 영문, 숫자만 씁니다")
-    if reserved and name in RESERVED:
+    if name in banned:
         raise TokenError(f"{where}: 이름 '{name}' 은 다트 예약어이거나 생성 코드와 겹쳐 쓸 수 없습니다")
     return name
 
@@ -149,18 +190,18 @@ def unit_object(v, where, units):
     return real(v["value"], where), v["unit"]
 
 
-def size(v, where, positive=False):
-    """'16px', 16, {value, unit: px}. 0 이상(positive 면 0 초과)의 유한한 수."""
+def size(v, where, positive=False, signed=False):
+    """'16px', 16, {value, unit: px}. 0 이상(positive 면 0 초과, signed 면 음수도)의 유한한 수."""
     if isinstance(v, dict):
         n, _ = unit_object(v, where, ("px",))
     elif isinstance(v, str):
-        m = SIZE.fullmatch(v)
+        m = (SIGNED_SIZE if signed else SIZE).fullmatch(v)
         if not m:
-            raise TokenError(f"{where}: 크기는 '16px' 처럼 0 이상의 수와 px 로 씁니다")
+            raise TokenError(f"{where}: 크기는 '16px' 처럼 {'' if signed else '0 이상의 '}수와 px 로 씁니다")
         n = real(float(m.group(1)), where)
     else:
         n = real(v, where)
-    if n < 0 or (positive and n == 0):
+    if (n < 0 and not signed) or (positive and n == 0):
         raise TokenError(f"{where}: 크기는 {'0 보다 큰' if positive else '0 이상의'} 수여야 합니다")
     return n
 
@@ -185,9 +226,14 @@ def line_height(v, where):
 def font_family(v, where):
     if not isinstance(v, str) or not v.strip():
         raise TokenError(f"{where}: 글꼴 이름은 비어 있지 않은 문자열입니다")
-    if any(c in "'\\$" or ord(c) < 32 or ord(c) == 127 for c in v):
-        raise TokenError(f"{where}: 글꼴 이름에 작은따옴표, 역슬래시, $, 줄바꿈 같은 제어 문자는 쓸 수 없습니다")
+    if any(c in "\\$" or ord(c) < 32 or ord(c) == 127 for c in v):
+        raise TokenError(f"{where}: 글꼴 이름에 역슬래시, $, 줄바꿈 같은 제어 문자는 쓸 수 없습니다")
     return v
+
+
+def dart_quote_safe(text):
+    """작은따옴표 문자열 안에 그대로 넣을 수 있게 작은따옴표만 \\x27 로 바꾼다. 나머지 위험 문자는 앞에서 거절했다."""
+    return text.replace("'", "\\x27")
 
 
 def byte(x):
@@ -244,10 +290,6 @@ def brightness_of(doc, argbs, theme):
     app = ext.get("app") if isinstance(ext, dict) else None
     b = app.get("brightness") if isinstance(app, dict) else None
     if b is None:
-        if "ground" not in argbs:
-            raise TokenError(
-                f"{theme}: $extensions.app.brightness 도 없고 ground 색도 없어 밝기를 정할 수 없습니다"
-            )
         return "light" if luminance(argbs["ground"]) > 0.5 else "dark"
     if b not in ("light", "dark"):
         raise TokenError(f"{theme}: $extensions.app.brightness 는 light 나 dark 여야 합니다")
@@ -262,17 +304,24 @@ def number(tok, group, where):
 def millis(tok, where):
     check_type(tok, "motion", where)
     v = value(tok, where)
+    out_of_range = f"{where}: 시간은 0 이상 {MAX_MS}ms(한 시간) 이하입니다"
     if isinstance(v, str):
         m = DURATION.fullmatch(v)
-        if m:
-            return int(m.group(1))
-    elif isinstance(v, dict):
-        n, unit = unit_object(v, where, ("ms", "s"))
-        ms = n * 1000 if unit == "s" else n
-        if ms >= 0 and abs(ms - round(ms)) < 1e-6:
-            return int(round(ms))
-        raise TokenError(f"{where}: 시간은 0 이상의 정수 ms 여야 합니다")
-    raise TokenError(f"{where}: 시간은 '120ms' 나 {{value, unit: ms 또는 s}} 로 씁니다")
+        if not m:
+            raise TokenError(f"{where}: 시간은 '120ms' 나 {{value, unit: ms 또는 s}} 로 씁니다")
+        ms = int(m.group(1))
+        if ms > MAX_MS:
+            raise TokenError(out_of_range)
+        return ms
+    if not isinstance(v, dict):
+        raise TokenError(f"{where}: 시간은 '120ms' 나 {{value, unit: ms 또는 s}} 로 씁니다")
+    n, unit = unit_object(v, where, ("ms", "s"))
+    ms = n * 1000 if unit == "s" else n
+    if not math.isfinite(ms) or not 0 <= ms <= MAX_MS:
+        raise TokenError(out_of_range)
+    if abs(ms - round(ms)) >= 1e-6 or (ms > 0 and round(ms) == 0):
+        raise TokenError(f"{where}: 시간은 정수 ms 여야 합니다. 1ms 보다 작은 값은 쓸 수 없습니다")
+    return int(round(ms))
 
 
 def num(x):
@@ -284,12 +333,12 @@ def palettes(theme_docs):
         raise TokenError("테마 세트가 하나도 없습니다")
     themes, bright = {}, {}
     for theme, doc in theme_docs.items():
-        ident(theme, f"{theme} 세트", reserved=False)
+        ident(theme, f"{theme} 세트", banned=frozenset())
         if not isinstance(doc, dict):
             raise TokenError(f"{theme}: 세트는 객체여야 합니다")
         argbs = {
-            ident(k, f"{theme}.color.{k}"): color_argb(v, f"{theme}.color.{k}")
-            for k, v in group_of(doc, "color", theme).items()
+            ident(k, f"{theme}.color.{k}", PALETTE_RESERVED): color_argb(v, f"{theme}.color.{k}")
+            for k, v in group_items(doc, "color", theme, REQUIRED_COLORS).items()
         }
         bright[theme] = brightness_of(doc, argbs, theme)
         themes[theme] = {k: f"Color(0x{a})" for k, a in argbs.items()}
@@ -372,6 +421,9 @@ def type_style(k, v, core):
     spec = value(v, where)
     if not isinstance(spec, dict):
         raise TokenError(f"{where}: $value 는 fontFamily, fontSize 같은 키를 가진 객체여야 합니다")
+    unknown = sorted(set(spec) - TYPOGRAPHY_FIELDS - TOKENS_STUDIO_EXTRAS)
+    if unknown:
+        raise TokenError(f"{where}: 알 수 없는 필드 {unknown}. 쓸 수 있는 것: {sorted(TYPOGRAPHY_FIELDS)}")
     family = font_family(
         resolve(spec.get("fontFamily", "{font.family}"), core, f"{where}.fontFamily"),
         f"{where}.fontFamily",
@@ -386,10 +438,13 @@ def type_style(k, v, core):
         raise TokenError(f"{where}.fontSize: 글자 크기가 없습니다")
     font_size = size(spec["fontSize"], f"{where}.fontSize", positive=True)
     height = line_height(spec.get("lineHeight", "1.2"), f"{where}.lineHeight")
+    spacing = ""
+    if "letterSpacing" in spec:
+        spacing = f", letterSpacing: {num(size(spec['letterSpacing'], f'{where}.letterSpacing', signed=True))}"
     return (
-        f"  static const TextStyle {ident(k, where)} = TextStyle(fontFamily: '{family}', "
+        f"  static const TextStyle {ident(k, where)} = TextStyle(fontFamily: '{dart_quote_safe(family)}', "
         f"fontSize: {num(font_size)}, fontWeight: FontWeight.w{weight}, "
-        f"height: {num(height)});"
+        f"height: {num(height)}{spacing});"
     )
 
 
@@ -402,8 +457,7 @@ def render(tokens):
     keys, themes, bright = palettes({k: v for k, v in tokens.items() if k != "core"})
     out = [
         "// 생성 파일이다. 손대지 않는다.",
-        # 아래 안내 문구는 옛 경로를 말하지만 생성 파일이 한 글자도 바뀌지 않게 그대로 둔다.
-        "// design/tokens/*.json 을 고친 뒤 python3 tool/gen_tokens.py 를 돌린다.",
+        "// design/tokens.json 을 고친 뒤 python3 tool/gen_tokens.py 를 돌린다.",
         "// ignore_for_file: lines_longer_than_80_chars",
         "import 'package:flutter/material.dart';",
         "",
@@ -418,23 +472,25 @@ def render(tokens):
     out.append("const List<AppPalette> allPalettes = [" + ", ".join(f"{t}Palette" for t in themes) + "];\n")
 
     for group, cls in (("space", "Space"), ("radius", "Radii")):
-        items = group_of(core, group, "core")
+        items = group_items(core, group, "core", REQUIRED_CORE[group])
         lines = "\n".join(
             f"  static const double {ident(k, f'{group}.{k}')} = {num(number(v, group, f'{group}.{k}'))};"
             for k, v in items.items()
         )
         out.append(f"abstract final class {cls} {{\n{lines}\n}}\n")
 
-    for k, v in group_of(core, "font", "core").items():
+    for k, v in group_items(core, "font", "core", REQUIRED_CORE["font"]).items():
         check_type(v, "font", f"font.{k}")
         font_family(value(v, f"font.{k}"), f"font.{k}")
 
-    styles = [type_style(k, v, core) for k, v in group_of(core, "type", "core").items()]
+    styles = [
+        type_style(k, v, core) for k, v in group_items(core, "type", "core", REQUIRED_CORE["type"]).items()
+    ]
     out.append("abstract final class TypeScale {\n" + "\n".join(styles) + "\n}\n")
 
     motion = "\n".join(
         f"  static const Duration {ident(k, f'motion.{k}')} = Duration(milliseconds: {millis(v, f'motion.{k}')});"
-        for k, v in group_of(core, "motion", "core").items()
+        for k, v in group_items(core, "motion", "core", REQUIRED_CORE["motion"]).items()
     )
     out.append(f"abstract final class Motion {{\n{motion}\n}}\n")
     return "\n".join(out)
