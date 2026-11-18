@@ -1,12 +1,12 @@
 # 스토어 등록 문구 초안 (ko / en / ja)
 
-임시 앱 이름 `Mood Clicker` 기준 초안입니다. 과장 광고 문구("최고", "무료" 등)와 의료·치료 효능 표현은 넣지 않았습니다. 3단계 지도 기능은 출시 시점에 맞춰 조정할 수 있도록 "곧" 수준으로만 언급합니다.
+임시 앱 이름 `Unknown`(가제) 기준 초안입니다. 과장 광고 문구("최고", "무료" 등)와 의료·치료 효능 표현은 넣지 않았습니다. 3단계 지도 기능은 출시 시점에 맞춰 조정할 수 있도록 "곧" 수준으로만 언급합니다.
 
 ---
 
 ## 1. 한국어 (ko)
 
-- **앱 이름 (30자 이하)**: `무드 클리커` (6자)
+- **앱 이름 (30자 이하)**: `Unknown` (7자)
 - **iOS 부제 (30자 이하)**: `오늘 기분을 두드려 남기는 기록` (17자)
 - **Google Play 간단 설명 (80자 이하)**: `기분을 고르고 손끝으로 두드려 오늘 마음의 크기를 남기고 달력으로 돌아봅니다.` (43자)
 - **iOS 키워드 (100자 이하)**: `기분,감정,기록,일기,달력,클리커,두드리기,마음,테마,휴식` (32자)
@@ -15,7 +15,7 @@
 
 ```text
 오늘 어떤 기분인가요?
-무드 클리커는 글쓰기 부담 없이 기분을 고르고, 화면을 두드려 그날 기분의 크기를 남기는 조용한 감정 기록 앱입니다.
+Unknown 은 글쓰기 부담 없이 기분을 고르고, 화면을 두드려 그날 기분의 크기를 남기는 조용한 감정 기록 앱입니다.
 
 1. 기분 고르기
 행복해요, 설레요, 화나요, 슬퍼요, 불안해요 중 지금 마음과 가까운 기분을 고릅니다. 확인 단계 없이 바로 두드리기 화면으로 넘어갑니다.
@@ -40,7 +40,7 @@
 
 ## 2. English (en)
 
-- **App Name (<= 30 chars)**: `Mood Clicker` (12 chars)
+- **App Name (<= 30 chars)**: `Unknown` (7 chars)
 - **iOS Subtitle (<= 30 chars)**: `Tap to log today's mood` (23 chars)
 - **Google Play Short Description (<= 80 chars)**: `Pick a mood, tap to capture its weight, and look back on your calendar.` (71 chars)
 - **iOS Keywords (<= 100 chars)**: `mood,tracker,journal,calendar,tap,clicker,feelings,mindful,calm,daily` (69 chars)
@@ -49,7 +49,7 @@
 
 ```text
 How are you feeling today?
-Mood Clicker is a quiet mood log where you pick a feeling and tap the screen to record how big it feels, with no long writing required.
+Unknown is a quiet mood log where you pick a feeling and tap the screen to record how big it feels, with no long writing required.
 
 1. Pick a mood
 Choose from Happy, Excited, Angry, Sad, or Anxious and jump straight into tapping with zero extra steps.

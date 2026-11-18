@@ -21,7 +21,7 @@ class _MoodClickerAppState extends State<MoodClickerApp> {
     final platform = MediaQuery.platformBrightnessOf(context);
     final palette = paletteFor(_choice, platform);
     return MaterialApp(
-      title: 'Mood Clicker',
+      title: 'Unknown',
       debugShowCheckedModeBanner: false,
       theme: buildTheme(palette),
       // Like a system dark switch, a theme change is immediate. An animation would blend colors mid-frame and break contrast.
