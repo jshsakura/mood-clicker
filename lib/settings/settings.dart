@@ -38,7 +38,7 @@ class Settings {
     this.hapticsOn = true,
     this.hapticStrength = HapticStrength.normal,
     this.soundOn = true,
-    this.soundPack = SoundPack.basic,
+    this.soundPack = SoundPack.defaultPack,
     this.cheersOn = true,
     this.cheerSize = CheerSize.normal,
     this.shakeOnFull = true,

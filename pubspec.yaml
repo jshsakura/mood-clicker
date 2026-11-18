@@ -93,6 +93,7 @@ flutter:
     - assets/cheers/en.json
     - assets/cheers/ja.json
     - assets/sounds/basic/
+    - assets/sounds/pentatonic/
     - assets/icons/
 
   # The following line ensures that the Material Icons font is

@@ -25,6 +25,12 @@ abstract interface class HapticsPort {
 }
 
 abstract interface class SoundPort {
-  /// [pitch] defaults to 1.0 (original pitch).
-  Future<void> play(SoundCue cue, {double pitch = 1.0});
+  /// [pitch] defaults to 1.0 (original pitch) and [volume] to full. A sound with [limitVoices]
+  /// counts against the cap of ringing tap sounds: past it the oldest one fades out.
+  Future<void> play(
+    SoundCue cue, {
+    double pitch = 1.0,
+    double volume = 1.0,
+    bool limitVoices = false,
+  });
 }

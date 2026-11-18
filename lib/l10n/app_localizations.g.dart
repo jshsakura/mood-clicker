@@ -556,6 +556,12 @@ abstract class AppLocalizations {
   /// **'기본'**
   String get settings_soundPackBasic;
 
+  /// 소리 묶음 중 펜타토닉의 이름입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'펜타토닉'**
+  String get settings_soundPackPentatonic;
+
   /// 두드릴 때 뜨는 응원 문구를 켜고 끄는 항목입니다.
   ///
   /// In ko, this message translates to:

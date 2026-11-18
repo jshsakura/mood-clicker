@@ -1,17 +1,29 @@
 /// Sound pack selection. Audio files live under `assets/sounds/<pack>/`.
 enum SoundPack {
   basic,
-  soft;
+  soft,
+
+  /// One kalimba note that the tap sound moves up and down the pentatonic scale.
+  pentatonic;
+
+  /// The pack until the person picks another.
+  static const SoundPack defaultPack = SoundPack.basic;
 
   /// Packs with bundled audio files ready to show in Settings.
-  static const List<SoundPack> available = [SoundPack.basic];
+  static const List<SoundPack> available = [
+    SoundPack.basic,
+    SoundPack.pentatonic,
+  ];
+
+  /// The sound id of every tap in this pack, or null when the pack has one sound per cue.
+  String? get tapSoundId => this == pentatonic ? 'kalimba' : null;
 }
 
 class FeedbackSettings {
   const FeedbackSettings({
     this.hapticsOn = true,
     this.soundOn = true,
-    this.soundPack = SoundPack.basic,
+    this.soundPack = SoundPack.defaultPack,
     this.hapticScale = 1,
   });
 

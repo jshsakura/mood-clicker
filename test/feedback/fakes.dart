@@ -14,15 +14,27 @@ class FakeHaptics implements HapticsPort {
 }
 
 class PlayedSound {
-  const PlayedSound(this.cue, this.pitch);
+  const PlayedSound(
+    this.cue,
+    this.pitch, {
+    this.volume = 1.0,
+    this.limited = false,
+  });
   final SoundCue cue;
   final double pitch;
+  final double volume;
+  final bool limited;
 }
 
 class FakeSound implements SoundPort {
   final List<PlayedSound> played = [];
 
   @override
-  Future<void> play(SoundCue cue, {double pitch = 1.0}) async =>
-      played.add(PlayedSound(cue, pitch));
+  Future<void> play(
+    SoundCue cue, {
+    double pitch = 1.0,
+    double volume = 1.0,
+    bool limitVoices = false,
+  }) async =>
+      played.add(PlayedSound(cue, pitch, volume: volume, limited: limitVoices));
 }

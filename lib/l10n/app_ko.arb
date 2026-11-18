@@ -346,6 +346,10 @@
     "description": "진동 세기 선택지입니다."
   },
   "settings_soundPackBasic": "기본",
+  "settings_soundPackPentatonic": "펜타토닉",
+  "@settings_soundPackPentatonic": {
+    "description": "소리 묶음 중 펜타토닉의 이름입니다."
+  },
   "@settings_soundPackBasic": {
     "description": "소리 묶음 선택지입니다. 지금은 이 한 벌만 있습니다."
   },

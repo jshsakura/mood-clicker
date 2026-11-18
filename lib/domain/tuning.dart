@@ -243,6 +243,33 @@ abstract final class FeedbackTuning {
   /// Pitch jitter range around the original pitch (1.0 +/- this value).
   static const double pitchJitter = 0.03;
 
+  /// The playback speed of the 1st, 2nd, ... tap in a run, on the pentatonic sound (do re mi sol la
+  /// and the do an octave up). After the last one the run starts again.
+  static const List<double> risePitches = [
+    1.0,
+    1.122,
+    1.260,
+    1.498,
+    1.682,
+    2.0,
+  ];
+
+  /// A run ends when the hand rests this long. The next tap is the first of a new run.
+  static const Duration riseReset = Duration(milliseconds: 800);
+
+  /// The playback speed and volume of a tap that follows the micro random rule: a small, fresh
+  /// mistake on every tap, like a hand.
+  static const double microPitchMin = 0.94;
+  static const double microPitchMax = 1.06;
+  static const double microVolumeMin = 0.85;
+  static const double microVolumeMax = 1.0;
+
+  /// The most tap sounds that ring at once. A newer tap beyond it fades the oldest one out.
+  static const int maxTapVoices = 5;
+
+  /// How long the oldest sound fades out when it is cut.
+  static const Duration voiceFade = Duration(milliseconds: 20);
+
   /// Fill-proportional tap haptic scaling bounds (iOS Core Haptics & Android scale).
   static const double fillIntensityMin = 0.35;
   static const double fillIntensityMax = 1.0;

@@ -264,6 +264,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get settings_soundPackBasic => '기본';
 
   @override
+  String get settings_soundPackPentatonic => '펜타토닉';
+
+  @override
   String get settings_cheers => '응원 문구';
 
   @override
