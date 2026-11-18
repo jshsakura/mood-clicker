@@ -4,7 +4,7 @@ name: ios-test
 on:
   workflow_dispatch:
   push:
-    branches: [integrate/poc]
+    branches: [main]
 permissions:
   contents: read
 concurrency:

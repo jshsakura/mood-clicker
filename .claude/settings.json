@@ -1,10 +1,16 @@
 {
   "extraKnownMarketplaces": {
     "pstack-claude": {
-      "source": { "source": "github", "repo": "michael-denyer/pstack-claude" }
+      "source": {
+        "source": "github",
+        "repo": "michael-denyer/pstack-claude"
+      }
     },
     "claude-community": {
-      "source": { "source": "github", "repo": "anthropics/claude-plugins-community" }
+      "source": {
+        "source": "github",
+        "repo": "anthropics/claude-plugins-community"
+      }
     }
   },
   "enabledPlugins": {
@@ -17,6 +23,31 @@
       "Bash(tool/fl_dart:*)",
       "Bash(python3 tool/privacy_scan.py:*)",
       "Bash(python3 -m unittest:*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/push_guard.py\""
+          },
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/no_verify_guard.py\""
+          },
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/stash_guard.py\""
+          },
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/idle_guard.py\""
+          }
+        ]
+      }
     ]
   }
 }
