@@ -1,13 +1,14 @@
 """Pin that gen_tokens stops a designer's mistakes with a clear message."""
 import copy
 import re
+import shutil
 import tempfile
 import unittest
 from pathlib import Path
 
 from gen_tokens import (
     IDENT, OUT, REQUIRED_COLORS, REQUIRED_CORE, ROOT, SPLASH_FILES, SRC, TokenError, load, outputs, parse_json,
-    render, splash_outputs, stale, token_sets,
+    render, splash_outputs, splash_wiring_problems, stale, token_sets,
 )
 
 BASE = load()
@@ -694,23 +695,26 @@ def with_ground(light=None, dark=None):
 
 
 class Splash(RefusesWith):
-    A_LIGHT, A_DARK, SET, STORY = (SPLASH_FILES[k] for k in ("android_light", "android_dark", "ios_colorset",
-                                                              "ios_storyboard"))
+    A_LIGHT, SET, STORY = (SPLASH_FILES[k] for k in ("android_light", "ios_colorset", "ios_storyboard"))
 
-    def test_android_colors_come_from_the_grounds(self):
+    def test_android_color_comes_from_the_light_ground(self):
         out = splash_outputs(with_ground("#F6F6F8", "#101820"), STORYBOARD)
         self.assertIn('<color name="splash_background">#F6F6F8</color>', out[self.A_LIGHT])
-        self.assertIn('<color name="splash_background">#101820</color>', out[self.A_DARK])
 
-    def test_ios_color_set_holds_any_and_dark(self):
+    def test_there_are_no_dark_splash_files(self):
+        """The app starts in light, so the native splash stays light even when the OS is dark."""
+        self.assertNotIn("android_dark", SPLASH_FILES)
+        for rel in splash_outputs(BASE, STORYBOARD):
+            self.assertNotIn("values-night", str(rel))
+
+    def test_ios_color_set_holds_one_color_without_a_dark_variant(self):
         import json
         out = splash_outputs(with_ground("#F6F6F8", "#101820"), STORYBOARD)
         colors = json.loads(out[self.SET])["colors"]
-        comps = lambda c: tuple(c["color"]["components"][k] for k in ("red", "green", "blue"))
+        self.assertEqual(len(colors), 1)
         self.assertNotIn("appearances", colors[0])
-        self.assertEqual(comps(colors[0]), ("0xF6", "0xF6", "0xF8"))
-        self.assertEqual(colors[1]["appearances"], [{"appearance": "luminosity", "value": "dark"}])
-        self.assertEqual(comps(colors[1]), ("0x10", "0x18", "0x20"))
+        comps = tuple(colors[0]["color"]["components"][k] for k in ("red", "green", "blue", "alpha"))
+        self.assertEqual(comps, ("0xF6", "0xF6", "0xF8", "1.000"))
 
     def test_storyboard_fallback_follows_light_ground_and_nothing_else_changes(self):
         out = splash_outputs(with_ground("#F6F6F8"), STORYBOARD)[self.STORY]
@@ -723,26 +727,40 @@ class Splash(RefusesWith):
         out = splash_outputs(with_ground("#FF0000"), STORYBOARD)[self.STORY]
         self.assertIn('red="1" green="0" blue="0" alpha="1"', out)
 
-    def test_the_dark_ground_does_not_touch_the_storyboard(self):
-        self.assertEqual(splash_outputs(with_ground(dark="#101820"), STORYBOARD)[self.STORY],
-                         splash_outputs(BASE, STORYBOARD)[self.STORY])
+    def test_the_dark_ground_does_not_touch_any_splash_file(self):
+        self.assertEqual(splash_outputs(with_ground(dark="#101820"), STORYBOARD), splash_outputs(BASE, STORYBOARD))
+
+    def test_storyboard_attribute_order_does_not_matter(self):
+        """Xcode may write the color attributes in any order. The generator reads the XML, not a text pattern."""
+        reordered = STORYBOARD.replace(
+            '<color red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>',
+            '<color alpha="0.5" colorSpace="custom" customColorSpace="sRGB" blue="0" green="0" red="0"/>',
+        )
+        self.assertNotEqual(reordered, STORYBOARD)
+        out = splash_outputs(with_ground("#FF0000"), reordered)[self.STORY]
+        self.assertIn(
+            '<color alpha="1" colorSpace="custom" customColorSpace="sRGB" blue="0" green="0" red="1"/>', out)
+        self.assertEqual(len(out.splitlines()), len(STORYBOARD.splitlines()))
+
+    def test_storyboard_with_two_named_colors_of_that_name_is_refused(self):
+        doubled = STORYBOARD.replace("</resources>", '<namedColor name="SplashBackground"><color red="0" green="0" '
+                                     'blue="0" alpha="1"/></namedColor></resources>')
+        with self.assertRaises(TokenError):
+            splash_outputs(BASE, doubled)
 
     def test_color_objects_work_and_alpha_is_refused(self):
         obj = {"colorSpace": "srgb", "components": [0, 0, 0]}
-        out = splash_outputs(with_ground(dark=obj), STORYBOARD)
-        self.assertIn("#000000", out[self.A_DARK])
+        out = splash_outputs(with_ground(light=obj), STORYBOARD)
+        self.assertIn("#000000", out[self.A_LIGHT])
         self.assertRefuses_splash(with_ground(light="#FFFFFF80"), "light")
-        self.assertRefuses_splash(with_ground(dark="#12121680"), "dark")
 
     def assertRefuses_splash(self, tokens, fragment):
         with self.assertRaises(TokenError) as cm:
             splash_outputs(tokens, STORYBOARD)
         self.assertIn(fragment, str(cm.exception))
 
-    def test_it_needs_a_light_and_a_dark_set(self):
-        for name in ("light", "dark"):
-            with self.subTest(name):
-                self.assertRefuses_splash(edited(lambda t: t.pop(name)), name)
+    def test_it_needs_a_light_set(self):
+        self.assertRefuses_splash(edited(lambda t: t.pop("light")), "light")
 
     def test_a_storyboard_without_the_named_color_is_refused(self):
         with self.assertRaises(TokenError) as cm:
@@ -768,8 +786,85 @@ class Splash(RefusesWith):
                 sorted(p.name for p in changed),
                 sorted([self.A_LIGHT.name, self.SET.name, self.STORY.name, OUT.name]),
             )
-            (root / self.A_DARK).unlink()
-            self.assertIn(self.A_DARK, stale(outputs(BASE, root), root))
+            (root / self.A_LIGHT).unlink()
+            self.assertIn(self.A_LIGHT, stale(outputs(BASE, root), root))
+
+
+class SplashWiring(unittest.TestCase):
+    """--check verifies that the native splash actually uses the generated colors, not only that they exist."""
+    RES = Path("android/app/src/main/res")
+    STYLES = RES / "values/styles.xml"
+    STYLES_V31 = RES / "values-v31/styles.xml"
+    LAUNCH_BG = RES / "drawable/launch_background.xml"
+    SET = SPLASH_FILES["ios_colorset"]
+    STORY = SPLASH_FILES["ios_storyboard"]
+
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.root = Path(tmp.name)
+        for rel in (self.RES, self.SET.parent, self.STORY.parent):
+            shutil.copytree(ROOT / rel, self.root / rel, ignore=shutil.ignore_patterns("mipmap-*", "LaunchImage*"))
+
+    def edit(self, rel, old, new):
+        path = self.root / rel
+        text = path.read_text(encoding="utf-8")
+        self.assertIn(old, text)
+        path.write_text(text.replace(old, new), encoding="utf-8")
+
+    def problems(self):
+        return splash_wiring_problems(self.root)
+
+    def test_the_checked_in_project_is_wired(self):
+        self.assertEqual(splash_wiring_problems(ROOT), [])
+
+    def test_a_styles_file_that_points_at_another_color_is_reported(self):
+        self.edit(self.STYLES, '@color/splash_background', '@color/other')
+        found = self.problems()
+        self.assertTrue(any("values/styles.xml" in p and "splash_background" in p for p in found), found)
+
+    def test_the_android_12_splash_color_must_use_the_generated_name(self):
+        self.edit(self.STYLES_V31, '@color/splash_background', '@color/other')
+        found = self.problems()
+        self.assertTrue(any("values-v31/styles.xml" in p for p in found), found)
+
+    def test_a_launch_background_without_the_color_is_reported(self):
+        self.edit(self.LAUNCH_BG, '@color/splash_background', '#FF0000')
+        found = self.problems()
+        self.assertTrue(any("launch_background" in p for p in found), found)
+
+    def test_a_leftover_dark_splash_resource_is_reported(self):
+        night = self.root / self.RES / "values-night"
+        night.mkdir()
+        (night / "colors.xml").write_text(
+            '<resources><color name="splash_background">#000000</color></resources>', encoding="utf-8")
+        found = self.problems()
+        self.assertTrue(any("values-night" in p for p in found), found)
+
+    def test_a_storyboard_that_uses_another_named_color_is_reported(self):
+        self.edit(self.STORY, '<color key="backgroundColor" name="SplashBackground"/>',
+                  '<color key="backgroundColor" name="Other"/>')
+        found = self.problems()
+        self.assertTrue(any("LaunchScreen.storyboard" in p and "SplashBackground" in p for p in found), found)
+
+    def test_a_missing_color_set_is_reported(self):
+        shutil.rmtree(self.root / self.SET.parent)
+        found = self.problems()
+        self.assertTrue(any("colorset" in p.lower() for p in found), found)
+
+    def test_a_fallback_color_that_is_not_opaque_is_reported(self):
+        self.edit(self.STORY, 'blue="1" alpha="1"', 'blue="1" alpha="0.5"')
+        found = self.problems()
+        self.assertTrue(any("alpha" in p for p in found), found)
+
+    def test_a_color_set_with_a_dark_variant_is_reported(self):
+        (self.root / self.SET).write_text(
+            (self.root / self.SET).read_text(encoding="utf-8").replace(
+                '"idiom" : "universal",\n      "color"',
+                '"appearances" : [ { "appearance" : "luminosity", "value" : "dark" } ],\n      "idiom" : "universal",\n      "color"', 1),
+            encoding="utf-8")
+        found = self.problems()
+        self.assertTrue(any("dark" in p for p in found), found)
 
 
 class Output(unittest.TestCase):

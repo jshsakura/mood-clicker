@@ -4,9 +4,10 @@
   python3 tool/gen_tokens.py           generate the files
   python3 tool/gen_tokens.py --check   only verify that the files match the tokens (hook, CI)
 
-Generated files: lib/design/tokens.g.dart and the native splash colors (two Android colors.xml
-files, the iOS color set, and the fallback color in LaunchScreen.storyboard). The splash colors
-follow light.ground and dark.ground.
+Generated files: lib/design/tokens.g.dart and the native splash color (the Android colors.xml,
+the iOS color set, and the fallback color in LaunchScreen.storyboard). The splash is always light,
+because the app starts in light even when the OS is dark, so it follows light.ground only.
+--check also verifies that the Android styles and the iOS storyboard really use those colors.
 
 The tokens use the Tokens Studio single-file format. The top-level key core holds the shared values
 and every other set is one theme. Top-level keys that start with $ ($themes, $metadata) are
@@ -25,15 +26,17 @@ import math
 import re
 import sys
 from pathlib import Path
+from xml.etree import ElementTree
+from xml.parsers import expat
+from xml.sax.saxutils import escape
 
 ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "design" / "tokens.json"
 OUT = ROOT / "lib" / "design" / "tokens.g.dart"
 
-# Native splash. The platform files are written directly, without a package. They follow light.ground and dark.ground.
+# Native splash. The platform files are written directly, without a package. They follow light.ground.
 SPLASH_FILES = {
     "android_light": Path("android/app/src/main/res/values/colors.xml"),
-    "android_dark": Path("android/app/src/main/res/values-night/colors.xml"),
     "ios_colorset": Path("ios/Runner/Assets.xcassets/SplashBackground.colorset/Contents.json"),
     "ios_storyboard": Path("ios/Runner/Base.lproj/LaunchScreen.storyboard"),
 }
@@ -532,26 +535,15 @@ def android_colors_xml(theme, rgb):
     )
 
 
-def ios_color_set(light_rgb, dark_rgb):
-    def comps(rgb):
-        r, g, b = (f"0x{rgb[i:i + 2]}" for i in (0, 2, 4))
-        return f'{{ "red" : "{r}", "green" : "{g}", "blue" : "{b}", "alpha" : "1.000" }}'
-
+def ios_color_set(light_rgb):
+    r, g, b = (f"0x{light_rgb[i:i + 2]}" for i in (0, 2, 4))
     return f"""{{
   "colors" : [
     {{
       "idiom" : "universal",
       "color" : {{
         "color-space" : "srgb",
-        "components" : {comps(light_rgb)}
-      }}
-    }},
-    {{
-      "appearances" : [ {{ "appearance" : "luminosity", "value" : "dark" }} ],
-      "idiom" : "universal",
-      "color" : {{
-        "color-space" : "srgb",
-        "components" : {comps(dark_rgb)}
+        "components" : {{ "red" : "{r}", "green" : "{g}", "blue" : "{b}", "alpha" : "1.000" }}
       }}
     }}
   ],
@@ -560,29 +552,161 @@ def ios_color_set(light_rgb, dark_rgb):
 """
 
 
-STORYBOARD_COLOR = re.compile(
-    r'(<namedColor name="SplashBackground">\s*<color )red="[^"]*" green="[^"]*" blue="[^"]*"'
-)
+SPLASH_COLOR_NAME = "SplashBackground"
+
+
+def storyboard_fallback_tag(data):
+    """Locate the <color> inside <namedColor name="SplashBackground"> in storyboard bytes.
+
+    Returns (start, end, attributes): the byte span of the start tag and its attributes in file order.
+    The XML parser finds the element, so the attribute order and spacing never matter.
+    """
+    parser = expat.ParserCreate()
+    parser.ordered_attributes = True
+    stack, named, found = [], [], []
+
+    def start(name, attrs):
+        pairs = list(zip(attrs[::2], attrs[1::2]))
+        if name == "namedColor" and dict(pairs).get("name") == SPLASH_COLOR_NAME:
+            named.append(1)
+        if name == "color" and stack and stack[-1][0] == "namedColor" and dict(stack[-1][1]).get("name") == SPLASH_COLOR_NAME:
+            found.append((parser.CurrentByteIndex, pairs))
+        stack.append((name, pairs))
+
+    parser.StartElementHandler = start
+    parser.EndElementHandler = lambda name: stack.pop()
+    try:
+        parser.Parse(data, True)
+    except expat.ExpatError as e:
+        raise TokenError(f"LaunchScreen.storyboard is not valid XML ({e})")
+    if len(named) != 1 or len(found) != 1:
+        raise TokenError(f"exactly one {SPLASH_COLOR_NAME} color with a <color> value is expected in LaunchScreen.storyboard")
+    begin, pairs = found[0]
+    quote, i = None, begin
+    while True:
+        c = data[i:i + 1]
+        if quote:
+            quote = None if c == quote else quote
+        elif c in (b'"', b"'"):
+            quote = c
+        elif c == b">":
+            return begin, i + 1, pairs
+        i += 1
 
 
 def ios_storyboard(storyboard, light_rgb):
-    """Change only the SplashBackground fallback in LaunchScreen.storyboard to light.ground."""
-    r, g, b = (f"{int(light_rgb[i:i + 2], 16) / 255:.17g}" for i in (0, 2, 4))
-    out, n = STORYBOARD_COLOR.subn(lambda m: f'{m.group(1)}red="{r}" green="{g}" blue="{b}"', storyboard)
-    if n != 1:
-        raise TokenError("SplashBackground color not found in LaunchScreen.storyboard")
-    return out
+    """Change only the SplashBackground fallback in LaunchScreen.storyboard to light.ground, fully opaque."""
+    data = storyboard.encode("utf-8")
+    begin, end, pairs = storyboard_fallback_tag(data)
+    wanted = {f"{c}": f"{int(light_rgb[i:i + 2], 16) / 255:.17g}" for c, i in (("red", 0), ("green", 2), ("blue", 4))}
+    wanted["alpha"] = "1"
+    values = dict(pairs)
+    values.update(wanted)
+    order = [k for k, _ in pairs] + [k for k in wanted if k not in dict(pairs)]
+    attrs = " ".join(f'{k}="{escape(values[k], {chr(34): "&quot;"})}"' for k in order)
+    tag = f"<color {attrs}{'/' if data[end - 2:end - 1] == b'/' else ''}>"
+    return (data[:begin] + tag.encode("utf-8") + data[end:]).decode("utf-8")
 
 
 def splash_outputs(tokens, storyboard):
-    """{repo-relative path: content}. The splash colors come from light.ground and dark.ground."""
-    light, dark = splash_ground(tokens, "light"), splash_ground(tokens, "dark")
+    """{repo-relative path: content}. The splash color comes from light.ground."""
+    light = splash_ground(tokens, "light")
     return {
         SPLASH_FILES["android_light"]: android_colors_xml("light", light),
-        SPLASH_FILES["android_dark"]: android_colors_xml("dark", dark),
-        SPLASH_FILES["ios_colorset"]: ios_color_set(light, dark),
+        SPLASH_FILES["ios_colorset"]: ios_color_set(light),
         SPLASH_FILES["ios_storyboard"]: ios_storyboard(storyboard, light),
     }
+
+
+ANDROID_RES = Path("android/app/src/main/res")
+SPLASH_COLOR_REF = "@color/splash_background"
+LAUNCH_DRAWABLE_REF = "@drawable/launch_background"
+# (styles file, style name, item name, accepted values)
+ANDROID_STYLE_ITEMS = (
+    ("values/styles.xml", "LaunchTheme", "android:windowBackground", {LAUNCH_DRAWABLE_REF}),
+    ("values/styles.xml", "NormalTheme", "android:windowBackground", {SPLASH_COLOR_REF}),
+    ("values-v31/styles.xml", "LaunchTheme", "android:windowSplashScreenBackground", {SPLASH_COLOR_REF}),
+)
+
+
+def parse_xml_file(path, problems, label):
+    try:
+        return ElementTree.parse(path).getroot()
+    except (ElementTree.ParseError, OSError) as e:
+        problems.append(f"{label}: cannot read ({e})")
+        return None
+
+
+def android_wiring_problems(root):
+    problems = []
+    res = root / ANDROID_RES
+    for rel, style, item, accepted in ANDROID_STYLE_ITEMS:
+        label = f"{ANDROID_RES / rel}"
+        tree = parse_xml_file(res / rel, problems, label) if (res / rel).is_file() else None
+        if tree is None:
+            if not (res / rel).is_file():
+                problems.append(f"{label}: missing, so {style} does not use {SPLASH_COLOR_REF}")
+            continue
+        values = [i.text.strip() for st in tree.iter("style") if st.get("name") == style
+                  for i in st.iter("item") if i.get("name") == item and i.text]
+        if not any(v in accepted for v in values):
+            problems.append(f"{label}: {style} {item} must be {' or '.join(sorted(accepted))} (got {values or 'nothing'})")
+    for drawable in sorted(res.glob("drawable*/launch_background.xml")):
+        label = f"{ANDROID_RES / drawable.relative_to(res)}"
+        tree = parse_xml_file(drawable, problems, label)
+        if tree is not None and not any(
+            e.get("{http://schemas.android.com/apk/res/android}drawable") == SPLASH_COLOR_REF for e in tree.iter()
+        ):
+            problems.append(f"{label}: no item uses {SPLASH_COLOR_REF}")
+    if not (res / "drawable/launch_background.xml").is_file():
+        problems.append(f"{ANDROID_RES}/drawable/launch_background.xml: missing, so {LAUNCH_DRAWABLE_REF} has nothing to draw")
+    for night in sorted(p for p in res.glob("values-night*") if p.is_dir()):
+        for f in sorted(night.rglob("*.xml")):
+            text = f.read_text(encoding="utf-8", errors="ignore")
+            if any(w in text for w in ("splash_background", "launch_background", "windowSplashScreenBackground")):
+                problems.append(f"{ANDROID_RES / f.relative_to(res)}: dark splash resources are not used (the splash is light only), delete it")
+    return problems
+
+
+def ios_wiring_problems(root):
+    problems = []
+    colorset = root / SPLASH_FILES["ios_colorset"]
+    story_rel = SPLASH_FILES["ios_storyboard"]
+    if not colorset.is_file():
+        problems.append(f"{SPLASH_FILES['ios_colorset']}: missing, so the {SPLASH_COLOR_NAME} colorset does not exist")
+    else:
+        try:
+            entries = json.loads(colorset.read_text(encoding="utf-8")).get("colors", [])
+        except ValueError as e:
+            entries = []
+            problems.append(f"{SPLASH_FILES['ios_colorset']}: not valid JSON ({e})")
+        if any(isinstance(c, dict) and "appearances" in c for c in entries):
+            problems.append(f"{SPLASH_FILES['ios_colorset']}: has a dark variant, but the splash is light only")
+    storyboard = root / story_rel
+    if not storyboard.is_file():
+        return problems + [f"{story_rel}: missing"]
+    tree = parse_xml_file(storyboard, problems, str(story_rel))
+    if tree is None:
+        return problems
+    if not any(c.get("key") == "backgroundColor" and c.get("name") == SPLASH_COLOR_NAME for c in tree.iter("color")):
+        problems.append(f"{story_rel}: no view uses the named color {SPLASH_COLOR_NAME}")
+    fallbacks = [c for n in tree.iter("namedColor") if n.get("name") == SPLASH_COLOR_NAME for c in n.iter("color")]
+    if len(fallbacks) != 1:
+        problems.append(f"{story_rel}: expected one {SPLASH_COLOR_NAME} fallback color, found {len(fallbacks)}")
+    else:
+        alpha = fallbacks[0].get("alpha")
+        try:
+            opaque = alpha is not None and float(alpha) == 1.0
+        except ValueError:
+            opaque = False
+        if not opaque:
+            problems.append(f"{story_rel}: the {SPLASH_COLOR_NAME} fallback alpha must be 1 (got {alpha})")
+    return problems
+
+
+def splash_wiring_problems(root=ROOT):
+    """What is wrong with how the native projects use the generated splash colors. Empty when all is connected."""
+    return android_wiring_problems(root) + ios_wiring_problems(root)
 
 
 def outputs(tokens, root=ROOT):
@@ -622,6 +746,10 @@ def main(argv):
             print("files generated from design/tokens.json are out of date: "
                   + ", ".join(str(p) for p in old)
                   + ". Run python3 tool/gen_tokens.py and commit the result.", file=sys.stderr)
+            return 1
+        broken = splash_wiring_problems()
+        if broken:
+            print("the native splash does not use the generated colors:\n  " + "\n  ".join(broken), file=sys.stderr)
             return 1
         return 0
     for rel in old:
