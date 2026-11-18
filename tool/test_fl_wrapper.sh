@@ -176,6 +176,109 @@ new_case "fl_dart does not mount a gradle volume"
 run fl_dart format lib
 expect_no_log ":/root/\\.gradle"
 
+# --- android sdk: the NDK lives in one shared volume --------------------------------
+
+new_case "the NDK folder is a shared volume and nothing else of the SDK is mounted"
+run fl build apk
+expect_log " -v mood-clicker-android-sdk:/opt/android-sdk-linux/ndk "
+expect_no_log ":/opt/android-sdk-linux "
+expect_log " bash /app/tool/fl_container.sh build apk"
+
+new_case "FL_ANDROID_SDK_VOLUME overrides the SDK volume and an empty one is ignored"
+FL_ANDROID_SDK_VOLUME=my-sdk run fl build apk
+expect_log " -v my-sdk:/opt/android-sdk-linux/ndk "
+: > "$LOG"
+FL_ANDROID_SDK_VOLUME= run fl build apk
+expect_log " -v mood-clicker-android-sdk:/opt/android-sdk-linux/ndk "
+
+new_case "the SDK volume does not depend on the working tree"
+run fl build apk
+FIRST="$(sed -n 's/.* -v \([^ ]*\):\/opt\/android-sdk-linux\/ndk .*/\1/p' "$LOG" | head -n 1)"
+OTHER="$CASE/other-tree"
+mkdir -p "$OTHER/tool"
+cp "$ROOT/tool/fl" "$ROOT/tool/flutter_env.sh" "$OTHER/tool/"
+: > "$LOG"
+FAKE_LOG="$LOG" PATH="$CASE/bin:/usr/bin:/bin:$BASH_DIR" "$OTHER/tool/fl" build apk > "$CASE/stdout" 2> "$CASE/stderr"
+SECOND="$(sed -n 's/.* -v \([^ ]*\):\/opt\/android-sdk-linux\/ndk .*/\1/p' "$LOG" | head -n 1)"
+if [ -n "$FIRST" ] && [ "$FIRST" = "$SECOND" ]; then pass; else fail "'$FIRST' and '$SECOND'"; fi
+
+new_case "fl_dart does not mount the SDK volume"
+run fl_dart format lib
+expect_no_log "android-sdk"
+
+# The script that runs inside the image. Fake sdkmanager and flutter record what they are asked.
+# container <args...>: runs it against a fake SDK folder in $CASE/sdk.
+container() {
+  cat > "$CASE/bin/flutter" <<'SH'
+#!/bin/sh
+echo "flutter $*" >> "$FAKE_LOG"
+exit "${FAKE_FLUTTER_RC:-0}"
+SH
+  cat > "$CASE/sdkmanager" <<'SH'
+#!/bin/sh
+echo "sdkmanager $*" >> "$FAKE_LOG"
+[ -n "${FAKE_SDK_SLEEP:-}" ] && sleep "$FAKE_SDK_SLEEP"
+n=$(grep -c '^sdkmanager' "$FAKE_LOG")
+if [ "$n" -le "${FAKE_SDK_FAILS:-0}" ]; then exit 1; fi
+mkdir -p "$SDK_ROOT/ndk/$NDK_VERSION"
+echo "Pkg.Revision=$NDK_VERSION" > "$SDK_ROOT/ndk/$NDK_VERSION/source.properties"
+SH
+  chmod +x "$CASE/bin/flutter" "$CASE/sdkmanager"
+  mkdir -p "$CASE/sdk/ndk"
+  FAKE_LOG="$LOG" SDK_ROOT="$CASE/sdk" NDK_VERSION=1.2.3 SDKMANAGER="$CASE/sdkmanager" APP_DIR="$CASE/app" \
+    PATH="$CASE/bin:/usr/bin:/bin:$BASH_DIR" bash "$ROOT/tool/fl_container.sh" "$@" > "$CASE/stdout" 2> "$CASE/stderr"
+  RC=$?
+}
+
+new_case "container: a build installs the missing NDK once and then builds"
+container build apk
+expect_rc 0
+expect_log "^sdkmanager .*ndk;1.2.3"
+expect_log "^flutter build apk"
+
+new_case "container: an installed NDK is not downloaded again"
+mkdir -p "$CASE/sdk/ndk/1.2.3"
+echo "Pkg.Revision=1.2.3" > "$CASE/sdk/ndk/1.2.3/source.properties"
+container build apk
+expect_no_log "^sdkmanager"
+expect_log "^flutter build apk"
+
+new_case "container: commands that do not build skip the NDK"
+container test
+expect_no_log "^sdkmanager"
+expect_log "^flutter test"
+
+new_case "container: a failed download is tried again"
+FAKE_SDK_FAILS=2 container build apk
+if [ "$(grep -c '^sdkmanager' "$LOG")" -eq 3 ]; then pass; else fail "wanted 3 sdkmanager calls"; fi
+expect_log "^flutter build apk"
+
+new_case "container: a download that keeps failing does not stop the build"
+FAKE_SDK_FAILS=9 container build apk
+expect_log "^flutter build apk"
+expect_stderr "could not install the NDK"
+
+new_case "container: the exit code of flutter is passed on"
+FAKE_FLUTTER_RC=7 container test
+expect_rc 7
+
+if command -v flock > /dev/null 2>&1; then
+  new_case "container: two builds at once install the NDK only once"
+  mkdir -p "$CASE/sdk/ndk"
+  export_env() { FAKE_LOG="$LOG" SDK_ROOT="$CASE/sdk" NDK_VERSION=1.2.3 SDKMANAGER="$CASE/sdkmanager" APP_DIR="$CASE/app" PATH="$CASE/bin:/usr/bin:/bin:$BASH_DIR" FAKE_SDK_SLEEP=1 "$@"; }
+  container true > /dev/null 2>&1
+  rm -rf "$CASE/sdk/ndk/1.2.3"
+  : > "$LOG"
+  export_env bash "$ROOT/tool/fl_container.sh" build apk > /dev/null 2>&1 &
+  PID1=$!
+  export_env bash "$ROOT/tool/fl_container.sh" build apk > /dev/null 2>&1 &
+  PID2=$!
+  wait $PID1
+  wait $PID2
+  if [ "$(grep -c '^sdkmanager' "$LOG")" -eq 1 ]; then pass; else fail "sdkmanager ran $(grep -c '^sdkmanager' "$LOG") times"; fi
+  if [ "$(grep -c '^flutter build' "$LOG")" -eq 2 ]; then pass; else fail "both builds should run"; fi
+fi
+
 # --- tool/fl_dart ------------------------------------------------------------
 
 new_case "fl_dart uses the dart next to the pinned local flutter"
