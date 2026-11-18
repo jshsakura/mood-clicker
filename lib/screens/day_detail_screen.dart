@@ -11,8 +11,9 @@ import '../l10n/date_labels.dart';
 import 'mood_labels.dart';
 import 'tap/note_sheet.dart';
 
-/// One day: the count of each mood as black bars, the two sides side by side, and the note.
-/// Bars and numbers are black and gray only; the faces are the only colored thing.
+/// One day: a card with the main face and the note, the two sides side by side, and the count of
+/// each mood as black bars. Bars and numbers are black and gray only; the faces are the only
+/// colored thing.
 class DayDetailScreen extends StatelessWidget {
   const DayDetailScreen({super.key, required this.day});
 
@@ -58,6 +59,12 @@ class DayDetailScreen extends StatelessWidget {
                     style: TypeScale.body.copyWith(color: p.inkMuted),
                   )
                 else ...[
+                  _FaceCard(
+                    mood: record.dominantMood!,
+                    total: record.total,
+                    note: note,
+                  ),
+                  const SizedBox(height: Space.md),
                   Row(
                     children: [
                       Expanded(
@@ -86,15 +93,6 @@ class DayDetailScreen extends StatelessWidget {
                         share: record.countOf(mood) / maxCount,
                       ),
                 ],
-                if (note != null) ...[
-                  const SizedBox(height: Space.xl),
-                  Text(
-                    l10n.dayDetail_note,
-                    style: TypeScale.label.copyWith(color: p.inkMuted),
-                  ),
-                  const SizedBox(height: Space.xs),
-                  Text(note, style: TypeScale.body.copyWith(color: p.ink)),
-                ],
                 if (record.total > 0 && note == null) ...[
                   const SizedBox(height: Space.xl),
                   Align(
@@ -109,6 +107,60 @@ class DayDetailScreen extends StatelessWidget {
             );
           },
         ),
+      ),
+    );
+  }
+}
+
+/// The card at the top of a day: the face of the main mood and, under it, the note of the day.
+class _FaceCard extends StatelessWidget {
+  const _FaceCard({
+    required this.mood,
+    required this.total,
+    required this.note,
+  });
+
+  final Mood mood;
+  final int total;
+  final String? note;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    final l10n = AppLocalizations.of(context);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(Space.lg),
+      decoration: BoxDecoration(
+        color: p.surface,
+        borderRadius: BorderRadius.circular(Radii.card),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(moodEmoji(mood), style: const TextStyle(fontSize: 44)),
+              const SizedBox(width: Space.md),
+              Expanded(
+                child: Text(
+                  moodName(context, mood),
+                  style: TypeScale.title.copyWith(color: p.ink),
+                ),
+              ),
+              Text('$total', style: TypeScale.display.copyWith(color: p.ink)),
+            ],
+          ),
+          if (note != null) ...[
+            const SizedBox(height: Space.lg),
+            Text(
+              l10n.dayDetail_note,
+              style: TypeScale.label.copyWith(color: p.inkMuted),
+            ),
+            const SizedBox(height: Space.xs),
+            Text(note!, style: TypeScale.body.copyWith(color: p.ink)),
+          ],
+        ],
       ),
     );
   }

@@ -37,7 +37,7 @@ MoodJournal sampleJournal(DateTime today) {
   tap(8, Mood.excited, 22);
   tap(9, Mood.sad, 9);
   tap(12, Mood.happy, 60);
-  return journal;
+  return journal.withNote(DayKey.of(today), note: 'A slow walk helped.');
 }
 
 /// English phrases that fit the layout. The shot is about the screen, not the real phrase pack.
