@@ -9,10 +9,26 @@ jobs:
   check:
     runs-on: ubuntu-latest
     container: ghcr.io/cirruslabs/flutter:3.44.0
+    env:
+      # 컨테이너 작업은 HOME 이 바뀌므로 캐시할 경로를 고정한다.
+      PUB_CACHE: /tmp/pub-cache
+      GRADLE_USER_HOME: /tmp/gradle
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - uses: actions/cache@v4
+        with:
+          path: /tmp/pub-cache
+          key: pub-${{ runner.os }}-${{ hashFiles('pubspec.lock') }}
+          restore-keys: pub-${{ runner.os }}-
+      - uses: actions/cache@v4
+        with:
+          path: |
+            /tmp/gradle/caches
+            /tmp/gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('android/**/*.gradle*', 'android/gradle/wrapper/gradle-wrapper.properties', 'pubspec.lock') }}
+          restore-keys: gradle-${{ runner.os }}-
       - name: 개인정보 검사
         if: github.event_name == 'pull_request'
         run: |
@@ -26,11 +42,22 @@ jobs:
       - run: flutter analyze
       - run: flutter test
       - run: flutter build apk --debug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mood-clicker-debug-apk
+          path: build/app/outputs/flutter-apk/app-debug.apk
+          retention-days: 14
+          if-no-files-found: error
   apple:
     needs: check
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: ~/.pub-cache
+          key: pub-${{ runner.os }}-${{ hashFiles('pubspec.lock') }}
+          restore-keys: pub-${{ runner.os }}-
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: 3.44.0
