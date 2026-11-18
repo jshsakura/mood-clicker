@@ -8,6 +8,9 @@ cd "$ROOT"
 echo "▶ 개인정보와 비밀 파일 검사"
 python3 tool/privacy_scan.py --staged
 
+echo "▶ AI 티 검사 (대시, 둥근 따옴표, AI 말투, 디버그 출력)"
+python3 tool/slop_scan.py --staged
+
 echo "▶ 디자인 토큰과 생성 파일이 맞는지"
 tool/check_snapshot.sh --index
 

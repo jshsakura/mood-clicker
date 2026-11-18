@@ -42,6 +42,8 @@ tool/fl build apk --debug
 코드, 테스트, 픽스처, 주석, 문서, 커밋 메시지, PR 본문 어디에도 넣지 않는다.
 `tool/privacy_scan.py` 가 커밋, 커밋 메시지, push, PR 에서 막는다.
 
+`tool/slop_scan.py` 는 같은 자리에서 AI 티를 막는다. 대시(—, –), 둥근 따옴표, 정해 둔 AI 말투, 제목과 목록의 꾸밈 이모지, `lib/` 의 `print`·`debugPrint`·`as dynamic` 이다. 기계로 못 가리는 것(수동태, 군더더기, 과한 방어 코드)은 리뷰 때 pstack 의 `unslop`(글), `deslop`(코드) 스킬로 본다. 정말 필요한 줄에만 `slop-ok` 를 적는다.
+
 - 실제 IP, 호스트명, 도메인, 이메일, 사람 이름, 운영 경로, 홈 경로, 키, 토큰.
 - 실제 좌표. 위치 기반 앱이라 특히 조심한다. 테스트 좌표는 소수 둘째 자리까지만 쓰거나 바다 한가운데 같은 가짜 값을 쓴다.
 - 서명 키, `key.properties`, `google-services.json`, `GoogleService-Info.plist`, `.env`.

@@ -18,6 +18,7 @@ while read -r _local_ref local_sha remote_ref remote_sha; do
   fi
   echo "▶ 올릴 커밋 개인정보 검사"
   python3 tool/privacy_scan.py --range "$BASE..$local_sha"
+  python3 tool/slop_scan.py --range "$BASE..$local_sha"
   echo "▶ 올릴 커밋의 토큰과 생성 파일"
   tool/check_snapshot.sh "$local_sha"
 done

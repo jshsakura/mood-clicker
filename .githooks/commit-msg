@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 커밋 메시지 형식(feat: …)과 개인정보를 확인한다.
+# 커밋 메시지 형식(feat: ...)과 개인정보, AI 티를 확인한다.
 set -euo pipefail
 ROOT="$(git rev-parse --show-toplevel)"
 FIRST=$(grep -v '^#' "$1" | head -1)
@@ -8,3 +8,4 @@ if ! printf '%s' "$FIRST" | grep -qE '^(feat|fix|refactor|docs|test|chore|perf|c
   exit 1
 fi
 python3 "$ROOT/tool/privacy_scan.py" --message "$1"
+python3 "$ROOT/tool/slop_scan.py" --message "$1"
