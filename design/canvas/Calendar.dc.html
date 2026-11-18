@@ -88,7 +88,7 @@ button{font-family:inherit}
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
-// 테마 색. design/tokens.json 의 값과 같다. 설정에서 고른 테마는 이 브라우저에 기억되고 모든 화면이 같이 바뀐다
+// Theme colors. Same values as design/tokens.json. The theme picked in settings is remembered in this browser and changes every screen together
 const PALETTES = {
   light: { id: 'light', ground: '#FFFFFF', surface: '#F5F5F7', line: '#E8E8EC', ink: '#16161A', ink2: '#3A3A42', inkMuted: '#62626C', muted: '#62626C', faint: '#A0A0AA', fill: '#EDEDF0', fillEdge: '#C8C8D0', mapLine: '#D4D4DC', happy: '#B07A00', sad: '#4C6FE0', error: '#C93A2F', inkRgb: '22,22,26' },
   dark: { id: 'dark', ground: '#121216', surface: '#222228', line: '#383840', ink: '#ECECF0', ink2: '#C8C8D0', inkMuted: '#A0A0AA', muted: '#A0A0AA', faint: '#6E6E78', fill: '#2A2A30', fillEdge: '#4A4A52', mapLine: '#383840', happy: '#FFC23D', sad: '#7A9CFF', error: '#F0685C', inkRgb: '236,236,240' },
@@ -121,7 +121,7 @@ const tint = { h: '242,169,0', s: '76,111,224' };
 const solid = { h: P.happy, s: P.sad };
 const labels = { happy: '행복해요', excited: '설레요', angry: '화나요', sad: '슬퍼요', anxious: '불안해요' };
 const side = { happy: 'h', excited: 'h', angry: 's', sad: 's', anxious: 's' };
-// [대표 기분, 두드린 수, 게이지를 끝까지 채웠는가]
+// [main mood, tap count, whether the gauge was filled to the top]
 const days = {
 1: ['happy', 96], 2: ['excited', 210], 3: ['sad', 64], 5: ['happy', 120], 6: ['angry', 180],
 7: ['happy', 40], 8: ['excited', 260, true], 9: ['happy', 150], 10: ['anxious', 88],
@@ -129,7 +129,7 @@ const days = {
 16: ['sad', 140], 17: ['happy', 90], 18: ['excited', 240, true]
 };
 const WEEKDAY = ['일', '월', '화', '수', '목', '금', '토'];
-// 끝까지 채운 날 남긴 오늘의 한마디
+// The note left on a day the gauge was filled to the top
 const NOTES = { 8: '오늘은 웃었다', 13: '맛있는 걸 먹었다', 18: '내일도 이렇게' };
 const smile = 'M8 14.5c1 1.3 2.3 2 4 2s3-.7 4-2';
 const frown = 'M8 17c1-1.3 2.3-2 4-2s3 .7 4 2';

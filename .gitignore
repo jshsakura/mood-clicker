@@ -44,7 +44,7 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
-# 비밀 파일과 개인 설정. tool/privacy_scan.py 도 같은 목록을 막는다.
+# Secret files and personal settings. tool/privacy_scan.py blocks the same list.
 .env
 .env.*
 !.env.example
