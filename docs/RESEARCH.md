@@ -477,3 +477,64 @@ Apple HIG(Playing haptics)에 따라 단발성 타격은 `transient`, 여운이 
 - Kenney Interface Sounds: https://kenney.nl/assets/interface-sounds
 - Kenney UI Audio: https://kenney.nl/assets/ui-audio
 - Kenney Impact Sounds: https://kenney.nl/assets/impact-sounds
+
+---
+
+## 9. 네이티브 퍼스트 체크리스트 (Flutter 3.44 기준)
+
+확인일: 2026-11-18
+
+Flutter 앱이 웹앱처럼 어색해 보이지 않고 iOS·Android·macOS 에서 네이티브처럼 느껴지게 하려면 아래 11가지 지점을 점검해야 합니다.
+
+### 1) 화면 전환 (iOS 스와이프 뒤로가기, Android 예측형 뒤로가기)
+- **어색한 지점**: Android 스타일 위아래 전환이나 스와이프 뒤로가기 먹통, Android 14+ 에서 뒤로가기 시 미리보기 없이 뚝 끊김.
+- **iOS**: `CupertinoPageRoute` 를 쓰거나 `ThemeData.pageTransitionsTheme` 에 `TargetPlatform.iOS: CupertinoPageTransitionsBuilder()` 를 지정해 왼쪽 가장자리 스와이프 뒤로가기를 살립니다. `PopScope(canPop: false)` 를 무심코 두면 iOS 스와이프 제스처 자체가 막히므로 주의합니다.
+- **Android**: `TargetPlatform.android: PredictiveBackPageTransitionsBuilder()` 를 지정하고, `android/app/src/main/AndroidManifest.xml` 의 `<application>`(또는 `<activity>`)에 `android:enableOnBackInvokedCallback="true"` 를 추가합니다. 뒤로가기 제어는 `WillPopScope` 대신 `PopScope(canPop: ..., onPopInvokedWithResult: ...)` 를 씁니다.
+
+### 2) 스크롤 물리
+- **어색한 지점**: iOS 에서 튕기지 않고 딱 멈추는 스크롤, 또는 Android 에서 iOS 식 바운스나 구형 글로우가 나오는 현상.
+- **iOS / Android**: 기본 `MaterialApp` 은 `MaterialScrollBehavior` 를 통해 플랫폼별로 iOS 는 `BouncingScrollPhysics`, Android 12+ 는 `ClampingScrollPhysics` + `StretchingOverscrollIndicator` 를 자동 적용합니다. 커스텀 `ScrollPhysics` 로 `BouncingScrollPhysics()` 를 전역 고정하지 말고, `ScrollBehavior.getScrollPhysics(context)` 기본 분기를 유지합니다.
+
+### 3) 눌림 피드백 (물결 효과 대신)
+- **어색한 지점**: iOS 나 미니멀 화면에서 Material 잉크 물결(`InkRipple` / `InkSplash`)이 퍼지면 웹앱이나 안드로이드 이식작처럼 보입니다.
+- **iOS / Android 공통(앱 톤에 따라)**: `ThemeData` 에 `splashFactory: NoSplash.splashFactory` 와 `highlightColor: Colors.transparent` 를 두고, 대신 눌릴 때 `AnimatedScale`(예: `0.97`) + `AnimatedOpacity`(예: `0.75`) + `Motion.tap`(`90ms`) 같은 물리적 눌림을 줍니다. iOS 표준 버튼에는 `CupertinoButton` 을 씁니다.
+
+### 4) 상태바와 내비게이션 바 (Edge-to-Edge)
+- **어색한 지점**: 상단 상태바나 하단 제스처 바 뒤가 검거나 흰 띠로 잘려 보이는 현상.
+- **iOS / Android**: Android 15(API 35) 타깃부터는 Edge-to-Edge 가 기본입니다. `SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge)` 를 호출하고, 화면마다 `AnnotatedRegion<SystemUiOverlayStyle>` 로 `statusBarColor: Colors.transparent`, `systemNavigationBarColor: Colors.transparent`, 그리고 테마 밝기에 맞는 `statusBarIconBrightness` / `statusBarBrightness` 를 맞춰 줍니다. 콘텐츠 겹침은 `SafeArea` 나 `MediaQuery.viewPaddingOf(context)` 로 피합니다.
+
+### 5) 글자 렌더링과 시스템 글자 크기
+- **어색한 지점**: 시스템 글자 크기를 키웠을 때 텍스트가 잘리거나(`RenderFlex overflow`), 고정 `TextScaler.noScaling` 으로 접근성을 무시하는 현상.
+- **iOS / Android**: `MediaQuery.textScalerOf(context)`(구 `textScaleFactor` 대체)를 그대로 존중합니다. 큰 숫자(연타 카운트 등)만 레이아웃이 깨지지 않도록 `FittedBox` 나 상한 클램프(`TextScaler.clamp(maxScaleFactor: ...)`)를 부분 적용합니다. 폰트는 `design/tokens.json` 의 `Pretendard` 등을 쓰되 iOS/Android 기본 시스템 폰트 fallback 이 어긋나지 않게 `ThemeData.fontFamilyFallback` 을 정리합니다.
+
+### 6) 키보드
+- **어색한 지점**: 스크롤해도 키보드가 안 내려가거나, 바깥을 눌러도 포커스가 안 풀림, 키보드에 가려 입력창이 안 보임.
+- **iOS / Android**: `Scaffold(resizeToAvoidBottomInset: true)` 를 유지하고, 스크롤 가능한 화면에는 `keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag` 를 켜 iOS 네이티브처럼 드래그로 키보드가 닫히게 합니다. 바깥 탭 시 `FocusManager.instance.primaryFocus?.unfocus()` 를 호출하고, `TextInputAction.done` / `next` 를 지정합니다. (파일럿 1단계는 텍스트 입력이 거의 없으나 메모 기능 추가 시 필수입니다.)
+
+### 7) 텍스트 선택
+- **어색한 지점**: 본문 복사가 안 되거나, 툴바가 플랫폼 기본 메뉴와 다르게 보임.
+- **iOS / Android**: 복사가 필요한 텍스트 영역은 `SelectionArea` 또는 `SelectableText` 로 감싸고, `contextMenuBuilder` 기본값인 `AdaptiveTextSelectionToolbar` 를 유지해 iOS/Android/macOS 각각의 네이티브 선택 핸들과 메뉴가 뜨게 합니다.
+
+### 8) 첫 실행 시간과 셰이더 끊김 (Impeller)
+- **어색한 지점**: 첫 애니메이션·화면 전환 순간에 프레임이 뚝 끊기는 셰이더 컴파일 쟁크(jank).
+- **iOS**: **Impeller(Metal)** 가 기본이자 유일한 렌더러입니다. 모든 기본 셰이더가 빌드 시 사전 컴파일됩니다.
+- **Android**: API 29+ Vulkan 기기에서는 **Impeller** 가 기본 활성화되며, Vulkan 미지원·구형 기기에서는 OpenGLES 로 자동 fallback 됩니다. (`docs/PLAN.md` 의 호일 금속 광택 GLSL 셰이더를 추가할 때는 첫 실행 시 1프레임 워밍업이나 `FragmentProgram.fromAsset` 사전 로드를 해 두어야 첫 탭 끊김을 막을 수 있습니다.)
+
+### 9) 접근성 (VoiceOver, TalkBack)
+- **어색한 지점**: `GestureDetector` 로 만든 커스텀 버튼이나 연타 영역을 스크린 리더가 읽지 못하거나 터치 영역이 너무 작음.
+- **iOS (VoiceOver) / Android (TalkBack)**: 커스텀 터치 위젯에 `Semantics(button: true, label: ...)` 를 반드시 붙이고, 아이콘+텍스트 묶음은 `MergeSemantics`, 장식 요소는 `ExcludeSemantics` 로 감쌉니다. 터치 영역은 최소 **iOS `44x44pt` / Android `48x48dp`** 를 확보하고, 위젯 테스트에서 `meetsGuideline(androidTapTargetGuideline)` 와 `labeledTapTargetGuideline` 으로 자동 검증합니다. 연타 중 매 탭마다 읽어 주면 방해되므로 `liveRegion` 은 완료(`full`) 등 핵심 상태 변화에만 씁니다.
+
+### 10) 다크 모드 전환
+- **어색한 지점**: OS 다크 모드를 바꿨는데 앱이 안 따라가거나, 바탕색만 바뀌고 상태바 아이콘 색이 안 바뀌어 글자가 안 보임.
+- **iOS / Android**: `MaterialApp(themeMode: ThemeMode.system, theme: ..., darkTheme: ...)` 또는 커스텀 `ThemeController` 에서 `MediaQuery.platformBrightnessOf(context)` 를 구독해 즉시 반응하게 합니다. 테마 전환 시 `SystemUiOverlayStyle`(상태바·내비게이션 바 아이콘 밝기)도 함께 갱신해야 합니다.
+
+### 11) 맥에서의 창과 메뉴
+- **어색한 지점**: 맥 앱을 실행했는데 상단 메뉴바가 비어 있거나 `Cmd+Q`, `Cmd+W`, 창 최소 크기 제어가 안 됨.
+- **macOS**: 루트 위젯에 `PlatformMenuBar` 를 두고 `PlatformProvidedMenuItem`(종료, 창 닫기, 최소화, 확대 등 macOS 기본 메뉴)과 `PlatformMenu` 를 연결합니다. 단축키는 `Shortcuts` + `Actions` 에서 `SingleActivator(..., meta: true)` 로 `Cmd` 키 조합을 지원하고, 창 최소 크기·타이틀바 스타일은 `macos/Runner/MainFlutterWindow.swift` 에서 설정합니다.
+
+출처 및 확인일 (2026-11-18):
+- Flutter `PageTransitionsTheme` / `PredictiveBackPageTransitionsBuilder` / `PopScope`: https://api.flutter.dev/flutter/material/PageTransitionsTheme-class.html , https://api.flutter.dev/flutter/widgets/PopScope-class.html
+- Flutter Impeller 렌더링 엔진: https://docs.flutter.dev/perf/impeller
+- Flutter Android Edge-to-Edge (`SystemUiMode.edgeToEdge`): https://docs.flutter.dev/release/breaking-changes/android-15-edge-to-edge
+- Flutter `TextScaler`, `AdaptiveTextSelectionToolbar`, `ScrollViewKeyboardDismissBehavior`, `PlatformMenuBar`: https://api.flutter.dev/flutter/painting/TextScaler-class.html , https://api.flutter.dev/flutter/material/AdaptiveTextSelectionToolbar-class.html , https://api.flutter.dev/flutter/widgets/ScrollViewKeyboardDismissBehavior.html , https://api.flutter.dev/flutter/widgets/PlatformMenuBar-class.html
+- Flutter 접근성 (`Semantics`, 가이드라인 테스트): https://docs.flutter.dev/ui/accessibility-and-localization/accessibility
