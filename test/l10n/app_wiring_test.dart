@@ -5,8 +5,9 @@ import 'package:mood_clicker/l10n/locale_resolution.dart';
 import 'package:mood_clicker/main.dart';
 
 /// Pumps the same localization wiring main.dart uses and shows the localized
-/// app name, so the delegates, supported locales and the fallback rule are
-/// exercised end to end.
+/// strings, so the delegates, supported locales and the fallback rule are
+/// exercised end to end. It shows the Back label, because the app name is the
+/// same placeholder in every language.
 Future<void> pumpProbe(WidgetTester tester) async {
   await tester.pumpWidget(
     MaterialApp(
@@ -15,7 +16,7 @@ Future<void> pumpProbe(WidgetTester tester) async {
       localeListResolutionCallback: (deviceLocales, supported) =>
           resolveAppLocale(deviceLocales ?? const [], supported),
       home: Builder(
-        builder: (context) => Text(AppLocalizations.of(context).appName),
+        builder: (context) => Text(AppLocalizations.of(context).common_back),
       ),
     ),
   );
@@ -23,25 +24,22 @@ Future<void> pumpProbe(WidgetTester tester) async {
 }
 
 void main() {
-  testWidgets('the app name resolves for each supported device locale', (
+  testWidgets('strings resolve for each supported device locale', (
     tester,
   ) async {
     tester.platformDispatcher.localesTestValue = const [Locale('ko')];
     await pumpProbe(tester);
-    expect(find.text('\uAE30\uBD84 \uD074\uB9AC\uCEE4'), findsOneWidget);
+    expect(find.text('\uB4A4\uB85C'), findsOneWidget);
 
     tester.platformDispatcher.localesTestValue = const [Locale('ja')];
     await pumpProbe(tester);
-    expect(
-      find.text('\u6C17\u5206\u30AF\u30EA\u30C3\u30AB\u30FC'),
-      findsOneWidget,
-    );
+    expect(find.text('\u623B\u308B'), findsOneWidget);
   });
 
   testWidgets('an unsupported device locale shows English', (tester) async {
     tester.platformDispatcher.localesTestValue = const [Locale('fr')];
     await pumpProbe(tester);
-    expect(find.text('Mood Clicker'), findsOneWidget);
+    expect(find.text('Back'), findsOneWidget);
   });
 
   testWidgets('the real app builds with localizations wired', (tester) async {
