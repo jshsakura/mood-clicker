@@ -35,6 +35,10 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
 
+  # 진동과 소리 계층(lib/feedback). 소리는 겹쳐 낼 수 있는 저지연 엔진을 쓴다.
+  flutter_soloud: ^4.1.7
+  audio_session: ^0.2.4
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -64,6 +68,10 @@ flutter:
         - asset: assets/fonts/Pretendard-Regular.otf
         - asset: assets/fonts/Pretendard-Bold.otf
           weight: 700
+
+  # 소리 묶음. 묶음을 더하면 폴더를 여기에도 적는다(없는 폴더를 적으면 빌드가 실패한다).
+  assets:
+    - assets/sounds/basic/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

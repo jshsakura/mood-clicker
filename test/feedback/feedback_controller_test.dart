@@ -1,0 +1,192 @@
+import 'dart:math';
+
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mood_clicker/feedback/feedback_controller.dart';
+import 'package:mood_clicker/feedback/feedback_kind.dart';
+import 'package:mood_clicker/feedback/feedback_settings.dart';
+import 'package:mood_clicker/feedback/feedback_table.dart';
+
+import 'fakes.dart';
+
+/// 정해 둔 값을 차례로 돌려주는 Random. 0.0 이면 가장 낮게, 1.0 에 가깝게 가장 높게 흔든다.
+class _FixedRandom implements Random {
+  _FixedRandom(this.values);
+  final List<double> values;
+  int _i = 0;
+
+  @override
+  double nextDouble() => values[_i++ % values.length];
+
+  @override
+  bool nextBool() => nextDouble() >= 0.5;
+
+  @override
+  int nextInt(int max) => (nextDouble() * max).floor();
+}
+
+void main() {
+  late FakeHaptics haptics;
+  late FakeSound sound;
+  late Duration now;
+
+  FeedbackController make({
+    FeedbackSettings settings = const FeedbackSettings(),
+    Random? random,
+  }) {
+    return FeedbackController(
+      haptics: haptics,
+      sound: sound,
+      settings: settings,
+      clock: () => now,
+      random: random ?? Random(1),
+    );
+  }
+
+  setUp(() {
+    haptics = FakeHaptics();
+    sound = FakeSound();
+    now = const Duration(seconds: 10);
+  });
+
+  group('plays what the table says', () {
+    test('sends the tables haptic cue and sound id', () {
+      make().trigger(FeedbackKind.tap, 'angry');
+      final entry = FeedbackTable.of(FeedbackKind.tap, 'angry');
+      expect(haptics.played, [entry.haptic]);
+      expect(sound.played.single.cue.id, entry.soundId);
+      expect(sound.played.single.cue.pack, SoundPack.basic);
+    });
+
+    test('uses the chosen sound pack', () {
+      make(
+        settings: const FeedbackSettings(soundPack: SoundPack.soft),
+      ).trigger(FeedbackKind.select, 'happy');
+      expect(sound.played.single.cue.pack, SoundPack.soft);
+    });
+
+    test('drop gives a haptic and no sound', () {
+      make().trigger(FeedbackKind.drop, 'sad');
+      expect(haptics.played, hasLength(1));
+      expect(sound.played, isEmpty);
+    });
+  });
+
+  group('haptic throttle', () {
+    test('skips a haptic that comes less than 40ms after the last one', () {
+      final c = make();
+      c.trigger(FeedbackKind.tap, 'happy');
+      now += const Duration(milliseconds: 39);
+      c.trigger(FeedbackKind.tap, 'happy');
+      expect(haptics.played, hasLength(1));
+    });
+
+    test('lets a haptic through at exactly 40ms', () {
+      final c = make();
+      c.trigger(FeedbackKind.tap, 'happy');
+      now += const Duration(milliseconds: 40);
+      c.trigger(FeedbackKind.tap, 'happy');
+      expect(haptics.played, hasLength(2));
+    });
+
+    test('measures from the last haptic that played, not the skipped one', () {
+      final c = make();
+      c.trigger(FeedbackKind.tap, 'happy'); // t=0 plays
+      now += const Duration(milliseconds: 30);
+      c.trigger(FeedbackKind.tap, 'happy'); // t=30 skipped
+      now += const Duration(milliseconds: 15);
+      c.trigger(FeedbackKind.tap, 'happy'); // t=45 plays
+      expect(haptics.played, hasLength(2));
+    });
+
+    test('still plays the sound when the haptic is skipped', () {
+      final c = make();
+      c.trigger(FeedbackKind.tap, 'happy');
+      c.trigger(FeedbackKind.tap, 'happy');
+      expect(haptics.played, hasLength(1));
+      expect(sound.played, hasLength(2));
+    });
+
+    test('a kind with no haptic does not start the clock', () {
+      final c = make();
+      c.trigger(FeedbackKind.tap, 'unknown');
+      c.trigger(FeedbackKind.tap, 'happy');
+      expect(haptics.played, hasLength(1));
+    });
+  });
+
+  group('settings', () {
+    test('haptics off mutes only the haptic', () {
+      make(
+        settings: const FeedbackSettings(hapticsOn: false),
+      ).trigger(FeedbackKind.tap, 'happy');
+      expect(haptics.played, isEmpty);
+      expect(sound.played, hasLength(1));
+    });
+
+    test('sound off mutes only the sound', () {
+      make(
+        settings: const FeedbackSettings(soundOn: false),
+      ).trigger(FeedbackKind.tap, 'happy');
+      expect(haptics.played, hasLength(1));
+      expect(sound.played, isEmpty);
+    });
+
+    test('new settings apply to the next trigger', () {
+      final c = make();
+      c.trigger(FeedbackKind.tap, 'happy');
+      now += const Duration(seconds: 1);
+      c.settings = c.settings.copyWith(hapticsOn: false, soundOn: false);
+      c.trigger(FeedbackKind.tap, 'happy');
+      expect(haptics.played, hasLength(1));
+      expect(sound.played, hasLength(1));
+    });
+  });
+
+  group('pitch jitter', () {
+    test('stays within 3 percent of the original pitch', () {
+      final c = make(random: Random(7));
+      for (var i = 0; i < 500; i++) {
+        now += const Duration(milliseconds: 50);
+        c.trigger(FeedbackKind.tap, 'happy');
+      }
+      for (final p in sound.played) {
+        expect(p.pitch, inInclusiveRange(0.97, 1.03));
+      }
+    });
+
+    test('reaches both ends of the range', () {
+      make(random: _FixedRandom([0.0, 0.999999]))
+        ..trigger(FeedbackKind.tap, 'happy')
+        ..trigger(FeedbackKind.tap, 'happy');
+      expect(sound.played[0].pitch, closeTo(0.97, 1e-9));
+      expect(sound.played[1].pitch, closeTo(1.03, 1e-4));
+    });
+
+    test('is not the same every time', () {
+      final c = make(random: Random(3));
+      for (var i = 0; i < 20; i++) {
+        c.trigger(FeedbackKind.tap, 'happy');
+      }
+      expect(sound.played.map((p) => p.pitch).toSet().length, greaterThan(10));
+    });
+  });
+
+  group('failures never reach the caller', () {
+    test('a haptic port that throws does not stop the sound', () {
+      final c = FeedbackController(
+        haptics: _ThrowingHaptics(),
+        sound: sound,
+        clock: () => now,
+        random: Random(1),
+        log: (_) {},
+      );
+      expect(() => c.trigger(FeedbackKind.tap, 'happy'), returnsNormally);
+      expect(sound.played, hasLength(1));
+    });
+  });
+}
+
+class _ThrowingHaptics extends FakeHaptics {
+  @override
+  Future<void> play(cue) => throw StateError('no motor');
+}
