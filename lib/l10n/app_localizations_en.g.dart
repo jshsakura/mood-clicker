@@ -500,4 +500,15 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get note_reason => 'You filled it up. Leave a line for today.';
+
+  @override
+  String get note_privacy =>
+      'Words you write stay on this device. Only a sentence picked from the list is shown on the map, with no name.';
+
+  @override
+  String get note_saveFailed =>
+      'Could not save. Try again in a moment. Your text is still here.';
 }

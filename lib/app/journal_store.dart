@@ -62,12 +62,24 @@ class JournalStore extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Sets the note of a day and writes it at once.
-  Future<void> setNote(DayKey day, {String? note, String? presetId}) {
+  /// Sets the note of a day and writes it at once. Returns false when the write failed: the
+  /// note is taken back out of memory, so the calendar never shows a line the disk does not hold,
+  /// and the caller keeps the draft and says so.
+  Future<bool> setNote(DayKey day, {String? note, String? presetId}) async {
+    final before = _journal.dayOf(day);
     _journal = _journal.withNote(day, note: note, presetId: presetId);
     _policy = _policy.afterTap(_watch.elapsed);
     notifyListeners();
-    return save(SaveTrigger.leaveScreen);
+    final written = await save(SaveTrigger.leaveScreen);
+    if (!written) {
+      _journal = _journal.withNote(
+        day,
+        note: before.note,
+        presetId: before.notePresetId,
+      );
+      notifyListeners();
+    }
+    return written;
   }
 
   /// Forgets every record: memory, the pending taps and the file. Listeners are told first so the
@@ -81,18 +93,20 @@ class JournalStore extends ChangeNotifier {
   }
 
   /// Writes when the policy says so for [trigger]. A failed write is kept pending and retried
-  /// on the next call; it never throws to the screen.
-  Future<void> save(SaveTrigger trigger) async {
-    if (!_policy.shouldSave(trigger, _watch.elapsed)) return;
+  /// on the next call; it never throws to the screen. Returns false only when a write failed.
+  Future<bool> save(SaveTrigger trigger) async {
+    if (!_policy.shouldSave(trigger, _watch.elapsed)) return true;
     final snapshot = _journal;
     _policy = _policy.afterSaveStarted();
     try {
       await repository.save(snapshot);
+      return true;
     } on Object catch (error) {
       _policy = _policy.afterSaveFailed();
       FlutterError.reportError(
         FlutterErrorDetails(exception: error, library: 'journal store'),
       );
+      return false;
     }
   }
 }

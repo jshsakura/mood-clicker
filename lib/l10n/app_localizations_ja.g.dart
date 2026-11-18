@@ -490,4 +490,14 @@ class AppLocalizationsJa extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get note_reason => '最後まで満たしました。今日を一行で残します。';
+
+  @override
+  String get note_privacy =>
+      '自分で書いた言葉はこの端末にだけ残ります。リストから選んだ文だけが、名前なしで地図に表示されます。';
+
+  @override
+  String get note_saveFailed => '保存できませんでした。しばらくしてからもう一度押してください。書いた文はそのままです。';
 }

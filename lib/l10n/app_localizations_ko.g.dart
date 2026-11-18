@@ -491,4 +491,14 @@ class AppLocalizationsKo extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get note_reason => '끝까지 채웠습니다. 오늘을 한 줄로 남깁니다.';
+
+  @override
+  String get note_privacy =>
+      '직접 쓴 말은 이 기기에만 남습니다. 위 문장 중에서 고른 것만 지도에 이름 없이 보입니다.';
+
+  @override
+  String get note_saveFailed => '저장하지 못했습니다. 잠시 뒤 다시 눌러 주세요. 쓴 글은 그대로 있습니다.';
 }

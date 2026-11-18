@@ -267,7 +267,7 @@ class _TapScreenState extends State<TapScreen>
     await _services.cheerPicker.persist(_services.deckStore);
     final record = _services.journal.journal.dayOf(today);
     if (record.shouldAskNote(filledThisVisit: _filledThisVisit) && mounted) {
-      await showNoteSheet(context, today);
+      await showNoteSheet(context, today, afterComplete: _filledThisVisit);
     }
     if (navigator.mounted) navigator.pop();
   }

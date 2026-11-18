@@ -41,6 +41,12 @@ class FakeSurfaces {
 class MemoryRepository implements MoodRepository {
   MemoryRepository({this.loadResult, this.gate});
 
+  /// When set, [save] throws it. A test that wants a failing disk sets one.
+  Object? saveError;
+
+  /// When given, [save] waits for it before it finishes.
+  Future<void>? saveGate;
+
   LoadResult? loadResult;
 
   /// When given, [load] waits for it. A test that wants the loading screen to stay gives one.
@@ -55,6 +61,8 @@ class MemoryRepository implements MoodRepository {
 
   @override
   Future<bool> save(MoodJournal journal) async {
+    await saveGate;
+    if (saveError case final error?) throw error;
     saved.add(journal);
     return true;
   }
