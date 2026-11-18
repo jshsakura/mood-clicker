@@ -231,4 +231,37 @@ void main() {
     expect(bars, isNotEmpty);
     expect(bars, everyElement(anyOf(lightPalette.ink, lightPalette.mapLine)));
   });
+
+  testWidgets('today button shows on past months and jumps back', (
+    tester,
+  ) async {
+    final app = TestApp();
+    await tester.pumpWidget(app.wrap(const CalendarScreen()));
+    expect(find.text(ko.calendar_today), findsNothing);
+    await tester.tap(find.bySemanticsLabel(ko.calendar_prevMonth));
+    await tester.pumpAndSettle();
+    expect(find.text(ko.calendar_today), findsOneWidget);
+    await tester.tap(find.text(ko.calendar_today));
+    await tester.pumpAndSettle();
+    expect(find.text(ko.calendar_today), findsNothing);
+  });
+
+  testWidgets('empty month shows an empty month notice', (tester) async {
+    final app = TestApp();
+    await tester.pumpWidget(app.wrap(const CalendarScreen()));
+    expect(find.text(ko.calendar_emptyMonth), findsOneWidget);
+  });
+
+  testWidgets('day detail shows edit note button next to note', (tester) async {
+    final app = TestApp();
+    app.journal.load(MoodJournal.empty().withTap(Mood.happy, app.clock));
+    await app.journal.setNote(
+      app.journal.journal.days.single.day,
+      note: 'hello',
+    );
+    await tester.pumpWidget(app.wrap(const CalendarScreen()));
+    await tester.tap(find.text('18'));
+    await tester.pumpAndSettle();
+    expect(find.text(ko.dayDetail_editNote), findsOneWidget);
+  });
 }

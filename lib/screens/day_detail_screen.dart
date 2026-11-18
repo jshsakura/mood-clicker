@@ -44,85 +44,95 @@ class DayDetailScreen extends StatelessWidget {
                 .fold(0, (a, b) => a > b ? a : b);
             final note = record.note;
 
-            return ListView(
-              padding: const EdgeInsets.fromLTRB(
-                Space.lg,
-                Space.lg,
-                Space.lg,
-                Space.xl,
-              ),
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Row(
-                  children: [
-                    PressableSurface.icon(
-                      icon: LineIcons.backHeavy,
-                      semanticLabel: l10n.common_back,
-                      onTap: () => Navigator.of(context).pop(),
-                    ),
-                    const SizedBox(width: Space.sm),
-                    Expanded(
-                      child: Text(
-                        dayTitle(locale, date),
-                        style: TypeScale.title.copyWith(color: p.ink),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: Space.xl),
-                if (record.total == 0)
-                  Text(
-                    l10n.dayDetail_empty,
-                    style: TypeScale.body.copyWith(color: p.inkMuted),
-                  )
-                else ...[
-                  _SummaryCard(mood: record.dominantMood!, note: note),
-                  const SizedBox(height: Space.xl),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: Space.sm),
-                    child: Column(
-                      children: [
-                        for (final mood in Mood.values)
-                          _MoodBarRow(
-                            mood: mood,
-                            count: record.countOf(mood),
-                            share: maxCount > 0
-                                ? record.countOf(mood) / maxCount
-                                : 0,
-                          ),
-                      ],
-                    ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    Space.lg,
+                    Space.lg,
+                    Space.lg,
+                    Space.sm,
                   ),
-                  const SizedBox(height: Space.md),
-                  Row(
+                  child: Row(
                     children: [
-                      Expanded(
-                        child: _SideTotalCard(
-                          label: l10n.dayDetail_happySide,
-                          count: record.happyTotal,
-                        ),
+                      PressableSurface.icon(
+                        icon: LineIcons.backHeavy,
+                        semanticLabel: l10n.common_back,
+                        onTap: () => Navigator.of(context).pop(),
                       ),
-                      const SizedBox(width: Space.md),
+                      const SizedBox(width: Space.sm),
                       Expanded(
-                        child: _SideTotalCard(
-                          label: l10n.dayDetail_sadSide,
-                          count: record.sadTotal,
+                        child: Text(
+                          dayTitle(locale, date),
+                          style: TypeScale.title.copyWith(color: p.ink),
                         ),
                       ),
                     ],
                   ),
-                  if (note == null) ...[
-                    const SizedBox(height: Space.md),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: TextButton(
-                        onPressed: () => showNoteSheet(context, day),
-                        child: Text(l10n.note_title),
-                      ),
+                ),
+                Expanded(
+                  child: ListView(
+                    padding: const EdgeInsets.fromLTRB(
+                      Space.lg,
+                      Space.md,
+                      Space.lg,
+                      Space.xl,
                     ),
-                  ],
-                  const SizedBox(height: Space.xl),
-                  _WeekReviewChart(day: date, journal: journal),
-                ],
+                    children: [
+                      if (record.total == 0)
+                        Text(
+                          l10n.dayDetail_empty,
+                          style: TypeScale.body.copyWith(color: p.inkMuted),
+                        )
+                      else ...[
+                        _SummaryCard(
+                          mood: record.dominantMood!,
+                          note: note,
+                          onEditNote: () => showNoteSheet(context, day),
+                        ),
+                        const SizedBox(height: Space.xl),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: Space.sm,
+                          ),
+                          child: Column(
+                            children: [
+                              for (final mood in Mood.values)
+                                _MoodBarRow(
+                                  mood: mood,
+                                  count: record.countOf(mood),
+                                  share: maxCount > 0
+                                      ? record.countOf(mood) / maxCount
+                                      : 0,
+                                ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: Space.md),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _SideTotalCard(
+                                label: l10n.dayDetail_happySide,
+                                count: record.happyTotal,
+                              ),
+                            ),
+                            const SizedBox(width: Space.md),
+                            Expanded(
+                              child: _SideTotalCard(
+                                label: l10n.dayDetail_sadSide,
+                                count: record.sadTotal,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: Space.xl),
+                        _WeekReviewChart(day: date, journal: journal),
+                      ],
+                    ],
+                  ),
+                ),
               ],
             );
           },
@@ -133,10 +143,15 @@ class DayDetailScreen extends StatelessWidget {
 }
 
 class _SummaryCard extends StatelessWidget {
-  const _SummaryCard({required this.mood, required this.note});
+  const _SummaryCard({
+    required this.mood,
+    required this.note,
+    required this.onEditNote,
+  });
 
   final Mood mood;
   final String? note;
+  final VoidCallback onEditNote;
 
   @override
   Widget build(BuildContext context) {
@@ -179,10 +194,42 @@ class _SummaryCard extends StatelessWidget {
               MoodFace(mood: mood, size: 44),
             ],
           ),
-          if (note != null) ...[
-            const SizedBox(height: Space.md),
-            Text('"$note"', style: TypeScale.body.copyWith(color: p.ink)),
-          ],
+          const SizedBox(height: Space.md),
+          Row(
+            children: [
+              if (note != null)
+                Expanded(
+                  child: Text(
+                    '"$note"',
+                    style: TypeScale.body.copyWith(color: p.ink),
+                  ),
+                )
+              else
+                const Spacer(),
+              const SizedBox(width: Space.sm),
+              PressableSurface(
+                kind: PressableKind.card,
+                radius: Radii.pill,
+                color: p.ground,
+                semanticLabel: note == null
+                    ? l10n.dayDetail_addNote
+                    : l10n.dayDetail_editNote,
+                onTap: onEditNote,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: Space.md,
+                    vertical: Space.xs,
+                  ),
+                  child: Text(
+                    note == null
+                        ? l10n.dayDetail_addNote
+                        : l10n.dayDetail_editNote,
+                    style: TypeScale.label.copyWith(color: p.ink),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );

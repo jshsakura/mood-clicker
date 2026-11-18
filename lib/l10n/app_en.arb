@@ -158,5 +158,11 @@
   "dayDetail_moodHeading": "Mood of the day",
   "dayDetail_dominantCaption": "Most tapped mood",
   "dayDetail_weekReview": "This week",
-  "settings_exportEmpty": "There are no records to export yet"
+  "settings_exportEmpty": "There are no records to export yet",
+  "calendar_today": "Today",
+  "calendar_emptyMonth": "No entries this month",
+  "dayDetail_addNote": "Add note",
+  "dayDetail_editNote": "Edit note",
+  "map_empty": "No nearby entries yet",
+  "map_sampleNotice": "Showing a sample neighborhood map"
 }

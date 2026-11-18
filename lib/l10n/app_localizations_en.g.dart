@@ -538,4 +538,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settings_exportEmpty => 'There are no records to export yet';
+
+  @override
+  String get calendar_today => 'Today';
+
+  @override
+  String get calendar_emptyMonth => 'No entries this month';
+
+  @override
+  String get dayDetail_addNote => 'Add note';
+
+  @override
+  String get dayDetail_editNote => 'Edit note';
+
+  @override
+  String get map_empty => 'No nearby entries yet';
+
+  @override
+  String get map_sampleNotice => 'Showing a sample neighborhood map';
 }

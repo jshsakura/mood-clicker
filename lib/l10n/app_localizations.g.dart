@@ -1053,6 +1053,42 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'내보낼 기록이 아직 없습니다'**
   String get settings_exportEmpty;
+
+  /// 과거 달에서 오늘이 속한 달로 돌아가는 단추입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'오늘'**
+  String get calendar_today;
+
+  /// 기록이 하나도 없는 달을 볼 때 나오는 안내입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'이달에는 기록이 없습니다'**
+  String get calendar_emptyMonth;
+
+  /// 그날 상세에서 한마디를 추가하는 단추입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'한마디 남기기'**
+  String get dayDetail_addNote;
+
+  /// 그날 상세에서 기존 한마디를 수정하는 단추입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'한마디 고치기'**
+  String get dayDetail_editNote;
+
+  /// 표시할 동네 칸이 없을 때 시트에 나오는 안내입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'아직 주변에 남긴 기록이 없습니다'**
+  String get map_empty;
+
+  /// 표본 지도 데이터를 보여 줄 때 시트에 나오는 안내입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'지금은 둘러보기용 표본 지도입니다'**
+  String get map_sampleNotice;
 }
 
 class _AppLocalizationsDelegate
