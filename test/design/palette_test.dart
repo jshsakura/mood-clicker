@@ -5,7 +5,7 @@ import 'package:mood_clicker/design/tokens.g.dart';
 
 import 'contrast.dart';
 
-/// 팔레트의 색 이름. 아래 쌍 표가 이 이름으로 색을 고른다.
+/// Palette color names. The pair table below picks colors by these names.
 final _roles = <String, Color Function(AppPalette)>{
   'ground': (p) => p.ground,
   'surface': (p) => p.surface,
@@ -21,48 +21,48 @@ final _roles = <String, Color Function(AppPalette)>{
   'mapLine': (p) => p.mapLine,
 };
 
-/// 글자 4.5, 큰 글자 3, 그림 3. WCAG 2 의 기준이다.
+/// Text 4.5, large text 3, graphics 3: the WCAG 2 thresholds.
 const _text = 4.5;
 const _largeText = 3.0;
 const _graphic = 3.0;
 
-/// 화면에서 실제로 마주 놓이는 색 쌍. 새 쌍이 생기면 여기에 더한다.
+/// Color pairs that really meet on screen. Add a pair here when a new one appears.
 ///
-/// 일부러 뺀 쌍:
-/// - fill/surface: 채움은 큰 면이고 숫자가 따로 보여서 빈 바닥과의 대비를 요구하지 않는다.
-/// - mapLine/mapGround: 지도 선은 장식선이라 대비를 요구하지 않는다.
+/// Pairs left out on purpose:
+/// - fill/surface: the fill is a large area and the number is shown separately, so no contrast with the empty ground is required.
+/// - mapLine/mapGround: map lines are decorative, so no contrast is required.
 const _pairs = <(String fg, String bg, double min, String use)>[
-  ('ink', 'ground', _text, '본문'),
-  ('ink', 'surface', _text, '카드 위 본문'),
-  ('inkMuted', 'ground', _text, '보조 글자'),
-  ('inkMuted', 'surface', _text, '카드 위 보조 글자'),
-  ('onAccent', 'accent', _text, '강조색 단추 위 글자'),
-  ('onAccent', 'error', _text, '오류색 위 글자(테마의 onError)'),
-  ('ink', 'fill', _largeText, '차오른 채움 위 큰 숫자(56px 굵게)'),
-  ('happy', 'surface', _graphic, '행복 쪽 배너의 띠'),
-  ('sad', 'surface', _graphic, '슬픔 쪽 배너의 띠'),
+  ('ink', 'ground', _text, 'body text'),
+  ('ink', 'surface', _text, 'body text on a card'),
+  ('inkMuted', 'ground', _text, 'secondary text'),
+  ('inkMuted', 'surface', _text, 'secondary text on a card'),
+  ('onAccent', 'accent', _text, 'text on an accent button'),
+  ('onAccent', 'error', _text, 'text on the error color (the theme onError)'),
+  ('ink', 'fill', _largeText, 'large number on a risen fill (56px bold)'),
+  ('happy', 'surface', _graphic, 'stripe of the happy side banner'),
+  ('sad', 'surface', _graphic, 'stripe of the sad side banner'),
 ];
 
-/// 지금 값에서 기준에 못 미치는 쌍. 키는 '팔레트/글자색/바탕색'.
-/// 색을 고치면 이 목록에서 지운다. 아직 실패하는 것만 남아 있는지는 아래 테스트가 지킨다.
-/// 값 변경은 design/tokens 쪽이라 이 테스트에서는 건드리지 않는다.
+/// Pairs that miss the threshold with today's values. The key is 'palette/foreground/background'.
+/// Remove an entry here once its color is fixed. A test below checks that only still-failing pairs remain.
+/// Changing values belongs to design/tokens, so this test never touches them.
 const _knownFailures = <String, String>{
   'dark/ink/fill':
-      '짙은 바탕용 밝은 글자색이 밝은 노랑 채움 위에 올라 1.37이다. 채움 위용 글자색(onFill)이 필요하다',
+      'the light text color made for dark grounds lands on the bright yellow fill at 1.37; a text color for fills (onFill) is needed',
   'light/onAccent/error':
-      'onError 로 쓰는 글자색이 오류 빨강 위에서 4.22이다. onError 짝 색이 필요하다',
-  'light/happy/surface': '밝은 바탕의 행복 띠가 1.85이다',
+      'the color used as onError is 4.22 on the error red; a matching onError color is needed',
+  'light/happy/surface': 'the happy stripe on the light ground is 1.85',
   'pink/onAccent/error':
-      'onError 로 쓰는 글자색이 오류 빨강 위에서 3.51이다. onError 짝 색이 필요하다',
-  'pink/happy/surface': '행복 띠가 2.61이다',
-  'pink/sad/surface': '슬픔 띠가 2.77이다',
+      'the color used as onError is 3.51 on the error red; a matching onError color is needed',
+  'pink/happy/surface': 'the happy stripe is 2.61',
+  'pink/sad/surface': 'the sad stripe is 2.77',
 };
 
 void main() {
   for (final p in allPalettes) {
     group('${p.name} palette', () {
       test('text colors are opaque', () {
-        // 반투명 글자색은 배경에 따라 대비가 달라져 한 번의 검사로 보장할 수 없다.
+        // A translucent text color changes contrast with the background, so one check cannot guarantee it.
         for (final c in [p.ink, p.inkMuted, p.onAccent]) {
           expect(c.a, 1.0);
         }
@@ -98,7 +98,8 @@ void main() {
         expect(
           ratio,
           lessThan(min),
-          reason: '${entry.key} 은 이제 통과합니다($ratio). _knownFailures 에서 지웁니다',
+          reason:
+              '${entry.key} now passes ($ratio). Remove it from _knownFailures',
         );
       }
     });

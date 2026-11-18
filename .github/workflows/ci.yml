@@ -25,10 +25,10 @@ jobs:
       - run: dart format --output=none --set-exit-if-changed $(find lib test -name '*.dart' ! -name '*.g.dart')
       - run: flutter analyze
       - run: flutter test --exclude-tags golden
-      # 화면 그림을 커밋된 골든과 비교한다. 로컬에서는 tool/shots.sh --check 와 같다.
-      - name: 화면 그림 비교
+      # Compares screen pictures with the committed goldens. Same as tool/shots.sh --check locally.
+      - name: Compare screen pictures
         run: flutter test --tags golden test/goldens
-      - name: 차이 그림 올리기
+      - name: Upload diff pictures
         if: failure()
         uses: actions/upload-artifact@v4
         with:

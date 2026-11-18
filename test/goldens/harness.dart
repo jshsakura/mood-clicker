@@ -8,7 +8,7 @@ import 'package:mood_clicker/design/theme_choice.dart';
 import 'package:mood_clicker/design/token_preview.dart';
 import 'package:mood_clicker/design/tokens.g.dart';
 
-/// 테스트에서 실제로 불러올 글꼴. pubspec.yaml 의 fonts 와 같아야 하고, 어긋나면 테스트가 알려 준다.
+/// The fonts the tests really load. They must match fonts in pubspec.yaml; a test reports a mismatch.
 const goldenFonts = <String, List<String>>{
   'Pretendard': [
     'assets/fonts/Pretendard-Regular.otf',
@@ -17,10 +17,10 @@ const goldenFonts = <String, List<String>>{
   'Baloo2': ['assets/fonts/Baloo2-ExtraBold.ttf'],
 };
 
-/// 이모지 글꼴 이름. 글꼴 대체 목록으로 걸어 준다.
+/// The emoji font name, set as a font fallback.
 const emojiFamily = 'NotoColorEmoji';
 
-/// 아이콘과 이모지는 Flutter SDK 가 들고 있는 글꼴을 쓴다. 저장소에는 넣지 않는다.
+/// Icons and emoji use fonts that ship with the Flutter SDK. They are not kept in the repository.
 const _sdkFonts = <String, String>{
   'MaterialIcons':
       'bin/cache/artifacts/material_fonts/MaterialIcons-Regular.otf',
@@ -47,8 +47,8 @@ Future<void> _load(String family, List<File> files) async {
   await loader.load();
 }
 
-/// 기본 글꼴(네모만 나오는 Ahem) 대신 앱의 진짜 글꼴과 SDK 의 아이콘, 이모지 글꼴을 불러온다.
-/// 찾지 못한 SDK 글꼴의 이름을 돌려준다. 골든 테스트는 하나라도 빠지면 실패시킨다.
+/// Loads the app's real fonts and the SDK icon and emoji fonts instead of the default Ahem (squares only).
+/// Returns the names of SDK fonts that were not found. The golden test fails if any is missing.
 Future<List<String>> loadGoldenFonts() async {
   for (final entry in goldenFonts.entries) {
     await _load(entry.key, [for (final path in entry.value) File(path)]);
@@ -66,7 +66,7 @@ Future<List<String>> loadGoldenFonts() async {
   return missing;
 }
 
-/// 그림을 뽑을 기기 틀. 크기는 논리 픽셀이다.
+/// A device frame to render in. Sizes are logical pixels.
 class GoldenDevice {
   const GoldenDevice(
     this.name,
@@ -80,7 +80,7 @@ class GoldenDevice {
   final Size size;
   final double pixelRatio;
 
-  /// 상태 표시줄과 홈 막대 자리. SafeArea 가 비켜 가는 만큼이다.
+  /// The status bar and home bar space, which SafeArea keeps clear.
   final double topInset;
   final double bottomInset;
 }
@@ -90,10 +90,10 @@ const goldenDevices = [
   GoldenDevice('android', Size(412, 915), 2.625, topInset: 24, bottomInset: 16),
 ];
 
-/// 그림을 뽑을 테마.
+/// A theme to render in.
 final goldenThemes = [for (final p in allPalettes) ThemeChoice.named(p.name)];
 
-/// 화면 하나. 이름은 파일 이름이 된다.
+/// One screen. Its name becomes the file name.
 class GoldenScreen {
   const GoldenScreen(this.name, this.build);
 
@@ -101,7 +101,7 @@ class GoldenScreen {
   final Widget Function(ThemeChoice choice) build;
 }
 
-/// 그림을 뽑을 화면 목록. 화면이 생기면 한 줄을 더한다.
+/// The screens to render. Add one line when a screen is added.
 final goldenScreens = <GoldenScreen>[
   GoldenScreen(
     'token_preview',
@@ -109,7 +109,7 @@ final goldenScreens = <GoldenScreen>[
   ),
 ];
 
-/// 기기 크기와 안전 영역을 맞추고 화면을 올린다.
+/// Sets the device size and safe area, then pumps the screen.
 Future<void> pumpOnDevice(
   WidgetTester tester,
   GoldenDevice device,
@@ -132,7 +132,7 @@ Future<void> pumpOnDevice(
     view.resetViewPadding();
   });
 
-  // 이모지는 글꼴 대체 목록에 걸어야 그려진다. Material 이 글자 스타일을 테마로 덮으므로 테마에 건다.
+  // Emoji only draw when set as a font fallback. Material overrides the text style with the theme, so set it on the theme.
   final base = buildTheme(paletteFor(choice, Brightness.light));
   await tester.pumpWidget(
     MaterialApp(

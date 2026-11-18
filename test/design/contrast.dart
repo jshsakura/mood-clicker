@@ -1,9 +1,9 @@
 import 'package:flutter/painting.dart';
 
-/// 글자색(또는 그림 색)이 바탕 위에서 보이는 대비. WCAG 상대 휘도 비율이다.
-/// 반투명한 색은 바탕에 합성한 색으로 잰다. 알파를 무시하면 안 보이는 색도 통과해 버린다.
+/// How visible a text (or graphic) color is on its background: the WCAG relative luminance ratio.
+/// A translucent color is measured as composited over the background. Ignoring alpha would let invisible colors pass.
 double contrast(Color foreground, Color background) {
-  assert(background.a == 1, '바탕은 불투명해야 합니다');
+  assert(background.a == 1, 'the background must be opaque');
   final seen = Color.alphaBlend(foreground, background);
   final la = seen.computeLuminance();
   final lb = background.computeLuminance();

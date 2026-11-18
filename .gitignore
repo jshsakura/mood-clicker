@@ -60,5 +60,5 @@ android/key.properties
 .claude/settings.local.json
 __pycache__/
 
-# 골든 비교가 실패하면 차이 그림이 여기 생긴다. tool/shots.sh --check
+# Diff pictures appear here when a golden comparison fails. tool/shots.sh --check
 test/goldens/failures/

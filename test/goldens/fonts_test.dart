@@ -38,7 +38,7 @@ void main() {
   }
 
   test('Pretendard draws real glyphs, not the square test font', () {
-    // 기본 글꼴 Ahem 은 모든 글자가 글자 크기와 같은 정사각형이라 'iiii' 가 80 이 된다.
+    // The default font Ahem draws every glyph as a square of the font size, so 'iiii' is 80 wide.
     expect(widthOf('iiii', 'Pretendard'), lessThan(60));
     expect(widthOf('iiii', 'Baloo2'), lessThan(60));
   });

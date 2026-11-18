@@ -2,23 +2,23 @@ import 'package:flutter/widgets.dart';
 
 import 'tokens.g.dart';
 
-/// 사용자가 설정에서 고르는 테마. `system` 이거나 팔레트 하나의 이름이다.
+/// The theme a user picks in settings: `system` or the name of one palette.
 ///
-/// 팔레트는 design/tokens 의 테마 파일에서 생기므로 선택지도 거기서 만든다.
-/// 테마 파일을 하나 더 두면 선택 단추도 저절로 하나 늘고, 이 파일은 고치지 않는다.
+/// Palettes come from the theme files in design/tokens, so the choices are built from them too.
+/// Adding one more theme file adds a choice button by itself; this file stays as it is.
 @immutable
 class ThemeChoice {
   const ThemeChoice._(this.name);
 
-  /// 기기의 밝기 설정을 따른다.
+  /// Follows the device brightness setting.
   static const system = ThemeChoice._('system');
 
-  /// 팔레트 이름으로 고른다. 이름이 팔레트와 맞는지는 [paletteFor] 가 본다.
+  /// Picks by palette name. [paletteFor] checks that the name matches a palette.
   const ThemeChoice.named(this.name);
 
   final String name;
 
-  /// 선택지 전체: system, 그리고 팔레트마다 하나.
+  /// All choices: system, then one per palette.
   static List<ThemeChoice> fromPalettes(Iterable<AppPalette> palettes) => [
     system,
     for (final p in palettes) ThemeChoice.named(p.name),
@@ -36,8 +36,8 @@ class ThemeChoice {
   String toString() => 'ThemeChoice($name)';
 }
 
-/// 고른 테마와 기기의 밝기 설정으로 실제로 쓸 팔레트를 정한다.
-/// 팔레트에 없는 이름이면 StateError 를 던진다.
+/// Decides the palette to use from the chosen theme and the device brightness.
+/// Throws a StateError when the name matches no palette.
 AppPalette paletteFor(
   ThemeChoice choice,
   Brightness platform, {
@@ -48,6 +48,6 @@ AppPalette paletteFor(
   }
   return palettes.firstWhere(
     (p) => p.name == choice.name,
-    orElse: () => throw StateError('테마 ${choice.name} 의 팔레트가 없습니다'),
+    orElse: () => throw StateError('no palette for theme ${choice.name}'),
   );
 }

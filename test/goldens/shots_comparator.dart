@@ -3,8 +3,8 @@ import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 
-/// 비교하지 않고 그림을 폴더에 쓰기만 하는 비교기. tool/shots.sh 가 쓴다.
-/// 커밋된 골든은 건드리지 않는다.
+/// A comparator that does not compare and only writes pictures to a folder. tool/shots.sh uses it.
+/// It never touches the committed goldens.
 class ShotsComparator extends GoldenFileComparator {
   ShotsComparator(this.dir);
 
