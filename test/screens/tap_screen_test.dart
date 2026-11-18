@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mood_clicker/design/parts/water_painter.dart';
 import 'package:mood_clicker/domain/day_key.dart';
@@ -41,6 +43,7 @@ int todayCount(TestApp app) =>
     app.journal.journal.dayOf(DayKey.of(app.clock)).countOf(Mood.happy);
 
 void main() {
+  edgeAndAccessTests();
   testWidgets('every pointer down counts one tap and feeds back', (
     tester,
   ) async {
@@ -179,6 +182,7 @@ void main() {
     await tester.tap(find.bySemanticsLabel(ko.common_back));
     await settle(tester);
     await tester.enterText(find.byType(TextField), 'good one');
+    await tester.pump();
     await tester.tap(find.text(ko.note_save));
     await settle(tester);
     final record = app.journal.journal.dayOf(DayKey.of(app.clock));
@@ -287,5 +291,119 @@ void main() {
     }
     expect(todayCount(app), countAtFull + 20);
     expect(FillTuning.fullKick, lessThan(1));
+  });
+}
+
+void edgeAndAccessTests() {
+  testWidgets('a drag that starts at the screen edge is not a tap', (
+    tester,
+  ) async {
+    final app = await openTap(tester);
+    final gesture = await tester.startGesture(const Offset(4, 400));
+    await gesture.moveBy(const Offset(120, 0));
+    await tester.pump(const Duration(milliseconds: 50));
+    await gesture.up();
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(todayCount(app), 0);
+  });
+
+  testWidgets('a cancelled edge touch is not a tap either', (tester) async {
+    final app = await openTap(tester);
+    final gesture = await tester.startGesture(const Offset(4, 400));
+    await tester.pump(const Duration(milliseconds: 30));
+    await gesture.cancel();
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(todayCount(app), 0);
+  });
+
+  testWidgets('a plain press at the edge still counts when it lifts', (
+    tester,
+  ) async {
+    final app = await openTap(tester);
+    await tester.tapAt(const Offset(4, 400));
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(todayCount(app), 1);
+  });
+
+  testWidgets(
+    'swiping back from the left edge leaves on iOS and counts nothing',
+    (tester) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      final app = TestApp();
+      await tester.pumpWidget(
+        app.wrap(
+          Builder(
+            builder: (context) => Scaffold(
+              body: TextButton(
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => const TapScreen(mood: Mood.happy),
+                  ),
+                ),
+                child: const Text('go'),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('go'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 1000));
+      expect(find.byType(TapScreen), findsOneWidget);
+      final gesture = await tester.startGesture(const Offset(3, 300));
+      for (var i = 0; i < 12; i++) {
+        await gesture.moveBy(const Offset(60, 0));
+        await tester.pump(const Duration(milliseconds: 16));
+      }
+      await gesture.up();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 800));
+      final left = find.byType(TapScreen).evaluate().isEmpty;
+      debugDefaultTargetPlatformOverride = null;
+      expect(left, isTrue);
+      expect(todayCount(app), 0);
+    },
+  );
+
+  testWidgets('the tap area is a named action for assistive technology', (
+    tester,
+  ) async {
+    final handle = tester.ensureSemantics();
+    final app = await openTap(tester);
+    final finder = find.semantics.byLabel(ko.tap_action);
+    expect(finder, findsOneWidget);
+    expect(
+      finder,
+      matchesSemantics(
+        label: ko.tap_action,
+        isButton: true,
+        hasTapAction: true,
+        hasFocusAction: true,
+        isFocused: true,
+        isFocusable: true,
+      ),
+    );
+    tester.semantics.tap(finder);
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(todayCount(app), 1);
+    handle.dispose();
+  });
+
+  testWidgets('the space key and the enter key tap from the keyboard', (
+    tester,
+  ) async {
+    final app = await openTap(tester);
+    await tester.sendKeyEvent(LogicalKeyboardKey.space);
+    await tester.pump(const Duration(milliseconds: 50));
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(todayCount(app), 2);
+  });
+
+  testWidgets('the hint tells where to tap until the day has many taps', (
+    tester,
+  ) async {
+    await openTap(tester);
+    expect(find.text(ko.tap_hint), findsOneWidget);
   });
 }

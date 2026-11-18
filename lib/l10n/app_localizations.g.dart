@@ -1089,6 +1089,36 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'지금은 둘러보기용 표본 지도입니다'**
   String get map_sampleNotice;
+
+  /// 두드리기 화면 가운데에 보이는 안내입니다. 130번 넘게 두드리면 사라집니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'화면 어디든 두드립니다'**
+  String get tap_hint;
+
+  /// 한마디 시트 제목 아래, 두드리기를 끝까지 채워서 시트가 열렸을 때만 보이는 이유 문구입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'끝까지 채웠습니다. 오늘을 한 줄로 남깁니다.'**
+  String get note_reason;
+
+  /// 한마디 입력란 아래의 저장 범위 안내입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'직접 쓴 말은 이 기기에만 남습니다. 위 문장 중에서 고른 것만 지도에 이름 없이 보입니다.'**
+  String get note_privacy;
+
+  /// 한마디를 저장하지 못했을 때 시트 안에 보이는 문구입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'저장하지 못했습니다. 잠시 뒤 다시 눌러 주세요. 쓴 글은 그대로 있습니다.'**
+  String get note_saveFailed;
+
+  /// 두드리기 화면 전체가 하나의 동작이라는 것을 보조기기에 알리는 이름입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'두드리기'**
+  String get tap_action;
 }
 
 class _AppLocalizationsDelegate

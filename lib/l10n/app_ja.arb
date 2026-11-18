@@ -164,5 +164,10 @@
   "dayDetail_addNote": "ひとことを残す",
   "dayDetail_editNote": "ひとことを直す",
   "map_empty": "近くにまだ記録がありません",
-  "map_sampleNotice": "現在は見本マップを表示しています"
+  "map_sampleNotice": "現在は見本マップを表示しています",
+  "tap_hint": "画面のどこでもタップします",
+  "note_reason": "最後まで満たしました。今日を一行で残します。",
+  "note_privacy": "自分で書いた言葉はこの端末にだけ残ります。リストから選んだ文だけが、名前なしで地図に表示されます。",
+  "note_saveFailed": "保存できませんでした。しばらくしてからもう一度押してください。書いた文はそのままです。",
+  "tap_action": "タップ"
 }

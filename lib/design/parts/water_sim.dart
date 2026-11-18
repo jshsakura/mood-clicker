@@ -147,7 +147,7 @@ class WaterSim extends ChangeNotifier {
     ) {
       droplets.add(
         Droplet(
-          x,
+          x + (_random.nextDouble() - 0.5) * FillTuning.dropletSpawnSpread,
           y,
           (_random.nextDouble() * 2 - 1) * FillTuning.dropletSide,
           -(FillTuning.dropletUpMin +

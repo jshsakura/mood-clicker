@@ -166,9 +166,12 @@ abstract final class FillTuning {
   /// A droplet leaves going up at [dropletUpMin] to [dropletUpMax] px/s, sideways by up to
   /// +-[dropletSide] px/s, with a radius of [dropletRadiusMin] to [dropletRadiusMax] px, and then
   /// falls under [dropletGravity] px/s^2.
+  static const double dropletSpawnSpread =
+      24; // px, total width a droplet can start across
   static const double dropletUpMin = 220;
   static const double dropletUpMax = 500;
   static const double dropletSide = 90;
+  static const double dropletBorder = 1.5;
   static const double dropletRadiusMin = 2;
   static const double dropletRadiusMax = 5;
   static const double dropletGravity = 1400;
@@ -213,6 +216,15 @@ abstract final class FillTuning {
 
   /// Settings that can turn the effects off, and the larger text scale.
   static const double largeTextScale = 1.18;
+
+  /// A touch that starts within [edgeGuard] px of the left or right edge may be the system back
+  /// gesture. It counts as a tap only when it lifts after moving less than [edgeTapSlop] px; a
+  /// drag or a cancelled touch counts for nothing.
+  static const double edgeGuard = 20;
+  static const double edgeTapSlop = 18;
+
+  /// The hint in the middle of the tap screen goes away after this many taps today.
+  static const int hintUntilCount = 130;
 }
 
 /// Numbers for the moment the gauge becomes full. There is no stamp on the tap screen.

@@ -21,4 +21,8 @@ abstract interface class MoodRepository {
   /// A failed write throws. Returns false when the file already holds the same content and the
   /// write is skipped, true when it wrote. Overlapping calls are written one at a time.
   Future<bool> save(MoodJournal journal);
+
+  /// Removes every stored record. It runs after the writes that were already started, so a
+  /// write in flight cannot bring the file back.
+  Future<void> clear();
 }

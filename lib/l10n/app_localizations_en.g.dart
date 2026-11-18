@@ -556,4 +556,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get map_sampleNotice => 'Showing a sample neighborhood map';
+
+  @override
+  String get tap_hint => 'Tap anywhere';
+
+  @override
+  String get note_reason => 'You filled it up. Leave a line for today.';
+
+  @override
+  String get note_privacy =>
+      'Words you write stay on this device. Only a sentence picked from the list is shown on the map, with no name.';
+
+  @override
+  String get note_saveFailed =>
+      'Could not save. Try again in a moment. Your text is still here.';
+
+  @override
+  String get tap_action => 'Tap';
 }

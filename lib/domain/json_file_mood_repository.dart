@@ -73,6 +73,15 @@ class JsonFileMoodRepository implements MoodRepository {
     return done;
   }
 
+  @override
+  Future<void> clear() {
+    final done = _tail.then((_) async {
+      if (await file.exists()) await file.delete();
+    });
+    _tail = done.then<void>((_) {}, onError: (Object _) {});
+    return done;
+  }
+
   Future<bool> _write(MoodJournal journal) async {
     final text = jsonEncode(_encode(journal));
     if (text == await _currentText()) return false;

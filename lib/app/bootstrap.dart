@@ -69,7 +69,7 @@ Future<AppServices> createServices({WidgetBuilder? settingsBuilder}) async {
     store: SettingsReminderSettingsStore(settingsStore),
   );
   await reminder.load();
-  final records = DeviceRecordsPort();
+  final records = DeviceRecordsPort(store: journal);
   final resolvedLocale = resolveAppLocale(
     WidgetsBinding.instance.platformDispatcher.locales,
     AppLocalizations.supportedLocales,
