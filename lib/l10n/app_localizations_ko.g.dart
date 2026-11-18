@@ -472,4 +472,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get map_togetherHappy => '오늘 기분이 좋은 사람이 가까이에 많습니다';
+
+  @override
+  String get tap_hint => '화면 어디든 두드립니다';
 }

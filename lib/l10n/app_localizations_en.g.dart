@@ -480,4 +480,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get map_togetherHappy => 'Many people nearby feel good today';
+
+  @override
+  String get tap_hint => 'Tap anywhere';
 }

@@ -957,6 +957,12 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'오늘 기분이 좋은 사람이 가까이에 많습니다'**
   String get map_togetherHappy;
+
+  /// 두드리기 화면 가운데에 보이는 안내입니다. 130번 넘게 두드리면 사라집니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'화면 어디든 두드립니다'**
+  String get tap_hint;
 }
 
 class _AppLocalizationsDelegate
