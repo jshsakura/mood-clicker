@@ -4,6 +4,7 @@
 # FL_DOCKER=1 forces docker. Each working tree uses its own Gradle volume so parallel builds do not
 # wait on one lock; FL_GRADLE_VOLUME=<name> picks the volume by hand. The Android NDK is one shared
 # volume (mood-clicker-android-sdk, FL_ANDROID_SDK_VOLUME to rename) so it is downloaded once.
+# CMake gets the same treatment in the volume named like it with -cmake added.
 # Examples: tool/fl test, tool/fl analyze, tool/fl build apk --debug
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -23,6 +24,7 @@ exec docker run --rm ${TTY[@]+"${TTY[@]}"} \
   -v "$(gradle_volume "$ROOT")":/root/.gradle \
   -w /app \
   -v "$(android_sdk_volume)":/opt/android-sdk-linux/ndk \
+  -v "$(android_cmake_volume)":/opt/android-sdk-linux/cmake \
   -e OWNER="$(id -u):$(id -g)" \
   "$FLUTTER_IMAGE" \
   bash /app/tool/fl_container.sh "$@"

@@ -51,3 +51,8 @@ gradle_volume() {
 android_sdk_volume() {
   printf '%s\n' "${FL_ANDROID_SDK_VOLUME:-mood-clicker-android-sdk}"
 }
+
+# The volume that holds the Android CMake, kept next to the NDK volume. Follows FL_ANDROID_SDK_VOLUME.
+android_cmake_volume() {
+  printf '%s-cmake\n' "$(android_sdk_volume)"
+}
