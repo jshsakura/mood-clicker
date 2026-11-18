@@ -70,5 +70,5 @@ iOS(Xcode 설정 뒤)
 ## 알려진 한계
 
 - 바로가기는 iOS 와 대부분의 안드로이드 런처가 네 개까지만 보여 줍니다. 그래서 최근 14일(오늘 포함) 동안 많이 고른 기분 네 개만 올리고(`lib/surfaces/shortcut_order.dart`), 횟수가 같거나 기록이 없는 기분은 `happy`, `excited`, `angry`, `sad`, `anxious` 순서를 따릅니다. 기록이 없으면 행복, 설레, 화나, 슬퍼입니다. 앱을 열 때마다 `registerShortcuts(l, journal, now)` 를 다시 불러야 메뉴가 따라옵니다.
-- 기분을 고른 뒤 가는 두드리기 화면은 아직 앱에 없습니다. `NativeSurfaces` 의 `onLaunchMood` 가 그 화면을 여는 자리이고, 앱 시작 때 `start()` 를 부르고 기록이 바뀔 때마다 `publishToday()` 를 부르면 이어집니다.
+- 현재 기능: 기분을 고른 뒤 가는 두드리기 화면과 `NativeSurfaces` (`onLaunchMood`, `start()`, `publishToday()`) 연결은 앱에 구현되어 있습니다. 안드로이드·iOS 실기기에서 위젯과 바로가기가 해당 화면을 여는지 확인이 남아 있습니다.
 - 표정은 자리 표시용 그림입니다.
