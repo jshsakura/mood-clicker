@@ -111,6 +111,7 @@ void main() {
       handler(shortcutTypeFor(Mood.sad));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
+      await tester.pump(const Duration(seconds: 1));
       expect(find.byType(TapScreen), findsOneWidget);
       expect(tester.widget<TapScreen>(find.byType(TapScreen)).mood, Mood.sad);
     },
