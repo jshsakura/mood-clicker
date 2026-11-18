@@ -1,16 +1,25 @@
 #!/usr/bin/env bash
-# Flutter 를 도커 안에서 돌린다. 호스트에 SDK 를 깔지 않는다.
-# 예: tool/fl test, tool/fl analyze, tool/fl build apk --debug
+# Run Flutter. The flutter on PATH is used when it is the pinned version (see tool/flutter_env.sh);
+# otherwise it runs in a docker image, so nothing has to be installed on the host.
+# FL_DOCKER=1 forces docker.
+# Examples: tool/fl test, tool/fl analyze, tool/fl build apk --debug
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-IMAGE="${FLUTTER_IMAGE:-ghcr.io/cirruslabs/flutter:3.44.0}"
+. "$ROOT/tool/flutter_env.sh"
+
+if use_local_flutter; then
+  cd "$ROOT"
+  exec flutter "$@"
+fi
+
+# An empty array under set -u fails on bash 3.2, hence the ${TTY[@]+...} form.
 TTY=()
 [ -t 1 ] && TTY=(-t)
-exec docker run --rm "${TTY[@]}" \
+exec docker run --rm ${TTY[@]+"${TTY[@]}"} \
   -v "$ROOT":/app \
   -v mood-clicker-pub-cache:/root/.pub-cache \
   -v mood-clicker-gradle:/root/.gradle \
   -w /app \
   -e OWNER="$(id -u):$(id -g)" \
-  "$IMAGE" \
+  "$FLUTTER_IMAGE" \
   bash -c 'flutter "$@"; rc=$?; find /app -xdev -uid 0 -exec chown "$OWNER" {} + 2>/dev/null; exit $rc' -- "$@"

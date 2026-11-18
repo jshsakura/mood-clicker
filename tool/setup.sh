@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
-# 클론한 뒤 한 번 돌린다. git 훅을 켜고 Flutter 이미지와 패키지를 받는다.
+# Run once after cloning. Turns on the git hooks and fetches the packages.
+# Pulls the Flutter docker image only when the flutter on PATH is not the pinned version.
 set -euo pipefail
 cd "$(dirname "$0")/.."
+. tool/flutter_env.sh
 git config core.hooksPath .githooks
 chmod +x .githooks/* tool/fl tool/fl_dart tool/privacy_scan.py
-docker pull "${FLUTTER_IMAGE:-ghcr.io/cirruslabs/flutter:3.44.0}" >/dev/null
+if ! use_local_flutter; then
+  docker pull "$FLUTTER_IMAGE" > /dev/null
+fi
 tool/fl pub get
-echo "준비 끝. 훅: $(git config core.hooksPath)"
+echo "Ready. Hooks: $(git config core.hooksPath)"
