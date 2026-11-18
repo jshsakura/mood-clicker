@@ -20,7 +20,9 @@ class DayKey implements Comparable<DayKey> {
     final y = int.parse(match[1]!);
     final m = int.parse(match[2]!);
     final d = int.parse(match[3]!);
-    final check = DateTime(y, m, d);
+    // A calendar check in UTC, which has no gaps. Local midnight may not exist on a day a time
+    // zone skipped, and that must not make a real calendar date look impossible.
+    final check = DateTime.utc(y, m, d);
     if (check.year != y || check.month != m || check.day != d) return null;
     return DayKey._(y, m, d);
   }

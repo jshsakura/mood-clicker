@@ -2,10 +2,20 @@ import 'day_key.dart';
 import 'mood.dart';
 
 class MoodTally {
-  const MoodTally({required this.count, required this.lastTapAt});
+  const MoodTally({
+    required this.count,
+    required this.lastTapAt,
+    required this.lastOrder,
+  });
 
   final int count;
+
+  /// When the last tap happened by the device clock. Informational only.
   final DateTime lastTapAt;
+
+  /// The serial number of the last tap within its day: 1 for the first tap of the day, counting up
+  /// across all moods. "Later" always means a higher serial, so a clock set back cannot reorder taps.
+  final int lastOrder;
 }
 
 /// One day of records. Updating returns a new object.
@@ -30,8 +40,8 @@ class DayRecord {
       .where((e) => e.key.side == side)
       .fold(0, (sum, e) => sum + e.value.count);
 
-  /// The mood with the most taps. A tie goes to the one tapped later; if the times match too,
-  /// to the one declared first in `Mood`. Null when there are no records.
+  /// The mood with the most taps. A tie goes to the one tapped last, judged by tap order and not by
+  /// the clock. Null when there are no records.
   Mood? get dominantMood {
     Mood? best;
     for (final mood in Mood.values) {
@@ -44,8 +54,7 @@ class DayRecord {
   }
 
   static bool _beats(MoodTally a, MoodTally b) =>
-      a.count > b.count ||
-      (a.count == b.count && a.lastTapAt.isAfter(b.lastTapAt));
+      a.count > b.count || (a.count == b.count && a.lastOrder > b.lastOrder);
 
   DayRecord withTap(Mood mood, DateTime at) {
     if (DayKey.of(at) != day) {
@@ -59,9 +68,15 @@ class DayRecord {
     final last = (old != null && old.lastTapAt.isAfter(at))
         ? old.lastTapAt
         : at;
+    final order =
+        tallies.values.fold(0, (m, t) => t.lastOrder > m ? t.lastOrder : m) + 1;
     return DayRecord(day, {
       ...tallies,
-      mood: MoodTally(count: (old?.count ?? 0) + 1, lastTapAt: last),
+      mood: MoodTally(
+        count: (old?.count ?? 0) + 1,
+        lastTapAt: last,
+        lastOrder: order,
+      ),
     });
   }
 }

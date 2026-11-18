@@ -57,4 +57,29 @@ void main() {
       expect(journal.days.single.day.toString(), '2026-03-08');
     });
   }, skip: skip);
+
+  // Samoa skipped 2011-12-30 entirely. The date is a real calendar date, so a saved
+  // key for it must still parse, even though local midnight of that day never existed.
+  const samoa = 'Pacific/Apia';
+  final samoaSkips = withTimeZone(
+    samoa,
+    () => DateTime(2011, 12, 30).day != 30,
+  );
+  final samoaSkip = samoaSkips ? null : 'no $samoa data in this environment';
+
+  test(
+    'a calendar date parses even when its local midnight never existed',
+    () {
+      withTimeZone(samoa, () {
+        expect(DayKey.tryParse('2011-12-30')?.toString(), '2011-12-30');
+      });
+    },
+    skip: samoaSkip,
+  );
+
+  test('an impossible date is still rejected in a skipping zone', () {
+    withTimeZone(samoa, () {
+      expect(DayKey.tryParse('2011-02-30'), isNull);
+    });
+  }, skip: samoaSkip);
 }

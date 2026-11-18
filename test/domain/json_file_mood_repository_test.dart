@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mood_clicker/domain/day_key.dart';
+import 'package:mood_clicker/domain/day_record.dart';
 import 'package:mood_clicker/domain/json_file_mood_repository.dart';
 import 'package:mood_clicker/domain/mood.dart';
 import 'package:mood_clicker/domain/mood_journal.dart';
@@ -128,15 +129,18 @@ void main() {
     });
 
     test(
-      'equal journals encode the same whatever order they were built in',
+      'equal journals encode the same whatever order the map was built in',
       () async {
         final repo = JsonFileMoodRepository(file);
-        final a = MoodJournal.empty()
-            .withTap(Mood.happy, tapAt)
-            .withTap(Mood.sad, tapAt);
-        final b = MoodJournal.empty()
-            .withTap(Mood.sad, tapAt)
-            .withTap(Mood.happy, tapAt);
+        final day = DayKey.of(tapAt);
+        final happy = MoodTally(count: 1, lastTapAt: tapAt, lastOrder: 1);
+        final sad = MoodTally(count: 1, lastTapAt: tapAt, lastOrder: 2);
+        final a = MoodJournal([
+          DayRecord(day, {Mood.happy: happy, Mood.sad: sad}),
+        ]);
+        final b = MoodJournal([
+          DayRecord(day, {Mood.sad: sad, Mood.happy: happy}),
+        ]);
         await repo.save(a);
         expect(await repo.save(b), isFalse);
       },
@@ -178,14 +182,106 @@ void main() {
       expect(loaded(await repo.load()).days, isEmpty);
     });
 
-    test('the first copy is kept when it fails to load again', () async {
+    test('every different unreadable original is kept, numbered', () async {
       await file.parent.create(recursive: true);
-      await file.writeAsString('{first');
-      await JsonFileMoodRepository(file).load();
-      await file.writeAsString('{second');
-      await JsonFileMoodRepository(file).load();
+      for (final text in ['{first', '{second', '{third']) {
+        await file.writeAsString(text);
+        await JsonFileMoodRepository(file).load();
+      }
+      String read(String suffix) =>
+          File('${file.path}$suffix').readAsStringSync();
+      expect(read('.unreadable'), '{first');
+      expect(read('.unreadable.2'), '{second');
+      expect(read('.unreadable.3'), '{third');
+    });
 
-      expect(await File('${file.path}.unreadable').readAsString(), '{first');
+    test('the same unreadable content is not copied again', () async {
+      await file.parent.create(recursive: true);
+      await file.writeAsString('{same');
+      for (var i = 0; i < 3; i++) {
+        await JsonFileMoodRepository(file).load();
+      }
+      expect(File('${file.path}.unreadable.2').existsSync(), isFalse);
+    });
+
+    test('a date that is not on the calendar fails the load', () async {
+      await file.parent.create(recursive: true);
+      await file.writeAsString(
+        '{"version":1,"days":{"2026-02-31":'
+        '{"happy":{"count":1,"lastTapAt":"2026-02-01T00:00:00.000Z"}}}}',
+      );
+      expect(await JsonFileMoodRepository(file).load(), isA<LoadFailed>());
+    });
+  });
+
+  group('concurrent repositories on one file', () {
+    test('writes never collide on a shared temp file', () async {
+      final a = JsonFileMoodRepository(file);
+      final b = JsonFileMoodRepository(file);
+      final base = DateTime(2026, 11, 18, 12);
+      var journal = MoodJournal.empty();
+      final saves = <Future<Object?>>[];
+      Future<Object?> attempt(Future<bool> save) =>
+          save.then<Object?>((v) => v, onError: (Object e) => e);
+      for (var i = 0; i < 20; i++) {
+        journal = journal.withTap(Mood.happy, base.add(Duration(seconds: i)));
+        saves.add(attempt(a.save(journal)));
+        saves.add(attempt(b.save(journal)));
+      }
+      final results = await Future.wait(saves);
+      expect(results.whereType<Object>().where((r) => r is! bool), isEmpty);
+      expect(file.parent.listSync().map((e) => e.path), [file.path]);
+      expect(await JsonFileMoodRepository(file).load(), isA<Loaded>());
+    });
+
+    test('a failed write leaves no temp file behind', () async {
+      await file.parent.create(recursive: true);
+      // A directory where the target file should go makes the rename fail.
+      await Directory(file.path).create();
+      final repo = JsonFileMoodRepository(file);
+      final journal = MoodJournal.empty().withTap(
+        Mood.happy,
+        DateTime(2026, 11, 18, 12),
+      );
+      await expectLater(
+        repo.save(journal),
+        throwsA(isA<FileSystemException>()),
+      );
+      final leftovers = file.parent
+          .listSync()
+          .map((e) => e.path)
+          .where((p) => p != file.path);
+      expect(leftovers, isEmpty);
+    });
+  });
+
+  group('tap order', () {
+    test('survives a save and load, even when the clock went back', () async {
+      final repo = JsonFileMoodRepository(file);
+      final day = DateTime(2026, 11, 18, 12);
+      final journal = MoodJournal.empty()
+          .withTap(Mood.happy, day.add(const Duration(seconds: 100)))
+          .withTap(Mood.sad, day.add(const Duration(seconds: 50)));
+      await repo.save(journal);
+      final record = loaded(await repo.load()).dayOf(DayKey.of(day));
+      expect(record.dominantMood, Mood.sad);
+    });
+
+    test('a file saved before tap order existed loads in time order', () async {
+      await file.parent.create(recursive: true);
+      await file.writeAsString(
+        '{"version":1,"days":{"2026-11-18":{'
+        '"happy":{"count":1,"lastTapAt":"2026-11-18T03:00:00.000Z"},'
+        '"sad":{"count":1,"lastTapAt":"2026-11-18T03:00:05.000Z"}}}}',
+      );
+      final record = loaded(
+        await JsonFileMoodRepository(file).load(),
+      ).days.single;
+      expect(record.dominantMood, Mood.sad);
+      expect(
+        record.tallies[Mood.sad]!.lastOrder,
+        greaterThan(record.tallies[Mood.happy]!.lastOrder),
+      );
     });
   });
 }
