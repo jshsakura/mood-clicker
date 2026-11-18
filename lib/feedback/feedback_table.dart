@@ -107,6 +107,25 @@ const _full = HapticCue(
   ),
 );
 
+// Two slow, soft swells with a breath between them: a "doo-oong", never a hit.
+const _cleanse = HapticCue(
+  steps: [
+    HapticStep(HapticStyle.medium),
+    HapticStep(HapticStyle.medium, delay: Duration(milliseconds: 700)),
+  ],
+  ios: [
+    IosHapticEvent(IosHapticType.continuous, 0.35, 0.10, durationMs: 420),
+    IosHapticEvent(
+      IosHapticType.continuous,
+      0.45,
+      0.10,
+      startMs: 700,
+      durationMs: 520,
+    ),
+  ],
+  android: AndroidHaptic([0, 420, 280, 520], [0, 90, 0, 120]),
+);
+
 const _rare = HapticCue(
   steps: [
     HapticStep(HapticStyle.light),
@@ -146,6 +165,7 @@ const _tapAngry = FeedbackEntry(haptic: _angry, soundId: 'tap_angry');
 const _tapSad = FeedbackEntry(haptic: _sad, soundId: 'tap_sad');
 const _tapAnxious = FeedbackEntry(haptic: _anxious, soundId: 'tap_anxious');
 const _fullAll = FeedbackEntry(haptic: _full, soundId: 'full');
+const _cleanseAll = FeedbackEntry(haptic: _cleanse, soundId: 'cleanse');
 const _selectAll = FeedbackEntry(haptic: _select, soundId: 'select');
 const _dropAll = FeedbackEntry(haptic: _drop);
 const _rareAll = FeedbackEntry(haptic: _rare);
@@ -167,6 +187,13 @@ abstract final class FeedbackTable {
       'angry': _fullAll,
       'sad': _fullAll,
       'anxious': _fullAll,
+    },
+    FeedbackKind.cleanse: {
+      'happy': _cleanseAll,
+      'excited': _cleanseAll,
+      'angry': _cleanseAll,
+      'sad': _cleanseAll,
+      'anxious': _cleanseAll,
     },
     FeedbackKind.select: {
       'happy': _selectAll,

@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mood_clicker/feedback/feedback_kind.dart';
+import 'package:mood_clicker/feedback/feedback_settings.dart';
 import 'package:mood_clicker/feedback/feedback_table.dart';
 
 void main() {
@@ -87,19 +88,23 @@ void main() {
   });
 
   group('sound files', () {
-    test('every sound id has a file in assets/sounds/basic', () {
-      final ids = {
-        for (final kind in FeedbackKind.values)
-          for (final mood in feedbackMoodIds)
-            ?FeedbackTable.of(kind, mood).soundId,
-      };
-      for (final id in ids) {
-        final exists = [
-          'ogg',
-          'wav',
-        ].any((ext) => File('assets/sounds/basic/$id.$ext').existsSync());
-        expect(exists, isTrue, reason: id);
-      }
-    });
+    test(
+      'every sound id has a file in the basic pack, the cleanse in the pentatonic one',
+      () {
+        final ids = {
+          for (final kind in FeedbackKind.values)
+            for (final mood in feedbackMoodIds)
+              ?FeedbackTable.of(kind, mood).soundId,
+        };
+        for (final id in ids) {
+          final pack = id == SoundPack.cleanseSoundId ? 'pentatonic' : 'basic';
+          final exists = [
+            'ogg',
+            'wav',
+          ].any((ext) => File('assets/sounds/$pack/$id.$ext').existsSync());
+          expect(exists, isTrue, reason: id);
+        }
+      },
+    );
   });
 }

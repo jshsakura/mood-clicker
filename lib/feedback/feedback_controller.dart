@@ -50,20 +50,33 @@ class FeedbackController {
 
   Duration? _lastHaptic;
 
+  /// How much of its strength the tap haptic keeps, 1 down to 0. The release flow lowers it while
+  /// the gauge approaches full. Taps made by hand never see it above 1.
+  double get hapticEase => _hapticEase;
+  double _hapticEase = 1;
+  set hapticEase(double value) => _hapticEase = value.clamp(0.0, 1.0);
+
+  /// True after the release flow settled: the tap sound is the pentatonic kalimba climbing, the
+  /// calm rule, whatever the heavy mood normally plays.
+  bool settled = false;
+
   /// Triggers feedback without throwing errors to the caller.
   /// When [kind] is [FeedbackKind.tap] and [fill] is given, scales intensity and sharpness.
   void trigger(FeedbackKind kind, String moodId, {double? fill}) {
     final entry = FeedbackTable.of(kind, moodId);
 
     var haptic = entry.haptic;
-    final isPriority = kind == FeedbackKind.full || kind == FeedbackKind.rare;
+    final isPriority =
+        kind == FeedbackKind.full ||
+        kind == FeedbackKind.rare ||
+        kind == FeedbackKind.cleanse;
     if (_settings.hapticsOn &&
         haptic != null &&
         _hapticAllowed(priority: isPriority)) {
       if (kind == FeedbackKind.tap && fill != null) {
         haptic = haptic.scaledByFill(fill);
       }
-      haptic = haptic.scaledByStrength(_settings.hapticScale);
+      haptic = haptic.scaledByStrength(_settings.hapticScale * _hapticEase);
       _fire(() => haptics.play(haptic!, priority: isPriority));
     }
 
@@ -71,9 +84,16 @@ class FeedbackController {
     if (_settings.soundOn && soundId != null) {
       final isTap = kind == FeedbackKind.tap;
       final tapId = _settings.soundPack.tapSoundId;
-      if (isTap && tapId != null) {
-        final voice = _run.next(tapPitchRuleOf(moodId), _clock());
-        final cue = SoundCue(_settings.soundPack, tapId);
+      if (kind == FeedbackKind.cleanse) {
+        final cue = SoundCue(SoundPack.pentatonic, SoundPack.cleanseSoundId);
+        _fire(() => sound.play(cue));
+      } else if (isTap && (settled || tapId != null)) {
+        final rule = settled ? TapPitchRule.rise : tapPitchRuleOf(moodId);
+        final voice = _run.next(rule, _clock());
+        final cue = SoundCue(
+          settled ? SoundPack.pentatonic : _settings.soundPack,
+          settled ? SoundPack.pentatonic.tapSoundId! : tapId!,
+        );
         _fire(
           () => sound.play(
             cue,

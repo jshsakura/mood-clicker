@@ -1,4 +1,11 @@
+import 'mood.dart';
 import 'tuning.dart';
+
+/// Whether a full gauge of [mood] lets the water go (angry, sad, anxious) instead of celebrating.
+bool hasRelease(Mood mood) => switch (mood) {
+  Mood.angry || Mood.sad || Mood.anxious => true,
+  Mood.happy || Mood.excited => false,
+};
 
 /// The three stages after the gauge of a heavy mood fills.
 enum ReleasePhase {
