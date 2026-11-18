@@ -2,15 +2,16 @@ import 'package:flutter/material.dart';
 
 import '../app/app_services.dart';
 import '../design/app_theme.dart';
+import '../design/parts/day_shade.dart';
 import '../design/parts/pressable_surface.dart';
 import '../design/tokens.g.dart';
 import '../domain/day_key.dart';
 import '../l10n/app_localizations.g.dart';
 import '../l10n/date_labels.dart';
 import 'day_detail_screen.dart';
-import 'mood_labels.dart';
 
-/// One month at a time. Each day with taps shows its main mood; a day without taps stays empty.
+/// One month at a time. A day with taps is a gray square, darker the more it was tapped. The
+/// faces are on the day card, not here.
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
 
@@ -152,14 +153,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
     final date = DateTime(month.year, month.month, dayNumber);
     final key = DayKey.of(date);
     final record = services.journal.journal.dayOf(key);
-    final mood = record.dominantMood;
+    final taps = record.total;
     final isFuture = date.isAfter(services.now());
     return Padding(
       padding: const EdgeInsets.all(2),
       child: PressableSurface(
         kind: PressableKind.card,
         radius: Radii.button,
-        color: mood == null ? p.ground : null,
+        color: DayShade.fill(p, taps),
         semanticLabel: l10n.calendar_openDay(dayTitle(locale, date)),
         onTap: isFuture ? null : () => _open(context, key),
         child: Column(
@@ -167,10 +168,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
           children: [
             Text(
               '$dayNumber',
-              style: TypeScale.label.copyWith(color: p.inkMuted),
+              style: TypeScale.body.copyWith(
+                color: taps == 0 ? p.inkMuted : DayShade.onFill(p, taps),
+              ),
             ),
-            if (mood != null)
-              Text(moodEmoji(mood), style: const TextStyle(fontSize: 22)),
           ],
         ),
       ),
