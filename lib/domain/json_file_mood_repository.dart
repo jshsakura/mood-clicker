@@ -77,6 +77,15 @@ class JsonFileMoodRepository implements MoodRepository {
   Future<void> clear() {
     final done = _tail.then((_) async {
       if (await file.exists()) await file.delete();
+      // Copies kept aside from an unreadable file hold the old records too.
+      final prefix = '${file.path}.unreadable';
+      if (await file.parent.exists()) {
+        await for (final entry in file.parent.list()) {
+          if (entry is File && entry.path.startsWith(prefix)) {
+            await entry.delete();
+          }
+        }
+      }
     });
     _tail = done.then<void>((_) {}, onError: (Object _) {});
     return done;

@@ -590,4 +590,13 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get settings_mindCareCopyFallback =>
       'アプリを開けなかったため、番号をコピーしました。電話やメッセージアプリに貼り付けてください。';
+
+  @override
+  String note_titleOn(String date) {
+    return '$dateの一言';
+  }
+
+  @override
+  String get settings_deleteFailed =>
+      '記録を消せませんでした。しばらくしてからもう一度お試しください。記録はそのまま残っています。';
 }

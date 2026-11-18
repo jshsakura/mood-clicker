@@ -603,4 +603,13 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get settings_mindCareCopyFallback =>
       'The app did not open, so the number is copied. Paste it into your phone or messages app.';
+
+  @override
+  String note_titleOn(String date) {
+    return 'Note for $date';
+  }
+
+  @override
+  String get settings_deleteFailed =>
+      'Could not delete the records. Try again in a moment. Your records are unchanged.';
 }

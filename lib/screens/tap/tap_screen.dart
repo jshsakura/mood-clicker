@@ -194,8 +194,7 @@ class _TapScreenState extends State<TapScreen>
   // --- a tap -----------------------------------------------------------------------------
 
   /// An edge touch waits: it may be the system back gesture. Null when none is waiting.
-  int? _edgePointer;
-  Offset _edgeStart = Offset.zero;
+  final Map<int, Offset> _edgeTouches = {};
 
   bool _atEdge(Offset at) =>
       at.dx < FillTuning.edgeGuard ||
@@ -203,28 +202,27 @@ class _TapScreenState extends State<TapScreen>
 
   void _onPointerDown(PointerDownEvent event) {
     if (_atEdge(event.localPosition)) {
-      _edgePointer = event.pointer;
-      _edgeStart = event.localPosition;
+      _edgeTouches[event.pointer] = event.localPosition;
       return;
     }
     _registerTap(event.localPosition);
   }
 
   void _onPointerMove(PointerMoveEvent event) {
-    if (event.pointer != _edgePointer) return;
-    if ((event.localPosition - _edgeStart).distance > FillTuning.edgeTapSlop) {
-      _edgePointer = null;
+    final start = _edgeTouches[event.pointer];
+    if (start == null) return;
+    if ((event.localPosition - start).distance > FillTuning.edgeTapSlop) {
+      _edgeTouches.remove(event.pointer);
     }
   }
 
   void _onPointerUp(PointerUpEvent event) {
-    if (event.pointer != _edgePointer) return;
-    _edgePointer = null;
+    if (_edgeTouches.remove(event.pointer) == null) return;
     _registerTap(event.localPosition);
   }
 
   void _onPointerCancel(PointerCancelEvent event) {
-    if (event.pointer == _edgePointer) _edgePointer = null;
+    _edgeTouches.remove(event.pointer);
   }
 
   /// A tap from the keyboard or from assistive technology: the middle of the screen.
@@ -322,18 +320,31 @@ class _TapScreenState extends State<TapScreen>
           .dayOf(DayKey.of(_services.now()))
           .shouldAskNote(filledThisVisit: true);
 
-  /// The screen is already gone (the system back gesture): write what is waiting.
-  Future<void> _saveOnExit() async {
-    await _services.journal.save(SaveTrigger.leaveScreen);
-    await _services.cheerPicker.persist(_services.deckStore);
+  /// The screen is already gone (the system back gesture or button): write what is waiting and, if
+  /// the day still owes a note, ask for it over the screen below, the same as the back button does.
+  Future<void> _afterSystemExit() async {
+    final navigator = Navigator.of(context);
+    final services = _services;
+    final today = DayKey.of(services.now());
+    final owed = _noteDue;
+    final filled = _filledThisVisit;
+    await services.journal.save(SaveTrigger.leaveScreen);
+    await services.cheerPicker.persist(services.deckStore);
+    final overlay = navigator.overlay?.context;
+    if (owed && navigator.mounted && overlay != null && overlay.mounted) {
+      await showNoteSheet(overlay, today, afterComplete: filled);
+    }
   }
 
   // --- leaving ---------------------------------------------------------------------------
 
+  /// The back button. Leaves once: a second exit while this one waits for the disk is ignored,
+  /// and the pop happens only when this screen is still the current route.
   Future<void> _leave() async {
     if (_leaving) return;
-    _leaving = true;
+    setState(() => _leaving = true);
     final navigator = Navigator.of(context);
+    final route = ModalRoute.of(context);
     final today = DayKey.of(_services.now());
     await _services.journal.save(SaveTrigger.leaveScreen);
     await _services.cheerPicker.persist(_services.deckStore);
@@ -341,7 +352,7 @@ class _TapScreenState extends State<TapScreen>
     if (record.shouldAskNote(filledThisVisit: _filledThisVisit) && mounted) {
       await showNoteSheet(context, today, afterComplete: _filledThisVisit);
     }
-    if (navigator.mounted) navigator.pop();
+    if (navigator.mounted && (route?.isCurrent ?? false)) navigator.pop();
   }
 
   // --- drawing ---------------------------------------------------------------------------
@@ -362,15 +373,11 @@ class _TapScreenState extends State<TapScreen>
     final p = context.palette;
     final l10n = AppLocalizations.of(context);
     return PopScope(
-      // The default back gesture stays on. Only a day that still owes a note blocks it, because
-      // the note sheet is asked before leaving.
-      canPop: !_noteDue,
+      // The default back gesture stays on. Only an exit that is already under way blocks a second
+      // one. A system exit writes what is waiting and asks for the note after the screen is gone.
+      canPop: !_leaving,
       onPopInvokedWithResult: (didPop, _) {
-        if (didPop) {
-          unawaited(_saveOnExit());
-        } else {
-          unawaited(_leave());
-        }
+        if (didPop) unawaited(_afterSystemExit());
       },
       child: Scaffold(
         body: LayoutBuilder(

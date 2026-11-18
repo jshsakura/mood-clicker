@@ -148,4 +148,21 @@ void main() {
       expect(told, greaterThan(0));
     });
   });
+
+  test('deleting also removes the kept copies of an unreadable file', () async {
+    await file.writeAsString('not json');
+    final repository = JsonFileMoodRepository(file);
+    expect(await repository.load(), isA<LoadFailed>());
+    final aside = File('${file.path}.unreadable');
+    expect(await aside.exists(), isTrue);
+    final store = JournalStore(repository);
+    await DeviceRecordsPort(
+      journalFile: () async => file,
+      shareFiles: (paths) async => true,
+      store: store,
+    ).deleteAll();
+    expect(await file.exists(), isFalse);
+    expect(await aside.exists(), isFalse);
+    expect(tmp.listSync(), isEmpty);
+  });
 }

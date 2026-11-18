@@ -32,6 +32,10 @@ class JournalStore extends ChangeNotifier {
 
   bool _isLoaded = false;
 
+  /// Counts the deletions. A write that was started in an older generation belongs to records that
+  /// are gone: its result must not touch the new ones.
+  int _generation = 0;
+
   /// True once [load] has run, so a launch request can wait for the real journal.
   bool get isLoaded => _isLoaded;
 
@@ -66,12 +70,13 @@ class JournalStore extends ChangeNotifier {
   /// note is taken back out of memory, so the calendar never shows a line the disk does not hold,
   /// and the caller keeps the draft and says so.
   Future<bool> setNote(DayKey day, {String? note, String? presetId}) async {
+    final generation = _generation;
     final before = _journal.dayOf(day);
     _journal = _journal.withNote(day, note: note, presetId: presetId);
     _policy = _policy.afterTap(_watch.elapsed);
     notifyListeners();
     final written = await save(SaveTrigger.leaveScreen);
-    if (!written) {
+    if (!written && generation == _generation) {
       _journal = _journal.withNote(
         day,
         note: before.note,
@@ -82,14 +87,15 @@ class JournalStore extends ChangeNotifier {
     return written;
   }
 
-  /// Forgets every record: memory, the pending taps and the file. Listeners are told first so the
-  /// calendar redraws at once. Nothing is written afterwards until a new tap arrives. Throws when
-  /// the file cannot be removed, and then the screen must say so.
+  /// Forgets every record: the file first, then memory, the pending taps and the screens. When the
+  /// file cannot be removed this throws and nothing else changes, so memory and disk still agree
+  /// and the screen can say so. Writes that were started before the delete are ignored afterwards.
   Future<void> deleteAll() async {
+    await repository.clear();
+    _generation++;
     _journal = MoodJournal.empty();
     _policy = const SavePolicy.clean();
     notifyListeners();
-    await repository.clear();
   }
 
   /// Writes when the policy says so for [trigger]. A failed write is kept pending and retried
@@ -97,11 +103,14 @@ class JournalStore extends ChangeNotifier {
   Future<bool> save(SaveTrigger trigger) async {
     if (!_policy.shouldSave(trigger, _watch.elapsed)) return true;
     final snapshot = _journal;
+    final generation = _generation;
     _policy = _policy.afterSaveStarted();
     try {
       await repository.save(snapshot);
       return true;
     } on Object catch (error) {
+      // Records deleted since this write began: nothing left to retry.
+      if (generation != _generation) return false;
       _policy = _policy.afterSaveFailed();
       FlutterError.reportError(
         FlutterErrorDetails(exception: error, library: 'journal store'),

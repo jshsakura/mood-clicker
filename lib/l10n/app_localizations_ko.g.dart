@@ -592,4 +592,13 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get settings_mindCareCopyFallback =>
       '앱을 열지 못해 번호를 복사해 두었습니다. 전화나 문자 앱에 붙여 넣어 주세요.';
+
+  @override
+  String note_titleOn(String date) {
+    return '$date 한마디';
+  }
+
+  @override
+  String get settings_deleteFailed =>
+      '기록을 지우지 못했습니다. 잠시 뒤 다시 시도해 주세요. 기록은 그대로 남아 있습니다.';
 }
