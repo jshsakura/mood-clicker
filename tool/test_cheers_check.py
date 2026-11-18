@@ -161,10 +161,10 @@ class CheersCheckTest(unittest.TestCase):
     def test_detects_missing_counts(self) -> None:
         data = _valid_bundle("en")
         errs = check_bundle(data, "en")
-        # 5 moods * 5 tiers + 5 moods missing min bases + 1 total item count + 3 calm moods * 5 tiers min bases
+        # 5 moods * 5 tiers + 5 moods missing min bases + 1 total item count + 5 moods * 5 tiers min bases
         self.assertEqual(
             len(errs),
-            len(MOODS) * len(TIERS) + len(MOODS) + 1 + 3 * len(TIERS),
+            2 * len(MOODS) * len(TIERS) + len(MOODS) + 1,
         )
 
     def test_safety_rules_reject_assertions_and_allow_optional_suggestions(self) -> None:

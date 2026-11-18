@@ -70,6 +70,8 @@
       "rare": 85
     },
     "min_bases_tier_moods": [
+      "happy",
+      "excited",
       "angry",
       "sad",
       "anxious"
