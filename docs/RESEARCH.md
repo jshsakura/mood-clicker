@@ -351,3 +351,78 @@
 출처 및 확인일 (2026-11-18):
 - `rive` 패키지 (pub.dev) 및 공식 문서: https://pub.dev/packages/rive , https://rive.app/docs/runtimes/flutter/flutter
 - `lottie` 패키지 (pub.dev): https://pub.dev/packages/lottie
+
+---
+
+## 7. 익명 기분 집계 서버, 위치 격자, 스토어 개인정보 요구사항
+
+확인일: 2026-11-18
+
+### 7.1 익명 기분 집계 서버 후보 비교
+
+| 항목 | Supabase | Firebase (Spark 무료 플랜) | Cloudflare Workers + D1 |
+|---|---|---|---|
+| **무료 범위** | DB 500MB, MAU 50,000, 스토리지 1GB, 대역폭 5GB, API 요청 무제한, 활성 프로젝트 최대 2개. **1주일 비활성 시 프로젝트 자동 일시정지**됩니다. | 인증(익명 포함) MAU 50,000, Firestore 일 5만 읽기 / 2만 쓰기 / 2만 삭제, 1GiB 저장, 월 10GB 전송. (Cloud Functions 는 Blaze 종량제 전환 필요) | Workers 일 10만 요청(호출당 CPU 10ms). D1(SQLite) 단일 DB 최대 500MB(계정 합산 5GB), 일 500만 행 읽기 / 10만 행 쓰기(초과 시 자정 UTC 까지 차단). 일시정지 없음. |
+| **익명 인증 방식** | `signInAnonymously()` 기본 제공 (`auth.users` 에 `is_anonymous` 클레임 JWT 발급, RLS 연동 가능). | Firebase Auth 익명 로그인 기본 제공 (Spark 플랜 무료 50,000 MAU 포함). | 기본 인증 서비스 없음. 앱에서 익명 토큰/UUID 를 발급하거나 Worker 에서 자체 JWT 를 서명해 D1 에 저장해야 합니다. |
+| **서버 격자 집계 방법** | Postgres RPC / View / SQL 에서 `GROUP BY grid_id HAVING COUNT(DISTINCT user_id) >= 5` 로 1회 쿼리로 `k-익명성` 필터링까지 처리합니다. | Firestore 는 `COUNT(DISTINCT)` 와 `HAVING` 집계가 약해, 격자별 카운터 문서로 증분 쓰기 후 조회 시 `>= 5` 필터링하거나 Cloud Functions(Blaze) 가 필요합니다. | D1(SQLite) 에서 `GROUP BY grid_id HAVING COUNT(DISTINCT user_id) >= 5` SQL 로 바로 집계·필터링합니다. |
+| **운영 부담** | 낮음(단, 무료 플랜 7일 미사용 시 자동 일시정지 복구 또는 주기적 핑 필요). | 낮음(다만 SQL 집계가 안 되어 NoSQL 데이터 모델 설계와 Blaze 전환 주의 필요). | 중간(익명 토큰·중복 방지 로직을 Worker 코드로 직접 짜야 하지만, 일시정지가 없고 SQLite 라 단순함). |
+
+**비상업 파일럿 추천: Supabase**
+- 이유:
+  1. `signInAnonymously()` 와 Postgres RLS 를 바로 쓸 수 있어 익명 인증 구현 비용이 가장 낮습니다.
+  2. 격자 집계와 "한 격자 최소 5명(`HAVING COUNT(DISTINCT user_id) >= 5`)" 조건을 Postgres SQL 한 줄(RPC)로 안전하게 강제할 수 있어, 클라이언트에 5명 미만 격자 데이터가 아예 내려가지 않습니다.
+  3. 추후 회사에 코드를 넘길 때도 표준 PostgreSQL 스키마와 SQL 로 인수인계하기 쉽습니다. (무료 플랜 7일 비활성 일시정지만 테스트 기간 중 유념하면 됩니다.)
+
+출처 및 확인일 (2026-11-18):
+- Supabase 요금 및 익명 로그인 문서: https://supabase.com/pricing , https://supabase.com/docs/guides/auth/auth-anonymous
+- Firebase 요금(Spark) 및 익명 인증 문서: https://firebase.google.com/pricing , https://firebase.google.com/docs/auth/flutter/anonymous-auth
+- Cloudflare Workers 및 D1 무료 범위 문서: https://developers.cloudflare.com/workers/platform/pricing/ , https://developers.cloudflare.com/d1/platform/pricing/
+
+### 7.2 위치 격자 크기, Flutter 패키지, k-익명성
+
+#### 1) Geohash vs H3 칸 크기 비교
+
+| 격자 체계 | 해상도 / 정밀도 | 실제 칸 크기 (넓이·변 길이) | 특징 |
+|---|---|---|---|
+| **Geohash** | 정밀도 **5** | 약 **4.9km x 4.9km** (적도 기준, 약 24km²) | 위도가 높아질수록 동서 폭이 좁아지는 직사각형입니다. |
+| **Geohash** | 정밀도 **6** | 약 **1.2km x 0.61km** (적도 기준, 약 0.73km²) | 3km² 보다 작아 스토어 정책상 정밀 위치로 분류될 수 있습니다. |
+| **Uber H3** | 해상도 **7** | 평균 면적 **약 5.16km²**, 평균 변 길이 **약 1.22km** (인접 중심 거리 약 2.04km) | 정육각형이라 위도 왜곡이 적고 인접 칸 거리가 균일합니다. |
+| **Uber H3** | 해상도 **8** | 평균 면적 **약 0.74km²**, 평균 변 길이 **약 0.46km** (인접 중심 거리 약 0.70km) | 3km² 보다 작아 동네 단위보다는 블록 단위에 가깝습니다. |
+
+#### 2) Flutter 패키지 유지 상태
+- **`dart_geohash` (`2.1.0`) / `geohash_plus` (`1.1.1`)**: 각각 약 2년·4년 전 이후 업데이트가 멈춘 레거시 상태입니다. Geohash 를 쓴다면 최신 순수 Dart 패키지(`fast_geohash` 등)나 직접 인코더(수십 줄) 구현을 권장합니다.
+- **`h3_flutter` (`0.8.0`) / `h3_dart` (`0.8.0`)**: `festelo.net` 이 유지 중이며 FFI/JS 바인딩을 제공합니다(커뮤니티 포크인 `h3_flutter_plus` 등도 존재합니다).
+
+#### 3) k-익명성(한 칸 최소 인원) 실무 사례
+- 공간 데이터 k-익명성은 한 격자·구간에 최소 `k` 명의 고유 사용자가 있을 때만 통계를 공개하는 방식입니다.
+- 이동·공간 통계 실무(소지역 통계, Strava Metro 등)에서는 **`k = 5`** 를 최소 기준선으로 삼고 구간별 임계치 미만은 숨기거나(suppression) 반올림·차분 프라이버시(Google Mobility 등)를 결합합니다.
+- `docs/SPEC.md` 의 초안("최소 5명 미만 비표시")은 실무 기준에 부합하며, `H3 해상도 7`(변 약 1.22km, 면적 약 5.16km²) 은 동네 크기 감각과 아래 스토어 "대략적 위치(3km² 이상)" 기준을 동시에 만족합니다.
+
+출처 및 확인일 (2026-11-18):
+- Uber H3 해상도별 면적·변 길이 공식 표: https://h3geo.org/docs/core-library/restable/
+- `h3_flutter` / `h3_dart` / `dart_geohash`: https://pub.dev/packages/h3_flutter , https://pub.dev/packages/h3_dart , https://pub.dev/packages/dart_geohash
+- Google Research 공간 집계 및 차분 프라이버시: https://research.google/blog/
+- 공간 역학·모빌리티 k-익명성 참고: https://www.gov.uk/government/publications/strava-metro-privacy-and-data-governance (Strava Metro 집계·임계치 사례)
+
+### 7.3 위치 기반 앱의 스토어 요구사항 (App Store / Google Play)
+
+| 항목 | Apple App Store | Google Play |
+|---|---|---|
+| **권한 및 설명 문구** | `Info.plist` 에 `NSLocationWhenInUseUsageDescription` 필수. 사용자가 왜 위치를 쓰는지 구체적 목적을 적어야 합니다("내 주변 동네 기분을 보여 주기 위해 사용합니다"). 백그라운드 권한은 요청하지 않습니다. | `AndroidManifest.xml` 에 `ACCESS_COARSE_LOCATION` 선언(대략적 위치만으로도 충분하면 `ACCESS_FINE_LOCATION` 제외 가능). |
+| **개인정보 처리방침** | App Store Connect 제출 및 앱 내 접근 가능한 Privacy Policy URL 필수. | Play Console 제출 및 앱 내 접근 가능한 개인정보 처리방침 URL 필수. |
+| **스토어 개인정보 신고** | **App Privacy (영양 라벨)**: 수집 항목, 사용자 연결 여부(Linked to User), 목적(App Functionality) 신고. | **Data Safety (데이터 보안 양식)**: 수집·공유 여부, 암호화, 삭제 요청 가능 여부 신고. |
+
+**기기에서 격자로 바꿔 보내는 경우의 기재 방법**:
+- **정밀 위치 vs 대략적 위치 기준**:
+  - Google Play Data Safety 는 **3km² 이상**을 대략적 위치(Approximate location), **3km² 미만**을 정밀 위치(Precise location)로 구분합니다.
+  - Apple App Privacy 도 약 3km 반경 수준 이상의 일반화 여부를 기준으로 정밀(Precise)과 대략적(Coarse) 위치를 구분합니다.
+- **기재 시 주의할 점**:
+  1. 기기에서 GPS 를 읽어 **H3 해상도 7(약 5.16km²) 또는 Geohash 5(약 24km²)** 로 바꾼 뒤 격자 번호만 서버로 보내고 원본 좌표는 즉시 버린다면, 서버로 전송되는 데이터는 **대략적 위치(Coarse / Approximate Location)** 로 기재할 수 있습니다.
+  2. 반대로 Geohash 6(약 0.73km²) 이나 H3 해상도 8(약 0.74km²) 은 3km² 미만이므로, 격자로 바꿨더라도 Google Play 기준상 **정밀 위치**로 신고해야 할 수 있습니다.
+  3. 서버 접속 로그에 사용자 IP 가 남거나 서드파티 SDK 가 좌표를 수집하면 별도로 위치·기기 정보 수집을 신고해야 하므로, 서드파티 SDK 유무와 서버 IP 로그 보관 여부를 함께 맞춰야 합니다.
+
+출처 및 확인일 (2026-11-18):
+- Apple App Privacy Details 공식 안내: https://developer.apple.com/app-store/app-privacy-details/
+- Apple `NSLocationWhenInUseUsageDescription`: https://developer.apple.com/documentation/bundleresources/information_property_list/nslocationwheninuseusagedescription
+- Google Play Data safety 공식 가이드: https://support.google.com/googleplay/android-developer/answer/10787469
+- Android 대략적 위치(`ACCESS_COARSE_LOCATION`) 가이드: https://developer.android.com/develop/sensors-and-location/location/permissions
