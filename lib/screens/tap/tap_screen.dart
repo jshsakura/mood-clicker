@@ -29,9 +29,12 @@ import 'note_sheet.dart';
 /// tap counts the instant a finger lands. Water rises with the taps, phrases pop up where the
 /// finger was, and tilting the phone sloshes the water and can spill it.
 class TapScreen extends StatefulWidget {
-  const TapScreen({super.key, required this.mood});
+  const TapScreen({super.key, required this.mood, this.random});
 
   final Mood mood;
+
+  /// The source of chance for the water. Tests give a seeded one.
+  final Random? random;
 
   @override
   State<TapScreen> createState() => _TapScreenState();
@@ -39,7 +42,7 @@ class TapScreen extends StatefulWidget {
 
 class _TapScreenState extends State<TapScreen>
     with SingleTickerProviderStateMixin {
-  final WaterSim _sim = WaterSim();
+  late final WaterSim _sim = WaterSim(random: widget.random);
   late final Ticker _ticker;
   late final AppServices _services;
 

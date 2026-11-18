@@ -99,6 +99,9 @@ Figma 의 Tokens Studio 플러그인에서 한 번만 설정합니다. 메뉴 �
 | `mood_banner.dart` | 기분 고르기의 큰 배너 |
 | `fill_gauge.dart` | 두드리기 화면의 차오르는 채움 |
 | `character_slot.dart` | 캐릭터 자리. 상태는 idle, react, palmsTogether, finish |
+| `pressable_surface.dart` | 눌리는 모든 면. 아이콘 버튼(44px 원, 0.92배)과 배너, 카드(0.98배)가 살짝 어두워지며 줄어듭니다. 잉크 번짐과 사각 하이라이트는 없습니다 |
+| `water_painter.dart` | 두드리기 화면의 물. 앞 물결, 뒤 물결, 물방울을 단색으로 그립니다 |
+| `water_sim.dart` | 물의 용수철 계산. 숫자는 `lib/domain/tuning.dart` 의 `FillTuning` 에 있습니다 |
 
 캐릭터 애니메이션(Rive, Lottie)이 오면 `character_slot.dart` 안만 바꿉니다. 상태 이름을 애니메이션의 상태 이름과 맞추면 부르는 쪽은 그대로 둡니다.
 

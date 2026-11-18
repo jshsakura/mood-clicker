@@ -7,6 +7,7 @@ import 'package:mood_clicker/app/journal_store.dart';
 import 'package:mood_clicker/design/app_theme.dart';
 import 'package:mood_clicker/design/theme_choice.dart';
 import 'package:mood_clicker/design/tokens.g.dart';
+import 'package:mood_clicker/domain/cheer.dart';
 import 'package:mood_clicker/domain/cheer_picker.dart';
 import 'package:mood_clicker/domain/feel_settings.dart';
 import 'package:mood_clicker/domain/mood_journal.dart';
@@ -38,13 +39,19 @@ class FakeSurfaces {
 }
 
 class MemoryRepository implements MoodRepository {
-  MemoryRepository({this.loadResult});
+  MemoryRepository({this.loadResult, this.gate});
 
   LoadResult? loadResult;
+
+  /// When given, [load] waits for it. A test that wants the loading screen to stay gives one.
+  final Future<void>? gate;
   final List<MoodJournal> saved = [];
 
   @override
-  Future<LoadResult> load() async => loadResult ?? Loaded(MoodJournal.empty());
+  Future<LoadResult> load() async {
+    await gate;
+    return loadResult ?? Loaded(MoodJournal.empty());
+  }
 
   @override
   Future<bool> save(MoodJournal journal) async {
@@ -74,6 +81,7 @@ class TestApp {
     DateTime? start,
     this.settingsBuilder,
     this.fakeSurfaces,
+    CheerBook? book,
   }) : repository = repository ?? MemoryRepository(),
        clock = start ?? DateTime(2026, 11, 18, 12),
        haptics = FakeHaptics(),
@@ -89,7 +97,7 @@ class TestApp {
         sound: sound,
         clock: () => Duration(microseconds: clock.microsecondsSinceEpoch),
       ),
-      loadCheers: (_) async => bookOf(20),
+      loadCheers: (_) async => book ?? bookOf(20),
       cheerPicker: CheerPicker(Random(1)),
       deckStore: store,
       feel: this.feel,

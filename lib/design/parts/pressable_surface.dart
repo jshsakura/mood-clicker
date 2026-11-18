@@ -27,6 +27,7 @@ class PressableSurface extends StatefulWidget {
     required this.child,
     this.semanticLabel,
     this.color,
+    this.radius,
   });
 
   /// A 44 px circular icon button.
@@ -59,6 +60,9 @@ class PressableSurface extends StatefulWidget {
   /// The surface color. Defaults to the palette surface.
   final Color? color;
 
+  /// The corner radius of a card. Defaults to [Radii.card].
+  final double? radius;
+
   @override
   State<PressableSurface> createState() => _PressableSurfaceState();
 }
@@ -77,7 +81,7 @@ class _PressableSurfaceState extends State<PressableSurface> {
     final shape = isIcon
         ? const CircleBorder()
         : RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(Radii.card),
+            borderRadius: BorderRadius.circular(widget.radius ?? Radii.card),
           );
     final enabled = widget.onTap != null;
     final pressed = _pressed && enabled;
@@ -87,6 +91,7 @@ class _PressableSurfaceState extends State<PressableSurface> {
         shape: shape,
       ),
       child: Stack(
+        fit: StackFit.passthrough,
         children: [
           widget.child,
           Positioned.fill(
