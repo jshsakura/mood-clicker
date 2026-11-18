@@ -191,4 +191,50 @@ void main() {
     // Only the route scope holds focus: no surface took it.
     expect(FocusManager.instance.primaryFocus, isA<FocusScopeNode>());
   });
+
+  testWidgets(
+    'a named icon has its tap action on the node that carries the name',
+    (tester) async {
+      final handle = tester.ensureSemantics();
+      var taps = 0;
+      await tester.pumpWidget(
+        host(
+          PressableSurface.icon(
+            icon: LineIcons.help,
+            semanticLabel: 'help',
+            onTap: () => taps++,
+          ),
+        ),
+      );
+      expect(
+        tester.getSemantics(find.bySemanticsLabel('help')),
+        isSemantics(label: 'help', isButton: true, hasTapAction: true),
+      );
+      tester.semantics.tap(find.semantics.byLabel('help'));
+      expect(taps, 1);
+      handle.dispose();
+    },
+  );
+
+  testWidgets('a chosen surface tells screen readers it is selected', (
+    tester,
+  ) async {
+    final handle = tester.ensureSemantics();
+    await tester.pumpWidget(
+      host(
+        PressableSurface(
+          kind: PressableKind.card,
+          selected: true,
+          semanticLabel: 'week',
+          onTap: () {},
+          child: const SizedBox(width: 80, height: 40),
+        ),
+      ),
+    );
+    expect(
+      tester.getSemantics(find.bySemanticsLabel('week')),
+      isSemantics(isSelected: true),
+    );
+    handle.dispose();
+  });
 }

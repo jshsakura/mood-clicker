@@ -36,6 +36,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
   // Pending final stamp rule: single threshold constant.
   static const double _stampFullRatio = 1.0 - 1e-9;
 
+  /// The first month the calendar shows.
+  static final DateTime _firstMonth = DateTime(2020);
+
   DateTime? _month;
   DayKey? _picked;
 
@@ -49,6 +52,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
   void _move(AppServices services, int by) {
     final shown = _shown(services);
     final next = DateTime(shown.year, shown.month + by);
+    if (next.isBefore(_firstMonth)) return;
     setState(() {
       _month = next;
       _picked = _defaultPicked(services.journal.journal, next, services.now());
@@ -84,7 +88,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
     final isCurrentMonth = month.year == now.year && month.month == now.month;
     final daysInMonth = DateTime(month.year, month.month + 1, 0).day;
     final weekdays = weekdayLabels(locale);
-    final firstCalendarDay = DateTime(2020, 1, 1);
+    final isFirstMonth = !month.isAfter(_firstMonth);
+    final firstCalendarDay = _firstMonth;
     final lastCalendarDay = DateTime(now.year, now.month + 1, 0);
 
     return Scaffold(
@@ -209,8 +214,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                               icon: LineIcons.chevronLeft,
                                               semanticLabel:
                                                   l10n.calendar_prevMonth,
-                                              color: p.inkMuted,
-                                              onTap: () => _move(services, -1),
+                                              color: isFirstMonth
+                                                  ? p.fillEdge
+                                                  : p.inkMuted,
+                                              onTap: isFirstMonth
+                                                  ? null
+                                                  : () => _move(services, -1),
                                             ),
                                             Padding(
                                               padding:
@@ -484,19 +493,13 @@ class _PlainChevronButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      enabled: onTap != null,
-      label: semanticLabel,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onTap,
-        child: SizedBox(
-          width: 32,
-          height: 40,
-          child: Center(child: LineIcon(icon, size: 18, color: color)),
-        ),
-      ),
+    return PressableSurface.icon(
+      icon: icon,
+      iconSize: 18,
+      iconColor: color,
+      color: Colors.transparent,
+      semanticLabel: semanticLabel,
+      onTap: onTap,
     );
   }
 }

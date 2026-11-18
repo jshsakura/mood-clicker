@@ -1,5 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:mood_clicker/design/parts/mood_face.dart';
@@ -133,14 +135,13 @@ void main() {
       final nextButton = find.bySemanticsLabel(ko.calendar_nextMonth);
       expect(prevButton, findsOneWidget);
       expect(nextButton, findsOneWidget);
-      expect(
-        find.ancestor(of: prevButton, matching: find.byType(PressableSurface)),
-        findsNothing,
-      );
-      expect(
-        find.ancestor(of: nextButton, matching: find.byType(PressableSurface)),
-        findsNothing,
-      );
+      // They are focusable buttons now, but with no fill, so no round background shows.
+      for (final button in [prevButton, nextButton]) {
+        final surface = tester.widget<PressableSurface>(
+          find.ancestor(of: button, matching: find.byType(PressableSurface)),
+        );
+        expect(surface.color, Colors.transparent);
+      }
       expect(find.text(ko.calendar_monthFlow), findsOneWidget);
       expect(find.byType(BarChart), findsOneWidget);
     },
@@ -263,5 +264,85 @@ void main() {
     await tester.tap(find.text('18'));
     await tester.pumpAndSettle();
     expect(find.text(ko.dayDetail_editNote), findsOneWidget);
+  });
+
+  group('month arrows', () {
+    Future<void> pumpAt(WidgetTester tester, DateTime start) async {
+      final app = TestApp(start: start);
+      await tester.pumpWidget(app.wrap(const CalendarScreen()));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('the arrows are focusable buttons a screen reader can tap', (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+      await pumpAt(tester, DateTime(2026, 11, 18, 12));
+      expect(
+        find.ancestor(
+          of: find.bySemanticsLabel(ko.calendar_prevMonth),
+          matching: find.byType(PressableSurface),
+        ),
+        findsOneWidget,
+      );
+      tester.semantics.tap(find.semantics.byLabel(ko.calendar_prevMonth));
+      await tester.pumpAndSettle();
+      expect(find.text(ko.calendar_nextMonth), findsNothing);
+      expect(find.textContaining('10'), findsWidgets);
+      handle.dispose();
+    });
+
+    testWidgets('Tab reaches the previous arrow and Enter moves the month', (
+      tester,
+    ) async {
+      await pumpAt(tester, DateTime(2026, 11, 18, 12));
+      final prev = find.ancestor(
+        of: find.bySemanticsLabel(ko.calendar_prevMonth),
+        matching: find.byType(PressableSurface),
+      );
+      var reached = false;
+      for (var i = 0; i < 8 && !reached; i++) {
+        await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+        await tester.pump();
+        final focus = FocusManager.instance.primaryFocus;
+        reached =
+            focus?.context != null &&
+            find
+                .descendant(
+                  of: prev,
+                  matching: find.byElementPredicate(
+                    (e) => identical(e, focus!.context),
+                  ),
+                )
+                .evaluate()
+                .isNotEmpty;
+      }
+      expect(reached, isTrue);
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+      expect(
+        find.text(DateFormat.MMMM('ko').format(DateTime(2026, 10))),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('previous month is off in January 2020 and does not assert', (
+      tester,
+    ) async {
+      await pumpAt(tester, DateTime(2020, 1, 15, 12));
+      final prev = tester.widget<PressableSurface>(
+        find.ancestor(
+          of: find.bySemanticsLabel(ko.calendar_prevMonth),
+          matching: find.byType(PressableSurface),
+        ),
+      );
+      expect(prev.onTap, isNull);
+      await tester.tap(
+        find.bySemanticsLabel(ko.calendar_prevMonth),
+        warnIfMissed: false,
+      );
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+    });
   });
 }

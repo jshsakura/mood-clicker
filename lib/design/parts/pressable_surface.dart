@@ -29,6 +29,7 @@ class PressableSurface extends StatefulWidget {
     this.semanticLabel,
     this.color,
     this.radius,
+    this.selected,
   });
 
   /// A 44 px circular icon button.
@@ -39,11 +40,13 @@ class PressableSurface extends StatefulWidget {
     required String semanticLabel,
     double iconSize = 22,
     Color? iconColor,
+    Color? color,
   }) : this(
          key: key,
          kind: PressableKind.icon,
          onTap: onTap,
          semanticLabel: semanticLabel,
+         color: color,
          child: Center(
            child: Builder(
              builder: (context) =>
@@ -70,6 +73,9 @@ class PressableSurface extends StatefulWidget {
 
   /// The corner radius of a card. Defaults to [Radii.card].
   final double? radius;
+
+  /// Whether the surface is the chosen one of a group, told to screen readers. Null for none.
+  final bool? selected;
 
   @override
   State<PressableSurface> createState() => _PressableSurfaceState();
@@ -159,6 +165,9 @@ class _PressableSurfaceState extends State<PressableSurface> {
     return Semantics(
       button: true,
       enabled: enabled,
+      selected: widget.selected,
+      // The tap action sits on the same node as the name, so a screen reader can run it.
+      onTap: widget.onTap,
       label: widget.semanticLabel,
       excludeSemantics: widget.semanticLabel != null,
       child: FocusableActionDetector(

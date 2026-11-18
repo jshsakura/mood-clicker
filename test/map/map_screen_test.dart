@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:mood_clicker/design/parts/pressable_surface.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mood_clicker/domain/mood.dart';
 import 'package:mood_clicker/map/map_rules.dart';
@@ -203,6 +205,29 @@ void main() {
     expect(find.text(ko.map_wordAteWell), findsOneWidget);
   });
 
+  testWidgets('the range switch takes keyboard focus and a screen reader tap', (
+    tester,
+  ) async {
+    final handle = tester.ensureSemantics();
+    await _pump(tester);
+    tester.semantics.tap(find.semantics.byLabel(ko.map_rangeWeek));
+    await tester.pump();
+    expect(
+      tester.getSemantics(find.bySemanticsLabel(ko.map_rangeWeek)),
+      isSemantics(isSelected: true),
+    );
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.pump();
+    expect(
+      find.descendant(
+        of: find.byType(PressableSurface),
+        matching: find.byType(Focus),
+      ),
+      findsWidgets,
+    );
+    handle.dispose();
+  });
+
   group('entry point', () {
     testWidgets('shown by default', (tester) async {
       final app = TestApp();
@@ -293,10 +318,39 @@ void main() {
     testWidgets('sheet handle collapses and expands the sheet', (tester) async {
       await _pump(tester);
       expect(find.text(ko.map_explain), findsOneWidget);
-      await tester.tap(find.byType(GestureDetector).last);
+      await tester.tap(find.byKey(const Key('sheetHandle')));
       await tester.pump();
       expect(find.text(ko.map_explain), findsNothing);
-      await tester.tap(find.byType(GestureDetector).last);
+      await tester.tap(find.byKey(const Key('sheetHandle')));
+      await tester.pump();
+      expect(find.text(ko.map_explain), findsOneWidget);
+    });
+
+    testWidgets('a slow drag down past the distance folds the sheet too', (
+      tester,
+    ) async {
+      await _pump(tester);
+      expect(find.text(ko.map_explain), findsOneWidget);
+      final handle = find.byKey(const Key('sheetHandle'));
+      final gesture = await tester.startGesture(tester.getCenter(handle));
+      for (var i = 0; i < 22; i++) {
+        await gesture.moveBy(const Offset(0, 5));
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      await gesture.up();
+      await tester.pump();
+      expect(find.text(ko.map_explain), findsNothing);
+    });
+
+    testWidgets('a short slow drag leaves the sheet open', (tester) async {
+      await _pump(tester);
+      final handle = find.byKey(const Key('sheetHandle'));
+      final gesture = await tester.startGesture(tester.getCenter(handle));
+      for (var i = 0; i < 4; i++) {
+        await gesture.moveBy(const Offset(0, 5));
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      await gesture.up();
       await tester.pump();
       expect(find.text(ko.map_explain), findsOneWidget);
     });

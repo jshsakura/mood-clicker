@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:mood_clicker/app/journal_store.dart';
 import 'package:mood_clicker/domain/day_key.dart';
 import 'package:mood_clicker/domain/mood.dart';
@@ -67,6 +68,18 @@ void main() {
     expect(
       await port(completes: false).exportJournal(),
       ExportOutcome.cancelled,
+    );
+  });
+
+  test('only a finished share counts as shared', () {
+    expect(shareFinished(ShareResult.unavailable), isFalse);
+    expect(
+      shareFinished(const ShareResult('', ShareResultStatus.dismissed)),
+      isFalse,
+    );
+    expect(
+      shareFinished(const ShareResult('', ShareResultStatus.success)),
+      isTrue,
     );
   });
 

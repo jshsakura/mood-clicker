@@ -354,29 +354,23 @@ class _RangeSwitch extends StatelessWidget {
               (MapRange.today, l10n.map_rangeToday),
               (MapRange.week, l10n.map_rangeWeek),
             ])
-              Semantics(
-                button: true,
+              PressableSurface(
+                kind: PressableKind.card,
+                radius: Radii.pill,
+                color: range == value ? p.ink : Colors.transparent,
                 selected: range == value,
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () => onPick(value),
-                  child: DecoratedBox(
-                    decoration: ShapeDecoration(
-                      color: range == value ? p.ink : Colors.transparent,
-                      shape: const StadiumBorder(),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: Space.lg,
-                        vertical: Space.sm,
-                      ),
-                      child: Text(
-                        label,
-                        style: TypeScale.label.copyWith(
-                          color: range == value ? p.mapGround : p.inkMuted,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
+                semanticLabel: label,
+                onTap: () => onPick(value),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: Space.lg,
+                    vertical: Space.sm,
+                  ),
+                  child: Text(
+                    label,
+                    style: TypeScale.label.copyWith(
+                      color: range == value ? p.mapGround : p.inkMuted,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
@@ -468,14 +462,9 @@ class _Sheet extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: onToggle,
-                onVerticalDragEnd: (details) {
-                  final v = details.primaryVelocity ?? 0;
-                  if (open && v > 120) onToggle();
-                  if (!open && v < -120) onToggle();
-                },
+              _FoldHandle(
+                open: open,
+                onToggle: onToggle,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: Space.xs),
                   child: Center(
@@ -602,4 +591,53 @@ class _CenteredAt extends SingleChildLayoutDelegate {
 
   @override
   bool shouldRelayout(_CenteredAt old) => old.point != point;
+}
+
+/// The handle of the sheet: a tap folds or opens it, and so does a drag that is fast enough or
+/// long enough, however slowly it goes.
+class _FoldHandle extends StatefulWidget {
+  const _FoldHandle({
+    required this.open,
+    required this.onToggle,
+    required this.child,
+  });
+
+  final bool open;
+  final VoidCallback onToggle;
+  final Widget child;
+
+  /// A drag faster than this folds the sheet (logical pixels per second).
+  static const double foldVelocity = 120;
+
+  /// A drag longer than this folds it too, even a slow one.
+  static const double foldDistance = 40;
+
+  @override
+  State<_FoldHandle> createState() => _FoldHandleState();
+}
+
+class _FoldHandleState extends State<_FoldHandle> {
+  double _dragged = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      key: const Key('sheetHandle'),
+      behavior: HitTestBehavior.opaque,
+      onTap: widget.onToggle,
+      onVerticalDragStart: (_) => _dragged = 0,
+      onVerticalDragUpdate: (details) => _dragged += details.delta.dy,
+      onVerticalDragEnd: (details) {
+        final v = details.primaryVelocity ?? 0;
+        final down =
+            v > _FoldHandle.foldVelocity || _dragged > _FoldHandle.foldDistance;
+        final up =
+            v < -_FoldHandle.foldVelocity ||
+            _dragged < -_FoldHandle.foldDistance;
+        if (widget.open && down) widget.onToggle();
+        if (!widget.open && up) widget.onToggle();
+      },
+      child: widget.child,
+    );
+  }
 }
