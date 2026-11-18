@@ -231,6 +231,10 @@ tool/shots.sh --update   # 의도한 변경이면 골든을 새 그림으로 바
 
 작업 트리를 새로 만든 직후에는 `.dart_tool` 이 없으므로 `tool/fl pub get`(또는 `tool/setup.sh`)을 한 번 돌린 뒤 테스트합니다. 훅 설정은 이미 공유되어 있습니다.
 
+## 앱 아이콘
+
+원본은 `python3 tool/make_app_icon.py` 로 `assets/app_icon/` 에 그립니다. 플랫폼별 아이콘(안드로이드 적응형, iOS, 맥)은 `tool/fl pub run flutter_launcher_icons` 한 줄로 만듭니다.
+
 ## 확인한 환경
 
 - 확인일: 2026-11-19

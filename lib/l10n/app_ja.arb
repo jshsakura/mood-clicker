@@ -15,6 +15,7 @@
   "moodSelect_moodSad": "悲しい",
   "moodSelect_moodAnxious": "不安",
   "tap_todayLabel": "今日押した回数",
+  "tap_todayCount": "{count, plural, other {今日 {count}回}}",
   "calendar_prevMonth": "前の月",
   "calendar_nextMonth": "次の月",
   "dayDetail_happySide": "幸せ側",
@@ -142,5 +143,7 @@
   "settings_mapView": "地図を見る",
   "settings_mapViewDesc": "オンにすると気分を選ぶ画面に地図ボタンが出ます。オフでは表示されません",
   "map_togetherSad": "今日、心が沈んでいるのはあなただけではありません",
-  "map_togetherHappy": "今日は近くに気分のいい人がたくさんいます"
+  "map_togetherHappy": "今日は近くに気分のいい人がたくさんいます",
+  "moodSelect_title": "今日の気分は",
+  "loading_message": "記録を読み込んでいます"
 }

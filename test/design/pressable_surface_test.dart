@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mood_clicker/design/app_theme.dart';
+import 'package:mood_clicker/design/parts/line_icon.dart';
 import 'package:mood_clicker/design/parts/pressable_surface.dart';
 import 'package:mood_clicker/design/tokens.g.dart';
 
@@ -44,7 +45,7 @@ void main() {
     await tester.pumpWidget(
       host(
         PressableSurface.icon(
-          icon: Icons.arrow_back,
+          icon: LineIcons.back,
           onTap: () {},
           semanticLabel: 'back',
         ),

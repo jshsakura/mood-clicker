@@ -60,6 +60,15 @@
   "@tap_todayLabel": {
     "description": "두드리기 화면 아래, 오늘 누적 수 숫자 밑에 붙는 작은 설명입니다."
   },
+  "tap_todayCount": "{count, plural, other {오늘 {count}}}",
+  "@tap_todayCount": {
+    "description": "두드리기 화면 아래에 오늘 누적 수를 보여 주는 문구입니다. 숫자는 자리표시자 count 로 들어갑니다.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "calendar_prevMonth": "지난달",
   "@calendar_prevMonth": {
     "description": "달력에서 한 달 뒤로 가는 버튼의 숨김 이름(접근성)입니다."
@@ -639,5 +648,13 @@
   },
   "@map_togetherHappy": {
     "description": "지도 아래 시트 제목입니다. 비율 표시를 공통성 문구로 고르고, 그 범위에서 행복한 쪽이 더 많을 때 씁니다. 숫자와 순위를 쓰지 않습니다."
+  },
+  "moodSelect_title": "오늘 기분은",
+  "@moodSelect_title": {
+    "description": "기분 고르기 화면의 큰 제목입니다."
+  },
+  "loading_message": "기록을 불러오는 중입니다",
+  "@loading_message": {
+    "description": "첫 화면에서 기록을 읽는 동안 로고 아래에 보이는 문구입니다."
   }
 }

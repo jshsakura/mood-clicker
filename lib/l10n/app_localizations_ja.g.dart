@@ -54,6 +54,16 @@ class AppLocalizationsJa extends AppLocalizations {
   String get tap_todayLabel => '今日押した回数';
 
   @override
+  String tap_todayCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '今日 $count回',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get calendar_prevMonth => '前の月';
 
   @override
@@ -471,4 +481,10 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get map_togetherHappy => '今日は近くに気分のいい人がたくさんいます';
+
+  @override
+  String get moodSelect_title => '今日の気分は';
+
+  @override
+  String get loading_message => '記録を読み込んでいます';
 }

@@ -56,3 +56,10 @@ String dayTitle(Locale locale, DateTime day) {
   _loadDateSymbols();
   return DateFormat.MMMd(code).format(day);
 }
+
+/// The date line above a title: month, day and the full weekday name.
+String dayWithWeekday(Locale locale, DateTime day) {
+  final code = _code(locale);
+  _loadDateSymbols();
+  return DateFormat.MMMMEEEEd(code).format(day);
+}

@@ -13,6 +13,8 @@ class AppPalette extends ThemeExtension<AppPalette> {
     required this.line,
     required this.ink,
     required this.inkMuted,
+    required this.ink2,
+    required this.faint,
     required this.accent,
     required this.onAccent,
     required this.happy,
@@ -33,6 +35,8 @@ class AppPalette extends ThemeExtension<AppPalette> {
   final Color line;
   final Color ink;
   final Color inkMuted;
+  final Color ink2;
+  final Color faint;
   final Color accent;
   final Color onAccent;
   final Color happy;
@@ -54,6 +58,8 @@ class AppPalette extends ThemeExtension<AppPalette> {
     Color? line,
     Color? ink,
     Color? inkMuted,
+    Color? ink2,
+    Color? faint,
     Color? accent,
     Color? onAccent,
     Color? happy,
@@ -74,6 +80,8 @@ class AppPalette extends ThemeExtension<AppPalette> {
       line: line ?? this.line,
       ink: ink ?? this.ink,
       inkMuted: inkMuted ?? this.inkMuted,
+      ink2: ink2 ?? this.ink2,
+      faint: faint ?? this.faint,
       accent: accent ?? this.accent,
       onAccent: onAccent ?? this.onAccent,
       happy: happy ?? this.happy,
@@ -99,6 +107,8 @@ class AppPalette extends ThemeExtension<AppPalette> {
       line: Color.lerp(line, other.line, t)!,
       ink: Color.lerp(ink, other.ink, t)!,
       inkMuted: Color.lerp(inkMuted, other.inkMuted, t)!,
+      ink2: Color.lerp(ink2, other.ink2, t)!,
+      faint: Color.lerp(faint, other.faint, t)!,
       accent: Color.lerp(accent, other.accent, t)!,
       onAccent: Color.lerp(onAccent, other.onAccent, t)!,
       happy: Color.lerp(happy, other.happy, t)!,
@@ -122,6 +132,8 @@ const AppPalette darkPalette = AppPalette(
   line: Color(0xFF383840),
   ink: Color(0xFFECECF0),
   inkMuted: Color(0xFFA0A0AA),
+  ink2: Color(0xFFC8C8D0),
+  faint: Color(0xFF6E6E78),
   accent: Color(0xFFECECF0),
   onAccent: Color(0xFF16161A),
   happy: Color(0xFFFFC23D),
@@ -143,6 +155,8 @@ const AppPalette lightPalette = AppPalette(
   line: Color(0xFFE8E8EC),
   ink: Color(0xFF16161A),
   inkMuted: Color(0xFF62626C),
+  ink2: Color(0xFF3A3A42),
+  faint: Color(0xFFA0A0AA),
   accent: Color(0xFF16161A),
   onAccent: Color(0xFFFFFFFF),
   happy: Color(0xFFB07A00),
@@ -164,6 +178,8 @@ const AppPalette pinkPalette = AppPalette(
   line: Color(0xFFF6D3DF),
   ink: Color(0xFF3A1E2B),
   inkMuted: Color(0xFF80505F),
+  ink2: Color(0xFF5A3445),
+  faint: Color(0xFFB08392),
   accent: Color(0xFFFF6FA3),
   onAccent: Color(0xFF3A1E2B),
   happy: Color(0xFFD9407A),
@@ -187,12 +203,18 @@ abstract final class Space {
   static const double xl = 24;
   static const double xxl = 32;
   static const double xxxl = 48;
+  static const double snug = 10;
+  static const double row = 14;
+  static const double inset = 18;
 }
 
 abstract final class Radii {
   static const double card = 24;
   static const double button = 16;
   static const double pill = 999;
+  static const double panel = 20;
+  static const double field = 14;
+  static const double chip = 10;
 }
 
 abstract final class TypeScale {

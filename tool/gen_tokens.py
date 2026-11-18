@@ -88,14 +88,14 @@ PALETTE_RESERVED = DART_WORDS | OBJECT_MEMBERS | frozenset(
 # Names the app code (lib, test) uses. The app does not compile without them, so refuse before generating.
 # tool/test_gen_tokens.py checks that every reference found in lib is listed here.
 REQUIRED_CORE = {
-    "space": ("xs", "sm", "md", "lg", "xl", "xxl", "xxxl"),
-    "radius": ("card", "button", "pill"),
+    "space": ("xs", "sm", "md", "lg", "xl", "xxl", "xxxl", "snug", "row", "inset"),
+    "radius": ("card", "button", "pill", "panel", "field", "chip"),
     "type": ("display", "title", "body", "label", "count", "wordmark"),
     "motion": ("fillRise", "tap", "page"),
     "font": ("family",),
 }
 REQUIRED_COLORS = (
-    "accent", "error", "fill", "fillEdge", "ground", "happy", "ink", "inkMuted",
+    "accent", "error", "faint", "fill", "fillEdge", "ground", "happy", "ink", "ink2", "inkMuted",
     "line", "mapLine", "onAccent", "onError", "onFill", "sad", "surface",
 )
 

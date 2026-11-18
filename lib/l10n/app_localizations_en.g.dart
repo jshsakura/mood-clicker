@@ -55,6 +55,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tap_todayLabel => 'Taps today';
 
   @override
+  String tap_todayCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Today $count',
+      one: 'Today 1',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get calendar_prevMonth => 'Previous month';
 
   @override
@@ -480,4 +491,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get map_togetherHappy => 'Many people nearby feel good today';
+
+  @override
+  String get moodSelect_title => 'How are you feeling today?';
+
+  @override
+  String get loading_message => 'Loading your records';
 }

@@ -190,6 +190,12 @@ abstract class AppLocalizations {
   /// **'오늘 두드린 수'**
   String get tap_todayLabel;
 
+  /// 두드리기 화면 아래에 오늘 누적 수를 보여 주는 문구입니다. 숫자는 자리표시자 count 로 들어갑니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'{count, plural, other {오늘 {count}}}'**
+  String tap_todayCount(int count);
+
   /// 달력에서 한 달 뒤로 가는 버튼의 숨김 이름(접근성)입니다.
   ///
   /// In ko, this message translates to:
@@ -957,6 +963,18 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'오늘 기분이 좋은 사람이 가까이에 많습니다'**
   String get map_togetherHappy;
+
+  /// 기분 고르기 화면의 큰 제목입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'오늘 기분은'**
+  String get moodSelect_title;
+
+  /// 첫 화면에서 기록을 읽는 동안 로고 아래에 보이는 문구입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'기록을 불러오는 중입니다'**
+  String get loading_message;
 }
 
 class _AppLocalizationsDelegate

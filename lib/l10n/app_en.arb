@@ -15,6 +15,7 @@
   "moodSelect_moodSad": "Sad",
   "moodSelect_moodAnxious": "Anxious",
   "tap_todayLabel": "Taps today",
+  "tap_todayCount": "{count, plural, =1{Today 1} other{Today {count}}}",
   "calendar_prevMonth": "Previous month",
   "calendar_nextMonth": "Next month",
   "dayDetail_happySide": "Happy side",
@@ -142,5 +143,7 @@
   "settings_mapView": "Show map",
   "settings_mapViewDesc": "Shows a map button on the mood screen. Off hides it",
   "map_togetherSad": "You are not the only one feeling low today",
-  "map_togetherHappy": "Many people nearby feel good today"
+  "map_togetherHappy": "Many people nearby feel good today",
+  "moodSelect_title": "How are you feeling today?",
+  "loading_message": "Loading your records"
 }

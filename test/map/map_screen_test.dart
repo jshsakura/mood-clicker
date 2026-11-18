@@ -228,7 +228,7 @@ void main() {
       app.services.mapView.value = true;
       await tester.pump();
       expect(find.bySemanticsLabel(ko.map_openLabel), findsOneWidget);
-      await tester.tap(find.byIcon(Icons.map_outlined));
+      await tester.tap(find.bySemanticsLabel(ko.map_openLabel));
       await tester.pump();
       await tester.pump();
       expect(find.byType(MapScreen), findsOneWidget);
