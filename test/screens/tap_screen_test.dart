@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -45,6 +47,7 @@ int todayCount(TestApp app) =>
 
 void main() {
   edgeAndAccessTests();
+  leavingTests();
   testWidgets('every pointer down counts one tap and feeds back', (
     tester,
   ) async {
@@ -422,4 +425,109 @@ void edgeAndAccessTests() {
     await openTap(tester);
     expect(find.text(ko.tap_hint), findsOneWidget);
   });
+}
+
+/// A home page that pushes the tap screen, so there is something below to lose.
+Future<TestApp> openTapOnHome(WidgetTester tester) async {
+  final app = TestApp();
+  await tester.pumpWidget(
+    app.wrap(
+      Builder(
+        builder: (context) => Scaffold(
+          body: Column(
+            children: [
+              const Text('home'),
+              TextButton(
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => const TapScreen(mood: Mood.happy),
+                  ),
+                ),
+                child: const Text('go'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+  await tester.tap(find.text('go'));
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 1000));
+  return app;
+}
+
+void leavingTests() {
+  testWidgets(
+    'a second way out while the first one waits for the disk pops once',
+    (tester) async {
+      final app = await openTapOnHome(tester);
+      await tapOnce(tester, app, const Offset(200, 500));
+      final gate = Completer<void>();
+      app.repository.saveGate = gate.future;
+      await tester.tap(find.bySemanticsLabel(ko.common_back));
+      await tester.pump();
+      await tester
+          .state<NavigatorState>(find.byType(Navigator).first)
+          .maybePop();
+      await tester.pump(const Duration(milliseconds: 500));
+      gate.complete();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 1000));
+      expect(find.byType(TapScreen), findsNothing);
+      expect(find.text('home'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'when the screen is already gone the late exit pops nothing more',
+    (tester) async {
+      final app = await openTapOnHome(tester);
+      await tapOnce(tester, app, const Offset(200, 500));
+      final gate = Completer<void>();
+      app.repository.saveGate = gate.future;
+      await tester.tap(find.bySemanticsLabel(ko.common_back));
+      await tester.pump();
+      tester.state<NavigatorState>(find.byType(Navigator).first).pop();
+      await tester.pump(const Duration(milliseconds: 500));
+      gate.complete();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 1000));
+      expect(find.text('home'), findsOneWidget);
+    },
+  );
+
+  testWidgets('one finger on each edge counts two taps', (tester) async {
+    final app = await openTap(tester);
+    final left = await tester.startGesture(const Offset(4, 300), pointer: 1);
+    final right = await tester.startGesture(const Offset(386, 300), pointer: 2);
+    await left.up();
+    await right.up();
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(todayCount(app), 2);
+  });
+
+  testWidgets(
+    'a filled gauge without a note still asks when swiping back on iOS',
+    (tester) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      final app = await openTapOnHome(tester);
+      for (var i = 0; i < 60; i++) {
+        await tapOnce(tester, app, const Offset(200, 500), gapMs: 100);
+      }
+      final gesture = await tester.startGesture(const Offset(3, 300));
+      for (var i = 0; i < 12; i++) {
+        await gesture.moveBy(const Offset(60, 0));
+        await tester.pump(const Duration(milliseconds: 16));
+      }
+      await gesture.up();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 1000));
+      final left = find.byType(TapScreen).evaluate().isEmpty;
+      final asked = find.text(ko.note_title).evaluate().length;
+      debugDefaultTargetPlatformOverride = null;
+      expect(left, isTrue);
+      expect(asked, 1);
+    },
+  );
 }

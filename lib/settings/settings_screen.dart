@@ -376,8 +376,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
         cancelLabel: l10n.common_cancel,
       ),
     );
-    if (confirmed ?? false) {
+    if (!(confirmed ?? false)) return;
+    try {
       await widget.records.deleteAll();
+    } on Object {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context).settings_deleteFailed),
+        ),
+      );
     }
   }
 

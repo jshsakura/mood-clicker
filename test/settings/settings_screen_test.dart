@@ -71,8 +71,14 @@ class FakeRecordsPort implements RecordsPort {
     return exportOutcome;
   }
 
+  /// When set, [deleteAll] throws it.
+  Object? deleteError;
+
   @override
-  Future<void> deleteAll() async => deletions += 1;
+  Future<void> deleteAll() async {
+    if (deleteError case final error?) throw error;
+    deletions += 1;
+  }
 }
 
 class Harness {
@@ -353,6 +359,21 @@ void main() {
       },
     );
   }
+
+  testWidgets('a delete that fails says so on the settings screen', (
+    tester,
+  ) async {
+    final harness = Harness();
+    harness.records.deleteError = Exception('read only');
+    await pumpScreen(tester, harness: harness);
+    final l10n = lookupAppLocalizations(const Locale('ko'));
+    await tester.tap(find.text(l10n.settings_deleteAll));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.settings_deleteConfirmAction));
+    await tester.pumpAndSettle();
+    expect(harness.records.deletions, 0);
+    expect(find.text(l10n.settings_deleteFailed), findsOneWidget);
+  });
 
   testWidgets('delete all asks first and only then wipes', (tester) async {
     final harness = Harness();

@@ -8,6 +8,7 @@ import '../../domain/day_key.dart';
 import '../../domain/day_record.dart';
 import '../../domain/tuning.dart';
 import '../../l10n/app_localizations.g.dart';
+import '../../l10n/date_labels.dart';
 
 /// The ready-made sentences. The id is the only part that may ever leave the device.
 const notePresetIds = ['proud', 'calm', 'thanks', 'hard', 'tired', 'rest'];
@@ -41,6 +42,7 @@ Future<void> showNoteSheet(
         day: day,
         afterComplete: afterComplete,
         existing: services.journal.journal.dayOf(day),
+        isToday: day == DayKey.of(services.now()),
       ),
     ),
   );
@@ -51,12 +53,16 @@ class _NoteSheet extends StatefulWidget {
     required this.day,
     required this.afterComplete,
     required this.existing,
+    required this.isToday,
   });
 
   final DayKey day;
 
   /// What the day holds when the sheet opens: the note to edit, if any.
   final DayRecord existing;
+
+  /// Today's sheet is titled "note for today"; another day is titled by its date.
+  final bool isToday;
   final bool afterComplete;
 
   @override
@@ -162,7 +168,18 @@ class _NoteSheetState extends State<_NoteSheet> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      l10n.note_title,
+                      widget.isToday
+                          ? l10n.note_title
+                          : l10n.note_titleOn(
+                              dayTitle(
+                                Localizations.localeOf(context),
+                                DateTime(
+                                  widget.day.year,
+                                  widget.day.month,
+                                  widget.day.day,
+                                ),
+                              ),
+                            ),
                       style: TypeScale.title.copyWith(color: p.ink),
                     ),
                     if (widget.afterComplete) ...[
@@ -177,6 +194,7 @@ class _NoteSheetState extends State<_NoteSheet> {
                       controller: _controller,
                       maxLength: NoteTuning.maxLength,
                       maxLines: 1,
+                      enabled: !_saving,
                       onChanged: _edited,
                       decoration: InputDecoration(hintText: l10n.note_hint),
                     ),
@@ -197,7 +215,7 @@ class _NoteSheetState extends State<_NoteSheet> {
                         for (final id in notePresetIds)
                           PressableSurface(
                             kind: PressableKind.card,
-                            onTap: () => _pick(l10n, id),
+                            onTap: _saving ? null : () => _pick(l10n, id),
                             color: _presetId == id ? p.line : null,
                             child: Padding(
                               padding: const EdgeInsets.symmetric(

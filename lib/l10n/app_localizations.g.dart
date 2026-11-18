@@ -1167,6 +1167,18 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'앱을 열지 못해 번호를 복사해 두었습니다. 전화나 문자 앱에 붙여 넣어 주세요.'**
   String get settings_mindCareCopyFallback;
+
+  /// 오늘이 아닌 날짜의 한마디 시트 제목입니다. date 는 월과 일입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'{date} 한마디'**
+  String note_titleOn(String date);
+
+  /// 모든 기록 지우기가 실패했을 때 설정 화면에 보이는 안내입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'기록을 지우지 못했습니다. 잠시 뒤 다시 시도해 주세요. 기록은 그대로 남아 있습니다.'**
+  String get settings_deleteFailed;
 }
 
 class _AppLocalizationsDelegate

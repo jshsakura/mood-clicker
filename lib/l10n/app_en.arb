@@ -177,5 +177,14 @@
   "settings_mindCareFootnoteJapan": "In immediate danger call 110 or 119. This app is not a medical device and does not replace care from a doctor.",
   "settings_mindCareFootnoteUs": "In immediate danger call 911. This app is not a medical device and does not replace care from a doctor.",
   "settings_mindCareFootnoteOther": "In immediate danger call the emergency number of the country you are in. This app is not a medical device and does not replace care from a doctor.",
-  "settings_mindCareCopyFallback": "The app did not open, so the number is copied. Paste it into your phone or messages app."
+  "settings_mindCareCopyFallback": "The app did not open, so the number is copied. Paste it into your phone or messages app.",
+  "note_titleOn": "Note for {date}",
+  "settings_deleteFailed": "Could not delete the records. Try again in a moment. Your records are unchanged.",
+  "@note_titleOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  }
 }

@@ -159,6 +159,19 @@ void main() {
       );
     });
 
+    test('a joined emoji is one character, as the text field counts it', () {
+      const family = '\u{1F468}\u200D\u{1F469}\u200D\u{1F467}';
+      const flag = '\u{1F1F0}\u{1F1F7}';
+      for (final unit in [family, flag, 'e\u0301']) {
+        expect(DayRecord.empty(day).withNote(note: unit * 40).note, unit * 40);
+        expect(
+          () => DayRecord.empty(day).withNote(note: unit * 41),
+          throwsArgumentError,
+          reason: unit,
+        );
+      }
+    });
+
     test('line breaks and control characters are refused', () {
       for (final bad in ['a\nb', 'a\rb', 'a\tb', 'a\u0000b']) {
         expect(

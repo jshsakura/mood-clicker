@@ -45,6 +45,9 @@ class MemoryRepository implements MoodRepository {
   /// When set, [save] throws it. A test that wants a failing disk sets one.
   Object? saveError;
 
+  /// When set, [clear] throws it. A test that wants a file that cannot be removed sets one.
+  Object? clearError;
+
   /// When given, [save] waits for it before it finishes.
   Future<void>? saveGate;
 
@@ -70,6 +73,7 @@ class MemoryRepository implements MoodRepository {
 
   @override
   Future<void> clear() async {
+    if (clearError case final error?) throw error;
     saved.clear();
   }
 }

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mood_clicker/domain/day_key.dart';
 import 'package:mood_clicker/domain/mood.dart';
+import 'package:mood_clicker/l10n/date_labels.dart';
 import 'package:mood_clicker/screens/tap/note_sheet.dart';
 
 import 'fake_app.dart';
@@ -38,10 +39,12 @@ Future<TestApp> openSheet(
   WidgetTester tester, {
   bool afterComplete = false,
   String? existing,
+  DateTime? on,
 }) async {
   final app = TestApp();
-  app.journal.recordTap(Mood.happy, app.clock);
-  final day = DayKey.of(app.clock);
+  final when = on ?? app.clock;
+  app.journal.recordTap(Mood.happy, when);
+  final day = DayKey.of(when);
   if (existing != null) await app.journal.setNote(day, note: existing);
   await tester.pumpWidget(
     app.wrap(_Detail(day: day, afterComplete: afterComplete)),
@@ -198,5 +201,40 @@ void main() {
     await tester.drag(scroll, const Offset(0, -200));
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('while it saves the field and the sentences are locked', (
+    tester,
+  ) async {
+    final app = await openSheet(tester);
+    final gate = Completer<void>();
+    app.repository.saveGate = gate.future;
+    await tester.enterText(find.byType(TextField), 'slow one');
+    await tester.pump();
+    await tester.tap(find.text(ko.note_save));
+    await tester.pump();
+    expect(tester.widget<TextField>(find.byType(TextField)).enabled, isFalse);
+    await tester.tap(find.text(ko.note_presetProud), warnIfMissed: false);
+    await tester.pump();
+    final field = tester.widget<TextField>(find.byType(TextField));
+    expect(field.controller!.text, 'slow one');
+    gate.complete();
+    await tester.pumpAndSettle();
+    expect(app.journal.journal.dayOf(DayKey.of(app.clock)).note, 'slow one');
+  });
+
+  testWidgets('a day that is not today is named by its date', (tester) async {
+    final past = DateTime(2026, 11, 10, 12);
+    await openSheet(tester, on: past);
+    expect(find.text(ko.note_title), findsNothing);
+    expect(
+      find.text(ko.note_titleOn(dayTitle(const Locale('ko'), past))),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('today keeps the plain title', (tester) async {
+    await openSheet(tester);
+    expect(find.text(ko.note_title), findsOneWidget);
   });
 }

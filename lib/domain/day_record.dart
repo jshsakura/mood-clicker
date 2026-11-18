@@ -1,3 +1,5 @@
+import 'package:characters/characters.dart';
+
 import 'day_key.dart';
 import 'mood.dart';
 import 'tuning.dart';
@@ -54,7 +56,7 @@ class DayRecord {
         'a note is one line of plain text',
       );
     }
-    if (text.runes.length > NoteTuning.maxLength) {
+    if (text.characters.length > NoteTuning.maxLength) {
       throw ArgumentError.value(
         raw,
         'note',
