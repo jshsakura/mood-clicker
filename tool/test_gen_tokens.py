@@ -6,7 +6,8 @@ import unittest
 from pathlib import Path
 
 from gen_tokens import (
-    IDENT, OUT, REQUIRED_COLORS, REQUIRED_CORE, SRC, TokenError, load, parse_json, render, token_sets,
+    IDENT, OUT, REQUIRED_COLORS, REQUIRED_CORE, ROOT, SPLASH_FILES, SRC, TokenError, load, outputs, parse_json,
+    render, splash_outputs, stale, token_sets,
 )
 
 BASE = load()
@@ -660,6 +661,97 @@ class Contrast(unittest.TestCase):
     def test_the_new_colors_are_required(self):
         self.assertIn("onFill", REQUIRED_COLORS)
         self.assertIn("onError", REQUIRED_COLORS)
+
+
+STORYBOARD = (ROOT / SPLASH_FILES["ios_storyboard"]).read_text(encoding="utf-8")
+
+
+def with_ground(light=None, dark=None):
+    def change(t):
+        if light:
+            t["light"]["color"]["ground"]["$value"] = light
+        if dark:
+            t["dark"]["color"]["ground"]["$value"] = dark
+    return edited(change)
+
+
+class Splash(RefusesWith):
+    A_LIGHT, A_DARK, SET, STORY = (SPLASH_FILES[k] for k in ("android_light", "android_dark", "ios_colorset",
+                                                              "ios_storyboard"))
+
+    def test_android_colors_come_from_the_grounds(self):
+        out = splash_outputs(with_ground("#F6F6F8", "#101820"), STORYBOARD)
+        self.assertIn('<color name="splash_background">#F6F6F8</color>', out[self.A_LIGHT])
+        self.assertIn('<color name="splash_background">#101820</color>', out[self.A_DARK])
+
+    def test_ios_color_set_holds_any_and_dark(self):
+        import json
+        out = splash_outputs(with_ground("#F6F6F8", "#101820"), STORYBOARD)
+        colors = json.loads(out[self.SET])["colors"]
+        comps = lambda c: tuple(c["color"]["components"][k] for k in ("red", "green", "blue"))
+        self.assertNotIn("appearances", colors[0])
+        self.assertEqual(comps(colors[0]), ("0xF6", "0xF6", "0xF8"))
+        self.assertEqual(colors[1]["appearances"], [{"appearance": "luminosity", "value": "dark"}])
+        self.assertEqual(comps(colors[1]), ("0x10", "0x18", "0x20"))
+
+    def test_storyboard_fallback_follows_light_ground_and_nothing_else_changes(self):
+        out = splash_outputs(with_ground("#F6F6F8"), STORYBOARD)[self.STORY]
+        self.assertIn('red="0.96470588235294119" green="0.96470588235294119" blue="0.97254901960784312"', out)
+        changed = [(a, b) for a, b in zip(STORYBOARD.splitlines(), out.splitlines()) if a != b]
+        self.assertEqual(len(changed), 1)
+        self.assertEqual(len(STORYBOARD.splitlines()), len(out.splitlines()))
+
+    def test_storyboard_fallback_uses_exact_one_and_zero(self):
+        out = splash_outputs(with_ground("#FF0000"), STORYBOARD)[self.STORY]
+        self.assertIn('red="1" green="0" blue="0" alpha="1"', out)
+
+    def test_the_dark_ground_does_not_touch_the_storyboard(self):
+        self.assertEqual(splash_outputs(with_ground(dark="#101820"), STORYBOARD)[self.STORY],
+                         splash_outputs(BASE, STORYBOARD)[self.STORY])
+
+    def test_color_objects_work_and_alpha_is_refused(self):
+        obj = {"colorSpace": "srgb", "components": [0, 0, 0]}
+        out = splash_outputs(with_ground(dark=obj), STORYBOARD)
+        self.assertIn("#000000", out[self.A_DARK])
+        self.assertRefuses_splash(with_ground(light="#FFFFFF80"), "light")
+        self.assertRefuses_splash(with_ground(dark="#12121680"), "dark")
+
+    def assertRefuses_splash(self, tokens, fragment):
+        with self.assertRaises(TokenError) as cm:
+            splash_outputs(tokens, STORYBOARD)
+        self.assertIn(fragment, str(cm.exception))
+
+    def test_it_needs_a_light_and_a_dark_set(self):
+        for name in ("light", "dark"):
+            with self.subTest(name):
+                self.assertRefuses_splash(edited(lambda t: t.pop(name)), name)
+
+    def test_a_storyboard_without_the_named_color_is_refused(self):
+        with self.assertRaises(TokenError) as cm:
+            splash_outputs(BASE, STORYBOARD.replace("SplashBackground", "Other"))
+        self.assertIn("SplashBackground", str(cm.exception))
+
+    def test_checked_in_platform_files_are_what_the_tokens_produce(self):
+        for rel, text in splash_outputs(BASE, STORYBOARD).items():
+            with self.subTest(rel.name):
+                self.assertEqual((ROOT / rel).read_text(encoding="utf-8"), text)
+
+    def test_stale_lists_every_file_that_differs_and_only_those(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            for rel in SPLASH_FILES.values():
+                (root / rel).parent.mkdir(parents=True, exist_ok=True)
+                (root / rel).write_text((ROOT / rel).read_text(encoding="utf-8"), encoding="utf-8")
+            (root / OUT.relative_to(ROOT)).parent.mkdir(parents=True, exist_ok=True)
+            (root / OUT.relative_to(ROOT)).write_text(OUT.read_text(encoding="utf-8"), encoding="utf-8")
+            self.assertEqual(stale(outputs(BASE, root), root), [])
+            changed = stale(outputs(with_ground(light="#F6F6F8"), root), root)
+            self.assertEqual(
+                sorted(p.name for p in changed),
+                sorted([self.A_LIGHT.name, self.SET.name, self.STORY.name, OUT.name]),
+            )
+            (root / self.A_DARK).unlink()
+            self.assertIn(self.A_DARK, stale(outputs(BASE, root), root))
 
 
 class Output(unittest.TestCase):

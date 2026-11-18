@@ -4,6 +4,9 @@
   python3 tool/gen_tokens.py           만든다
   python3 tool/gen_tokens.py --check   만든 파일이 토큰과 맞는지만 본다 (훅, CI)
 
+만드는 파일: lib/design/tokens.g.dart 와, 네이티브 스플래시 색(안드로이드 colors.xml 둘, iOS 색 자산과
+LaunchScreen.storyboard 의 대체값. light.ground, dark.ground 를 따른다).
+
 토큰은 Tokens Studio 의 단일 파일 형식을 따른다. 최상위 키 core 는 공통 값, 나머지 세트 하나가 테마 하나다.
 $themes, $metadata 처럼 $ 로 시작하는 최상위 키는 건너뛰고, $metadata.tokenSetOrder 가 있으면 그 순서를 따른다.
 디자이너는 이 파일만 고친다. 색을 새로 넣으면 모든 테마에 같은 이름으로 넣어야 한다.
@@ -23,6 +26,14 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "design" / "tokens.json"
 OUT = ROOT / "lib" / "design" / "tokens.g.dart"
+
+# 네이티브 스플래시. 패키지 없이 플랫폼 파일을 직접 만든다. light.ground, dark.ground 를 따른다.
+SPLASH_FILES = {
+    "android_light": Path("android/app/src/main/res/values/colors.xml"),
+    "android_dark": Path("android/app/src/main/res/values-night/colors.xml"),
+    "ios_colorset": Path("ios/Runner/Assets.xcassets/SplashBackground.colorset/Contents.json"),
+    "ios_storyboard": Path("ios/Runner/Base.lproj/LaunchScreen.storyboard"),
+}
 
 HEX = re.compile(r"#([0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})")
 HEX6 = re.compile(r"#[0-9A-Fa-f]{6}")
@@ -496,6 +507,100 @@ def render(tokens):
     return "\n".join(out)
 
 
+def splash_ground(tokens, theme):
+    """스플래시가 쓸 theme.ground 의 RRGGBB. 스플래시는 불투명해야 한다."""
+    sets = token_sets(tokens)
+    doc = sets.get(theme)
+    ground = doc.get("color", {}).get("ground") if isinstance(doc, dict) else None
+    if ground is None:
+        raise TokenError(f"스플래시 색을 정할 {theme}.color.ground 가 없습니다")
+    argb = color_argb(ground, f"{theme}.color.ground")
+    if argb[:2] != "FF":
+        raise TokenError(f"{theme}.color.ground: 스플래시 바탕은 불투명해야 합니다")
+    return argb[2:]
+
+
+def android_colors_xml(theme, rgb):
+    return (
+        '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n'
+        f"    <!-- 생성 파일이다. 손대지 않는다. design/tokens.json 의 {theme}.color.ground 에서 "
+        "tool/gen_tokens.py 가 만든다. -->\n"
+        f'    <color name="splash_background">#{rgb}</color>\n</resources>\n'
+    )
+
+
+def ios_color_set(light_rgb, dark_rgb):
+    def comps(rgb):
+        r, g, b = (f"0x{rgb[i:i + 2]}" for i in (0, 2, 4))
+        return f'{{ "red" : "{r}", "green" : "{g}", "blue" : "{b}", "alpha" : "1.000" }}'
+
+    return f"""{{
+  "colors" : [
+    {{
+      "idiom" : "universal",
+      "color" : {{
+        "color-space" : "srgb",
+        "components" : {comps(light_rgb)}
+      }}
+    }},
+    {{
+      "appearances" : [ {{ "appearance" : "luminosity", "value" : "dark" }} ],
+      "idiom" : "universal",
+      "color" : {{
+        "color-space" : "srgb",
+        "components" : {comps(dark_rgb)}
+      }}
+    }}
+  ],
+  "info" : {{ "version" : 1, "author" : "xcode" }}
+}}
+"""
+
+
+STORYBOARD_COLOR = re.compile(
+    r'(<namedColor name="SplashBackground">\s*<color )red="[^"]*" green="[^"]*" blue="[^"]*"'
+)
+
+
+def ios_storyboard(storyboard, light_rgb):
+    """LaunchScreen.storyboard 의 SplashBackground 대체값만 light.ground 로 바꾼다."""
+    r, g, b = (f"{int(light_rgb[i:i + 2], 16) / 255:.17g}" for i in (0, 2, 4))
+    out, n = STORYBOARD_COLOR.subn(lambda m: f'{m.group(1)}red="{r}" green="{g}" blue="{b}"', storyboard)
+    if n != 1:
+        raise TokenError("LaunchScreen.storyboard 에서 SplashBackground 색을 찾지 못했습니다")
+    return out
+
+
+def splash_outputs(tokens, storyboard):
+    """{저장소 기준 경로: 내용}. 스플래시 색을 light.ground, dark.ground 에서 만든다."""
+    light, dark = splash_ground(tokens, "light"), splash_ground(tokens, "dark")
+    return {
+        SPLASH_FILES["android_light"]: android_colors_xml("light", light),
+        SPLASH_FILES["android_dark"]: android_colors_xml("dark", dark),
+        SPLASH_FILES["ios_colorset"]: ios_color_set(light, dark),
+        SPLASH_FILES["ios_storyboard"]: ios_storyboard(storyboard, light),
+    }
+
+
+def outputs(tokens, root=ROOT):
+    """만들어야 할 모든 파일. {저장소 기준 경로: 내용}."""
+    storyboard_path = root / SPLASH_FILES["ios_storyboard"]
+    if not storyboard_path.is_file():
+        raise TokenError(f"{SPLASH_FILES['ios_storyboard']} 가 없습니다")
+    out = {OUT.relative_to(ROOT): render(tokens)}
+    out.update(splash_outputs(tokens, storyboard_path.read_text(encoding="utf-8")))
+    return out
+
+
+def stale(outs, root=ROOT):
+    """디스크의 내용이 없거나 다른 파일들."""
+    return [
+        rel
+        for rel, text in outs.items()
+        if not (root / rel).is_file() or (root / rel).read_text(encoding="utf-8") != text
+    ]
+
+
 def load(path=SRC):
     if not path.is_file():
         raise TokenError(f"{path.name} 이 없습니다")
@@ -504,20 +609,24 @@ def load(path=SRC):
 
 def main(argv):
     try:
-        text = render(load())
+        outs = outputs(load())
     except (TokenError, KeyError) as e:
         print(f"design/tokens.json 오류: {e}", file=sys.stderr)
         return 1
+    old = stale(outs)
     if argv == ["--check"]:
-        current = OUT.read_text(encoding="utf-8") if OUT.exists() else ""
-        if current != text:
-            print("lib/design/tokens.g.dart 가 design/tokens.json 과 다릅니다. "
-                  "python3 tool/gen_tokens.py 를 돌린 뒤 둘 다 커밋합니다.", file=sys.stderr)
+        if old:
+            print("design/tokens.json 에서 만드는 파일이 맞지 않습니다: "
+                  + ", ".join(str(p) for p in old)
+                  + ". python3 tool/gen_tokens.py 를 돌린 뒤 같이 커밋합니다.", file=sys.stderr)
             return 1
         return 0
-    OUT.parent.mkdir(parents=True, exist_ok=True)
-    OUT.write_text(text, encoding="utf-8")
-    print(f"만들었습니다: {OUT.relative_to(ROOT)}")
+    for rel in old:
+        (ROOT / rel).parent.mkdir(parents=True, exist_ok=True)
+        (ROOT / rel).write_text(outs[rel], encoding="utf-8")
+        print(f"만들었습니다: {rel}")
+    if not old:
+        print("바뀐 파일이 없습니다")
     return 0
 
 
