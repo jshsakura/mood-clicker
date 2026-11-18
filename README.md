@@ -7,6 +7,7 @@
 
 - 계획: [docs/PLAN.md](docs/PLAN.md)
 - 개발 규칙: [AGENTS.md](AGENTS.md)
+- 일하는 방법(여러 에이전트 팀, 훅, 스킬): [docs/HARNESS.md](docs/HARNESS.md) · [English](docs/HARNESS.en.md)
 
 ## 시작
 

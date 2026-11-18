@@ -1,6 +1,6 @@
 # AGENTS.md
 
-코딩 에이전트를 위한 안내다. 사람은 README.md 부터 본다.
+코딩 에이전트를 위한 안내다. 사람은 README.md 부터 본다. 여러 에이전트가 팀으로 일하는 방법은 `docs/HARNESS.md` 에 있다.
 
 기분을 고르고 연타한 횟수로 그날 기분의 크기를 남기는 앱의 파일럿이다. Flutter 하나로 안드로이드,
 아이폰, 맥을 낸다. 계획은 `docs/PLAN.md` 에 있다.
@@ -64,3 +64,14 @@ UI 문구와 문서는 합니다체로 쓴다. 엠대시로 문장을 잇지 않
 - `cheers-write`: 기분별 응원 문구를 쓰거나 고칠 때 (`docs/PRINCIPLES.md`, `docs/EVIDENCE.md`, `tool/cheers_rules.json`, `tool/cheers_check.py`)
 - `principles-check`: 새 기능이나 화면을 여섯 가지 핵심 가치와 안전·민감정보 기준에 대어 볼 때 (`docs/PRINCIPLES.md`, `docs/PRIVACY.md`)
 - `l10n-add`: 화면 문구 키를 추가하고 번역을 맞출 때 (`docs/I18N.md`, `tool/l10n_check.py`)
+
+## 팀으로 일할 때
+
+자세한 것은 `docs/HARNESS.md`. 에이전트 종류와 상관없이 지킨다. Claude 훅이 없는 에이전트도 같은 규칙이다.
+
+- 일을 받으면 자기 git worktree 에서 맡은 범위만 고치고 커밋까지만 한다. push, PR, 합치기는 팀장이 한다.
+- 끝나면 `tool/team/itl send <팀장 팬> '…'` 로 브랜치, 커밋, 세 줄 요약, 명세와 다르게 판단한 점, 실제로 돌린 검사 결과를 보낸다. 실패와 건너뛴 것도 적는다.
+- 오래 걸리는 명령은 백그라운드로 띄우고 끝날 때까지 기다린다. `sleep` 뒤 확인, 출력 파일 반복 확인을 하지 않는다.
+- 파일 조각을 하나씩 들여다보는 호출을 이어 붙이지 않는다. 볼 파일과 범위를 정해 한 번에 뽑는다.
+- `git stash` 는 모든 worktree 가 같이 쓴다. 맨 `git stash`, `git stash pop` 을 쓰지 않는다. 임시 커밋으로 비켜 둔다.
+- 사람이 정할 일은 상수 하나로 감추고 진행한다. 공개, 삭제, 배포처럼 되돌리기 어려운 일은 먼저 묻는다.
