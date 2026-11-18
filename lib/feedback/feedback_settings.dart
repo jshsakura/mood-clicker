@@ -12,8 +12,11 @@ class FeedbackSettings {
     this.hapticsOn = true,
     this.soundOn = true,
     this.soundPack = SoundPack.basic,
+    this.hapticScale = 1,
   });
 
+  /// How strong the haptics are, 1 being the cue as designed.
+  final double hapticScale;
   final bool hapticsOn;
   final bool soundOn;
   final SoundPack soundPack;
@@ -22,11 +25,13 @@ class FeedbackSettings {
     bool? hapticsOn,
     bool? soundOn,
     SoundPack? soundPack,
+    double? hapticScale,
   }) {
     return FeedbackSettings(
       hapticsOn: hapticsOn ?? this.hapticsOn,
       soundOn: soundOn ?? this.soundOn,
       soundPack: soundPack ?? this.soundPack,
+      hapticScale: hapticScale ?? this.hapticScale,
     );
   }
 }

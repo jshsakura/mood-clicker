@@ -9,12 +9,22 @@ import 'package:flutter/foundation.dart';
 
 import '../design/theme_choice.dart';
 import '../domain/feel_settings.dart';
+import '../domain/tuning.dart';
 import '../feedback/feedback_settings.dart';
 import '../l10n/locale_choice.dart';
 import '../reminder/reminder_settings.dart';
 
 /// Vibration strength. Devices without amplitude control ignore it.
-enum HapticStrength { weak, normal, strong }
+enum HapticStrength {
+  weak(FeedbackTuning.hapticWeakScale),
+  normal(1),
+  strong(FeedbackTuning.hapticStrongScale);
+
+  const HapticStrength(this.scale);
+
+  /// The factor on the haptic intensity.
+  final double scale;
+}
 
 /// Cheer phrase text size on the tap screen.
 enum CheerSize { normal, large }
@@ -68,6 +78,14 @@ class Settings {
     cheerPhrases: cheersOn,
     largeText: cheerSize == CheerSize.large,
     tiltSpill: tiltToPour,
+  );
+
+  /// What the feedback controller reads: haptics, sound and their strength.
+  FeedbackSettings get feedbackSettings => FeedbackSettings(
+    hapticsOn: hapticsOn,
+    soundOn: soundOn,
+    soundPack: soundPack,
+    hapticScale: hapticStrength.scale,
   );
 
   Settings fromFeel(FeelSettings feel) {

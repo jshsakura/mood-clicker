@@ -38,6 +38,7 @@ class SettingsScreen extends StatefulWidget {
     required this.records,
     required this.appVersion,
     this.launchPhone = launchPhoneCall,
+    this.onApplied,
   });
 
   final SettingsStore store;
@@ -49,6 +50,9 @@ class SettingsScreen extends StatefulWidget {
   final RecordsPort records;
   final String appVersion;
   final Future<bool> Function(String url) launchPhone;
+
+  /// Called after each save, so consumers that are not notifiers (haptics, sound) follow.
+  final ValueChanged<Settings>? onApplied;
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -80,6 +84,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     widget.theme.value = next.themeChoice;
     widget.language.value = next.language;
     widget.mapView.value = next.mapView;
+    widget.onApplied?.call(next);
   }
 
   void _saveReminderSlice() {

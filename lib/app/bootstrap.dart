@@ -29,6 +29,7 @@ import '../surfaces/home_widget_adapters.dart';
 import '../surfaces/native_surfaces.dart';
 import 'app_services.dart';
 import 'journal_store.dart';
+import 'settings_hub.dart';
 
 /// The tilt of the phone as an angle: 0 upright, positive when the right edge leans down.
 /// The accelerometer reads the direction opposite to gravity, so a right edge that goes down
@@ -56,11 +57,8 @@ Future<AppServices> createServices({WidgetBuilder? settingsBuilder}) async {
   final settingsStore = SharedPreferencesSettingsStore(
     await SharedPreferences.getInstance(),
   );
-  final settings = await settingsStore.read();
-  final feel = ValueNotifier(settings.feelSettings);
-  final theme = ValueNotifier(settings.themeChoice);
-  final language = ValueNotifier(settings.language);
-  final mapView = ValueNotifier(settings.mapView);
+  final feedback = FeedbackController(haptics: SystemHaptics(), sound: sound);
+  final hub = await SettingsHub.open(store: settingsStore, feedback: feedback);
 
   final notifications = FlutterLocalNotificationsPort();
   await notifications.initialize();
@@ -86,10 +84,11 @@ Future<AppServices> createServices({WidgetBuilder? settingsBuilder}) async {
       settingsBuilder ??
       (context) => SettingsScreen(
         store: settingsStore,
-        feel: feel,
-        theme: theme,
-        language: language,
-        mapView: mapView,
+        feel: hub.feel,
+        theme: hub.theme,
+        language: hub.language,
+        mapView: hub.mapView,
+        onApplied: hub.apply,
         reminder: reminder,
         records: records,
         appVersion: info.version,
@@ -97,7 +96,7 @@ Future<AppServices> createServices({WidgetBuilder? settingsBuilder}) async {
 
   return AppServices(
     journal: journal,
-    feedback: FeedbackController(haptics: SystemHaptics(), sound: sound),
+    feedback: feedback,
     loadCheers: (code) => books.putIfAbsent(code, () async {
       final path = cheersAssetPath(code, assets.contains);
       final text = await rootBundle.loadString(path);
@@ -105,11 +104,11 @@ Future<AppServices> createServices({WidgetBuilder? settingsBuilder}) async {
     }),
     cheerPicker: await CheerPicker.open(Random(), deckStore),
     deckStore: deckStore,
-    feel: feel,
+    feel: hub.feel,
     tilt: phoneTilt,
-    theme: theme,
-    language: language,
-    mapView: mapView,
+    theme: hub.theme,
+    language: hub.language,
+    mapView: hub.mapView,
     settingsStore: settingsStore,
     reminder: reminder,
     records: records,
