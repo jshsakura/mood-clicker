@@ -214,6 +214,35 @@ class CheersCheckTest(unittest.TestCase):
                         f"{lang}.{mood} should allow {phrase!r}, got {errs}",
                     )
 
+    def test_unnegated_self_harm_is_rejected_across_all_moods(self) -> None:
+        bad = {
+            "ko": "\ub098\ub97c \ud574\uccd0",
+            "en": "Hurt yourself now",
+            "ja": "\u305f\u3060\u81ea\u5206\u50b7\u3064\u3051",
+        }
+        good = {
+            "ko": "\ub098\ub97c \ud574\uce58\uc9c0 \uc54a\uc544",
+            "en": "Do not hurt yourself",
+            "ja": "\u81ea\u5206\u3092\u50b7\u3064\u3051\u306a\u304f\u3066\u3044\u3044",
+        }
+        for lang in ("ko", "en", "ja"):
+            for mood in MOODS:
+                data = _valid_bundle(lang)
+                data["moods"][mood]["low"][0] = bad[lang]
+                errs = check_bundle(data, lang, self.small_counts)
+                self.assertTrue(
+                    any("self-harm" in e for e in errs),
+                    f"{lang}.{mood} should reject {bad[lang]!r}, got {errs}",
+                )
+                data = _valid_bundle(lang)
+                data["moods"][mood]["low"][0] = good[lang]
+                errs = check_bundle(data, lang, self.small_counts)
+                self.assertEqual(
+                    [],
+                    errs,
+                    f"{lang}.{mood} should allow {good[lang]!r}, got {errs}",
+                )
+
 
 BANNED_KO = "\uc6b0\uc6b8\uc99d"  # a clinical word the rules forbid in cheers
 
