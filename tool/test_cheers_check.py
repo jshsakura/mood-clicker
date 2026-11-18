@@ -7,10 +7,10 @@ from cheers_check import MOODS, TIERS, check_bundle, count_graphemes, load_rules
 
 
 def _valid_bundle(lang: str) -> dict:
-    sample = "\ud1a1!" if lang == "ko" else "Yay!"
     moods = {}
     n = 0
     for mood in MOODS:
+        sample = ("\ud1a1" if lang == "ko" else "Okay ")
         moods[mood] = {}
         for tier, count in (
             ("low", 2),
@@ -84,16 +84,17 @@ class CheersCheckTest(unittest.TestCase):
         self.assertEqual(len(errs_en), 2, errs_en)
 
     def test_detects_forbidden_words_dashes_and_quotes(self) -> None:
+        empty_rules = {"version": 1, "global": {}, "moods": {}}
         en = _valid_bundle("en")
         en["moods"]["sad"]["low"][0] = "Best therapy"
         en["moods"]["angry"]["low"][0] = "Wait\u2014now"
         en["moods"]["happy"]["low"][0] = "\u201cNice\u201d"
-        errs = check_bundle(en, "en", self.small_counts)
+        errs = check_bundle(en, "en", self.small_counts, rules=empty_rules)
         self.assertEqual(len(errs), 3, errs)
 
         ko = _valid_bundle("ko")
         ko["moods"]["sad"]["low"][0] = "\uc6b0\uc6b8\uc99d \uadf9\ubcf5"
-        errs_ko = check_bundle(ko, "ko", self.small_counts)
+        errs_ko = check_bundle(ko, "ko", self.small_counts, rules=empty_rules)
         self.assertTrue(any("forbidden word" in e for e in errs_ko), errs_ko)
 
     def test_per_mood_rules_exclamation_emojis_and_banned_words(self) -> None:
@@ -101,32 +102,50 @@ class CheersCheckTest(unittest.TestCase):
         data["moods"]["sad"] = {
             "low": ["Softly now!", "Warm tea \U0001F389"],
             "high": ["Cheer up now", "Quiet breath"],
-            "full": ["Rest easy"],
-            "complete": ["Dawn is here"],
-            "rare": ["Soft light"],
+            "full": ["Rest easy (つ´∀`)つ"],
+            "complete": ["Dawn is here hehe"],
+            "rare": ["White cloud"],
         }
         data["moods"]["anxious"]["low"][0] = "Breathe \U0001F33F"
+        data["moods"]["happy"]["low"][0] = "Nice!!"
+        data["moods"]["happy"]["low"][1] = "Great!!!"
 
         rules = {
             "version": 1,
+            "global": {"banned_words": {"ko": [], "en": []}},
             "moods": {
+                "happy": {
+                    "max_exclamation": 2,
+                    "allowed_emojis": None,
+                    "allow_kaomoji": True,
+                    "allow_laughter": True,
+                    "banned_words": {"ko": [], "en": []},
+                },
                 "sad": {
-                    "allow_exclamation": False,
+                    "max_exclamation": 0,
                     "allowed_emojis": [],
-                    "banned_words": {"ko": [], "en": ["cheer up"]},
+                    "allow_kaomoji": False,
+                    "allow_laughter": False,
+                    "banned_words": {"ko": [], "en": ["cheer up", "hit"]},
                 },
                 "anxious": {
-                    "allow_exclamation": True,
+                    "max_exclamation": 1,
                     "allowed_emojis": ["\U0001F33F"],
+                    "allow_kaomoji": True,
+                    "allow_laughter": True,
                     "banned_words": {"ko": [], "en": []},
                 },
             },
         }
         errs = check_bundle(data, "en", self.small_counts, rules=rules)
-        self.assertEqual(len(errs), 3, errs)
-        self.assertTrue(any("exclamation mark not allowed" in e for e in errs), errs)
+        self.assertEqual(len(errs), 6, errs)
+        self.assertTrue(any("exclamation count 1 exceeds max 0" in e for e in errs), errs)
+        self.assertTrue(any("exclamation count 3 exceeds max 2" in e for e in errs), errs)
         self.assertTrue(any("disallowed emoji" in e for e in errs), errs)
+        self.assertTrue(any("kaomoji not allowed" in e for e in errs), errs)
+        self.assertTrue(any("laughter not allowed" in e for e in errs), errs)
         self.assertTrue(any("mood-banned word" in e for e in errs), errs)
+        self.assertFalse(any("White cloud" in e for e in errs), errs)
 
     def test_default_rules_file_loads(self) -> None:
         rules = load_rules()
@@ -137,8 +156,8 @@ class CheersCheckTest(unittest.TestCase):
     def test_detects_missing_counts(self) -> None:
         data = _valid_bundle("en")
         errs = check_bundle(data, "en")
-        # 5 moods * 5 tiers + 5 moods missing min bases
-        self.assertEqual(len(errs), len(MOODS) * len(TIERS) + len(MOODS))
+        # 5 moods * 5 tiers + 5 moods missing min bases + 1 total item count
+        self.assertEqual(len(errs), len(MOODS) * len(TIERS) + len(MOODS) + 1)
 
 
 if __name__ == "__main__":

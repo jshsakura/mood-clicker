@@ -1,44 +1,109 @@
 {
   "version": 1,
+  "global": {
+    "banned_words": {
+      "ko": [
+        "치료", "완치", "치유", "우울증 개선", "우울증이 나아", "증상 완화",
+        "처방", "진단", "극단적 선택", "연속 기록", "스트릭", "놓쳤", "끊겼",
+        "잃었", "초기화", "남들은", "남들보다", "다른 사람들은 다", "평균보다",
+        "동네에서 가장"
+      ],
+      "en": [
+        "cure", "treat", "treatment", "therapy", "therapeutic", "heal",
+        "diagnose", "diagnosis", "clinically proven", "prescription",
+        "symptom relief", "committed suicide", "streak", "you missed",
+        "you lost", "reset", "everyone else", "happier than"
+      ]
+    }
+  },
   "moods": {
     "happy": {
-      "allow_exclamation": true,
+      "max_exclamation": 2,
       "allowed_emojis": null,
+      "allow_kaomoji": true,
+      "allow_laughter": true,
       "banned_words": {
-        "ko": [],
-        "en": []
+        "ko": [
+          "행복해야", "항상 행복", "영원히", "절대 잃지", "놓치지 마",
+          "드디어 정상", "우울에서 벗어"
+        ],
+        "en": [
+          "always be happy", "forever", "never lose", "don't lose this",
+          "finally normal", "you should be happy"
+        ]
       }
     },
     "excited": {
-      "allow_exclamation": true,
+      "max_exclamation": 2,
       "allowed_emojis": null,
+      "allow_kaomoji": true,
+      "allow_laughter": true,
       "banned_words": {
-        "ko": [],
-        "en": []
+        "ko": [
+          "폭발", "미쳤", "끝까지 달려", "멈추지 마", "더 더",
+          "뭐든 다 할 수", "행복해야"
+        ],
+        "en": [
+          "explode", "go crazy", "don't stop", "push harder",
+          "unstoppable", "anything is possible"
+        ]
       }
     },
     "angry": {
-      "allow_exclamation": true,
-      "allowed_emojis": null,
+      "max_exclamation": 0,
+      "allowed_emojis": [],
+      "allow_kaomoji": false,
+      "allow_laughter": false,
       "banned_words": {
-        "ko": [],
-        "en": []
+        "ko": [
+          "쏟아내", "털어내", "털어 내", "풀어버려", "풀어 버려", "터뜨려",
+          "분출", "부숴", "박살", "때려", "날려버려", "날려 버려", "응징",
+          "복수", "누구 때문", "누가 잘못", "진정해", "진정하세요", "참아",
+          "그만 화내", "별일 아니", "화내면 안", "예민", "더 세게", "더 빨리"
+        ],
+        "en": [
+          "let it out", "vent", "smash", "destroy", "crush", "punch", "hit",
+          "revenge", "get even", "whose fault", "calm down", "relax", "chill",
+          "not a big deal", "overreacting", "too sensitive", "harder", "faster"
+        ]
       }
     },
     "sad": {
-      "allow_exclamation": true,
-      "allowed_emojis": null,
+      "max_exclamation": 0,
+      "allowed_emojis": [],
+      "allow_kaomoji": false,
+      "allow_laughter": false,
       "banned_words": {
-        "ko": [],
-        "en": []
+        "ko": [
+          "힘내", "기운 내", "웃어", "웃으면", "긍정적으로", "좋게 생각",
+          "밝은 면", "그래도", "적어도", "그나마", "더 힘든 사람", "별거 아니",
+          "별일 아니", "울지 마", "슬퍼하지 마", "다 잘될", "극복", "이겨내",
+          "완벽해", "사랑받아 마땅"
+        ],
+        "en": [
+          "cheer up", "smile", "stay positive", "be happy", "bright side",
+          "at least", "could be worse", "don't be sad", "get over it",
+          "happens for a reason", "you're amazing", "you're perfect",
+          "i am lovable", "good vibes"
+        ]
       }
     },
     "anxious": {
-      "allow_exclamation": true,
-      "allowed_emojis": null,
+      "max_exclamation": 0,
+      "allowed_emojis": [],
+      "allow_kaomoji": false,
+      "allow_laughter": false,
       "banned_words": {
-        "ko": [],
-        "en": []
+        "ko": [
+          "걱정 마", "걱정하지 마", "불안해하지 마", "아무 일 없을",
+          "아무 일도 없을", "다 잘될", "괜히", "별거 아니", "머릿속",
+          "기분 탓", "생각하지 마", "진정해", "긴장 풀어", "힘내"
+        ],
+        "en": [
+          "don't worry", "no need to worry", "nothing bad will happen",
+          "all in your head", "just relax", "calm down", "stop thinking",
+          "overthinking"
+        ]
       }
     }
   }
