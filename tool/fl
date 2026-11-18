@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Run Flutter. The flutter on PATH is used when it is the pinned version (see tool/flutter_env.sh);
 # otherwise it runs in a docker image, so nothing has to be installed on the host.
-# FL_DOCKER=1 forces docker.
+# FL_DOCKER=1 forces docker. Each working tree uses its own Gradle volume so parallel builds do not
+# wait on one lock; FL_GRADLE_VOLUME=<name> picks the volume by hand.
 # Examples: tool/fl test, tool/fl analyze, tool/fl build apk --debug
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -18,7 +19,7 @@ TTY=()
 exec docker run --rm ${TTY[@]+"${TTY[@]}"} \
   -v "$ROOT":/app \
   -v mood-clicker-pub-cache:/root/.pub-cache \
-  -v mood-clicker-gradle:/root/.gradle \
+  -v "$(gradle_volume "$ROOT")":/root/.gradle \
   -w /app \
   -e OWNER="$(id -u):$(id -g)" \
   "$FLUTTER_IMAGE" \

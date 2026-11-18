@@ -30,3 +30,17 @@ use_local_flutter() {
   fi
   return 0
 }
+
+# The docker volume for Gradle's cache. Each working tree gets its own, named from a checksum of its
+# path, because Gradle locks its cache and two builds in one volume wait on each other until one times
+# out. The pub cache stays shared (it has no such lock). FL_GRADLE_VOLUME overrides the name.
+# cksum is POSIX, so this works on macOS and Linux alike.
+gradle_volume() {
+  if [ -n "${FL_GRADLE_VOLUME:-}" ]; then
+    printf '%s\n' "$FL_GRADLE_VOLUME"
+    return 0
+  fi
+  local sum
+  sum="$(printf '%s' "$1" | cksum | cut -d ' ' -f 1)"
+  printf 'mood-clicker-gradle-%08x\n' "$sum"
+}
