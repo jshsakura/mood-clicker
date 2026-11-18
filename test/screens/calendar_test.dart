@@ -7,6 +7,7 @@ import 'package:mood_clicker/design/parts/mood_face.dart';
 import 'package:mood_clicker/design/parts/month_flow_bars.dart';
 import 'package:mood_clicker/design/parts/pressable_surface.dart';
 import 'package:mood_clicker/design/tokens.g.dart';
+import 'package:mood_clicker/domain/day_key.dart';
 import 'package:mood_clicker/domain/mood.dart';
 import 'package:mood_clicker/domain/mood_journal.dart';
 import 'package:mood_clicker/screens/calendar_screen.dart';
@@ -271,6 +272,57 @@ void main() {
     await tester.tap(find.text('18'));
     await tester.pumpAndSettle();
     expect(find.text(ko.dayDetail_editNote), findsOneWidget);
+  });
+
+  group('the note on the card', () {
+    MoodJournal withNote({String? presetId, required String note}) =>
+        MoodJournal.empty()
+            .withTap(Mood.happy, DateTime(2026, 11, 18, 9))
+            .withNote(
+              DayKey.of(DateTime(2026, 11, 18)),
+              note: note,
+              presetId: presetId,
+            );
+
+    testWidgets('a ready-made sentence shows in the language of the app', (
+      tester,
+    ) async {
+      final app = TestApp();
+      app.journal.load(
+        withNote(presetId: 'thanks', note: 'Something to be thankful for'),
+      );
+      await tester.pumpWidget(app.wrap(const CalendarScreen()));
+      expect(find.text(ko.calendar_noteQuote(ko.note_presetThanks)), findsOne);
+      expect(find.textContaining('thankful'), findsNothing);
+    });
+
+    testWidgets('words the user wrote are shown as they are', (tester) async {
+      final app = TestApp();
+      app.journal.load(withNote(note: 'my own words'));
+      await tester.pumpWidget(app.wrap(const CalendarScreen()));
+      expect(find.text(ko.calendar_noteQuote('my own words')), findsOne);
+    });
+
+    testWidgets('a long note shows two lines and then an ellipsis', (
+      tester,
+    ) async {
+      final app = TestApp();
+      app.journal.load(withNote(note: List.filled(8, 'word').join(' ')));
+      await tester.pumpWidget(app.wrap(const CalendarScreen()));
+      final text = tester.widget<Text>(find.textContaining('word word'));
+      expect(text.maxLines, 2);
+      expect(text.overflow, TextOverflow.ellipsis);
+    });
+
+    testWidgets('the day detail follows the language too', (tester) async {
+      final app = TestApp();
+      app.journal.load(withNote(presetId: 'calm', note: 'Felt calm'));
+      await tester.pumpWidget(app.wrap(const CalendarScreen()));
+      await tester.tap(find.text('18'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining(ko.note_presetCalm), findsOneWidget);
+      expect(find.textContaining('Felt calm'), findsNothing);
+    });
   });
 
   group('month arrows', () {
