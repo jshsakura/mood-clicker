@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>내 주변 지도</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:Pretendard;src:url(/_blob/eac3a98fdd643af8c80b7f3daead90fa);font-weight:400}
+@font-face{font-family:Pretendard;src:url(/_blob/6dd9f1d0495ff325d173b1d71cb974c9);font-weight:700}
+body{margin:0}
+a,button{-webkit-tap-highlight-color:transparent;outline:none}
+a:focus-visible,button:focus-visible{outline:2px solid #16161A;outline-offset:2px}
+.press{transition:transform 90ms ease-out,filter 90ms ease-out}.press:active{transform:scale(0.98);filter:brightness(0.94)}.tap{transition:transform 90ms ease-out,filter 90ms ease-out}.tap:active{transform:scale(0.92);filter:brightness(0.9)}
+
+a{color:inherit;text-decoration:none}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; background: {{p.ground}}; color: {{p.ink}}; font-family: Pretendard, system-ui, sans-serif">
+<svg width="390" height="844" viewBox="0 0 390 844" fill="none" aria-hidden="true" style="position: absolute; inset: 0">
+<defs><pattern id="dots" width="22" height="22" patternUnits="userSpaceOnUse"><circle cx="11" cy="11" r="1" fill="{{p.line}}"></circle></pattern></defs>
+<rect width="390" height="844" fill="url(#dots)"></rect>
+<circle cx="172" cy="300" r="120" stroke="{{p.line}}" stroke-width="1"></circle>
+<circle cx="172" cy="300" r="260" stroke="{{p.line}}" stroke-width="1" stroke-dasharray="2 6"></circle>
+<text x="172" y="174" text-anchor="middle" font-family="Pretendard, sans-serif" font-size="11" fill="{{p.faint}}">1km</text>
+<text x="172" y="34" text-anchor="middle" font-family="Pretendard, sans-serif" font-size="11" fill="{{p.faint}}">3km</text>
+</svg>
+<sc-for list="{{spots}}" as="s" hint-placeholder-count="6">
+<button class="press" type="button" onClick="{{s.pick}}" aria-label="{{s.aria}}" style="position: absolute; left: {{s.x}}; top: {{s.y}}; transform: translate(-50%, -50%) rotate({{s.rot}}); border: 0; padding: 3px 8px; border-radius: 999px; background: {{s.bg}}; color: {{p.ink}}; opacity: {{s.op}}; font-family: inherit; font-size: {{s.size}}; font-weight: 700; letter-spacing: -0.5px; white-space: nowrap; cursor: pointer">{{s.word}}</button>
+</sc-for>
+<div aria-label="내 위치" style="position: absolute; left: 172px; top: 300px; width: 14px; height: 14px; transform: translate(-50%, -50%); border-radius: 999px; background: {{p.ink}}; box-shadow: 0 0 0 4px {{p.ground}}, 0 0 0 10px rgba(22,22,26,0.08)"></div>
+<div style="position: absolute; left: 0; right: 0; top: 0; padding: 56px 16px 0; display: flex; align-items: center; gap: 8px">
+<a class="tap" href="MoodPicker.dc.html" aria-label="뒤로" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: {{p.ground}}; box-shadow: inset 0 0 0 1px {{p.line}}">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="{{p.ink}}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg>
+</a>
+<div style="flex-grow: 1"></div>
+<div style="display: flex; padding: 3px; border-radius: 999px; background: {{p.ground}}; box-shadow: inset 0 0 0 1px {{p.line}}">
+<sc-for list="{{ranges}}" as="r" hint-placeholder-count="2">
+<button class="press" type="button" onClick="{{r.pick}}" aria-pressed="{{r.pressed}}" style="height: 38px; padding: 0 16px; border: 0; border-radius: 999px; background: {{r.bg}}; color: {{r.fg}}; font-size: 14px; font-weight: 700; cursor: pointer">{{r.label}}</button>
+</sc-for>
+</div>
+</div>
+<div style="position: absolute; left: 0; right: 0; bottom: 0; padding: 12px 24px 40px; border-radius: 24px 24px 0 0; background: {{p.ground}}; box-shadow: 0 -1px 0 {{p.line}}; display: flex; flex-direction: column; gap: 16px">
+<div style="align-self: center; width: 36px; height: 4px; border-radius: 999px; background: {{p.line}}"></div>
+<div style="display: flex; align-items: flex-end; justify-content: space-between">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<div style="font-size: 13px; color: {{p.inkMuted}}">{{where}}</div>
+<div style="font-size: 22px; font-weight: 700; letter-spacing: -0.3px">{{headline}}</div>
+</div>
+<div style="font-size: 13px; color: {{p.inkMuted}}">{{people}}</div>
+</div>
+<div style="display: flex; height: 6px; border-radius: 999px; overflow: hidden; background: {{p.surface}}; gap: 2px">
+<div style="width: {{happyPct}}; background: {{p.ink}}"></div>
+<div style="width: {{sadPct}}; background: {{p.mapLine}}"></div>
+</div>
+<div style="font-size: 13px; color: {{p.inkMuted}}; line-height: 1.5">글씨는 사람들이 고른 한마디이고, 크기는 그 동네에서 두드린 수입니다. 약 1km 단위로 묶고, 5명이 안 되는 곳은 보이지 않습니다.</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+// 테마 색. design/tokens.json 의 값과 같다. 설정에서 고른 테마는 이 브라우저에 기억되고 모든 화면이 같이 바뀐다
+const PALETTES = {
+  light: { id: 'light', ground: '#FFFFFF', surface: '#F5F5F7', line: '#E8E8EC', ink: '#16161A', ink2: '#3A3A42', inkMuted: '#62626C', muted: '#62626C', faint: '#A0A0AA', fill: '#EDEDF0', fillEdge: '#C8C8D0', mapLine: '#D4D4DC', happy: '#B07A00', sad: '#4C6FE0', error: '#C93A2F', inkRgb: '22,22,26' },
+  dark: { id: 'dark', ground: '#121216', surface: '#222228', line: '#383840', ink: '#ECECF0', ink2: '#C8C8D0', inkMuted: '#A0A0AA', muted: '#A0A0AA', faint: '#6E6E78', fill: '#2A2A30', fillEdge: '#4A4A52', mapLine: '#383840', happy: '#FFC23D', sad: '#7A9CFF', error: '#F0685C', inkRgb: '236,236,240' },
+  pink: { id: 'pink', ground: '#FFF1F5', surface: '#FFFFFF', line: '#F6D3DF', ink: '#3A1E2B', ink2: '#5A3445', inkMuted: '#80505F', muted: '#80505F', faint: '#B08392', fill: '#FF8FB8', fillEdge: '#FF5C9A', mapLine: '#F2C2D3', happy: '#D9407A', sad: '#7B68E8', error: '#C93A2F', inkRgb: '58,30,43' }
+};
+function themeChoice() {
+  try { return localStorage.getItem('mc-theme') || 'light'; } catch (e) { return 'light'; }
+}
+function themePalette(forced) {
+  let id = forced || themeChoice();
+  if (id === 'system') id = typeof matchMedia !== 'undefined' && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  return PALETTES[id] || PALETTES.light;
+}
+function appSettings() {
+  try { return JSON.parse(localStorage.getItem('mc-settings') || '{}'); } catch (e) { return {}; }
+}
+let P = themePalette();
+
+class Component extends DCLogic {
+constructor(props) {
+super(props);
+this.state = { picked: null, range: 'today' };
+}
+renderVals() {
+    P = themePalette(this.props && this.props.theme);
+    return Object.assign({ p: P }, this.renderVals0());
+  }
+  renderVals0() {
+const week = this.state.range === 'week';
+// 동네마다 사람들이 고른 한마디와 그 동네의 오늘 두드린 수. 두드린 수가 많을수록 글씨가 크다
+const raw = [
+{ id: 'a', x: 110, y: 200, h: 72, n: 23, taps: 3100, word: '오늘은 웃었다' }, { id: 'b', x: 262, y: 236, h: 38, n: 9, taps: 640, word: '조금 쉬고 싶다' },
+{ id: 'c', x: 172, y: 330, h: 80, n: 31, taps: 5200, word: '맛있는 걸 먹었다' }, { id: 'd', x: 290, y: 392, h: 30, n: 12, taps: 980, word: '생각보다 괜찮았다' },
+{ id: 'e', x: 84, y: 436, h: 58, n: 7, taps: 410, word: '내일도 이렇게' }, { id: 'f', x: 200, y: 540, h: 66, n: 18, taps: 2300, word: '고마운 사람이 있었다' },
+{ id: 'g', x: 300, y: 150, h: 55, n: 6, taps: 260, word: '오늘은 웃었다' }, { id: 'h', x: 92, y: 300, h: 44, n: 8, taps: 720, word: '조금 쉬고 싶다' }
+];
+const most = Math.max(...raw.map((r) => r.taps));
+const spots = raw.map((s) => {
+const taps = week ? s.taps * 4 : s.taps;
+const ratio = Math.sqrt(s.taps / most);
+const on = this.state.picked === s.id;
+return {
+x: s.x + 'px', y: s.y + 'px', word: s.word,
+size: Math.round(11 + ratio * 9) + 'px',
+op: (0.35 + ratio * 0.65).toFixed(2),
+rot: (((s.x * 7 + s.y) % 7) - 3) + 'deg',
+bg: on ? P.surface : 'transparent',
+aria: s.word + ', ' + taps + '번 두드림',
+pick: () => this.setState({ picked: s.id })
+};
+});
+const picked = raw.find((s) => s.id === this.state.picked);
+const h = picked ? picked.h : 58;
+const n = picked ? picked.n : raw.reduce((a, s) => a + s.n, 0);
+const ranges = [['today', '오늘'], ['week', '이번 주']].map(([id, label]) => ({
+label,
+pressed: this.state.range === id ? 'true' : 'false',
+bg: this.state.range === id ? P.ink : 'transparent',
+fg: this.state.range === id ? P.ground : P.inkMuted,
+pick: () => this.setState({ range: id })
+}));
+return {
+spots, ranges,
+where: picked ? '고른 동네' : '내 주변 3km',
+headline: picked ? '“' + picked.word + '”' : (h >= 50 ? '행복한 쪽이 ' + h : '슬픈 쪽이 ' + (100 - h)) + '%',
+people: picked ? (week ? picked.taps * 4 : picked.taps).toLocaleString() + '번 두드렸습니다' : (week ? n * 4 : n) + '명이 남겼습니다',
+happyPct: h + '%',
+sadPct: (100 - h) + '%'
+};
+}
+}
+</script>
+</body>
+</html>
