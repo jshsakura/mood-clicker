@@ -42,6 +42,8 @@ tool/fl build apk --debug
 코드, 테스트, 픽스처, 주석, 문서, 커밋 메시지, PR 본문 어디에도 넣지 않는다.
 `tool/privacy_scan.py` 가 커밋, 커밋 메시지, push, PR 에서 막는다.
 
+코드와 주석은 영어로만 쓴다. 한글은 문서(.md), 번역(lib/l10n/*.arb), 토큰 데이터(design/tokens.json)에만 둔다. 화면 문구는 코드에 적지 않고 ARB 키로 쓴다. `tool/slop_scan.py` 가 새로 추가한 코드 줄의 한글을 막는다. 예전 코드의 한글은 한 번에 영어로 옮길 예정이다.
+
 `tool/slop_scan.py` 는 같은 자리에서 AI 티를 막는다. 엠대시와 엔대시, 둥근 따옴표, 정해 둔 AI 말투, 제목과 목록의 꾸밈 이모지, `lib/` 의 `print`·`debugPrint`·`as dynamic` 이다. 기계로 못 가리는 것(수동태, 군더더기, 과한 방어 코드)은 리뷰 때 pstack 의 `unslop`(글), `deslop`(코드) 스킬로 본다. 정말 필요한 줄에만 `slop-ok` 를 적는다.
 
 - 실제 IP, 호스트명, 도메인, 이메일, 사람 이름, 운영 경로, 홈 경로, 키, 토큰.

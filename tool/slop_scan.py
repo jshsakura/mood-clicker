@@ -34,6 +34,9 @@ EMOJI = "\U0001F300-\U0001FAFF☀-➿⭐⬆↔-⇿"
 DECORATED = re.compile(rf"^\s*(#{{1,6}}|[-*+]|\d+\.)\s+[{EMOJI}]")
 DEBUG_PRINT = re.compile(r"(?<![\w.])(print|debugPrint)\s*\(")
 DYNAMIC_CAST = re.compile(r"\bas\s+dynamic\b")
+# Code and comments are English only. Korean belongs in docs (.md), translations (.arb) and token data (.json).
+HANGUL = re.compile(r"[\u1100-\u11ff\u3130-\u318f\uac00-\ud7a3]")
+CODE_KINDS = ("dart", "dart-test", "code")
 
 
 def findings_in_line(line, kind):
@@ -49,6 +52,8 @@ def findings_in_line(line, kind):
         out.append("AI 말투")
     if kind in ("md", "msg") and DECORATED.search(line):
         out.append("꾸밈 이모지")
+    if kind in CODE_KINDS and HANGUL.search(line):
+        out.append("한글 코드")
     if kind == "dart":
         if DEBUG_PRINT.search(line):
             out.append("디버그 출력")
@@ -62,6 +67,8 @@ def kind_of(path):
         return "dart" if path.startswith("lib/") else "dart-test"
     if path.endswith((".md", ".txt")):
         return "md"
+    if path.endswith(".json"):
+        return "data"
     return "code"
 
 
@@ -85,7 +92,7 @@ def report(hits):
         print(f"  {h}", file=sys.stderr)
     print(
         "대시는 마침표나 연결어미로, 둥근 따옴표는 곧은 따옴표로, 꾸밈 이모지는 빼고, "
-        "디버그 출력은 지웁니다. 정말 필요한 줄이면 그 줄에 slop-ok 를 적습니다.",
+        "디버그 출력은 지우고, 코드와 주석은 영어로 씁니다. 정말 필요한 줄이면 그 줄에 slop-ok 를 적습니다.",
         file=sys.stderr,
     )
     return 1

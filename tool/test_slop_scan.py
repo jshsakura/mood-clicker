@@ -35,6 +35,23 @@ class FindsSlop(unittest.TestCase):
         self.assertEqual(["docs/A.md:5 대시"], scan_diff(diff))
 
 
+class KeepsCodeEnglish(unittest.TestCase):
+    KO = "\uc548\ub155"  # two Hangul syllables
+
+    def test_flags_hangul_in_code_and_comments(self):
+        self.assertIn("한글 코드", findings_in_line(f"// {self.KO}", "dart"))
+        self.assertIn("한글 코드", findings_in_line(f"label = '{self.KO}'", "dart-test"))
+        self.assertIn("한글 코드", findings_in_line(f"# {self.KO}", "code"))
+
+    def test_allows_hangul_in_docs_and_token_data(self):
+        self.assertEqual([], findings_in_line(f"{self.KO} \ud569\ub2c8\ub2e4.", "md"))
+        self.assertEqual([], findings_in_line(f'"$description": "{self.KO}"', "data"))
+
+    def test_json_files_are_data(self):
+        diff = f"+++ b/design/tokens.json\n@@ -0,0 +1 @@\n+\"{self.KO}\"\n"
+        self.assertEqual([], scan_diff(diff))
+
+
 class AllowsNormalText(unittest.TestCase):
     def test_allows_plain_korean_and_hyphens(self):
         self.assertEqual([], findings_in_line("실행 중인 작업을 끝내고 셸을 새로 엽니다. well-known", "md"))
