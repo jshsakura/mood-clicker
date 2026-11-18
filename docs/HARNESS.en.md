@@ -135,6 +135,7 @@ stale in one of them.
 | `AGENTS.md` | Shared agent rules. `CLAUDE.md` imports it |
 | `docs/HARNESS.md` | How we work (this document in Korean) |
 | `docs/TEAM.md` | Task board: roles, queue, open items |
+| `docs/prompts/` | The real briefs and reports, verbatim, by role (Korean) |
 | `docs/DEV-ENV.md` | Dev environment, Docker, cache volumes |
 | `docs/PRINCIPLES.md`, `docs/EVIDENCE.md` | Core values and their evidence |
 | `docs/SPEC.md`, `docs/DESIGN.md`, `docs/I18N.md`, `docs/PRIVACY.md` | Spec, design, localization, privacy |

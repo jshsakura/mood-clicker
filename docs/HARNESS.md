@@ -131,6 +131,7 @@ tool/team/start.sh         # 팀장 1, 작업자 N 팬을 띄웁니다. 사용�
 | `AGENTS.md` | 에이전트 공통 규칙. `CLAUDE.md` 는 이것을 불러옵니다 |
 | `docs/HARNESS.md` | 이 문서. 일하는 방법 |
 | `docs/TEAM.md` | 작업판. 역할, 작업 큐, 남은 일 |
+| `docs/prompts/` | 실제로 오간 지시와 보고, 역할별 원문 기록 |
 | `docs/DEV-ENV.md` | 개발 환경 설치와 도커, 캐시 볼륨 |
 | `docs/PRINCIPLES.md`, `docs/EVIDENCE.md` | 핵심 가치와 그 근거 |
 | `docs/SPEC.md`, `docs/DESIGN.md`, `docs/I18N.md`, `docs/PRIVACY.md` | 명세, 디자인, 다국어, 개인정보 |
