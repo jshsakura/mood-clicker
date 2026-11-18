@@ -1,21 +1,24 @@
 #!/usr/bin/env python3
-"""design/tokens.json 에서 lib/design/tokens.g.dart 를 만든다.
+"""Generate lib/design/tokens.g.dart from design/tokens.json.
 
-  python3 tool/gen_tokens.py           만든다
-  python3 tool/gen_tokens.py --check   만든 파일이 토큰과 맞는지만 본다 (훅, CI)
+  python3 tool/gen_tokens.py           generate the files
+  python3 tool/gen_tokens.py --check   only verify that the files match the tokens (hook, CI)
 
-만드는 파일: lib/design/tokens.g.dart 와, 네이티브 스플래시 색(안드로이드 colors.xml 둘, iOS 색 자산과
-LaunchScreen.storyboard 의 대체값. light.ground, dark.ground 를 따른다).
+Generated files: lib/design/tokens.g.dart and the native splash colors (two Android colors.xml
+files, the iOS color set, and the fallback color in LaunchScreen.storyboard). The splash colors
+follow light.ground and dark.ground.
 
-토큰은 Tokens Studio 의 단일 파일 형식을 따른다. 최상위 키 core 는 공통 값, 나머지 세트 하나가 테마 하나다.
-$themes, $metadata 처럼 $ 로 시작하는 최상위 키는 건너뛰고, $metadata.tokenSetOrder 가 있으면 그 순서를 따른다.
-디자이너는 이 파일만 고친다. 색을 새로 넣으면 모든 테마에 같은 이름으로 넣어야 한다.
+The tokens use the Tokens Studio single-file format. The top-level key core holds the shared values
+and every other set is one theme. Top-level keys that start with $ ($themes, $metadata) are
+skipped, and $metadata.tokenSetOrder sets the order of the sets when it is present.
+Designers edit only this file. A new color must be added to every theme under the same name.
 
-받는 값 형식 (W3C DTCG 2025.10):
-  색     "#RRGGBB", "#RRGGBBAA", {colorSpace: "srgb", components: [r, g, b], alpha?, hex?}
-  크기   "16px", 16, {value, unit: "px"}
-  시간   "120ms", {value, unit: "ms" 또는 "s"}  (결과가 0 이상의 정수 ms 여야 한다)
-묶음마다 $type 이 정해져 있고(TYPE_OF) 적혀 있는데 다르면 거절한다. $type 을 생략하면 묶음 자리를 따른다.
+Accepted value forms (W3C DTCG 2025.10):
+  color  "#RRGGBB", "#RRGGBBAA", {colorSpace: "srgb", components: [r, g, b], alpha?, hex?}
+  size   "16px", 16, {value, unit: "px"}
+  time   "120ms", {value, unit: "ms" or "s"}  (must come out as a whole number of ms, 0 or more)
+Each group has a fixed $type (TYPE_OF). An explicit $type that differs is refused. A missing $type
+follows the group's slot.
 """
 import json
 import math
@@ -27,7 +30,7 @@ ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "design" / "tokens.json"
 OUT = ROOT / "lib" / "design" / "tokens.g.dart"
 
-# 네이티브 스플래시. 패키지 없이 플랫폼 파일을 직접 만든다. light.ground, dark.ground 를 따른다.
+# Native splash. The platform files are written directly, without a package. They follow light.ground and dark.ground.
 SPLASH_FILES = {
     "android_light": Path("android/app/src/main/res/values/colors.xml"),
     "android_dark": Path("android/app/src/main/res/values-night/colors.xml"),
@@ -45,7 +48,7 @@ SIGNED_SIZE = re.compile(r"(-?\d+(?:\.\d+)?)(?:px)?", re.ASCII)
 PERCENT = re.compile(r"(\d+(?:\.\d+)?)%", re.ASCII)
 WEIGHTS = {100, 200, 300, 400, 500, 600, 700, 800, 900}
 
-# 묶음마다 기대하는 $type. $type 이 적혀 있는데 다르면 거절한다.
+# The $type each group expects. An explicit $type that differs is refused.
 TYPE_OF = {
     "color": "color",
     "space": "dimension",
@@ -55,20 +58,20 @@ TYPE_OF = {
     "font": "fontFamily",
 }
 
-# 다트 언어의 예약어. 식별자로 쓸 수 없다.
+# Reserved words of the Dart language. They cannot be identifiers.
 DART_WORDS = frozenset(
     """assert break case catch class const continue default do else enum extends false final
     finally for if in is new null rethrow return super switch this throw true try var void while
     with""".split()
 )
 
-# 클래스의 static 멤버가 Object 의 인스턴스 멤버와 이름이 같으면 다트가 거절한다.
+# Dart rejects a static member that has the same name as an instance member of Object.
 OBJECT_MEMBERS = frozenset({"hashCode", "toString", "runtimeType", "noSuchMethod"})
 
-# 간격, 둥글기, 움직임, 글자 이름은 static 멤버라 이 둘만 피하면 된다.
+# Space, radius, motion and type names are static members, so only these two sets matter for them.
 STATIC_RESERVED = DART_WORDS | OBJECT_MEMBERS
 
-# 색 이름은 AppPalette 의 필드이자 copyWith, lerp 의 매개변수라 더 많은 이름과 겹친다.
+# Color names are fields of AppPalette and parameters of copyWith and lerp, so more names collide.
 PALETTE_RESERVED = DART_WORDS | OBJECT_MEMBERS | frozenset(
     """abstract as covariant deferred dynamic export extension external factory function get hide
     implements import interface late library mixin on operator part required set show static
@@ -76,8 +79,8 @@ PALETTE_RESERVED = DART_WORDS | OBJECT_MEMBERS | frozenset(
     name brightness type other t copyWith lerp debugFillProperties toDiagnosticsNode""".split()
 )
 
-# 앱 코드(lib, test)가 쓰는 이름. 빠지면 앱이 컴파일되지 않으므로 생성 전에 거절한다.
-# tool/test_gen_tokens.py 가 lib 의 실제 참조가 여기 들어 있는지 지킨다.
+# Names the app code (lib, test) uses. The app does not compile without them, so refuse before generating.
+# tool/test_gen_tokens.py checks that every reference found in lib is listed here.
 REQUIRED_CORE = {
     "space": ("sm", "md", "lg", "xl", "xxl", "xxxl"),
     "radius": ("card", "button", "pill"),
@@ -90,11 +93,11 @@ REQUIRED_COLORS = (
     "line", "mapLine", "onAccent", "onError", "onFill", "sad", "surface",
 )
 
-# 글자 토큰이 받는 필드. Tokens Studio 가 덧붙이는 것은 알지만 쓰지 않으므로 건너뛴다.
+# Fields a typography token accepts. Tokens Studio adds a few more that are known but unused, so they are skipped.
 TYPOGRAPHY_FIELDS = frozenset({"fontFamily", "fontSize", "fontWeight", "lineHeight", "letterSpacing"})
 TOKENS_STUDIO_EXTRAS = frozenset({"paragraphSpacing", "paragraphIndent", "textCase", "textDecoration"})
 
-MAX_MS = 3_600_000  # 한 시간
+MAX_MS = 3_600_000  # one hour
 
 
 class TokenError(ValueError):
@@ -108,117 +111,117 @@ def _no_duplicates(pairs):
     out = {}
     for k, v in pairs:
         if k in out:
-            raise TokenError(f"같은 키 '{k}' 가 두 번 나옵니다")
+            raise TokenError(f"duplicate key '{k}'")
         out[k] = v
     return out
 
 
 def _no_constant(name):
-    raise TokenError(f"JSON 에 {name} 은 쓸 수 없습니다")
+    raise TokenError(f"{name} is not allowed in JSON")
 
 
 def parse_json(text, where="JSON"):
-    """같은 키가 두 번 나오거나 NaN, Infinity 가 있으면 거절한다."""
+    """Refuse duplicate keys and the NaN and Infinity literals."""
     try:
         return json.loads(text, object_pairs_hook=_no_duplicates, parse_constant=_no_constant)
     except TokenError as e:
         raise TokenError(f"{where}: {e}") from None
     except json.JSONDecodeError as e:
-        raise TokenError(f"{where}: JSON 형식이 아닙니다 ({e})") from None
+        raise TokenError(f"{where}: not valid JSON ({e})") from None
 
 
 def value(tok, where):
     if not isinstance(tok, dict) or "$value" not in tok:
-        raise TokenError(f"{where}: $value 가 없습니다")
+        raise TokenError(f"{where}: missing $value")
     return tok["$value"]
 
 
 def check_type(tok, group, where):
     expected = TYPE_OF[group]
     if isinstance(tok, dict) and "$type" in tok and tok["$type"] != expected:
-        raise TokenError(f"{where}: $type 은 '{expected}' 여야 합니다 (지금 {tok['$type']!r})")
+        raise TokenError(f"{where}: $type must be '{expected}' (got {tok['$type']!r})")
 
 
 def group_items(parent, name, where, required=()):
-    """묶음 안의 토큰만 돌려준다. 묶음에 붙은 $type, $description 같은 $ 키는 토큰이 아니라 뺀다.
+    """Return only the tokens of a group. Group-level keys that start with $ ($type, $description) are not tokens.
 
-    묶음이 없거나 null 이거나 객체가 아니거나 비었으면, 앱이 쓰는 이름이 빠졌으면 거절한다.
-    묶음의 $type 은 그 자리의 기대값과 같아야 하고, 그 아래 토큰이 이를 물려받는다.
+    Refuse a group that is missing, null, not an object or empty, and one that lacks a name the app uses.
+    The group's $type must equal the slot's expected type, and the tokens below inherit it.
     """
     g = parent.get(name) if isinstance(parent, dict) else None
     if not isinstance(g, dict):
-        raise TokenError(f"{where}: {name} 묶음이 없거나 객체가 아닙니다")
+        raise TokenError(f"{where}: group {name} is missing or not an object")
     if "$type" in g and g["$type"] != TYPE_OF[name]:
-        raise TokenError(f"{where}.{name}: 묶음의 $type 은 '{TYPE_OF[name]}' 여야 합니다 (지금 {g['$type']!r})")
+        raise TokenError(f"{where}.{name}: the group's $type must be '{TYPE_OF[name]}' (got {g['$type']!r})")
     items = {k: v for k, v in g.items() if not k.startswith("$")}
     if not items:
-        raise TokenError(f"{where}: {name} 묶음이 비어 있습니다")
+        raise TokenError(f"{where}: group {name} is empty")
     missing = [k for k in required if k not in items]
     if missing:
-        raise TokenError(f"{where}.{name}: 앱이 쓰는 이름이 빠졌습니다 {missing}")
+        raise TokenError(f"{where}.{name}: names the app uses are missing {missing}")
     return items
 
 
 def resolve(v, core, where):
-    """'{font.family}' 같은 참조를 core 의 값으로 바꾼다."""
+    """Replace a reference such as '{font.family}' with the value from core."""
     m = REF.fullmatch(v) if isinstance(v, str) else None
     if not m:
         return v
     node = core
     for part in m.group(1).split("."):
         if not isinstance(node, dict) or part not in node:
-            raise TokenError(f"{where}: 참조 {v} 를 찾지 못했습니다")
+            raise TokenError(f"{where}: reference {v} not found")
         node = node[part]
-    check_type(node, "font", f"{where} 가 가리키는 {v}")
+    check_type(node, "font", f"{where} (reference {v})")
     return value(node, where)
 
 
 def ident(name, where, banned=STATIC_RESERVED):
     if not IDENT.fullmatch(name):
-        raise TokenError(f"{where}: 이름 '{name}' 은 소문자로 시작하는 영문, 숫자만 씁니다")
+        raise TokenError(f"{where}: name '{name}' must start with a lowercase letter and use only ASCII letters and digits")
     if name in banned:
-        raise TokenError(f"{where}: 이름 '{name}' 은 다트 예약어이거나 생성 코드와 겹쳐 쓸 수 없습니다")
+        raise TokenError(f"{where}: name '{name}' is a Dart reserved word or collides with generated code")
     return name
 
 
-def real(v, where, what="숫자"):
+def real(v, where, what="number"):
     if isinstance(v, bool) or not isinstance(v, (int, float)):
-        raise TokenError(f"{where}: {what}는 유한한 숫자여야 합니다")
+        raise TokenError(f"{where}: {what} must be a finite number")
     try:
         n = float(v)
     except OverflowError:
         n = math.inf
     if not math.isfinite(n):
-        raise TokenError(f"{where}: {what}는 유한한 숫자여야 합니다")
+        raise TokenError(f"{where}: {what} must be a finite number")
     return n
 
 
 def unit_object(v, where, units):
     if not isinstance(v, dict) or set(v) != {"value", "unit"}:
-        raise TokenError(f"{where}: 객체 형식은 value 와 unit 두 키만 씁니다")
+        raise TokenError(f"{where}: the object form takes exactly the keys value and unit")
     if v["unit"] not in units:
-        raise TokenError(f"{where}: unit 은 {' 나 '.join(units)} 만 쓸 수 있습니다")
+        raise TokenError(f"{where}: unit must be {' or '.join(units)}")
     return real(v["value"], where), v["unit"]
 
 
 def size(v, where, positive=False, signed=False):
-    """'16px', 16, {value, unit: px}. 0 이상(positive 면 0 초과, signed 면 음수도)의 유한한 수."""
+    """'16px', 16 or {value, unit: px}. A finite number: 0 or more (more than 0 when positive, negatives allowed when signed)."""
     if isinstance(v, dict):
         n, _ = unit_object(v, where, ("px",))
     elif isinstance(v, str):
         m = (SIGNED_SIZE if signed else SIZE).fullmatch(v)
         if not m:
-            raise TokenError(f"{where}: 크기는 '16px' 처럼 {'' if signed else '0 이상의 '}수와 px 로 씁니다")
+            raise TokenError(f"{where}: a size looks like '16px' ({'a number' if signed else 'a number of 0 or more'}, px optional)")
         n = real(float(m.group(1)), where)
     else:
         n = real(v, where)
     if (n < 0 and not signed) or (positive and n == 0):
-        raise TokenError(f"{where}: 크기는 {'0 보다 큰' if positive else '0 이상의'} 수여야 합니다")
+        raise TokenError(f"{where}: a size must be {'greater than 0' if positive else '0 or more'}")
     return n
 
 
 def line_height(v, where):
-    """1.2, '1.2', '150%'. 0 보다 큰 유한한 수."""
+    """1.2, '1.2' or '150%'. A finite number greater than 0."""
     if isinstance(v, str):
         m = PERCENT.fullmatch(v)
         if m:
@@ -226,24 +229,24 @@ def line_height(v, where):
         elif NUMBER.fullmatch(v):
             n = real(float(v), where)
         else:
-            raise TokenError(f"{where}: 줄 높이는 1.2 나 '150%' 처럼 씁니다")
+            raise TokenError(f"{where}: a line height looks like 1.2 or '150%'")
     else:
         n = real(v, where)
     if n <= 0:
-        raise TokenError(f"{where}: 줄 높이는 0 보다 큰 수여야 합니다")
+        raise TokenError(f"{where}: a line height must be greater than 0")
     return n
 
 
 def font_family(v, where):
     if not isinstance(v, str) or not v.strip():
-        raise TokenError(f"{where}: 글꼴 이름은 비어 있지 않은 문자열입니다")
+        raise TokenError(f"{where}: a font name must be a non-empty string")
     if any(c in "\\$" or ord(c) < 32 or ord(c) == 127 for c in v):
-        raise TokenError(f"{where}: 글꼴 이름에 역슬래시, $, 줄바꿈 같은 제어 문자는 쓸 수 없습니다")
+        raise TokenError(f"{where}: a font name cannot contain a backslash, $ or a control character such as a newline")
     return v
 
 
 def dart_quote_safe(text):
-    """작은따옴표 문자열 안에 그대로 넣을 수 있게 작은따옴표만 \\x27 로 바꾼다. 나머지 위험 문자는 앞에서 거절했다."""
+    """Make text safe inside a single-quoted Dart string. Only the single quote is rewritten (as \\x27); the other dangerous characters were refused earlier."""
     return text.replace("'", "\\x27")
 
 
@@ -255,40 +258,40 @@ def color_object(v, where):
     if not isinstance(v, dict) or not {"colorSpace", "components"} <= set(v) <= {
         "colorSpace", "components", "alpha", "hex"
     }:
-        raise TokenError(f"{where}: 색 객체는 colorSpace, components 를 쓰고 alpha, hex 는 고를 수 있습니다")
+        raise TokenError(f"{where}: a color object takes colorSpace and components, plus optional alpha and hex")
     if v["colorSpace"] != "srgb":
-        raise TokenError(f"{where}: 색 공간은 srgb 만 지원합니다")
+        raise TokenError(f"{where}: only the srgb color space is supported")
     comps = v["components"]
     if not isinstance(comps, list) or len(comps) != 3:
-        raise TokenError(f"{where}: components 는 [r, g, b] 세 개입니다")
-    chans = [real(c, where, "색 성분") for c in comps]
+        raise TokenError(f"{where}: components must be [r, g, b]")
+    chans = [real(c, where, "color component") for c in comps]
     alpha = real(v["alpha"], where, "alpha") if "alpha" in v else 1.0
     if not all(0 <= c <= 1 for c in [*chans, alpha]):
-        raise TokenError(f"{where}: 색 성분과 alpha 는 0 이상 1 이하입니다")
+        raise TokenError(f"{where}: color components and alpha must be between 0 and 1")
     r, g, b = (byte(c) for c in chans)
     if "hex" in v and not (
         isinstance(v["hex"], str)
         and HEX6.fullmatch(v["hex"])
         and v["hex"][1:].upper() == f"{r:02X}{g:02X}{b:02X}"
     ):
-        raise TokenError(f"{where}: hex 가 components 와 맞지 않습니다")
+        raise TokenError(f"{where}: hex does not match components")
     return f"{byte(alpha):02X}{r:02X}{g:02X}{b:02X}"
 
 
 def color_argb(tok, where):
-    """색 토큰의 AARRGGBB (대문자 16진수 여덟 글자)."""
+    """AARRGGBB of a color token (eight uppercase hex digits)."""
     check_type(tok, "color", where)
     v = value(tok, where)
     if isinstance(v, dict):
         return color_object(v, where)
     if not isinstance(v, str) or not HEX.fullmatch(v):
-        raise TokenError(f"{where}: 색은 #RRGGBB, #RRGGBBAA 나 srgb 객체로 씁니다")
+        raise TokenError(f"{where}: a color is #RRGGBB, #RRGGBBAA or an srgb object")
     h = v[1:].upper()
     return h[6:] + h[:6] if len(h) == 8 else "FF" + h
 
 
 def luminance(argb):
-    """WCAG 상대 휘도 0~1. 알파는 보지 않는다."""
+    """WCAG relative luminance, 0 to 1. Alpha is ignored."""
     def lin(byte_hex):
         c = int(byte_hex, 16) / 255
         return c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4
@@ -296,14 +299,14 @@ def luminance(argb):
 
 
 def brightness_of(doc, argbs, theme):
-    """$extensions.app.brightness 를 따른다. 없으면 ground 의 상대 휘도가 0.5 를 넘는지로 추정한다."""
+    """Follow $extensions.app.brightness. When it is missing, guess from whether the relative luminance of ground is above 0.5."""
     ext = doc.get("$extensions")
     app = ext.get("app") if isinstance(ext, dict) else None
     b = app.get("brightness") if isinstance(app, dict) else None
     if b is None:
         return "light" if luminance(argbs["ground"]) > 0.5 else "dark"
     if b not in ("light", "dark"):
-        raise TokenError(f"{theme}: $extensions.app.brightness 는 light 나 dark 여야 합니다")
+        raise TokenError(f"{theme}: $extensions.app.brightness must be light or dark")
     return b
 
 
@@ -315,23 +318,23 @@ def number(tok, group, where):
 def millis(tok, where):
     check_type(tok, "motion", where)
     v = value(tok, where)
-    out_of_range = f"{where}: 시간은 0 이상 {MAX_MS}ms(한 시간) 이하입니다"
+    out_of_range = f"{where}: a duration must be between 0 and {MAX_MS}ms (one hour)"
     if isinstance(v, str):
         m = DURATION.fullmatch(v)
         if not m:
-            raise TokenError(f"{where}: 시간은 '120ms' 나 {{value, unit: ms 또는 s}} 로 씁니다")
+            raise TokenError(f"{where}: a duration looks like '120ms' or {{value, unit: ms or s}}")
         ms = int(m.group(1))
         if ms > MAX_MS:
             raise TokenError(out_of_range)
         return ms
     if not isinstance(v, dict):
-        raise TokenError(f"{where}: 시간은 '120ms' 나 {{value, unit: ms 또는 s}} 로 씁니다")
+        raise TokenError(f"{where}: a duration looks like '120ms' or {{value, unit: ms or s}}")
     n, unit = unit_object(v, where, ("ms", "s"))
     ms = n * 1000 if unit == "s" else n
     if not math.isfinite(ms) or not 0 <= ms <= MAX_MS:
         raise TokenError(out_of_range)
     if abs(ms - round(ms)) >= 1e-6 or (ms > 0 and round(ms) == 0):
-        raise TokenError(f"{where}: 시간은 정수 ms 여야 합니다. 1ms 보다 작은 값은 쓸 수 없습니다")
+        raise TokenError(f"{where}: a duration must be a whole number of ms; values below 1ms are not allowed")
     return int(round(ms))
 
 
@@ -341,12 +344,12 @@ def num(x):
 
 def palettes(theme_docs):
     if not theme_docs:
-        raise TokenError("테마 세트가 하나도 없습니다")
+        raise TokenError("no theme sets found")
     themes, bright = {}, {}
     for theme, doc in theme_docs.items():
-        ident(theme, f"{theme} 세트", banned=frozenset())
+        ident(theme, f"{theme} set", banned=frozenset())
         if not isinstance(doc, dict):
-            raise TokenError(f"{theme}: 세트는 객체여야 합니다")
+            raise TokenError(f"{theme}: a set must be an object")
         argbs = {
             ident(k, f"{theme}.color.{k}", PALETTE_RESERVED): color_argb(v, f"{theme}.color.{k}")
             for k, v in group_items(doc, "color", theme, REQUIRED_COLORS).items()
@@ -359,26 +362,26 @@ def palettes(theme_docs):
         missing, extra = set(keys) - set(themes[t]), set(themes[t]) - set(keys)
         if missing or extra:
             raise TokenError(
-                f"{t}: 테마마다 색 이름이 같아야 합니다. "
-                f"빠진 것 {sorted(missing) or '없음'}, 남는 것 {sorted(extra) or '없음'}"
+                f"{t}: every theme must have the same color names. "
+                f"missing {sorted(missing) or 'none'}, extra {sorted(extra) or 'none'}"
             )
     return keys, themes, bright
 
 
 def token_sets(doc):
-    """최상위에서 $ 로 시작하는 키를 건너뛰고, $metadata.tokenSetOrder 가 있으면 그 순서로 세트를 돌려준다."""
+    """Skip top-level keys that start with $ and return the sets in $metadata.tokenSetOrder order when it is present."""
     if not isinstance(doc, dict):
-        raise TokenError("토큰 파일의 최상위는 객체여야 합니다")
+        raise TokenError("the top level of the token file must be an object")
     sets = {k: v for k, v in doc.items() if not k.startswith("$")}
     meta = doc.get("$metadata")
     order = meta.get("tokenSetOrder") if isinstance(meta, dict) else None
     if order is None:
         return sets
     if not isinstance(order, list) or not all(isinstance(n, str) for n in order) or len(set(order)) != len(order):
-        raise TokenError("$metadata.tokenSetOrder 는 겹치지 않는 세트 이름의 목록이어야 합니다")
+        raise TokenError("$metadata.tokenSetOrder must be a list of distinct set names")
     for n in order:
         if n not in sets:
-            raise TokenError(f"$metadata.tokenSetOrder 에 있는 세트 '{n}' 가 파일에 없습니다")
+            raise TokenError(f"$metadata.tokenSetOrder lists set '{n}' which is not in the file")
     return {**{n: sets[n] for n in order}, **{k: v for k, v in sets.items() if k not in order}}
 
 
@@ -431,10 +434,10 @@ def type_style(k, v, core):
     check_type(v, "type", where)
     spec = value(v, where)
     if not isinstance(spec, dict):
-        raise TokenError(f"{where}: $value 는 fontFamily, fontSize 같은 키를 가진 객체여야 합니다")
+        raise TokenError(f"{where}: $value must be an object with keys such as fontFamily and fontSize")
     unknown = sorted(set(spec) - TYPOGRAPHY_FIELDS - TOKENS_STUDIO_EXTRAS)
     if unknown:
-        raise TokenError(f"{where}: 알 수 없는 필드 {unknown}. 쓸 수 있는 것: {sorted(TYPOGRAPHY_FIELDS)}")
+        raise TokenError(f"{where}: unknown fields {unknown}. Allowed: {sorted(TYPOGRAPHY_FIELDS)}")
     family = font_family(
         resolve(spec.get("fontFamily", "{font.family}"), core, f"{where}.fontFamily"),
         f"{where}.fontFamily",
@@ -444,9 +447,9 @@ def type_style(k, v, core):
         int(weight) if isinstance(weight, str) and weight.isascii() and weight.isdecimal() else -1
     )
     if weight not in WEIGHTS:
-        raise TokenError(f"{where}.fontWeight: 100 단위로 100~900 입니다")
+        raise TokenError(f"{where}.fontWeight: must be 100 to 900 in steps of 100")
     if "fontSize" not in spec:
-        raise TokenError(f"{where}.fontSize: 글자 크기가 없습니다")
+        raise TokenError(f"{where}.fontSize: missing")
     font_size = size(spec["fontSize"], f"{where}.fontSize", positive=True)
     height = line_height(spec.get("lineHeight", "1.2"), f"{where}.lineHeight")
     spacing = ""
@@ -460,15 +463,15 @@ def type_style(k, v, core):
 
 
 def render(tokens):
-    """tokens = {"core": {...}, "dark": {...}, ...}. core 외의 키가 테마다."""
+    """tokens = {"core": {...}, "dark": {...}, ...}. Every key except core is a theme."""
     tokens = token_sets(tokens)
     core = tokens.get("core")
     if not isinstance(core, dict):
-        raise TokenError("core 세트가 없습니다")
+        raise TokenError("the core set is missing")
     keys, themes, bright = palettes({k: v for k, v in tokens.items() if k != "core"})
     out = [
-        "// 생성 파일이다. 손대지 않는다.",
-        "// design/tokens.json 을 고친 뒤 python3 tool/gen_tokens.py 를 돌린다.",
+        "// Generated file. Do not edit.",
+        "// Edit design/tokens.json, then run python3 tool/gen_tokens.py.",
         "// ignore_for_file: lines_longer_than_80_chars",
         "import 'package:flutter/material.dart';",
         "",
@@ -508,23 +511,23 @@ def render(tokens):
 
 
 def splash_ground(tokens, theme):
-    """스플래시가 쓸 theme.ground 의 RRGGBB. 스플래시는 불투명해야 한다."""
+    """RRGGBB of theme.ground for the splash. The splash background must be opaque."""
     sets = token_sets(tokens)
     doc = sets.get(theme)
     ground = doc.get("color", {}).get("ground") if isinstance(doc, dict) else None
     if ground is None:
-        raise TokenError(f"스플래시 색을 정할 {theme}.color.ground 가 없습니다")
+        raise TokenError(f"{theme}.color.ground is missing, so there is no splash color")
     argb = color_argb(ground, f"{theme}.color.ground")
     if argb[:2] != "FF":
-        raise TokenError(f"{theme}.color.ground: 스플래시 바탕은 불투명해야 합니다")
+        raise TokenError(f"{theme}.color.ground: the splash background must be opaque")
     return argb[2:]
 
 
 def android_colors_xml(theme, rgb):
     return (
         '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n'
-        f"    <!-- 생성 파일이다. 손대지 않는다. design/tokens.json 의 {theme}.color.ground 에서 "
-        "tool/gen_tokens.py 가 만든다. -->\n"
+        f"    <!-- Generated file. Do not edit. tool/gen_tokens.py writes it from {theme}.color.ground "
+        "in design/tokens.json. -->\n"
         f'    <color name="splash_background">#{rgb}</color>\n</resources>\n'
     )
 
@@ -563,16 +566,16 @@ STORYBOARD_COLOR = re.compile(
 
 
 def ios_storyboard(storyboard, light_rgb):
-    """LaunchScreen.storyboard 의 SplashBackground 대체값만 light.ground 로 바꾼다."""
+    """Change only the SplashBackground fallback in LaunchScreen.storyboard to light.ground."""
     r, g, b = (f"{int(light_rgb[i:i + 2], 16) / 255:.17g}" for i in (0, 2, 4))
     out, n = STORYBOARD_COLOR.subn(lambda m: f'{m.group(1)}red="{r}" green="{g}" blue="{b}"', storyboard)
     if n != 1:
-        raise TokenError("LaunchScreen.storyboard 에서 SplashBackground 색을 찾지 못했습니다")
+        raise TokenError("SplashBackground color not found in LaunchScreen.storyboard")
     return out
 
 
 def splash_outputs(tokens, storyboard):
-    """{저장소 기준 경로: 내용}. 스플래시 색을 light.ground, dark.ground 에서 만든다."""
+    """{repo-relative path: content}. The splash colors come from light.ground and dark.ground."""
     light, dark = splash_ground(tokens, "light"), splash_ground(tokens, "dark")
     return {
         SPLASH_FILES["android_light"]: android_colors_xml("light", light),
@@ -583,17 +586,17 @@ def splash_outputs(tokens, storyboard):
 
 
 def outputs(tokens, root=ROOT):
-    """만들어야 할 모든 파일. {저장소 기준 경로: 내용}."""
+    """Every file to generate, as {repo-relative path: content}."""
     storyboard_path = root / SPLASH_FILES["ios_storyboard"]
     if not storyboard_path.is_file():
-        raise TokenError(f"{SPLASH_FILES['ios_storyboard']} 가 없습니다")
+        raise TokenError(f"{SPLASH_FILES['ios_storyboard']} is missing")
     out = {OUT.relative_to(ROOT): render(tokens)}
     out.update(splash_outputs(tokens, storyboard_path.read_text(encoding="utf-8")))
     return out
 
 
 def stale(outs, root=ROOT):
-    """디스크의 내용이 없거나 다른 파일들."""
+    """Files whose content on disk is missing or different."""
     return [
         rel
         for rel, text in outs.items()
@@ -603,7 +606,7 @@ def stale(outs, root=ROOT):
 
 def load(path=SRC):
     if not path.is_file():
-        raise TokenError(f"{path.name} 이 없습니다")
+        raise TokenError(f"{path.name} is missing")
     return token_sets(parse_json(path.read_text(encoding="utf-8"), path.name))
 
 
@@ -611,22 +614,22 @@ def main(argv):
     try:
         outs = outputs(load())
     except (TokenError, KeyError) as e:
-        print(f"design/tokens.json 오류: {e}", file=sys.stderr)
+        print(f"design/tokens.json error: {e}", file=sys.stderr)
         return 1
     old = stale(outs)
     if argv == ["--check"]:
         if old:
-            print("design/tokens.json 에서 만드는 파일이 맞지 않습니다: "
+            print("files generated from design/tokens.json are out of date: "
                   + ", ".join(str(p) for p in old)
-                  + ". python3 tool/gen_tokens.py 를 돌린 뒤 같이 커밋합니다.", file=sys.stderr)
+                  + ". Run python3 tool/gen_tokens.py and commit the result.", file=sys.stderr)
             return 1
         return 0
     for rel in old:
         (ROOT / rel).parent.mkdir(parents=True, exist_ok=True)
         (ROOT / rel).write_text(outs[rel], encoding="utf-8")
-        print(f"만들었습니다: {rel}")
+        print(f"wrote {rel}")
     if not old:
-        print("바뀐 파일이 없습니다")
+        print("nothing changed")
     return 0
 
 

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""design/fonts 의 원본 글꼴에서 앱에 넣을 가벼운 판을 만든다.
+"""Build the lightweight fonts that ship with the app from the originals in design/fonts.
 
-남기는 글자: KS X 1001 한글 2,350자, 한글 자모, 영문과 숫자, 라틴 기본 기호, 일반 문장부호, 원 기호 등.
-빠진 글자(드문 한글, 한자, 이모지)는 기기의 시스템 글꼴로 그려진다.
-실행: python3 tool/subset_fonts.py   (fonttools 필요)
+Kept characters: the 2,350 Hangul syllables of KS X 1001, Hangul jamo, Latin letters and digits, basic Latin symbols, general punctuation, circled symbols and so on.
+Characters that are left out (rare Hangul, Hanja, emoji) are drawn with the system font of the device.
+Run: python3 tool/subset_fonts.py   (needs fonttools)
 """
 import sys
 from pathlib import Path
@@ -18,7 +18,7 @@ OUT = ROOT / "assets" / "fonts"
 def hangul_ksx1001():
     out = []
     for cp in range(0xAC00, 0xD7A4):
-        # 표에 없는 글자는 8바이트 자모 조합으로 인코딩되므로 2바이트인 것만 표의 글자다.
+        # A character that is not in the table is encoded as an 8-byte jamo sequence, so only the 2-byte ones are table characters.
         if len(chr(cp).encode("euc_kr")) == 2:
             out.append(cp)
     return out
@@ -37,7 +37,7 @@ def main():
     OUT.mkdir(parents=True, exist_ok=True)
     for src in sorted([*SRC.glob("*.otf"), *SRC.glob("*.ttf")]):
         opts = subset.Options()
-        opts.layout_closure = False  # 자모 조합 규칙이 빠진 글자를 다시 끌어오지 않게 한다
+        opts.layout_closure = False  # keep the jamo composition rules from pulling the dropped characters back in
         opts.name_IDs = ["*"]
         opts.notdef_outline = True
         font = subset.load_font(str(src), opts)

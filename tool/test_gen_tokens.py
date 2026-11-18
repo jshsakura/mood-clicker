@@ -1,4 +1,4 @@
-"""gen_tokens 가 디자이너의 실수를 분명한 말로 막는지 고정한다."""
+"""Pin that gen_tokens stops a designer's mistakes with a clear message."""
 import copy
 import re
 import tempfile
@@ -436,7 +436,7 @@ class SingleFile(RefusesWith):
 
 
 CORE_GROUPS = ("space", "radius", "type", "motion", "font")
-BAD_GROUPS = [None, {}, [], 0, "", False, "x", 5, {"$type": "dimension"}, {"$description": "비었음"}]
+BAD_GROUPS = [None, {}, [], 0, "", False, "x", 5, {"$type": "dimension"}, {"$description": "empty"}]
 
 
 class RequiredGroups(RefusesWith):
@@ -487,7 +487,7 @@ class RequiredGroups(RefusesWith):
             for m in re.finditer(r"\b(Space|Radii|TypeScale|Motion)\.(\w+)", f.read_text(encoding="utf-8")):
                 used[classes[m[1]]].add(m[2])
         for group, names in used.items():
-            self.assertLessEqual(names, set(REQUIRED_CORE[group]), f"{group}: REQUIRED_CORE 에 더하세요")
+            self.assertLessEqual(names, set(REQUIRED_CORE[group]), f"{group}: add it to REQUIRED_CORE")
 
     def test_extra_names_are_fine(self):
         t = edited(lambda t: t["core"]["space"].update({"huge": {"$type": "dimension", "$value": "96px"}}))
@@ -524,7 +524,7 @@ class NullAndInheritedTypes(RefusesWith):
                 t["core"][group]["$type"] = typ
             for theme in THEMES:
                 t[theme]["color"]["$type"] = "color"
-                t[theme]["color"]["$description"] = "메모"
+                t[theme]["color"]["$description"] = "note"
         self.assertEqual(render(edited(add)), render(BASE))
 
     def test_tokens_inherit_the_group_type(self):
@@ -640,7 +640,7 @@ def contrast(a, b):
 
 
 class Contrast(unittest.TestCase):
-    """색을 바꾸다 글자가 안 읽히게 되는 것을 막는다. Dart 쪽 palette_test 와 같은 기준(WCAG)이다."""
+    """Keep a color change from making text unreadable. Same criterion (WCAG) as the Dart palette_test."""
 
     def argb(self, theme, name):
         from gen_tokens import color_argb
@@ -757,7 +757,7 @@ class Splash(RefusesWith):
 class Output(unittest.TestCase):
     def test_header_points_at_the_single_token_file(self):
         out = render(BASE)
-        self.assertIn("// design/tokens.json 을 고친 뒤 python3 tool/gen_tokens.py 를 돌린다.", out)
+        self.assertIn("// Edit design/tokens.json, then run python3 tool/gen_tokens.py.", out)
         self.assertNotIn("design/tokens/", out)
 
     def test_checked_in_output_is_exactly_what_the_tokens_render(self):
