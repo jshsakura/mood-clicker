@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mood_clicker/design/app_theme.dart';
 import 'package:mood_clicker/design/theme_choice.dart';
 import 'package:mood_clicker/design/token_preview.dart';
+import 'package:mood_clicker/design/tokens.g.dart';
 
 /// 테스트에서 실제로 불러올 글꼴. pubspec.yaml 의 fonts 와 같아야 하고, 어긋나면 테스트가 알려 준다.
 const goldenFonts = <String, List<String>>{
@@ -90,7 +91,7 @@ const goldenDevices = [
 ];
 
 /// 그림을 뽑을 테마.
-const goldenThemes = [ThemeChoice.light, ThemeChoice.dark, ThemeChoice.pink];
+final goldenThemes = [for (final p in allPalettes) ThemeChoice.named(p.name)];
 
 /// 화면 하나. 이름은 파일 이름이 된다.
 class GoldenScreen {

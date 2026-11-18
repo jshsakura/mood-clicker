@@ -10,9 +10,17 @@ import 'tokens.g.dart';
 /// 디자인 토큰과 화면 부품을 한 화면에 늘어놓는다.
 /// 디자이너가 design/tokens 를 고친 결과를 바로 확인하는 곳이다.
 class TokenPreview extends StatelessWidget {
-  const TokenPreview({super.key, required this.choice, required this.onChoice});
+  TokenPreview({
+    super.key,
+    required this.choice,
+    required this.onChoice,
+    List<ThemeChoice>? choices,
+  }) : choices = choices ?? ThemeChoice.all;
 
   final ThemeChoice choice;
+
+  /// 테마 선택 단추. 팔레트가 늘면 저절로 늘어난다.
+  final List<ThemeChoice> choices;
   final ValueChanged<ThemeChoice> onChoice;
 
   @override
@@ -27,7 +35,7 @@ class TokenPreview extends StatelessWidget {
             const SizedBox(height: Space.lg),
             SegmentedButton<ThemeChoice>(
               segments: [
-                for (final c in ThemeChoice.values)
+                for (final c in choices)
                   ButtonSegment(value: c, label: Text(c.name)),
               ],
               selected: {choice},

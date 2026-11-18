@@ -14,7 +14,7 @@ class MoodClickerApp extends StatefulWidget {
 }
 
 class _MoodClickerAppState extends State<MoodClickerApp> {
-  ThemeChoice _choice = ThemeChoice.light;
+  ThemeChoice _choice = const ThemeChoice.named('light');
 
   @override
   Widget build(BuildContext context) {
@@ -24,6 +24,8 @@ class _MoodClickerAppState extends State<MoodClickerApp> {
       title: 'Mood Clicker',
       debugShowCheckedModeBanner: false,
       theme: buildTheme(palette),
+      // 시스템 다크 전환처럼 테마는 즉시 바뀐다. 애니메이션이 있으면 중간 프레임의 색이 섞여 대비가 깨진다.
+      themeAnimationDuration: Duration.zero,
       home: TokenPreview(
         choice: _choice,
         onChoice: (c) => setState(() => _choice = c),
