@@ -60,14 +60,15 @@ class FakeRecordsPort implements RecordsPort {
   bool recordedToday = false;
   int exports = 0;
   int deletions = 0;
+  ExportOutcome exportOutcome = ExportOutcome.shared;
 
   @override
   Future<bool> hasRecordToday() async => recordedToday;
 
   @override
-  Future<String?> exportJournal() async {
+  Future<ExportOutcome> exportJournal() async {
     exports += 1;
-    return '/tmp/opencode/journal.json';
+    return exportOutcome;
   }
 
   @override
@@ -342,6 +343,43 @@ void main() {
     await tester.pumpAndSettle();
     expect(harness.records.exports, 1);
     expect(find.text(l10n.settings_exportDone), findsOneWidget);
+  });
+
+  testWidgets('export with no records says so and does not claim success', (
+    tester,
+  ) async {
+    final harness = Harness();
+    harness.records.exportOutcome = ExportOutcome.nothing;
+    await pumpScreen(tester, harness: harness);
+    final l10n = lookupAppLocalizations(const Locale('ko'));
+    await tester.tap(find.text(l10n.settings_export));
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.settings_exportEmpty), findsOneWidget);
+    expect(find.text(l10n.settings_exportDone), findsNothing);
+  });
+
+  testWidgets('a cancelled share sheet shows no toast', (tester) async {
+    final harness = Harness();
+    harness.records.exportOutcome = ExportOutcome.cancelled;
+    await pumpScreen(tester, harness: harness);
+    final l10n = lookupAppLocalizations(const Locale('ko'));
+    await tester.tap(find.text(l10n.settings_export));
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.settings_exportDone), findsNothing);
+    expect(find.text(l10n.settings_exportEmpty), findsNothing);
+  });
+
+  testWidgets('the back button stays while the list scrolls', (tester) async {
+    final harness = Harness();
+    await pumpScreen(tester, harness: harness);
+    final l10n = lookupAppLocalizations(const Locale('ko'));
+    await tester.drag(find.byType(ListView), const Offset(0, -600));
+    await tester.pump();
+    expect(find.bySemanticsLabel(l10n.common_back), findsOneWidget);
+    expect(
+      tester.getTopLeft(find.bySemanticsLabel(l10n.common_back)).dy,
+      lessThan(80),
+    );
   });
 
   testWidgets('the privacy row opens the policy screen', (tester) async {

@@ -77,6 +77,13 @@ class PressableSurface extends StatefulWidget {
 
 class _PressableSurfaceState extends State<PressableSurface> {
   bool _pressed = false;
+  bool _focusVisible = false;
+
+  /// The ring that shows keyboard focus, like the design's focus-visible outline.
+  static const double focusRingWidth = 2;
+
+  /// How much a switched off surface fades.
+  static const double disabledOpacity = 0.4;
 
   void _set(bool value) {
     if (_pressed != value) setState(() => _pressed = value);
@@ -102,6 +109,31 @@ class _PressableSurfaceState extends State<PressableSurface> {
         fit: StackFit.passthrough,
         children: [
           widget.child,
+          if (_focusVisible && enabled)
+            Positioned.fill(
+              child: IgnorePointer(
+                child: DecoratedBox(
+                  decoration: ShapeDecoration(
+                    shape: isIcon
+                        ? CircleBorder(
+                            side: BorderSide(
+                              color: p.ink,
+                              width: focusRingWidth,
+                            ),
+                          )
+                        : RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(
+                              widget.radius ?? Radii.card,
+                            ),
+                            side: BorderSide(
+                              color: p.ink,
+                              width: focusRingWidth,
+                            ),
+                          ),
+                  ),
+                ),
+              ),
+            ),
           Positioned.fill(
             child: IgnorePointer(
               child: AnimatedOpacity(
@@ -129,17 +161,33 @@ class _PressableSurfaceState extends State<PressableSurface> {
       enabled: enabled,
       label: widget.semanticLabel,
       excludeSemantics: widget.semanticLabel != null,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTapDown: enabled ? (_) => _set(true) : null,
-        onTapUp: enabled ? (_) => _set(false) : null,
-        onTapCancel: enabled ? () => _set(false) : null,
-        onTap: widget.onTap,
-        child: AnimatedScale(
-          duration: Motion.tap,
-          curve: Curves.easeOut,
-          scale: pressed ? widget.kind.pressedScale : 1,
-          child: face,
+      child: FocusableActionDetector(
+        enabled: enabled,
+        onShowFocusHighlight: (value) => setState(() => _focusVisible = value),
+        actions: {
+          ActivateIntent: CallbackAction<ActivateIntent>(
+            onInvoke: (_) {
+              widget.onTap?.call();
+              return null;
+            },
+          ),
+        },
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTapDown: enabled ? (_) => _set(true) : null,
+          onTapUp: enabled ? (_) => _set(false) : null,
+          onTapCancel: enabled ? () => _set(false) : null,
+          onTap: widget.onTap,
+          child: AnimatedOpacity(
+            duration: Motion.tap,
+            opacity: enabled ? 1 : disabledOpacity,
+            child: AnimatedScale(
+              duration: Motion.tap,
+              curve: Curves.easeOut,
+              scale: pressed ? widget.kind.pressedScale : 1,
+              child: face,
+            ),
+          ),
         ),
       ),
     );

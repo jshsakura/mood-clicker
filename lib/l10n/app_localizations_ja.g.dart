@@ -484,4 +484,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get loading_message => '記録を読み込んでいます';
+
+  @override
+  String get settings_exportEmpty => '書き出せる記録がまだありません';
 }

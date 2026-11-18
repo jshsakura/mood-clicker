@@ -11,23 +11,37 @@ import '../domain/day_key.dart';
 import '../domain/json_file_mood_repository.dart';
 import '../domain/mood_repository.dart';
 
+/// How an export ended, so the screen tells the three apart.
+enum ExportOutcome {
+  /// There is no journal file yet.
+  nothing,
+
+  /// The share sheet was used.
+  shared,
+
+  /// The user closed the share sheet without sharing.
+  cancelled,
+}
+
 abstract interface class RecordsPort {
   /// Whether today already has a record; the reminder skips such days.
   Future<bool> hasRecordToday();
 
-  /// Shares the journal file and returns its path, or returns null when
-  /// there is nothing to export yet.
-  Future<String?> exportJournal();
+  /// Shares the journal file, and says whether there was nothing to share,
+  /// the file was shared, or the user cancelled.
+  Future<ExportOutcome> exportJournal();
 
   /// Removes every record after the confirm sheet.
   Future<void> deleteAll();
 }
 
 /// Shares paths through the system share sheet.
-Future<void> shareThroughSheet(List<String> paths) async {
-  await SharePlus.instance.share(
+/// Returns false only when the user dismissed the sheet.
+Future<bool> shareThroughSheet(List<String> paths) async {
+  final result = await SharePlus.instance.share(
     ShareParams(files: [for (final path in paths) XFile(path)]),
   );
+  return result.status != ShareResultStatus.dismissed;
 }
 
 class DeviceRecordsPort implements RecordsPort {
@@ -40,7 +54,7 @@ class DeviceRecordsPort implements RecordsPort {
   static Future<File> defaultJournalFile() => app_journal.journalFile();
 
   final Future<File> Function() journalFile;
-  final Future<void> Function(List<String> paths) shareFiles;
+  final Future<bool> Function(List<String> paths) shareFiles;
 
   @override
   Future<bool> hasRecordToday() async {
@@ -54,13 +68,13 @@ class DeviceRecordsPort implements RecordsPort {
   }
 
   @override
-  Future<String?> exportJournal() async {
+  Future<ExportOutcome> exportJournal() async {
     final file = await journalFile();
     if (!await file.exists()) {
-      return null;
+      return ExportOutcome.nothing;
     }
-    await shareFiles([file.path]);
-    return file.path;
+    final done = await shareFiles([file.path]);
+    return done ? ExportOutcome.shared : ExportOutcome.cancelled;
   }
 
   @override

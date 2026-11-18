@@ -652,5 +652,9 @@
   "loading_message": "기록을 불러오는 중입니다",
   "@loading_message": {
     "description": "첫 화면에서 기록을 읽는 동안 로고 아래에 보이는 문구입니다."
+  },
+  "settings_exportEmpty": "내보낼 기록이 아직 없습니다",
+  "@settings_exportEmpty": {
+    "description": "내보낼 기록 파일이 없을 때 잠깐 뜨는 알림입니다."
   }
 }

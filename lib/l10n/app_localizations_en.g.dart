@@ -494,4 +494,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get loading_message => 'Loading your records';
+
+  @override
+  String get settings_exportEmpty => 'There are no records to export yet';
 }

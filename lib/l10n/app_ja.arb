@@ -144,5 +144,6 @@
   "map_togetherSad": "今日、心が沈んでいるのはあなただけではありません",
   "map_togetherHappy": "今日は近くに気分のいい人がたくさんいます",
   "moodSelect_title": "今日の気分は",
-  "loading_message": "記録を読み込んでいます"
+  "loading_message": "記録を読み込んでいます",
+  "settings_exportEmpty": "書き出せる記録がまだありません"
 }

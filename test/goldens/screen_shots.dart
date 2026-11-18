@@ -53,6 +53,7 @@ CheerBook shotBook() {
 
 TestApp shotApp({bool holdLoading = false}) {
   final app = TestApp(
+    settingsBuilder: (_) => const SizedBox(),
     book: shotBook(),
     repository: holdLoading
         ? MemoryRepository(gate: Completer<void>().future)

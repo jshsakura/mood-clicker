@@ -485,4 +485,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get loading_message => '기록을 불러오는 중입니다';
+
+  @override
+  String get settings_exportEmpty => '내보낼 기록이 아직 없습니다';
 }

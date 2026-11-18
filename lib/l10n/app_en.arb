@@ -144,5 +144,6 @@
   "map_togetherSad": "You are not the only one feeling low today",
   "map_togetherHappy": "Many people nearby feel good today",
   "moodSelect_title": "How are you feeling today?",
-  "loading_message": "Loading your records"
+  "loading_message": "Loading your records",
+  "settings_exportEmpty": "There are no records to export yet"
 }
