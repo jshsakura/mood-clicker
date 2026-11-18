@@ -53,7 +53,7 @@ Mix agent vendors. The same model misses the same things, so a different vendor 
 
 ## How one task runs
 
-1. **Assign.** The lead sends it with `itl send <pane> '…'`, all in one message:
+1. **Assign.** The lead sends it with `tool/team/itl send <name> '…'`, all in one message:
    - task number, branch name, base commit
    - scope: paths to change and paths to leave alone
    - done criteria: which checks must pass and what must actually run
@@ -70,7 +70,12 @@ Mix agent vendors. The same model misses the same things, so a different vendor 
 6. **To `main`.** When the integration branch is ready, one PR merges it into `main`. Nothing reaches
    `main` except through a PR.
 
-Real assignment and report examples remain in the task queue in [TEAM.md](TEAM.md).
+Panes are addressed by name. `start.sh` names the lead pane `leader` and each worker pane by the name you give
+(`ui`, `api` and so on). `itl send` prefixes the sender, as in `[from ui · reply: itl send ui '…']`, so the receiver
+can answer right away. When this repository was first built, panes were tmux tab numbers (`12.1` lead, `12.2` to
+`12.6` workers). Those numbers in the records are the same roles.
+
+Every brief and report, exactly as written, is kept by role in [prompts/](prompts/README.md) (Korean). The task list is in [TEAM.md](TEAM.md).
 
 ## Rules the machine enforces
 
