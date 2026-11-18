@@ -4,3 +4,5 @@
 |---|---|---|
 | Pretendard | `assets/fonts/` | SIL Open Font License 1.1, `licenses/Pretendard-OFL.txt` |
 | Baloo 2 | `assets/fonts/` (앱 이름 글자) | SIL Open Font License 1.1, `licenses/OFL-Baloo2.txt` |
+| Kenney Interface Sounds 1.0 | `assets/sounds/basic/` (`tap_happy` `tap_excited` `tap_sad` `tap_anxious` `full` `select`) | CC0 1.0, https://kenney.nl/assets/interface-sounds |
+| Kenney Impact Sounds | `assets/sounds/basic/` (`tap_angry`) | CC0 1.0, https://kenney.nl/assets/impact-sounds |
