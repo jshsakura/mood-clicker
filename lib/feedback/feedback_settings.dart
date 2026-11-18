@@ -7,7 +7,7 @@ enum SoundPack {
   pentatonic;
 
   /// The pack until the person picks another.
-  static const SoundPack defaultPack = SoundPack.basic;
+  static const SoundPack defaultPack = SoundPack.pentatonic;
 
   /// Packs with bundled audio files ready to show in Settings.
   static const List<SoundPack> available = [

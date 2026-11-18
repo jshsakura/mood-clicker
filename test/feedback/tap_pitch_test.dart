@@ -175,7 +175,7 @@ void main() {
 
     test('the basic pack keeps its own sounds and its jitter', () {
       final c = make();
-      c.settings = const FeedbackSettings();
+      c.settings = const FeedbackSettings(soundPack: SoundPack.basic);
       c.trigger(FeedbackKind.tap, 'happy');
       expect(sound.played.single.cue.id, isNot('kalimba'));
       expect(sound.played.single.pitch, inInclusiveRange(0.97, 1.03));
