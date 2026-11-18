@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
 # Starts a team in one tmux session: a leader pane and one pane per worker.
 #
-#   tool/team/start.sh [-s SESSION] [-b BASE] [-n COUNT] AGENT [NAME...]
+#   tool/team/start.sh [-s SESSION] [-b BASE] [-n COUNT] AGENT [NAME[=AGENT]...]
 #
-# AGENT is the command to run in every pane, for example claude or codex. The leader works in this
-# checkout. Each worker NAME works in its own git worktree, ../<repo>-<NAME> on branch work/<NAME>,
-# cut from BASE (default: the current commit). -n COUNT names the workers w1..wCOUNT instead.
+# AGENT is the command to run in a pane, for example claude or codex. The first AGENT runs in the
+# leader pane and is the default of every worker; NAME=AGENT gives one worker another product
+# (quote it when it has spaces: ui="codex --yolo"). The leader works in this checkout. Each
+# worker NAME works in its own git worktree, ../<repo>-<NAME> on branch work/<NAME>, cut from BASE
+# (default: the current commit). -n COUNT names the workers w1..wCOUNT instead.
 # Panes are named (see tool/team/itl), so panes talk with: itl send leader '...'
 # Safe to run again: an existing worktree, pane or session is reused, never created twice, and
 # new names are added to the running session.
@@ -13,7 +15,7 @@
 set -euo pipefail
 
 usage() {
-  echo "usage: tool/team/start.sh [-s SESSION] [-b BASE] [-n COUNT] AGENT [NAME...]" >&2
+  echo "usage: tool/team/start.sh [-s SESSION] [-b BASE] [-n COUNT] AGENT [NAME[=AGENT]...]" >&2
   exit 2
 }
 
@@ -30,10 +32,17 @@ shift $((OPTIND - 1))
 [ $# -ge 1 ] || usage
 AGENT="$1"
 shift
-NAMES=("$@")
+# Each worker argument is NAME or NAME=AGENT; NAMES and AGENTS stay in step (bash 3.2 has no maps).
+NAMES=() AGENTS=()
+for arg in "$@"; do
+  case "$arg" in
+    *=*) NAMES+=("${arg%%=*}") AGENTS+=("${arg#*=}") ;;
+    *) NAMES+=("$arg") AGENTS+=("$AGENT") ;;
+  esac
+done
 case "$COUNT" in '' | *[!0-9]*) echo "start.sh: -n needs a number" >&2; exit 2 ;; esac
 if [ "${#NAMES[@]}" -eq 0 ] && [ "$COUNT" -gt 0 ]; then
-  for ((i = 1; i <= COUNT; i++)); do NAMES+=("w$i"); done
+  for ((i = 1; i <= COUNT; i++)); do NAMES+=("w$i") AGENTS+=("$AGENT"); done
 fi
 if [ "${#NAMES[@]}" -eq 0 ]; then
   echo "start.sh: give worker names or -n COUNT" >&2
@@ -41,10 +50,12 @@ if [ "${#NAMES[@]}" -eq 0 ]; then
 fi
 
 command -v tmux > /dev/null || { echo "start.sh: tmux is not installed" >&2; exit 1; }
-for name in "${NAMES[@]}"; do
+for i in "${!NAMES[@]}"; do
+  name="${NAMES[$i]}"
   case "$name" in
     '' | -* | *[!A-Za-z0-9._-]*) echo "start.sh: bad worker name '$name' (letters, digits, dot, dash, underscore)" >&2; exit 2 ;;
   esac
+  [ -n "${AGENTS[$i]}" ] || { echo "start.sh: worker '$name' has an empty agent command" >&2; exit 2; }
   [ "$name" = "leader" ] && { echo "start.sh: 'leader' is taken by the leader pane" >&2; exit 2; }
 done
 
@@ -73,9 +84,9 @@ done
 
 has_pane() { tmux list-panes -s -t "$SESSION" -F '#{@itl_name}' 2> /dev/null | grep -qx "$1"; }
 
-# new_pane NAME DIR: a pane named NAME running AGENT in DIR; the first one creates the session.
+# new_pane NAME DIR AGENT: a pane named NAME running AGENT in DIR; the first one creates the session.
 new_pane() {
-  local name="$1" dir="$2" id
+  local name="$1" dir="$2" agent="$3" id
   if has_pane "$name"; then
     echo "pane $name already exists"
     return
@@ -87,13 +98,13 @@ new_pane() {
     id="$(tmux new-session -d -P -F '#{pane_id}' -s "$SESSION" -c "$dir" -x 200 -y 50)"
   fi
   tmux set-option -p -t "$id" @itl_name "$name"
-  tmux send-keys -t "$id" -l "$AGENT"
+  tmux send-keys -t "$id" -l "$agent"
   tmux send-keys -t "$id" Enter
   echo "pane $name started in $dir"
 }
 
-new_pane leader "$REPO"
-for name in "${NAMES[@]}"; do
-  new_pane "$name" "$PARENT/$REPO_NAME-$name"
+new_pane leader "$REPO" "$AGENT"
+for i in "${!NAMES[@]}"; do
+  new_pane "${NAMES[$i]}" "$PARENT/$REPO_NAME-${NAMES[$i]}" "${AGENTS[$i]}"
 done
 echo "team is up. Attach with: tmux attach -t $SESSION"

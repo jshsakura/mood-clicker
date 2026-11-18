@@ -193,7 +193,12 @@ class StartScript(TmuxCase):
     def test_one_leader_and_the_named_workers_start_in_their_own_worktrees(self):
         done = self.start("-s", "team", "cat", "ui", "api")
         self.assertEqual(0, done.returncode, done.stderr)
-        by_name = {p[0]: p for p in self.panes()}
+        # A pane reports its start folder only once its shell is up, so give a slow profile time.
+        for _ in range(100):
+            by_name = {p[0]: p for p in self.panes()}
+            if len(by_name) == 3 and by_name["ui"][1] == str(self.root / "proj-ui"):
+                break
+            time.sleep(0.1)
         self.assertEqual({"leader", "ui", "api"}, set(by_name))
         self.assertEqual(str(self.repo), by_name["leader"][1])
         for name in ("ui", "api"):
@@ -211,6 +216,44 @@ class StartScript(TmuxCase):
                 break
             time.sleep(0.1)
         self.assertEqual(["cat", "cat"], commands)
+
+    def commands_by_name(self, expected):
+        # The keys wait in the pane until its shell is ready, so give a slow shell profile time.
+        for _ in range(100):
+            found = {p[0]: p[2] for p in self.panes()}
+            if found == expected:
+                break
+            time.sleep(0.1)
+        return found
+
+    def test_a_worker_can_run_a_different_agent_than_the_others(self):
+        done = self.start("-s", "team", "cat", "ui=sleep 300", "research", "dev=cat")
+        self.assertEqual(0, done.returncode, done.stderr)
+        self.assertEqual({"leader": "cat", "ui": "sleep", "research": "cat", "dev": "cat"},
+                         self.commands_by_name({"leader": "cat", "ui": "sleep", "research": "cat", "dev": "cat"}))
+
+    def test_the_worktree_name_is_the_part_before_the_equals_sign(self):
+        self.start("-s", "team", "cat", "ui=sleep 300")
+        self.assertTrue((self.root / "proj-ui" / "f.txt").is_file())
+        self.assertFalse((self.root / "proj-ui=sleep 300").exists())
+
+    def test_a_count_uses_the_first_agent_for_every_worker(self):
+        self.start("-s", "team", "-n", "2", "cat")
+        self.assertEqual({"leader": "cat", "w1": "cat", "w2": "cat"},
+                         self.commands_by_name({"leader": "cat", "w1": "cat", "w2": "cat"}))
+
+    def test_an_empty_agent_or_empty_name_is_refused_before_anything_is_made(self):
+        for bad in ["ui=", "=cat"]:
+            done = self.start("-s", "team", "cat", bad)
+            self.assertNotEqual(0, done.returncode, bad)
+            self.assertFalse(self.has_server(), bad)
+
+    def test_a_running_team_keeps_its_agents_when_names_are_added(self):
+        self.start("-s", "team", "cat", "ui=sleep 300")
+        self.start("-s", "team", "cat", "ui=cat", "docs=sleep 300")
+        found = self.commands_by_name({"leader": "cat", "ui": "sleep", "docs": "sleep"})
+        self.assertEqual("sleep", found["ui"])
+        self.assertEqual("sleep", found["docs"])
 
     def test_a_count_makes_numbered_workers(self):
         self.assertEqual(0, self.start("-s", "team", "-n", "2", "cat").returncode)
