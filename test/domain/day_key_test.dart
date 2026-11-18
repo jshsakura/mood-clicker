@@ -34,8 +34,24 @@ void main() {
   });
 
   test('rejects malformed or impossible dates', () {
-    for (final s in ['2026-1-2', '2026-02-30', '2026-13-01', 'x', '']) {
+    for (final s in [
+      '2026-1-2',
+      '2026-02-30',
+      '2026-02-31',
+      '2026-13-01',
+      '2026-00-10',
+      '2026-04-31',
+      '2025-02-29',
+      'x',
+      '',
+    ]) {
       expect(DayKey.tryParse(s), isNull, reason: s);
+    }
+  });
+
+  test('accepts real calendar dates, including a leap day', () {
+    for (final s in ['2024-02-29', '2026-12-31', '2026-01-01']) {
+      expect(DayKey.tryParse(s)?.toString(), s);
     }
   });
 }

@@ -15,6 +15,9 @@ class JsonFileMoodRepository implements MoodRepository {
 
   static const int _version = 1;
 
+  /// Makes every temp file name unique in this process, across all repositories.
+  static int _nextTemp = 0;
+
   /// Chains writes one after another so two saves never share the temp file.
   Future<void> _tail = Future.value();
 
@@ -31,16 +34,33 @@ class JsonFileMoodRepository implements MoodRepository {
     }
   }
 
-  /// Copies an unreadable file to `.unreadable`. If the caller carries on with an
-  /// empty journal and saves, the original still survives. An existing copy is kept as is.
+  /// Copies an unreadable file to `.unreadable`, then `.unreadable.2`, `.unreadable.3` and so on,
+  /// so every different damaged original survives even if the caller carries on with an empty
+  /// journal and saves. A copy with the same bytes already kept is not made again.
   Future<String> _keepAside(String reason) async {
-    final backup = File('${file.path}.unreadable');
     try {
-      if (!await backup.exists()) await file.copy(backup.path);
-      return reason;
+      final bytes = await file.readAsBytes();
+      for (var n = 1; ; n++) {
+        final backup = File(
+          n == 1 ? '${file.path}.unreadable' : '${file.path}.unreadable.$n',
+        );
+        if (!await backup.exists()) {
+          await backup.writeAsBytes(bytes, flush: true);
+          return reason;
+        }
+        if (_sameBytes(await backup.readAsBytes(), bytes)) return reason;
+      }
     } on FileSystemException catch (e) {
       return '$reason (could not keep the original aside: ${e.message})';
     }
+  }
+
+  static bool _sameBytes(List<int> a, List<int> b) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
   }
 
   @override
@@ -54,9 +74,14 @@ class JsonFileMoodRepository implements MoodRepository {
     final text = jsonEncode(_encode(journal));
     if (text == await _currentText()) return false;
     await file.parent.create(recursive: true);
-    final temp = File('${file.path}.tmp');
-    await temp.writeAsString(text, flush: true);
-    await temp.rename(file.path);
+    final temp = File('${file.path}.$pid.${_nextTemp++}.tmp');
+    try {
+      await temp.writeAsString(text, flush: true);
+      await temp.rename(file.path);
+    } on Object {
+      if (await temp.exists()) await temp.delete();
+      rethrow;
+    }
     return true;
   }
 
@@ -82,6 +107,7 @@ class JsonFileMoodRepository implements MoodRepository {
               mood.id: {
                 'count': tally.count,
                 'lastTapAt': tally.lastTapAt.toUtc().toIso8601String(),
+                'order': tally.lastOrder,
               },
         },
     },
@@ -101,7 +127,7 @@ class JsonFileMoodRepository implements MoodRepository {
   DayRecord _decodeDay(String key, Object? value) {
     final day =
         DayKey.tryParse(key) ?? (throw FormatException('bad day key: $key'));
-    final tallies = <Mood, MoodTally>{};
+    final raws = <Mood, ({int count, DateTime at, int? order})>{};
     for (final MapEntry(key: moodId, value: raw) in _asMap(
       value,
       key,
@@ -118,9 +144,34 @@ class JsonFileMoodRepository implements MoodRepository {
       if (parsed == null) {
         throw FormatException('bad timestamp at $key/$moodId');
       }
-      tallies[mood] = MoodTally(count: count, lastTapAt: parsed);
+      final order = tally['order'];
+      if (order != null && (order is! int || order < 1)) {
+        throw FormatException('bad order at $key/$moodId');
+      }
+      raws[mood] = (count: count, at: parsed, order: order as int?);
     }
-    return DayRecord(day, tallies);
+    return DayRecord(day, _withOrder(raws));
+  }
+
+  /// Uses the saved tap order. A file from before tap order existed has none, so the order is
+  /// rebuilt from the timestamps (ties by `Mood` declaration order).
+  Map<Mood, MoodTally> _withOrder(
+    Map<Mood, ({int count, DateTime at, int? order})> raws,
+  ) {
+    final saved = raws.values.every((r) => r.order != null);
+    final byTime = raws.keys.toList()
+      ..sort((a, b) {
+        final byAt = raws[a]!.at.compareTo(raws[b]!.at);
+        return byAt != 0 ? byAt : a.index.compareTo(b.index);
+      });
+    return {
+      for (final mood in raws.keys)
+        mood: MoodTally(
+          count: raws[mood]!.count,
+          lastTapAt: raws[mood]!.at,
+          lastOrder: saved ? raws[mood]!.order! : byTime.indexOf(mood) + 1,
+        ),
+    };
   }
 
   Map<String, Object?> _asMap(Object? value, String where) {

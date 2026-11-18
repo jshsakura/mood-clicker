@@ -34,7 +34,11 @@ void main() {
   test('tallies cannot be mutated from outside', () {
     final record = DayRecord.empty(day).withTap(Mood.sad, t0);
     expect(
-      () => record.tallies[Mood.happy] = MoodTally(count: 1, lastTapAt: t0),
+      () => record.tallies[Mood.happy] = MoodTally(
+        count: 1,
+        lastTapAt: t0,
+        lastOrder: 1,
+      ),
       throwsUnsupportedError,
     );
   });
@@ -90,15 +94,27 @@ void main() {
     );
   });
 
-  test(
-    'a tie on count and on last tap time resolves the same way every time',
-    () {
-      // Equal count and equal time: the mood declared first wins, whatever order the map was built in.
-      final a = MoodTally(count: 2, lastTapAt: t0);
-      final forward = DayRecord(day, {Mood.happy: a, Mood.sad: a});
-      final backward = DayRecord(day, {Mood.sad: a, Mood.happy: a});
-      expect(forward.dominantMood, Mood.happy);
-      expect(backward.dominantMood, Mood.happy);
-    },
-  );
+  test('a tie on count and on last tap time resolves by tap order', () {
+    final first = MoodTally(count: 2, lastTapAt: t0, lastOrder: 1);
+    final second = MoodTally(count: 2, lastTapAt: t0, lastOrder: 2);
+    final forward = DayRecord(day, {Mood.happy: first, Mood.sad: second});
+    final backward = DayRecord(day, {Mood.sad: second, Mood.happy: first});
+    expect(forward.dominantMood, Mood.sad);
+    expect(backward.dominantMood, Mood.sad);
+  });
+
+  test('"later" is the order of taps, not the clock', () {
+    // The clock was set back between the two taps: the sad tap came last in order,
+    // although its timestamp is earlier.
+    final record = DayRecord.empty(
+      day,
+    ).withTap(Mood.happy, at(100)).withTap(Mood.sad, at(50));
+    expect(record.dominantMood, Mood.sad);
+  });
+
+  test('tap order keeps counting up across moods', () {
+    final record = tapAll([(Mood.happy, 0), (Mood.sad, 1), (Mood.happy, 2)]);
+    expect(record.tallies[Mood.happy]!.lastOrder, 3);
+    expect(record.tallies[Mood.sad]!.lastOrder, 2);
+  });
 }

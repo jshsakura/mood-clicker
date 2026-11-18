@@ -4,6 +4,9 @@ enum SaveTrigger { tick, leaveScreen, background }
 
 /// An immutable value that decides when to write to disk.
 ///
+/// Every time is monotonic: the elapsed time of an injected `Stopwatch`, never the wall clock.
+/// Setting the device clock back or forward cannot delay or hasten a save.
+///
 /// The screen calls `afterTap` on each tap, `afterSaveStarted` the moment a write begins, and
 /// `afterSaveFailed` if the write fails. Taps that arrive during a write stay pending for the next one.
 class SavePolicy {
@@ -12,17 +15,20 @@ class SavePolicy {
   const SavePolicy._(this._pendingSince, this._inFlightSince);
 
   /// The time of the oldest tap that has not been written.
-  final DateTime? _pendingSince;
+  final Duration? _pendingSince;
 
   /// The time of the oldest tap in the batch being written. Restored if the write fails.
-  final DateTime? _inFlightSince;
+  final Duration? _inFlightSince;
 
   bool get hasPending => _pendingSince != null;
 
   /// When there are unwritten taps, the latest time they must be written by.
-  DateTime? get dueAt => _pendingSince?.add(SaveTuning.interval);
+  Duration? get dueAt {
+    final since = _pendingSince;
+    return since == null ? null : since + SaveTuning.interval;
+  }
 
-  SavePolicy afterTap(DateTime now) =>
+  SavePolicy afterTap(Duration now) =>
       SavePolicy._(_pendingSince ?? now, _inFlightSince);
 
   /// Call right after taking the snapshot to save, before awaiting the write.
@@ -36,16 +42,16 @@ class SavePolicy {
     final since = switch ((inFlight, pending)) {
       (null, _) => pending,
       (_, null) => inFlight,
-      (final a?, final b?) => a.isBefore(b) ? a : b,
+      (final a?, final b?) => a < b ? a : b,
     };
     return SavePolicy._(since, null);
   }
 
-  bool shouldSave(SaveTrigger trigger, DateTime now) {
+  bool shouldSave(SaveTrigger trigger, Duration now) {
     final due = dueAt;
     if (due == null) return false;
     return switch (trigger) {
-      SaveTrigger.tick => !now.isBefore(due),
+      SaveTrigger.tick => now >= due,
       SaveTrigger.leaveScreen || SaveTrigger.background => true,
     };
   }
