@@ -34,7 +34,12 @@ class DeviceRecordsPort implements RecordsPort {
   DeviceRecordsPort({
     this.journalFile = defaultJournalFile,
     this.shareFiles = shareThroughSheet,
+    this.store,
   });
+
+  /// The live journal. When given, deleting goes through it so memory, disk and the calendar
+  /// empty together.
+  final app_journal.JournalStore? store;
 
   /// Resolves to the app's one journal file from lib/app/journal_store.dart.
   static Future<File> defaultJournalFile() => app_journal.journalFile();
@@ -65,6 +70,8 @@ class DeviceRecordsPort implements RecordsPort {
 
   @override
   Future<void> deleteAll() async {
+    final live = store;
+    if (live != null) return live.deleteAll();
     final file = await journalFile();
     if (await file.exists()) {
       await file.delete();

@@ -58,6 +58,11 @@ class MemoryRepository implements MoodRepository {
     saved.add(journal);
     return true;
   }
+
+  @override
+  Future<void> clear() async {
+    saved.clear();
+  }
 }
 
 class MemoryDeckStore implements CheerDeckStore {

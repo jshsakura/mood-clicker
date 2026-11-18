@@ -70,6 +70,16 @@ class JournalStore extends ChangeNotifier {
     return save(SaveTrigger.leaveScreen);
   }
 
+  /// Forgets every record: memory, the pending taps and the file. Listeners are told first so the
+  /// calendar redraws at once. Nothing is written afterwards until a new tap arrives. Throws when
+  /// the file cannot be removed, and then the screen must say so.
+  Future<void> deleteAll() async {
+    _journal = MoodJournal.empty();
+    _policy = const SavePolicy.clean();
+    notifyListeners();
+    await repository.clear();
+  }
+
   /// Writes when the policy says so for [trigger]. A failed write is kept pending and retried
   /// on the next call; it never throws to the screen.
   Future<void> save(SaveTrigger trigger) async {
