@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""design/tokens/*.json 에서 lib/design/tokens.g.dart 를 만든다.
+"""design/tokens.json 에서 lib/design/tokens.g.dart 를 만든다.
 
   python3 tool/gen_tokens.py           만든다
   python3 tool/gen_tokens.py --check   만든 파일이 토큰과 맞는지만 본다 (훅, CI)
 
-토큰은 Tokens Studio 의 세트 구성을 따른다. core.json 은 공통 값, 나머지 파일 하나가 테마 하나다.
-디자이너는 이 파일들만 고친다. 색을 새로 넣으면 모든 테마에 같은 이름으로 넣어야 한다.
+토큰은 Tokens Studio 의 단일 파일 형식을 따른다. 최상위 키 core 는 공통 값, 나머지 세트 하나가 테마 하나다.
+$themes, $metadata 처럼 $ 로 시작하는 최상위 키는 건너뛰고, $metadata.tokenSetOrder 가 있으면 그 순서를 따른다.
+디자이너는 이 파일만 고친다. 색을 새로 넣으면 모든 테마에 같은 이름으로 넣어야 한다.
 
 받는 값 형식 (W3C DTCG 2025.10):
   색     "#RRGGBB", "#RRGGBBAA", {colorSpace: "srgb", components: [r, g, b], alpha?, hex?}
@@ -20,7 +21,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-SRC = ROOT / "design" / "tokens"
+SRC = ROOT / "design" / "tokens.json"
 OUT = ROOT / "lib" / "design" / "tokens.g.dart"
 
 HEX = re.compile(r"#([0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})")
@@ -217,16 +218,40 @@ def color_object(v, where):
     return f"{byte(alpha):02X}{r:02X}{g:02X}{b:02X}"
 
 
-def color(tok, where):
+def color_argb(tok, where):
+    """색 토큰의 AARRGGBB (대문자 16진수 여덟 글자)."""
     check_type(tok, "color", where)
     v = value(tok, where)
     if isinstance(v, dict):
-        return f"Color(0x{color_object(v, where)})"
+        return color_object(v, where)
     if not isinstance(v, str) or not HEX.fullmatch(v):
         raise TokenError(f"{where}: 색은 #RRGGBB, #RRGGBBAA 나 srgb 객체로 씁니다")
     h = v[1:].upper()
-    argb = h[6:] + h[:6] if len(h) == 8 else "FF" + h
-    return f"Color(0x{argb})"
+    return h[6:] + h[:6] if len(h) == 8 else "FF" + h
+
+
+def luminance(argb):
+    """WCAG 상대 휘도 0~1. 알파는 보지 않는다."""
+    def lin(byte_hex):
+        c = int(byte_hex, 16) / 255
+        return c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4
+    return 0.2126 * lin(argb[2:4]) + 0.7152 * lin(argb[4:6]) + 0.0722 * lin(argb[6:8])
+
+
+def brightness_of(doc, argbs, theme):
+    """$extensions.app.brightness 를 따른다. 없으면 ground 의 상대 휘도가 0.5 를 넘는지로 추정한다."""
+    ext = doc.get("$extensions")
+    app = ext.get("app") if isinstance(ext, dict) else None
+    b = app.get("brightness") if isinstance(app, dict) else None
+    if b is None:
+        if "ground" not in argbs:
+            raise TokenError(
+                f"{theme}: $extensions.app.brightness 도 없고 ground 색도 없어 밝기를 정할 수 없습니다"
+            )
+        return "light" if luminance(argbs["ground"]) > 0.5 else "dark"
+    if b not in ("light", "dark"):
+        raise TokenError(f"{theme}: $extensions.app.brightness 는 light 나 dark 여야 합니다")
+    return b
 
 
 def number(tok, group, where):
@@ -256,31 +281,45 @@ def num(x):
 
 def palettes(theme_docs):
     if not theme_docs:
-        raise TokenError("테마 파일이 하나도 없습니다")
+        raise TokenError("테마 세트가 하나도 없습니다")
     themes, bright = {}, {}
     for theme, doc in theme_docs.items():
-        ident(theme, f"{theme}.json", reserved=False)
+        ident(theme, f"{theme} 세트", reserved=False)
         if not isinstance(doc, dict):
-            raise TokenError(f"{theme}.json: 최상위는 객체여야 합니다")
-        b = (((doc.get("$extensions") or {}).get("app")) or {}).get("brightness")
-        if b not in ("light", "dark"):
-            raise TokenError(f"{theme}.json: $extensions.app.brightness 는 light 나 dark 여야 합니다")
-        bright[theme] = b
-        body = group_of(doc, "color", f"{theme}.json")
-        themes[theme] = {
-            ident(k, f"{theme}.color.{k}"): color(v, f"{theme}.color.{k}")
-            for k, v in body.items()
+            raise TokenError(f"{theme}: 세트는 객체여야 합니다")
+        argbs = {
+            ident(k, f"{theme}.color.{k}"): color_argb(v, f"{theme}.color.{k}")
+            for k, v in group_of(doc, "color", theme).items()
         }
+        bright[theme] = brightness_of(doc, argbs, theme)
+        themes[theme] = {k: f"Color(0x{a})" for k, a in argbs.items()}
     first, *rest = themes
     keys = list(themes[first])
     for t in rest:
         missing, extra = set(keys) - set(themes[t]), set(themes[t]) - set(keys)
         if missing or extra:
             raise TokenError(
-                f"{t}.json: 테마마다 색 이름이 같아야 합니다. "
+                f"{t}: 테마마다 색 이름이 같아야 합니다. "
                 f"빠진 것 {sorted(missing) or '없음'}, 남는 것 {sorted(extra) or '없음'}"
             )
     return keys, themes, bright
+
+
+def token_sets(doc):
+    """최상위에서 $ 로 시작하는 키를 건너뛰고, $metadata.tokenSetOrder 가 있으면 그 순서로 세트를 돌려준다."""
+    if not isinstance(doc, dict):
+        raise TokenError("토큰 파일의 최상위는 객체여야 합니다")
+    sets = {k: v for k, v in doc.items() if not k.startswith("$")}
+    meta = doc.get("$metadata")
+    order = meta.get("tokenSetOrder") if isinstance(meta, dict) else None
+    if order is None:
+        return sets
+    if not isinstance(order, list) or not all(isinstance(n, str) for n in order) or len(set(order)) != len(order):
+        raise TokenError("$metadata.tokenSetOrder 는 겹치지 않는 세트 이름의 목록이어야 합니다")
+    for n in order:
+        if n not in sets:
+            raise TokenError(f"$metadata.tokenSetOrder 에 있는 세트 '{n}' 가 파일에 없습니다")
+    return {**{n: sets[n] for n in order}, **{k: v for k, v in sets.items() if k not in order}}
 
 
 def palette_class(keys):
@@ -356,12 +395,14 @@ def type_style(k, v, core):
 
 def render(tokens):
     """tokens = {"core": {...}, "dark": {...}, ...}. core 외의 키가 테마다."""
+    tokens = token_sets(tokens)
     core = tokens.get("core")
     if not isinstance(core, dict):
-        raise TokenError("core.json 이 없습니다")
+        raise TokenError("core 세트가 없습니다")
     keys, themes, bright = palettes({k: v for k, v in tokens.items() if k != "core"})
     out = [
         "// 생성 파일이다. 손대지 않는다.",
+        # 아래 안내 문구는 옛 경로를 말하지만 생성 파일이 한 글자도 바뀌지 않게 그대로 둔다.
         "// design/tokens/*.json 을 고친 뒤 python3 tool/gen_tokens.py 를 돌린다.",
         "// ignore_for_file: lines_longer_than_80_chars",
         "import 'package:flutter/material.dart';",
@@ -399,21 +440,22 @@ def render(tokens):
     return "\n".join(out)
 
 
-def load(src=SRC):
-    files = sorted(src.glob("*.json"))
-    return {f.stem: parse_json(f.read_text(encoding="utf-8"), f.name) for f in files}
+def load(path=SRC):
+    if not path.is_file():
+        raise TokenError(f"{path.name} 이 없습니다")
+    return token_sets(parse_json(path.read_text(encoding="utf-8"), path.name))
 
 
 def main(argv):
     try:
         text = render(load())
     except (TokenError, KeyError) as e:
-        print(f"design/tokens 오류: {e}", file=sys.stderr)
+        print(f"design/tokens.json 오류: {e}", file=sys.stderr)
         return 1
     if argv == ["--check"]:
         current = OUT.read_text(encoding="utf-8") if OUT.exists() else ""
         if current != text:
-            print("lib/design/tokens.g.dart 가 design/tokens 와 다릅니다. "
+            print("lib/design/tokens.g.dart 가 design/tokens.json 과 다릅니다. "
                   "python3 tool/gen_tokens.py 를 돌린 뒤 둘 다 커밋합니다.", file=sys.stderr)
             return 1
         return 0

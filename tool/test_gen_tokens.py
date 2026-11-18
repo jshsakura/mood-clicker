@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from gen_tokens import IDENT, OUT, TokenError, load, parse_json, render
+from gen_tokens import IDENT, OUT, SRC, TokenError, load, parse_json, render, token_sets
 
 BASE = load()
 THEMES = [k for k in BASE if k != "core"]
@@ -50,7 +50,7 @@ class Refuses(unittest.TestCase):
     def test_color_missing_from_one_theme(self):
         t = copy.deepcopy(BASE)
         del t["pink"]["color"]["sad"]
-        self.assertRefuses(t, "pink.json")
+        self.assertRefuses(t, "pink")
 
     def test_bad_hex(self):
         t = copy.deepcopy(BASE)
@@ -66,11 +66,6 @@ class Refuses(unittest.TestCase):
         t = copy.deepcopy(BASE)
         t["core"]["type"]["body"]["$value"]["fontFamily"] = "{font.nope}"
         self.assertRefuses(t, "{font.nope}")
-
-    def test_theme_without_brightness(self):
-        t = copy.deepcopy(BASE)
-        del t["pink"]["$extensions"]
-        self.assertRefuses(t, "brightness")
 
     def test_bad_weight(self):
         t = copy.deepcopy(BASE)
@@ -129,10 +124,16 @@ class Json(unittest.TestCase):
 
     def test_load_reports_the_file_with_a_duplicate(self):
         with tempfile.TemporaryDirectory() as d:
-            Path(d, "core.json").write_text('{"space": {}, "space": {}}', encoding="utf-8")
+            f = Path(d, "tokens.json")
+            f.write_text('{"core": {"space": {}, "space": {}}}', encoding="utf-8")
             with self.assertRaises(TokenError) as cm:
-                load(Path(d))
-            self.assertIn("core.json", str(cm.exception))
+                load(f)
+            self.assertIn("tokens.json", str(cm.exception))
+
+    def test_load_refuses_a_missing_file(self):
+        with tempfile.TemporaryDirectory() as d:
+            with self.assertRaises(TokenError):
+                load(Path(d, "nope.json"))
 
     def test_nan_and_infinity_literals_are_refused(self):
         for text in ('{"a": NaN}', '{"a": Infinity}', '{"a": -Infinity}'):
@@ -323,6 +324,106 @@ class Dtcg(RefusesWith):
             with self.subTest(form=form):
                 t = edited(lambda t: t["core"]["motion"]["fillRise"].update({"$value": form}))
                 self.assertEqual(render(t), render(BASE))
+
+
+def without_brightness(theme, ground=None):
+    def change(t):
+        t[theme].pop("$extensions", None)
+        if ground:
+            t[theme]["color"]["ground"]["$value"] = ground
+    return edited(change)
+
+
+class Brightness(RefusesWith):
+    def test_missing_brightness_is_guessed_from_ground(self):
+        for theme in THEMES:
+            with self.subTest(theme):
+                self.assertEqual(render(without_brightness(theme)), render(BASE))
+
+    def test_empty_extensions_count_as_missing(self):
+        t = edited(lambda t: t["dark"].update({"$extensions": {"app": {}}}))
+        self.assertEqual(render(t), render(BASE))
+
+    def test_relative_luminance_half_is_the_dividing_line(self):
+        cases = {"#FFFFFF": "light", "#BCBCBC": "light", "#BBBBBB": "dark",
+                 "#808080": "dark", "#000000": "dark", "#FFF1F5": "light", "#121216": "dark"}
+        for ground, expected in cases.items():
+            with self.subTest(ground):
+                out = render(without_brightness("pink", ground))
+                self.assertIn(f"name: 'pink',\n  brightness: Brightness.{expected},", out)
+
+    def test_ground_alpha_is_ignored(self):
+        out = render(without_brightness("pink", "#00000080"))
+        self.assertIn("name: 'pink',\n  brightness: Brightness.dark,", out)
+
+    def test_ground_may_be_a_color_object(self):
+        obj = {"colorSpace": "srgb", "components": [1, 1, 1]}
+        out = render(without_brightness("pink", obj))
+        self.assertIn("name: 'pink',\n  brightness: Brightness.light,", out)
+
+    def test_written_brightness_wins_over_the_guess(self):
+        t = edited(lambda t: t["light"]["color"]["ground"].update({"$value": "#000000"}))
+        self.assertIn("name: 'light',\n  brightness: Brightness.light,", render(t))
+
+    def test_a_wrong_brightness_is_still_refused(self):
+        t = edited(lambda t: t["pink"]["$extensions"]["app"].update({"brightness": "bright"}))
+        self.assertRefuses(t, "brightness")
+
+    def test_nothing_to_guess_from_is_refused(self):
+        t = without_brightness("pink")
+        del t["pink"]["color"]["ground"]
+        for theme in THEMES:
+            t[theme]["color"].pop("ground", None)
+        self.assertRefuses(t, "ground")
+
+
+class SingleFile(RefusesWith):
+    def doc(self, **extra):
+        return {**BASE, **extra}
+
+    def test_the_checked_in_file_lists_every_set_in_a_fixed_order(self):
+        self.assertEqual(list(BASE), ["core", "dark", "light", "pink"])
+
+    def test_dollar_keys_are_skipped(self):
+        doc = self.doc(**{"$themes": [{"id": "x", "name": "x"}], "$metadata": {"tokenSetOrder": list(BASE)},
+                          "$other": 3})
+        self.assertEqual(render(doc), render(BASE))
+        self.assertEqual(list(token_sets(doc)), list(BASE))
+
+    def test_token_set_order_decides_the_theme_order(self):
+        doc = self.doc(**{"$metadata": {"tokenSetOrder": ["core", "pink", "dark", "light"]}})
+        self.assertIn("allPalettes = [pinkPalette, darkPalette, lightPalette];", render(doc))
+
+    def test_sets_missing_from_the_order_follow_it(self):
+        doc = self.doc(**{"$metadata": {"tokenSetOrder": ["core", "light"]}})
+        self.assertEqual(list(token_sets(doc)), ["core", "light", "dark", "pink"])
+
+    def test_bad_token_set_order_is_refused(self):
+        for order in (["core", "ghost"], ["core", "core"], "core", [1, 2], {"core": 1}):
+            with self.subTest(order):
+                self.assertRefuses(self.doc(**{"$metadata": {"tokenSetOrder": order}}), "tokenSetOrder")
+
+    def test_the_checked_in_file_is_the_single_source(self):
+        self.assertEqual(SRC.name, "tokens.json")
+        self.assertTrue(SRC.is_file())
+        self.assertFalse(SRC.with_suffix("").exists())
+
+    def test_load_reads_one_file_and_skips_dollar_keys(self):
+        with tempfile.TemporaryDirectory() as d:
+            f = Path(d, "tokens.json")
+            f.write_text(
+                __import__("json").dumps({**BASE, "$themes": [], "$metadata": {"tokenSetOrder": list(BASE)}}),
+                encoding="utf-8",
+            )
+            self.assertEqual(render(load(f)), render(BASE))
+
+    def test_a_bare_number_is_pixels(self):
+        a = edited(lambda t: t["core"]["space"]["xs"].update({"$value": 4}))
+        b = edited(lambda t: t["core"]["space"]["xs"].update({"$value": "4"}))
+        self.assertEqual(render(a), render(BASE))
+        self.assertEqual(render(b), render(BASE))
+        c = edited(lambda t: t["core"]["type"]["body"]["$value"].update({"fontSize": 16}))
+        self.assertEqual(render(c), render(BASE))
 
 
 class Output(unittest.TestCase):

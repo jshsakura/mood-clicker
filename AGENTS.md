@@ -8,7 +8,7 @@
 ## 지금 할 일과 하지 않을 일
 
 - 파일럿과 개발 환경에 집중한다. 화면은 꾸미지 않는다. 디자인은 디자이너가 맡는다.
-- 색, 간격, 둥글기, 글자, 움직임 값은 `design/tokens/` 에만 둔다. 화면 코드는 `context.palette`,
+- 색, 간격, 둥글기, 글자, 움직임 값은 `design/tokens.json` 에만 둔다. 화면 코드는 `context.palette`,
   `Space`, `Radii`, `TypeScale`, `Motion` 만 쓴다. `Color(0x…)` 나 숫자 간격을 위젯에 직접 쓰지 않는다.
 - `lib/design/tokens.g.dart` 는 생성 파일이다. 손대지 말고 `python3 tool/gen_tokens.py` 로 만든다.
 - 화면 부품은 `lib/design/parts/` 에 둔다. 디자이너가 고치는 곳이 이 두 군데여야 한다. 자세한 것은 `docs/DESIGN.md`.
