@@ -294,7 +294,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get settings_mindCareSuicide => '自殺予防相談電話(韓国)';
 
   @override
-  String get settings_mindCareKakao => 'カカオトーク相談マドゥルランド(韓国)';
+  String get settings_mindCareKakao => 'マドゥルレン(カカオトーク)';
 
   @override
   String get settings_mindCarePolice => '警察';
