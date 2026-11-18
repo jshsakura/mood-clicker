@@ -36,13 +36,17 @@ abstract interface class RecordsPort {
 }
 
 /// Shares paths through the system share sheet.
-/// Returns false only when the user dismissed the sheet.
+/// Returns true only when the share finished.
 Future<bool> shareThroughSheet(List<String> paths) async {
   final result = await SharePlus.instance.share(
     ShareParams(files: [for (final path in paths) XFile(path)]),
   );
-  return result.status != ShareResultStatus.dismissed;
+  return shareFinished(result);
 }
+
+/// Only a finished share counts. A device that cannot say, or has no share sheet, did not share.
+bool shareFinished(ShareResult result) =>
+    result.status == ShareResultStatus.success;
 
 class DeviceRecordsPort implements RecordsPort {
   DeviceRecordsPort({

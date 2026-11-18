@@ -11,7 +11,7 @@
 |---|---|---|
 | `lib/feedback/shake_detector.dart:7,18` (`SloshSignal`, `ShakeDetector`) | 어느 `lib/` 파일도 가져오지 않습니다. 테스트 1개(`test/feedback/shake_detector_test.dart`)만 씁니다. 실제 앱의 기울이기는 `bootstrap.dart` 의 `sensors_plus` 로 처리합니다 | 중간. 지우면 테스트도 지웁니다 |
 | `lib/feedback/platform_haptics.dart:9` (`PlatformHaptics`) | `lib/` 가져오기 0. 테스트 1개만 씁니다. 앱은 `system_haptics.dart` 를 씁니다 | 중간 |
-| `lib/l10n/locale_choice_prefs.dart:6` (`SharedPreferencesLocaleChoiceStore`) | `lib/` 가져오기 0, 테스트 1개. `AppServices.language`(`lib/app/app_services.dart:65`)도 부트스트랩에서 채우지 않습니다 | 지우지 말고 먼저 확인. 지워야 할 코드가 아니라 연결이 빠진 것일 수 있습니다. 설정의 언어 선택이 재시작 뒤에 남는지 실기기로 확인합니다 |
+| `lib/l10n/locale_choice_prefs.dart:6` (`SharedPreferencesLocaleChoiceStore`) | `lib/` 가져오기 0, 테스트 1개. 언어 선택은 설정 저장소(`settings.language`)가 저장하고 `AppServices.language` 도 부트스트랩에서 채워집니다. 이 옛 저장소는 대체된 것입니다 | 지워도 됩니다(확신 높음). 테스트 `test/l10n/locale_choice_test.dart` 도 함께 지웁니다 |
 | `lib/design/token_preview.dart` | `lib/` 가져오기 0. 골든과 테스트(`test/goldens/harness.dart:116`, `test/design/token_preview_test.dart`)만 씁니다. 화면 문구가 한글로 박혀 있습니다(36행 근처 8줄, `slop-ok`) | 중간. 릴리스 빌드에 들어가므로 `test/` 로 옮기는 것이 맞습니다 |
 
 ## 2. 안 쓰는 함수와 상수
