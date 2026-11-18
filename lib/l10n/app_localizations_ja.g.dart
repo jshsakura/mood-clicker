@@ -154,7 +154,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get settings_language => '言語';
 
   @override
-  String get settings_languageSystem => 'システムに従う';
+  String get settings_languageSystem => '端末の言語';
 
   @override
   String get settings_languageKo => '한국어';
@@ -182,6 +182,120 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get settings_reminderTime => '通知の時刻';
+
+  @override
+  String get settings_time20 => '午後8時';
+
+  @override
+  String get settings_time21 => '午後9時';
+
+  @override
+  String get settings_time22 => '午後10時';
+
+  @override
+  String get settings_notifications => '通知';
+
+  @override
+  String get settings_tapping => 'たたく';
+
+  @override
+  String get settings_strengthWeak => '弱く';
+
+  @override
+  String get settings_strengthNormal => 'ふつう';
+
+  @override
+  String get settings_strengthStrong => '強く';
+
+  @override
+  String get settings_soundPackBasic => '基本';
+
+  @override
+  String get settings_cheers => '応援メッセージ';
+
+  @override
+  String get settings_cheersSize => '文字の大きさ';
+
+  @override
+  String get settings_cheersNormal => 'ふつう';
+
+  @override
+  String get settings_cheersLarge => '大きく';
+
+  @override
+  String get settings_shakeOnFull => 'いっぱいになったら画面を揺らす';
+
+  @override
+  String get settings_tiltToPour => '傾けてこぼす';
+
+  @override
+  String get settings_mindCare => '心のケア';
+
+  @override
+  String get settings_mindCareHelp => '危ないときは助けを求める';
+
+  @override
+  String get settings_mindCareCenter => 'こころの健康相談電話';
+
+  @override
+  String get settings_mindCareCenterNote => '近くのこころの健康福祉センターにつながります';
+
+  @override
+  String get settings_mindCareSuicide => '自殺予防相談';
+
+  @override
+  String get settings_mindCareKakao => 'カカオトーク マドゥルランド';
+
+  @override
+  String get settings_mindCarePolice => '警察';
+
+  @override
+  String get settings_mindCareMedical => '救急医療';
+
+  @override
+  String get settings_notMedical => 'このアプリは医療機器ではなく、診療の代わりにはなりません';
+
+  @override
+  String get settings_map => '地図';
+
+  @override
+  String get settings_mapComment => 'ひと言も足す';
+
+  @override
+  String get settings_mapCommentNote => '用意された文だけを送ります';
+
+  @override
+  String get settings_records => '記録';
+
+  @override
+  String get settings_export => '記録を書き出す';
+
+  @override
+  String get settings_deleteAll => 'すべての記録を消す';
+
+  @override
+  String get settings_deleteConfirmTitle => '記録を消します';
+
+  @override
+  String get settings_deleteConfirmBody => '過去の記録がすべて消えます。元に戻せません。';
+
+  @override
+  String get settings_deleteConfirmAction => '消す';
+
+  @override
+  String get settings_about => '情報';
+
+  @override
+  String get settings_version => 'バージョン';
+
+  @override
+  String get settings_licenses => 'オープンソースライセンス';
+
+  @override
+  String get settings_privacy => 'プライバシーポリシー';
+
+  @override
+  String get settings_privacyPending => '準備中';
 
   @override
   String get settings_mapContribute => '地図に自分の気分を足す';

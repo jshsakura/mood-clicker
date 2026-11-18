@@ -158,7 +158,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settings_language => 'Language';
 
   @override
-  String get settings_languageSystem => 'System default';
+  String get settings_languageSystem => 'Device language';
 
   @override
   String get settings_languageKo => '한국어';
@@ -186,6 +186,122 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settings_reminderTime => 'Reminder time';
+
+  @override
+  String get settings_time20 => '8 PM';
+
+  @override
+  String get settings_time21 => '9 PM';
+
+  @override
+  String get settings_time22 => '10 PM';
+
+  @override
+  String get settings_notifications => 'Notifications';
+
+  @override
+  String get settings_tapping => 'Tapping';
+
+  @override
+  String get settings_strengthWeak => 'Gentle';
+
+  @override
+  String get settings_strengthNormal => 'Normal';
+
+  @override
+  String get settings_strengthStrong => 'Strong';
+
+  @override
+  String get settings_soundPackBasic => 'Basic';
+
+  @override
+  String get settings_cheers => 'Cheer phrases';
+
+  @override
+  String get settings_cheersSize => 'Text size';
+
+  @override
+  String get settings_cheersNormal => 'Normal';
+
+  @override
+  String get settings_cheersLarge => 'Large';
+
+  @override
+  String get settings_shakeOnFull => 'Shake the screen when full';
+
+  @override
+  String get settings_tiltToPour => 'Tilt to pour';
+
+  @override
+  String get settings_mindCare => 'Mind care';
+
+  @override
+  String get settings_mindCareHelp => 'Get help in a crisis';
+
+  @override
+  String get settings_mindCareCenter => 'Mental health hotline';
+
+  @override
+  String get settings_mindCareCenterNote => 'Connects you to a nearby center';
+
+  @override
+  String get settings_mindCareSuicide => 'Suicide prevention line';
+
+  @override
+  String get settings_mindCareKakao => 'KakaoTalk Madellan';
+
+  @override
+  String get settings_mindCarePolice => 'Police';
+
+  @override
+  String get settings_mindCareMedical => 'Emergency medical';
+
+  @override
+  String get settings_notMedical =>
+      'This app is not a medical device and does not replace care from a doctor';
+
+  @override
+  String get settings_map => 'Map';
+
+  @override
+  String get settings_mapComment => 'Add a word too';
+
+  @override
+  String get settings_mapCommentNote => 'Only prepared sentences are shared';
+
+  @override
+  String get settings_records => 'Records';
+
+  @override
+  String get settings_export => 'Export records';
+
+  @override
+  String get settings_deleteAll => 'Delete all records';
+
+  @override
+  String get settings_deleteConfirmTitle => 'Delete the records';
+
+  @override
+  String get settings_deleteConfirmBody =>
+      'Every past day disappears. This cannot be undone.';
+
+  @override
+  String get settings_deleteConfirmAction => 'Delete';
+
+  @override
+  String get settings_about => 'About';
+
+  @override
+  String get settings_version => 'Version';
+
+  @override
+  String get settings_licenses => 'Open source licenses';
+
+  @override
+  String get settings_privacy => 'Privacy policy';
+
+  @override
+  String get settings_privacyPending => 'Coming soon';
 
   @override
   String get settings_mapContribute => 'Share my mood on the map';

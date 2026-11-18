@@ -154,7 +154,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get settings_language => '언어';
 
   @override
-  String get settings_languageSystem => '시스템 따름';
+  String get settings_languageSystem => '기기 언어';
 
   @override
   String get settings_languageKo => '한국어';
@@ -182,6 +182,120 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get settings_reminderTime => '알림 시각';
+
+  @override
+  String get settings_time20 => '오후 8시';
+
+  @override
+  String get settings_time21 => '오후 9시';
+
+  @override
+  String get settings_time22 => '오후 10시';
+
+  @override
+  String get settings_notifications => '알림';
+
+  @override
+  String get settings_tapping => '두드리기';
+
+  @override
+  String get settings_strengthWeak => '약';
+
+  @override
+  String get settings_strengthNormal => '보통';
+
+  @override
+  String get settings_strengthStrong => '세게';
+
+  @override
+  String get settings_soundPackBasic => '기본';
+
+  @override
+  String get settings_cheers => '응원 문구';
+
+  @override
+  String get settings_cheersSize => '글자 크기';
+
+  @override
+  String get settings_cheersNormal => '보통';
+
+  @override
+  String get settings_cheersLarge => '큰 글씨';
+
+  @override
+  String get settings_shakeOnFull => '가득 찰 때 화면 흔들기';
+
+  @override
+  String get settings_tiltToPour => '기울여 쏟기';
+
+  @override
+  String get settings_mindCare => '마음 돌봄';
+
+  @override
+  String get settings_mindCareHelp => '위기 때 도움 요청하기';
+
+  @override
+  String get settings_mindCareCenter => '정신건강 상담전화';
+
+  @override
+  String get settings_mindCareCenterNote => '가까운 정신건강복지센터로 연결합니다';
+
+  @override
+  String get settings_mindCareSuicide => '자살예방 상담전화';
+
+  @override
+  String get settings_mindCareKakao => '카카오톡 마들랜';
+
+  @override
+  String get settings_mindCarePolice => '경찰';
+
+  @override
+  String get settings_mindCareMedical => '응급 의료';
+
+  @override
+  String get settings_notMedical => '이 앱은 의료기기가 아니며 진료를 대신하지 않습니다';
+
+  @override
+  String get settings_map => '지도';
+
+  @override
+  String get settings_mapComment => '한마디도 보태기';
+
+  @override
+  String get settings_mapCommentNote => '고른 준비 문장만 보냅니다';
+
+  @override
+  String get settings_records => '기록';
+
+  @override
+  String get settings_export => '기록 내보내기';
+
+  @override
+  String get settings_deleteAll => '모든 기록 지우기';
+
+  @override
+  String get settings_deleteConfirmTitle => '기록을 지웁니다';
+
+  @override
+  String get settings_deleteConfirmBody => '지난 날들의 기록이 모두 사라집니다. 되돌릴 수 없습니다.';
+
+  @override
+  String get settings_deleteConfirmAction => '지웁니다';
+
+  @override
+  String get settings_about => '정보';
+
+  @override
+  String get settings_version => '버전';
+
+  @override
+  String get settings_licenses => '오픈소스 라이선스';
+
+  @override
+  String get settings_privacy => '개인정보 처리방침';
+
+  @override
+  String get settings_privacyPending => '준비 중입니다';
 
   @override
   String get settings_mapContribute => '지도에 내 기분 보태기';

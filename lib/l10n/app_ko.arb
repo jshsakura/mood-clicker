@@ -181,7 +181,7 @@
   "@settings_language": {
     "description": "설정에서 언어 항목의 이름입니다."
   },
-  "settings_languageSystem": "시스템 따름",
+  "settings_languageSystem": "기기 언어",
   "@settings_languageSystem": {
     "description": "언어 선택지입니다. 기기 언어를 따릅니다. 지원하지 않는 기기 언어는 영어로 보입니다."
   },
@@ -220,6 +220,158 @@
   "settings_reminderTime": "알림 시각",
   "@settings_reminderTime": {
     "description": "저녁 알림이 울리는 시각을 고르는 항목의 이름입니다. 기본은 저녁 9시입니다."
+  },
+  "settings_time20": "오후 8시",
+  "@settings_time20": {
+    "description": "저녁 알림 시각 선택지입니다."
+  },
+  "settings_time21": "오후 9시",
+  "@settings_time21": {
+    "description": "저녁 알림 시각 선택지입니다. 기본값입니다."
+  },
+  "settings_time22": "오후 10시",
+  "@settings_time22": {
+    "description": "저녁 알림 시각 선택지입니다."
+  },
+  "settings_notifications": "알림",
+  "@settings_notifications": {
+    "description": "설정의 알림 묶음 이름입니다."
+  },
+  "settings_tapping": "두드리기",
+  "@settings_tapping": {
+    "description": "설정의 두드리기 묶음 이름입니다. 진동, 소리, 응원 문구, 화면 흔들기, 기울여 쏟기가 여기에 듭니다."
+  },
+  "settings_strengthWeak": "약",
+  "@settings_strengthWeak": {
+    "description": "진동 세기 선택지입니다."
+  },
+  "settings_strengthNormal": "보통",
+  "@settings_strengthNormal": {
+    "description": "진동 세기 선택지입니다. 기본값입니다."
+  },
+  "settings_strengthStrong": "세게",
+  "@settings_strengthStrong": {
+    "description": "진동 세기 선택지입니다."
+  },
+  "settings_soundPackBasic": "기본",
+  "@settings_soundPackBasic": {
+    "description": "소리 묶음 선택지입니다. 지금은 이 한 벌만 있습니다."
+  },
+  "settings_cheers": "응원 문구",
+  "@settings_cheers": {
+    "description": "두드릴 때 뜨는 응원 문구를 켜고 끄는 항목입니다."
+  },
+  "settings_cheersSize": "글자 크기",
+  "@settings_cheersSize": {
+    "description": "응원 문구의 글자 크기를 고르는 항목의 이름입니다."
+  },
+  "settings_cheersNormal": "보통",
+  "@settings_cheersNormal": {
+    "description": "응원 문구 글자 크기 선택지입니다. 기본값입니다."
+  },
+  "settings_cheersLarge": "큰 글씨",
+  "@settings_cheersLarge": {
+    "description": "응원 문구 글자 크기 선택지입니다."
+  },
+  "settings_shakeOnFull": "가득 찰 때 화면 흔들기",
+  "@settings_shakeOnFull": {
+    "description": "채움이 끝까지 찼을 때 화면을 흔들지 고르는 항목입니다."
+  },
+  "settings_tiltToPour": "기울여 쏟기",
+  "@settings_tiltToPour": {
+    "description": "기기를 기울여 채움을 쏟아 내는 놀이를 켜고 끄는 항목입니다."
+  },
+  "settings_mindCare": "마음 돌봄",
+  "@settings_mindCare": {
+    "description": "설정의 마음 돌봄 묶음 이름입니다."
+  },
+  "settings_mindCareHelp": "위기 때 도움 요청하기",
+  "@settings_mindCareHelp": {
+    "description": "누르면 위기 연락처 시트가 열리는 항목입니다."
+  },
+  "settings_mindCareCenter": "정신건강 상담전화",
+  "@settings_mindCareCenter": {
+    "description": "위기 시트의 연락처 이름입니다. 번호 1577-0199 는 코드의 상수에서 옵니다."
+  },
+  "settings_mindCareCenterNote": "가까운 정신건강복지센터로 연결합니다",
+  "@settings_mindCareCenterNote": {
+    "description": "위기 시트에서 109 와 1577-0199 아래에 붙는 안내입니다."
+  },
+  "settings_mindCareSuicide": "자살예방 상담전화",
+  "@settings_mindCareSuicide": {
+    "description": "위기 시트의 연락처 이름입니다. 번호 109 는 코드의 상수에서 옵니다."
+  },
+  "settings_mindCareKakao": "카카오톡 마들랜",
+  "@settings_mindCareKakao": {
+    "description": "위기 시트의 참여 방법 이름입니다. 지금은 번호가 없어 눌러도 연결되지 않습니다."
+  },
+  "settings_mindCarePolice": "경찰",
+  "@settings_mindCarePolice": {
+    "description": "위기 시트의 연락처 이름입니다. 번호 112 는 코드의 상수에서 옵니다."
+  },
+  "settings_mindCareMedical": "응급 의료",
+  "@settings_mindCareMedical": {
+    "description": "위기 시트의 연락처 이름입니다. 번호 119 는 코드의 상수에서 옵니다."
+  },
+  "settings_notMedical": "이 앱은 의료기기가 아니며 진료를 대신하지 않습니다",
+  "@settings_notMedical": {
+    "description": "위기 시트 맨 아래에 늘 보이는 알림입니다."
+  },
+  "settings_map": "지도",
+  "@settings_map": {
+    "description": "설정의 지도 묶음 이름입니다. 3단계 기능입니다."
+  },
+  "settings_mapComment": "한마디도 보태기",
+  "@settings_mapComment": {
+    "description": "지도에 한 줄 문구도 함께 보낼지 고르는 항목입니다. 기본은 꺼짐입니다."
+  },
+  "settings_mapCommentNote": "고른 준비 문장만 보냅니다",
+  "@settings_mapCommentNote": {
+    "description": "한마디도 보태기 아래에 붙는 안내입니다. 마음대로 쓴 글은 보내지 않습니다."
+  },
+  "settings_records": "기록",
+  "@settings_records": {
+    "description": "설정의 기록 묶음 이름입니다."
+  },
+  "settings_export": "기록 내보내기",
+  "@settings_export": {
+    "description": "누르면 기록 파일을 공유 시트로 내보냅니다."
+  },
+  "settings_deleteAll": "모든 기록 지우기",
+  "@settings_deleteAll": {
+    "description": "누르면 확인 시트가 열리는 위험한 항목입니다."
+  },
+  "settings_deleteConfirmTitle": "기록을 지웁니다",
+  "@settings_deleteConfirmTitle": {
+    "description": "모든 기록 지우기의 확인 시트 제목입니다."
+  },
+  "settings_deleteConfirmBody": "지난 날들의 기록이 모두 사라집니다. 되돌릴 수 없습니다.",
+  "@settings_deleteConfirmBody": {
+    "description": "모든 기록 지우기의 확인 시트 본문입니다."
+  },
+  "settings_deleteConfirmAction": "지웁니다",
+  "@settings_deleteConfirmAction": {
+    "description": "모든 기록 지우기의 확인 시트에서 실제로 지우는 버튼입니다."
+  },
+  "settings_about": "정보",
+  "@settings_about": {
+    "description": "설정의 정보 묶음 이름입니다."
+  },
+  "settings_version": "버전",
+  "@settings_version": {
+    "description": "앱 버전 항목의 이름입니다."
+  },
+  "settings_licenses": "오픈소스 라이선스",
+  "@settings_licenses": {
+    "description": "누르면 오픈소스 라이선스 화면이 열립니다."
+  },
+  "settings_privacy": "개인정보 처리방침",
+  "@settings_privacy": {
+    "description": "개인정보 처리방침 항목의 이름입니다. 링크는 아직 준비 중입니다."
+  },
+  "settings_privacyPending": "준비 중입니다",
+  "@settings_privacyPending": {
+    "description": "개인정보 처리방침 항목 오른쪽에 보이는 값입니다."
   },
   "settings_mapContribute": "지도에 내 기분 보태기",
   "@settings_mapContribute": {
