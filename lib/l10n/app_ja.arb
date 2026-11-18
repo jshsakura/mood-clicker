@@ -154,6 +154,7 @@
   "calendar_monthFlow": "今月の流れ",
   "calendar_tapsAxis": "タップ数",
   "calendar_tappedTimes": "{count}回タップしました",
+  "calendar_noteQuote": "「{note}」",
   "calendar_stampLine1": "よくでき",
   "calendar_stampLine2": "ました",
   "dayDetail_moodHeading": "この日の気分",

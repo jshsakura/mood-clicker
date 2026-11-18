@@ -515,6 +515,11 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String calendar_noteQuote(String note) {
+    return '「$note」';
+  }
+
+  @override
   String get calendar_stampLine1 => 'よくでき';
 
   @override

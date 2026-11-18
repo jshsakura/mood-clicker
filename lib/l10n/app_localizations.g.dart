@@ -1024,6 +1024,12 @@ abstract class AppLocalizations {
   /// **'{count}번 두드렸습니다'**
   String calendar_tappedTimes(int count);
 
+  /// 달력 아래 고른 날 카드에 보이는 오늘의 한마디입니다. 따옴표로 감쌉니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'“{note}”'**
+  String calendar_noteQuote(String note);
+
   /// 달력 도장 첫째 줄입니다.
   ///
   /// In ko, this message translates to:
