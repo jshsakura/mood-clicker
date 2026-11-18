@@ -592,3 +592,55 @@ Flutter 앱이 웹앱처럼 어색해 보이지 않고 iOS·Android·macOS 에�
    - **원래 위치**: `oc-cookingfoil-client/source/ui/Pairing.cpp:33-38` (커밋 `0379025`, 5초 시작 -> 2배씩 증가해 최대 1분 -> 10분 후 정지), `oc-cookingfoil-client/source/ui/Application.cpp:1097` (커밋 `2f636d2`)
    - **왜 그렇게 했는지**: 고정 간격 폴링은 배터리를 소모하고, 첫 연결에서 DNS 해석만 느려 타임아웃이 났을 때 바로 실패 처리하면 첫인상이 나빠집니다.
    - **우리 앱에서 쓸 곳**: 3단계 지도 주기적 새로고침이나 기분 업로드 재시도에 지수 백오프(예: 5초 -> 10초 -> 20초, 상한)와 백그라운드 일시정지를 적용하고, 첫 네트워크 연결 타임아웃 시 1회 재시도합니다.
+
+---
+
+## 11. 디자이너의 Figma 토큰 편집 및 무터미널 빌드 확인 흐름
+
+확인일: 2026-11-18
+
+### 11.1 Tokens Studio 무료판의 GitHub 동기화와 필요 설정
+
+- **단일 파일 vs 다중 파일(폴더) 동기화**:
+  - Tokens Studio **무료판**에서도 GitHub **단일 파일 동기화(Single-file sync)**(예: `design/tokens.json` 하나에 `core`, `light`, `dark`, `pink` 세트를 모두 담는 방식)는 push/pull 이 가능합니다.
+  - 반면 **`design/tokens/*.json` 처럼 세트별 여러 파일로 나누어 push 하는 다중 파일 동기화(Multi-file sync)**, 플러그인 내 브랜치 전환, **Themes 기능**은 **유료(Team) 플랜** 기능입니다. 무료판은 팀원이 유료 플랜으로 만들어 둔 다중 파일 폴더를 **읽기 전용(pull)** 으로 불러오는 것까지만 지원합니다.
+- **GitHub 동기화 설정 항목**:
+  - **Repository**: `소유자/저장소이름`
+  - **Branch**: 디자이너용 작업 브랜치(예: `design/tokens`)
+  - **File Path**: 단일 파일 경로(예: `design/tokens.json`) 또는 유료 플랜 시 폴더 경로(`design/tokens`)
+  - **Personal Access Token (PAT)**: GitHub 에서 `contents: read and write` 권한이 있는 토큰 발급
+  - **Token Format 설정**: 플러그인 `Settings` 에서 반드시 **W3C DTCG** 형식으로 선택해야 `$type`, `$value` 를 읽고 씁니다.
+- **실무 대안**: 무료판을 유지하면서 `design/tokens/*.json` 다중 파일 구조를 쓰려면, 디자이너가 Tokens Studio 에서 로컬 Export 한 JSON 을 GitHub 웹 UI 에서 직접 커밋하거나, 단일 파일(`design/tokens.json`)로 동기화한 뒤 `tool/gen_tokens.py` 가 이를 읽도록 맞추는 편이 간단합니다.
+
+출처 및 확인일 (2026-11-18):
+- Tokens Studio GitHub 동기화 및 다중 파일(Multi-file) 플랜 안내: https://docs.tokens.studio/manage-tokens/sync/github , https://docs.tokens.studio/manage-tokens/sync/multi-file-sync
+- Tokens Studio W3C DTCG 포맷 설정: https://docs.tokens.studio/manage-tokens/token-format/w3c-dtcg
+
+### 11.2 우리 형식과 Tokens Studio 내보내기가 어긋나는 지점
+
+1. **`$extensions.app.brightness` 보존 여부**:
+   - W3C DTCG 표준의 `$extensions` 는 Tokens Studio DTCG 직렬화에서 통과될 수 있으나, 플러그인 UI 에서 새 세트를 만들거나 편집할 때 비표준 확장 필드가 누락·초기화될 위험이 있습니다. `tool/gen_tokens.py` 에서 `$extensions.app.brightness` 가 빠졌을 때를 대비한 기본값(`dark` 세트는 dark, 그 외는 light)을 두는 편이 안전합니다.
+2. **제어 파일(`$metadata.json`, `$themes.json`) 생성**:
+   - 다중 파일 동기화를 쓰면 폴더(`design/tokens/`) 안에 세트 순서 파일(`$metadata.json`)과 테마 매핑 파일(`$themes.json`)이 함께 생깁니다. `gen_tokens.py` 가 폴더를 훑을 때 `$` 로 시작하는 제어 파일은 건너뛰어야 합니다.
+3. **`dimension` 과 `typography` 표기 차이**:
+   - Tokens Studio 는 `dimension` 을 `"4px"` 처럼 단위 포함 문자열로 내보내고, `typography` 는 `fontFamily`, `fontWeight`(`"700"` 또는 `"Bold"`), `fontSize`(`"34px"`), `lineHeight`(`"120%"` 또는 `"1.2"`)를 포함한 9개 속성 객체를 기본으로 합니다. `gen_tokens.py` 가 `"4px"` 와 숫자 `4` 를 모두 파싱할 수 있게 두면 충돌이 없습니다.
+
+### 11.3 Figma Variables 기본 내보내기(플러그인 없이) 가능 여부
+
+- **가능합니다(부분 지원).** Figma 의 **Local Variables** 패널에서 Collection 또는 Mode 를 우클릭해 **Export modes** 를 누르면 플러그인 없이도 **W3C DTCG 1.0 JSON**(다중 모드는 모드별 JSON 이 담긴 `.zip`)을 바로 내보내고, 다시 드래그 앤 드롭으로 가져올 수 있습니다.
+- **한계**: Figma Variables 는 Color, Number(간격·둥글기), String, Boolean 중심이므로 **색상(`light`·`dark`·`pink` 모드), 간격, 둥글기**는 플러그인 없이도 충분하지만, **`typography` 복합 토큰과 `motion`(`duration`)** 까지 한 파일로 묶어 관리하려면 Tokens Studio 가 필요합니다.
+
+출처 및 확인일 (2026-11-18):
+- Figma Variables W3C DTCG 내보내기·가져오기 안내: https://help.figma.com/hc/en-us/articles/15339657135383-Guide-to-variables-in-Figma
+
+### 11.4 디자이너가 터미널 없이 폰에서 결과 보는 방법
+
+- **Android (.apk)**:
+  1. **GitHub Actions Artifacts / Releases**: GitHub 웹의 `Actions` 탭에서 최신 실행의 `Artifacts`(`.zip` 압축 해제 후 `.apk` 탭해 설치, "출처를 알 수 없는 앱 허용" 1회) 또는 태그/브랜치 Release 에 붙은 `.apk` 를 폰 브라우저로 바로 내려받아 설치합니다.
+  2. **Firebase App Distribution (권장)**: Actions 마지막에 Firebase App Distribution 을 붙이면 빌드 완료 시 디자이너 이메일·링크(또는 QR)로 알림이 와서 GitHub 로그인 없이 한 번에 설치할 수 있습니다.
+- **iOS (TestFlight)**:
+  - 디자이너의 Apple ID 를 App Store Connect **내부 테스터**로 등록해 두면, GitHub Actions 가 `.ipa` 를 TestFlight 에 올릴 때마다 아이폰 TestFlight 앱에 알림이 뜨고 "업데이트" 버튼 한 번으로 바로 설치됩니다.
+
+출처 및 확인일 (2026-11-18):
+- GitHub Actions Artifact 내려받기: https://docs.github.com/en/actions/managing-workflow-runs-and-deployments/managing-workflow-runs/downloading-workflow-artifacts
+- Firebase App Distribution: https://firebase.google.com/docs/app-distribution
