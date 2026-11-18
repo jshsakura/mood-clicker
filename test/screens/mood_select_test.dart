@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mood_clicker/design/parts/help_button.dart';
 import 'package:mood_clicker/domain/mood.dart';
 import 'package:mood_clicker/domain/mood_journal.dart';
 import 'package:mood_clicker/domain/mood_repository.dart';
 import 'package:mood_clicker/screens/loading_screen.dart';
 import 'package:mood_clicker/screens/mood_select_screen.dart';
 import 'package:mood_clicker/screens/tap/tap_screen.dart';
+import 'package:mood_clicker/settings/crisis_contacts.dart';
 
 import 'fake_app.dart';
 
@@ -99,8 +101,8 @@ void main() {
       settingsBuilder: (_) => const Scaffold(body: Text('settings page')),
     );
     await tester.pumpWidget(app.wrap(const MoodSelectScreen()));
-    // The header order is map, calendar, settings.
-    for (var i = 0; i < 3; i++) {
+    // The header order is help, map, calendar, settings.
+    for (var i = 0; i < 4; i++) {
       await tester.sendKeyEvent(LogicalKeyboardKey.tab);
     }
     await tester.pump();
@@ -114,5 +116,82 @@ void main() {
     final app = TestApp();
     await tester.pumpWidget(app.wrap(const MoodSelectScreen()));
     expect(find.text(ko.moodSelect_title), findsOneWidget);
+  });
+
+  testWidgets('the help button opens the crisis sheet of the device region', (
+    tester,
+  ) async {
+    tester.platformDispatcher.localesTestValue = [const Locale('ko', 'KR')];
+    tester.platformDispatcher.localeTestValue = const Locale('ko', 'KR');
+    addTearDown(tester.platformDispatcher.clearAllTestValues);
+    final app = TestApp();
+    await tester.pumpWidget(app.wrap(const MoodSelectScreen()));
+    expect(find.byType(HelpButton), findsOneWidget);
+    await tester.tap(find.bySemanticsLabel(ko.settings_mindCareHelp));
+    await tester.pumpAndSettle();
+    expect(find.text(ko.settings_mindCareTitle), findsOneWidget);
+    expect(find.text(crisisPhoneNumbers['suicidePrevention']!), findsOneWidget);
+  });
+
+  testWidgets('without a region the help sheet points to a directory', (
+    tester,
+  ) async {
+    tester.platformDispatcher.localesTestValue = [const Locale('ko')];
+    tester.platformDispatcher.localeTestValue = const Locale('ko');
+    addTearDown(tester.platformDispatcher.clearAllTestValues);
+    final app = TestApp();
+    await tester.pumpWidget(app.wrap(const MoodSelectScreen()));
+    await tester.tap(find.bySemanticsLabel(ko.settings_mindCareHelp));
+    await tester.pumpAndSettle();
+    expect(find.text(ko.settings_mindCareFindHelpline), findsOneWidget);
+    expect(find.text(crisisPhoneNumbers['suicidePrevention']!), findsNothing);
+  });
+
+  testWidgets('the grab bar on top is a close button for assistive tech', (
+    tester,
+  ) async {
+    tester.platformDispatcher.localesTestValue = [const Locale('ko', 'KR')];
+    tester.platformDispatcher.localeTestValue = const Locale('ko', 'KR');
+    addTearDown(tester.platformDispatcher.clearAllTestValues);
+    final app = TestApp();
+    await tester.pumpWidget(app.wrap(const MoodSelectScreen()));
+    await tester.tap(find.bySemanticsLabel(ko.settings_mindCareHelp));
+    await tester.pumpAndSettle();
+    expect(find.bySemanticsLabel(ko.settings_close), findsWidgets);
+    // Tapping the top handle closes, without reaching for the bottom one.
+    await tester.tap(find.bySemanticsLabel(ko.settings_close).first);
+    await tester.pumpAndSettle();
+    expect(find.text(ko.settings_mindCareTitle), findsNothing);
+  });
+
+  testWidgets('the crisis sheet closes by dragging it down', (tester) async {
+    tester.platformDispatcher.localesTestValue = [const Locale('ko', 'KR')];
+    tester.platformDispatcher.localeTestValue = const Locale('ko', 'KR');
+    addTearDown(tester.platformDispatcher.clearAllTestValues);
+    final app = TestApp();
+    await tester.pumpWidget(app.wrap(const MoodSelectScreen()));
+    await tester.tap(find.bySemanticsLabel(ko.settings_mindCareHelp));
+    await tester.pumpAndSettle();
+    expect(find.text(ko.settings_mindCareTitle), findsOneWidget);
+    await tester.drag(
+      find.text(ko.settings_mindCareTitle),
+      const Offset(0, 300),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text(ko.settings_mindCareTitle), findsNothing);
+  });
+
+  testWidgets('the crisis sheet closes by tapping above it', (tester) async {
+    tester.platformDispatcher.localesTestValue = [const Locale('ko', 'KR')];
+    tester.platformDispatcher.localeTestValue = const Locale('ko', 'KR');
+    addTearDown(tester.platformDispatcher.clearAllTestValues);
+    final app = TestApp();
+    await tester.pumpWidget(app.wrap(const MoodSelectScreen()));
+    await tester.tap(find.bySemanticsLabel(ko.settings_mindCareHelp));
+    await tester.pumpAndSettle();
+    expect(find.text(ko.settings_mindCareTitle), findsOneWidget);
+    await tester.tapAt(const Offset(200, 20));
+    await tester.pumpAndSettle();
+    expect(find.text(ko.settings_mindCareTitle), findsNothing);
   });
 }

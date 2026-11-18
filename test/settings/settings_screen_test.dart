@@ -262,7 +262,7 @@ void main() {
     tester,
   ) async {
     final harness = Harness();
-    await pumpScreen(tester, harness: harness);
+    await pumpScreen(tester, harness: harness, deviceCountryCode: 'KR');
     final l10n = lookupAppLocalizations(const Locale('ko'));
     await tester.tap(find.text(l10n.settings_mindCareHelp));
     await tester.pumpAndSettle();
@@ -282,6 +282,7 @@ void main() {
     await pumpScreen(
       tester,
       harness: harness,
+      deviceCountryCode: 'KR',
       customize: (screen) {
         urls.clear();
         return SettingsScreen(
@@ -321,6 +322,37 @@ void main() {
       expect(find.text(number), findsNothing);
     }
   });
+
+  for (final code in ['US', 'GB', null]) {
+    testWidgets(
+      'the crisis sheet for ${code ?? 'no region'} has no Korean number',
+      (tester) async {
+        final harness = Harness();
+        await pumpScreen(tester, harness: harness, deviceCountryCode: code);
+        final l10n = lookupAppLocalizations(const Locale('ko'));
+        await tester.tap(find.text(l10n.settings_mindCareHelp));
+        await tester.pumpAndSettle();
+        for (final number in [
+          ...crisisPhoneNumbers.values,
+          ...japanCrisisPhoneNumbers.values,
+        ]) {
+          expect(find.text(number), findsNothing, reason: number);
+        }
+        expect(find.text(l10n.settings_mindCareFootnote), findsNothing);
+        if (code == 'US') {
+          expect(find.text(usCrisisLine), findsNWidgets(2));
+          expect(find.text(l10n.settings_mindCareFootnoteUs), findsOneWidget);
+        } else {
+          expect(find.text(l10n.settings_mindCareFindHelpline), findsOneWidget);
+          expect(find.text(helplineDirectoryHost), findsOneWidget);
+          expect(
+            find.text(l10n.settings_mindCareFootnoteOther),
+            findsOneWidget,
+          );
+        }
+      },
+    );
+  }
 
   testWidgets('delete all asks first and only then wipes', (tester) async {
     final harness = Harness();

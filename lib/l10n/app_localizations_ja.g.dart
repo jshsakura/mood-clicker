@@ -562,4 +562,32 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get tap_action => 'タップ';
+
+  @override
+  String get settings_mindCareUs988 => '988 自殺・危機ライフライン(米国)';
+
+  @override
+  String get settings_mindCareUs988Text => '988 テキスト相談(米国)';
+
+  @override
+  String get settings_mindCareFindHelpline => '今いる国の相談窓口を探す';
+
+  @override
+  String get settings_mindCareFindHelplineNote => '国ごとの無料相談窓口をまとめたサイトが開きます';
+
+  @override
+  String get settings_mindCareFootnoteJapan =>
+      '危険なときは110か119に電話してください。このアプリは医療機器ではなく、診療の代わりにはなりません。';
+
+  @override
+  String get settings_mindCareFootnoteUs =>
+      '危険なときは911に電話してください。このアプリは医療機器ではなく、診療の代わりにはなりません。';
+
+  @override
+  String get settings_mindCareFootnoteOther =>
+      '危険なときは、今いる国の緊急番号に電話してください。このアプリは医療機器ではなく、診療の代わりにはなりません。';
+
+  @override
+  String get settings_mindCareCopyFallback =>
+      'アプリを開けなかったため、番号をコピーしました。電話やメッセージアプリに貼り付けてください。';
 }

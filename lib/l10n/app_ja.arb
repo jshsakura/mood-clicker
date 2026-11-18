@@ -169,5 +169,13 @@
   "note_reason": "最後まで満たしました。今日を一行で残します。",
   "note_privacy": "自分で書いた言葉はこの端末にだけ残ります。リストから選んだ文だけが、名前なしで地図に表示されます。",
   "note_saveFailed": "保存できませんでした。しばらくしてからもう一度押してください。書いた文はそのままです。",
-  "tap_action": "タップ"
+  "tap_action": "タップ",
+  "settings_mindCareUs988": "988 自殺・危機ライフライン(米国)",
+  "settings_mindCareUs988Text": "988 テキスト相談(米国)",
+  "settings_mindCareFindHelpline": "今いる国の相談窓口を探す",
+  "settings_mindCareFindHelplineNote": "国ごとの無料相談窓口をまとめたサイトが開きます",
+  "settings_mindCareFootnoteJapan": "危険なときは110か119に電話してください。このアプリは医療機器ではなく、診療の代わりにはなりません。",
+  "settings_mindCareFootnoteUs": "危険なときは911に電話してください。このアプリは医療機器ではなく、診療の代わりにはなりません。",
+  "settings_mindCareFootnoteOther": "危険なときは、今いる国の緊急番号に電話してください。このアプリは医療機器ではなく、診療の代わりにはなりません。",
+  "settings_mindCareCopyFallback": "アプリを開けなかったため、番号をコピーしました。電話やメッセージアプリに貼り付けてください。"
 }

@@ -14,7 +14,7 @@ import '../l10n/app_localizations.g.dart';
 import '../l10n/locale_choice.dart';
 import '../reminder/reminder_controller.dart';
 import '../reminder/reminder_port.dart';
-import 'crisis_contacts.dart';
+import 'crisis_sheet.dart';
 import 'records_port.dart';
 import 'privacy_screen.dart';
 import 'settings.dart';
@@ -377,14 +377,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _openCrisisSheet() async {
-    final region = crisisRegionOf(
-      WidgetsBinding.instance.platformDispatcher.locale.countryCode,
-    );
-    await showModalBottomSheet<void>(
-      context: context,
-      builder: (sheetContext) =>
-          CrisisSheet(region: region, launchPhone: widget.launchPhone),
-    );
+    await showCrisisSheet(context, launchPhone: widget.launchPhone);
   }
 }
 
@@ -1008,132 +1001,6 @@ class _ConfirmSheet extends StatelessWidget {
                   ),
                 ),
               ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// The crisis sheet of the mind care section.
-class CrisisSheet extends StatelessWidget {
-  const CrisisSheet({
-    super.key,
-    required this.region,
-    required this.launchPhone,
-  });
-
-  final CrisisRegion region;
-  final Future<bool> Function(String url) launchPhone;
-
-  @override
-  Widget build(BuildContext context) {
-    final palette = context.palette;
-    final l10n = AppLocalizations.of(context);
-    String labelOf(CrisisEntry entry) => switch (entry.labelKey) {
-      'suicide' => l10n.settings_mindCareSuicide,
-      'center' => l10n.settings_mindCareCenter,
-      'kakao' => l10n.settings_mindCareKakao,
-      'sosJapan' => l10n.settings_mindCareSosJapan,
-      _ => l10n.settings_mindCareYorisoiJapan,
-    };
-    String? noteOf(CrisisEntry entry) => switch (entry.noteKey) {
-      'SuicideNote' => l10n.settings_mindCareSuicideNote,
-      'CenterNote' => l10n.settings_mindCareCenterNote,
-      'KakaoNote' => l10n.settings_mindCareKakaoNote,
-      _ => null,
-    };
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(Space.xl),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.settings_mindCareTitle,
-              style: TypeScale.title.copyWith(
-                color: palette.ink,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: Space.sm),
-            Text(
-              l10n.settings_mindCareIntro,
-              style: TypeScale.body.copyWith(color: palette.inkMuted),
-            ),
-            const SizedBox(height: Space.md),
-            for (final entry in crisisEntriesFor(region)) ...[
-              PressableSurface(
-                kind: PressableKind.card,
-                onTap: entry.number == null
-                    ? null
-                    : () => launchPhone('tel:${entry.number}'),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: Space.md),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: Space.md,
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                labelOf(entry),
-                                style: TypeScale.body.copyWith(
-                                  color: palette.ink,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              if (noteOf(entry) != null)
-                                Text(
-                                  noteOf(entry)!,
-                                  style: TypeScale.label.copyWith(
-                                    color: palette.inkMuted,
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      if (entry.number != null)
-                        Text(
-                          entry.number!,
-                          style: TypeScale.body.copyWith(
-                            color: palette.ink,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: Space.sm),
-            ],
-            Text(
-              l10n.settings_mindCareFootnote,
-              style: TypeScale.label.copyWith(color: palette.inkMuted),
-            ),
-            const SizedBox(height: Space.md),
-            PressableSurface(
-              kind: PressableKind.card,
-              color: palette.ink,
-              onTap: () => Navigator.of(context).pop(),
-              child: Container(
-                height: 52,
-                alignment: Alignment.center,
-                child: Text(
-                  l10n.settings_close,
-                  style: TypeScale.body.copyWith(
-                    color: palette.ground,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
             ),
           ],
         ),

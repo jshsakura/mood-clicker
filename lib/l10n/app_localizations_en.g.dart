@@ -573,4 +573,34 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tap_action => 'Tap';
+
+  @override
+  String get settings_mindCareUs988 => '988 Suicide and Crisis Lifeline (US)';
+
+  @override
+  String get settings_mindCareUs988Text => 'Text 988 (US)';
+
+  @override
+  String get settings_mindCareFindHelpline =>
+      'Find a helpline in the country you are in';
+
+  @override
+  String get settings_mindCareFindHelplineNote =>
+      'Opens a site that lists free helplines by country';
+
+  @override
+  String get settings_mindCareFootnoteJapan =>
+      'In immediate danger call 110 or 119. This app is not a medical device and does not replace care from a doctor.';
+
+  @override
+  String get settings_mindCareFootnoteUs =>
+      'In immediate danger call 911. This app is not a medical device and does not replace care from a doctor.';
+
+  @override
+  String get settings_mindCareFootnoteOther =>
+      'In immediate danger call the emergency number of the country you are in. This app is not a medical device and does not replace care from a doctor.';
+
+  @override
+  String get settings_mindCareCopyFallback =>
+      'The app did not open, so the number is copied. Paste it into your phone or messages app.';
 }

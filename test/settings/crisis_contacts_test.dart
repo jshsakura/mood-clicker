@@ -22,7 +22,7 @@ void main() {
     expect(crisisRegionOf('JP'), CrisisRegion.japan);
     expect(crisisRegionOf('jp'), CrisisRegion.japan);
     expect(crisisRegionOf('KR'), CrisisRegion.korea);
-    expect(crisisRegionOf(null), CrisisRegion.korea);
+    expect(crisisRegionOf('us'), CrisisRegion.unitedStates);
   });
 
   test('the Korean set carries the pinned numbers', () {
@@ -36,6 +36,33 @@ void main() {
   test('the Japan set carries the pinned numbers', () {
     for (final entry in crisisEntriesFor(CrisisRegion.japan)) {
       expect(japanCrisisPhoneNumbers.containsValue(entry.number), isTrue);
+    }
+  });
+
+  test('GB, no region and unknown codes never get a Korean number', () {
+    for (final code in ['GB', null, '', 'ZZ', 'DE']) {
+      expect(crisisRegionOf(code), CrisisRegion.other, reason: '$code');
+    }
+    for (final entry in crisisEntriesFor(CrisisRegion.other)) {
+      expect(entry.number, isNull);
+      expect(entry.textNumber, isNull);
+      expect(entry.launchUrl, helplineDirectoryUrl);
+    }
+  });
+
+  test('the United States gets 988 by call and by text', () {
+    final entries = crisisEntriesFor(CrisisRegion.unitedStates);
+    expect(entries.map((e) => e.launchUrl), ['tel:988', 'sms:988']);
+  });
+
+  test('no region leaks the numbers of another', () {
+    final korean = crisisPhoneNumbers.values.toSet();
+    final japanese = japanCrisisPhoneNumbers.values.toSet();
+    for (final region in [CrisisRegion.unitedStates, CrisisRegion.other]) {
+      for (final entry in crisisEntriesFor(region)) {
+        expect(korean, isNot(contains(entry.number)));
+        expect(japanese, isNot(contains(entry.number)));
+      }
     }
   });
 }

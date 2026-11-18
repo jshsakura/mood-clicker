@@ -563,4 +563,33 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get tap_action => '두드리기';
+
+  @override
+  String get settings_mindCareUs988 => '988 자살 및 위기 상담 전화(미국)';
+
+  @override
+  String get settings_mindCareUs988Text => '988 문자 상담(미국)';
+
+  @override
+  String get settings_mindCareFindHelpline => '지금 계신 나라의 상담 전화 찾기';
+
+  @override
+  String get settings_mindCareFindHelplineNote =>
+      '나라별 무료 상담 전화를 모아 둔 사이트가 열립니다';
+
+  @override
+  String get settings_mindCareFootnoteJapan =>
+      '당장 위험하다면 110 또는 119에 전화합니다. 이 앱은 의료기기가 아니며 진료를 대신하지 않습니다.';
+
+  @override
+  String get settings_mindCareFootnoteUs =>
+      '당장 위험하다면 911에 전화합니다. 이 앱은 의료기기가 아니며 진료를 대신하지 않습니다.';
+
+  @override
+  String get settings_mindCareFootnoteOther =>
+      '당장 위험하다면 지금 계신 나라의 긴급 번호에 전화합니다. 이 앱은 의료기기가 아니며 진료를 대신하지 않습니다.';
+
+  @override
+  String get settings_mindCareCopyFallback =>
+      '앱을 열지 못해 번호를 복사해 두었습니다. 전화나 문자 앱에 붙여 넣어 주세요.';
 }

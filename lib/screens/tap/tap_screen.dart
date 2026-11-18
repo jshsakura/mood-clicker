@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 
 import '../../app/app_services.dart';
 import '../../design/app_theme.dart';
+import '../../design/parts/help_button.dart';
 import '../../design/parts/line_icon.dart';
 import '../../design/parts/mood_face.dart';
 import '../../design/parts/pressable_surface.dart';
@@ -24,6 +25,7 @@ import '../../domain/spill.dart';
 import '../../domain/tuning.dart';
 import '../../feedback/feedback_kind.dart';
 import '../../l10n/app_localizations.g.dart';
+import '../../settings/crisis_sheet.dart';
 import '../mood_labels.dart';
 import 'cheer_overlay.dart';
 import 'note_sheet.dart';
@@ -32,12 +34,20 @@ import 'note_sheet.dart';
 /// tap counts the instant a finger lands. Water rises with the taps, phrases pop up where the
 /// finger was, and tilting the phone sloshes the water and can spill it.
 class TapScreen extends StatefulWidget {
-  const TapScreen({super.key, required this.mood, this.random});
+  const TapScreen({
+    super.key,
+    required this.mood,
+    this.random,
+    this.launchPhone = launchPhoneCall,
+  });
 
   final Mood mood;
 
   /// The source of chance for the water. Tests give a seeded one.
   final Random? random;
+
+  /// Opens tel: and sms: links. The help button uses it.
+  final Future<bool> Function(String url) launchPhone;
 
   @override
   State<TapScreen> createState() => _TapScreenState();
@@ -454,6 +464,14 @@ class _TapScreenState extends State<TapScreen>
                               ),
                             ),
                           ],
+                          // One tap to help from the tapping screen too.
+                          const SizedBox(width: Space.md),
+                          HelpButton(
+                            onTap: () => showCrisisSheet(
+                              context,
+                              launchPhone: widget.launchPhone,
+                            ),
+                          ),
                         ],
                       ),
                     ),
