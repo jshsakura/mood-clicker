@@ -164,5 +164,12 @@
   "dayDetail_addNote": "Add note",
   "dayDetail_editNote": "Edit note",
   "map_empty": "No nearby entries yet",
-  "map_sampleNotice": "Showing a sample neighborhood map"
+  "map_sampleNotice": "Showing a sample neighborhood map",
+  "settings_mindCareUs988": "988 Suicide and Crisis Lifeline (US)",
+  "settings_mindCareUs988Text": "Text 988 (US)",
+  "settings_mindCareFindHelpline": "Find a helpline in the country you are in",
+  "settings_mindCareFindHelplineNote": "Opens a site that lists free helplines by country",
+  "settings_mindCareFootnoteJapan": "In immediate danger call 110 or 119. This app is not a medical device and does not replace care from a doctor.",
+  "settings_mindCareFootnoteUs": "In immediate danger call 911. This app is not a medical device and does not replace care from a doctor.",
+  "settings_mindCareFootnoteOther": "In immediate danger call the emergency number of the country you are in. This app is not a medical device and does not replace care from a doctor."
 }

@@ -164,5 +164,12 @@
   "dayDetail_addNote": "ひとことを残す",
   "dayDetail_editNote": "ひとことを直す",
   "map_empty": "近くにまだ記録がありません",
-  "map_sampleNotice": "現在は見本マップを表示しています"
+  "map_sampleNotice": "現在は見本マップを表示しています",
+  "settings_mindCareUs988": "988 自殺・危機ライフライン(米国)",
+  "settings_mindCareUs988Text": "988 テキスト相談(米国)",
+  "settings_mindCareFindHelpline": "今いる国の相談窓口を探す",
+  "settings_mindCareFindHelplineNote": "国ごとの無料相談窓口をまとめたサイトが開きます",
+  "settings_mindCareFootnoteJapan": "危険なときは110か119に電話してください。このアプリは医療機器ではなく、診療の代わりにはなりません。",
+  "settings_mindCareFootnoteUs": "危険なときは911に電話してください。このアプリは医療機器ではなく、診療の代わりにはなりません。",
+  "settings_mindCareFootnoteOther": "危険なときは、今いる国の緊急番号に電話してください。このアプリは医療機器ではなく、診療の代わりにはなりません。"
 }

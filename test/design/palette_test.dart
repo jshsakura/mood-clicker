@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mood_clicker/design/app_theme.dart';
 import 'package:mood_clicker/design/theme_choice.dart';
 import 'package:mood_clicker/design/tokens.g.dart';
 
@@ -38,7 +39,6 @@ const _pairs = <(String fg, String bg, double min, String use)>[
   ('inkMuted', 'ground', _text, 'secondary text'),
   ('inkMuted', 'surface', _text, 'secondary text on a card'),
   ('onAccent', 'accent', _text, 'text on an accent button'),
-  ('onAccent', 'error', _text, 'text on the error color (the theme onError)'),
   ('onFill', 'fill', _largeText, 'large number on a risen fill (56px bold)'),
   ('happy', 'surface', _graphic, 'stripe of the happy side banner'),
   ('sad', 'surface', _graphic, 'stripe of the sad side banner'),
@@ -47,10 +47,7 @@ const _pairs = <(String fg, String bg, double min, String use)>[
 /// Pairs that miss the threshold with today's values. The key is 'palette/foreground/background'.
 /// Remove an entry here once its color is fixed. A test below checks that only still-failing pairs remain.
 /// Changing values belongs to design/tokens, so this test never touches them.
-const _knownFailures = <String, String>{
-  'pink/onAccent/error':
-      'the color used as onError is 3.51 on the error red; a matching onError color is needed',
-};
+const _knownFailures = <String, String>{};
 
 void main() {
   for (final p in allPalettes) {
@@ -60,6 +57,17 @@ void main() {
         for (final c in [p.ink, p.inkMuted, p.onAccent]) {
           expect(c.a, 1.0);
         }
+      });
+
+      test('the theme onError is opaque and reads on the error color', () {
+        // The color Material really draws on top of the error color.
+        final scheme = buildTheme(p).colorScheme;
+        expect(scheme.onError.a, 1.0);
+        expect(scheme.error.a, 1.0);
+        expect(
+          contrast(scheme.onError, scheme.error),
+          greaterThanOrEqualTo(_text),
+        );
       });
 
       for (final (fg, bg, min, use) in _pairs) {

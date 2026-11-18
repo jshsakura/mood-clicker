@@ -483,6 +483,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get map_togetherHappy => '今日は近くに気分のいい人がたくさんいます';
 
   @override
+<<<<<<< HEAD
   String get moodSelect_title => '今日の気分は';
 
   @override
@@ -546,4 +547,28 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get map_sampleNotice => '現在は見本マップを表示しています';
+=======
+  String get settings_mindCareUs988 => '988 自殺・危機ライフライン(米国)';
+
+  @override
+  String get settings_mindCareUs988Text => '988 テキスト相談(米国)';
+
+  @override
+  String get settings_mindCareFindHelpline => '今いる国の相談窓口を探す';
+
+  @override
+  String get settings_mindCareFindHelplineNote => '国ごとの無料相談窓口をまとめたサイトが開きます';
+
+  @override
+  String get settings_mindCareFootnoteJapan =>
+      '危険なときは110か119に電話してください。このアプリは医療機器ではなく、診療の代わりにはなりません。';
+
+  @override
+  String get settings_mindCareFootnoteUs =>
+      '危険なときは911に電話してください。このアプリは医療機器ではなく、診療の代わりにはなりません。';
+
+  @override
+  String get settings_mindCareFootnoteOther =>
+      '危険なときは、今いる国の緊急番号に電話してください。このアプリは医療機器ではなく、診療の代わりにはなりません。';
+>>>>>>> 04a55ed (fix: route the crisis sheet by region and add a help button on the mood screen)
 }

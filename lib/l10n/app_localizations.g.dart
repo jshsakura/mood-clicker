@@ -964,6 +964,7 @@ abstract class AppLocalizations {
   /// **'오늘 기분이 좋은 사람이 가까이에 많습니다'**
   String get map_togetherHappy;
 
+<<<<<<< HEAD
   /// 기분 고르기 화면의 큰 제목입니다.
   ///
   /// In ko, this message translates to:
@@ -1089,6 +1090,49 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'지금은 둘러보기용 표본 지도입니다'**
   String get map_sampleNotice;
+=======
+  /// 기기 지역이 미국일 때 보이는 988 전화 이름입니다. 번호는 코드의 상수에서 옵니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'988 자살 및 위기 상담 전화(미국)'**
+  String get settings_mindCareUs988;
+
+  /// 기기 지역이 미국일 때 보이는 988 문자 상담 이름입니다. 누르면 문자 앱이 열립니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'988 문자 상담(미국)'**
+  String get settings_mindCareUs988Text;
+
+  /// 기기 지역이 한국, 일본, 미국이 아닐 때 보이는 안내입니다. 누르면 국가별 상담 전화 모음 사이트가 열립니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'지금 계신 나라의 상담 전화 찾기'**
+  String get settings_mindCareFindHelpline;
+
+  /// 상담 전화 찾기 아래에 붙는 안내입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'나라별 무료 상담 전화를 모아 둔 사이트가 열립니다'**
+  String get settings_mindCareFindHelplineNote;
+
+  /// 기기 지역이 일본일 때 위기 시트 맨 아래에 보이는 안내입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'당장 위험하다면 110 또는 119에 전화합니다. 이 앱은 의료기기가 아니며 진료를 대신하지 않습니다.'**
+  String get settings_mindCareFootnoteJapan;
+
+  /// 기기 지역이 미국일 때 위기 시트 맨 아래에 보이는 안내입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'당장 위험하다면 911에 전화합니다. 이 앱은 의료기기가 아니며 진료를 대신하지 않습니다.'**
+  String get settings_mindCareFootnoteUs;
+
+  /// 기기 지역이 한국, 일본, 미국이 아닐 때 위기 시트 맨 아래에 보이는 안내입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'당장 위험하다면 지금 계신 나라의 긴급 번호에 전화합니다. 이 앱은 의료기기가 아니며 진료를 대신하지 않습니다.'**
+  String get settings_mindCareFootnoteOther;
+>>>>>>> 04a55ed (fix: route the crisis sheet by region and add a help button on the mood screen)
 }
 
 class _AppLocalizationsDelegate
