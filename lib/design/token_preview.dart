@@ -66,7 +66,6 @@ class TokenPreview extends StatelessWidget {
               label:
                   '행복해요', // slop-ok: shown on screen to check the Korean font
               emoji: '😊',
-              isHappySide: true,
               todayCount: 128,
               onTap: () {},
             ),
@@ -74,7 +73,6 @@ class TokenPreview extends StatelessWidget {
             MoodBanner(
               label: '슬퍼요', // slop-ok: shown on screen to check the Korean font
               emoji: '😢',
-              isHappySide: false,
               todayCount: 12,
               onTap: () {},
             ),
