@@ -142,6 +142,18 @@ class CheerPicker {
     return chosen;
   }
 
+  /// Decides what one tap shows. The complete stage is always the complete phrase. Any other tap
+  /// is a rare phrase with [CheerTuning.rareChance], else an ordinary one of that stage.
+  CheerDraw draw(CheerBook book, Mood mood, CheerStage stage) {
+    if (stage == CheerStage.complete) {
+      return CheerDraw(pick(book, mood, stage), CheerKind.complete);
+    }
+    if (_random.nextDouble() < CheerTuning.rareChance) {
+      return CheerDraw(pick(book, mood, CheerStage.rare), CheerKind.rare);
+    }
+    return CheerDraw(pick(book, mood, stage), CheerKind.normal);
+  }
+
   _Deck _newDeck(int size, String fingerprint, _Deck? previous) {
     final keep = min(CheerTuning.deckTailSize, size ~/ 2);
     final tail = previous == null || keep == 0
@@ -158,6 +170,13 @@ class CheerPicker {
     final later = [...rest.skip(keep), ...tail]..shuffle(_random);
     return _Deck(fingerprint, List.unmodifiable([...head, ...later]), 0);
   }
+}
+
+/// One tap's phrase and how to show it.
+class CheerDraw {
+  const CheerDraw(this.phrase, this.kind);
+  final String phrase;
+  final CheerKind kind;
 }
 
 /// Keeps the deck positions between app runs.

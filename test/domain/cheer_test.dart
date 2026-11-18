@@ -98,10 +98,6 @@ void main() {
       expect(stages[39], CheerStage.complete);
       expect(stages.skip(40), everyElement(CheerStage.full));
     });
-
-    test('complete uses the full font size', () {
-      expect(CheerStage.complete.fontSize, CheerStage.full.fontSize);
-    });
   });
 
   group('complete bundle', () {
@@ -216,5 +212,44 @@ void main() {
       ),
       hasLength(1),
     );
+  });
+
+  group('rare bundle', () {
+    test('is optional and falls back to the high bundle', () {
+      final moods = moodsWith(3, rare: false);
+      final book = CheerBook.parse(fileOf(moods)).book;
+      expect(book.effectiveStage(Mood.sad, CheerStage.rare), CheerStage.high);
+      expect(
+        book.bundle(Mood.sad, CheerStage.rare),
+        book.bundle(Mood.sad, CheerStage.high),
+      );
+    });
+
+    test('is used when the file has it', () {
+      final book = bookOf(3);
+      expect(book.bundle(Mood.sad, CheerStage.rare), ['3r0', '3r1', '3r2']);
+    });
+
+    test('an empty rare bundle is an error', () {
+      final moods = moodsWith(2);
+      (moods['sad']! as Map<String, Object?>)['rare'] = <String>[];
+      expect(() => CheerBook.parse(fileOf(moods)), throwsFormatException);
+    });
+
+    test('the stage of a gauge is never rare', () {
+      var gauge = const FillGauge.empty();
+      final t = DateTime(2026, 11, 18, 12);
+      for (var i = 0; i < 45; i++) {
+        gauge = gauge.tap(t);
+        expect(CheerStage.of(gauge, t), isNot(CheerStage.rare));
+      }
+    });
+  });
+
+  test('lifetimes by kind and the rare chance are the agreed numbers', () {
+    expect(CheerKind.normal.lifetime, const Duration(milliseconds: 950));
+    expect(CheerKind.rare.lifetime, const Duration(milliseconds: 1400));
+    expect(CheerKind.complete.lifetime, const Duration(milliseconds: 1700));
+    expect(CheerTuning.rareChance, 0.025);
   });
 }

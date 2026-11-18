@@ -6,6 +6,19 @@ import 'mood.dart';
 import 'tuning.dart';
 
 /// Which phrase bundle fits the gauge: 0 to 0.5, 0.5 to 1, full, or the single moment it fills.
+/// How a phrase is shown. Decides its lifetime and look.
+enum CheerKind {
+  normal,
+  rare,
+  complete;
+
+  Duration get lifetime => switch (this) {
+    CheerKind.normal => CheerTuning.lifetime,
+    CheerKind.rare => CheerTuning.rareLifetime,
+    CheerKind.complete => CheerTuning.completeLifetime,
+  };
+}
+
 enum CheerStage {
   low('low'),
   high('high'),
@@ -13,16 +26,13 @@ enum CheerStage {
 
   /// The one tap that takes the gauge from not full to full. Optional in a phrase file: without
   /// it the full bundle is used.
-  complete('complete');
+  complete('complete'),
+
+  /// A rare phrase. Optional in a phrase file: without it a rare draw uses the high bundle.
+  rare('rare');
 
   const CheerStage(this.id);
   final String id;
-
-  double get fontSize => switch (this) {
-    CheerStage.low => CheerTuning.fontSizeLow,
-    CheerStage.high => CheerTuning.fontSizeHigh,
-    CheerStage.full || CheerStage.complete => CheerTuning.fontSizeFull,
-  };
 
   static CheerStage of(FillGauge gauge, DateTime now) {
     if (gauge.justFilled) return CheerStage.complete;
@@ -38,10 +48,12 @@ class CheerBook {
   final Map<(Mood, CheerStage), List<String>> _bundles;
   final Map<(Mood, CheerStage), String> _fingerprints;
 
-  /// The stage whose bundle is really used: `complete` falls back to `full` when this mood has
-  /// no complete bundle.
-  CheerStage effectiveStage(Mood mood, CheerStage stage) =>
-      _bundles.containsKey((mood, stage)) ? stage : CheerStage.full;
+  /// The stage whose bundle is really used. `complete` falls back to `full` and `rare` to `high`
+  /// when this mood has no such bundle.
+  CheerStage effectiveStage(Mood mood, CheerStage stage) {
+    if (_bundles.containsKey((mood, stage))) return stage;
+    return stage == CheerStage.rare ? CheerStage.high : CheerStage.full;
+  }
 
   List<String> bundle(Mood mood, CheerStage stage) =>
       _bundles[(mood, effectiveStage(mood, stage))] ?? const [];
@@ -51,8 +63,8 @@ class CheerBook {
   String fingerprint(Mood mood, CheerStage stage) =>
       _fingerprints[(mood, effectiveStage(mood, stage))] ?? '';
 
-  /// Parses `{"version":1,"moods":{"happy":{"low":[...],"high":[...],"full":[...],"complete":[...]}}}`.
-  /// `complete` is optional. Throws [FormatException] for a file over [CheerTuning.maxFileBytes],
+  /// Parses `{"version":1,"moods":{"happy":{"low":[...],"high":[...],"full":[...],"complete":[...],"rare":[...]}}}`.
+  /// `complete` and `rare` are optional. Throws [FormatException] for a file over [CheerTuning.maxFileBytes],
   /// a wrong version, an unknown mood id, a missing or empty bundle, or an entry that is not a
   /// non-empty string. Phrases longer than [CheerTuning.maxPhraseLength] and phrases repeated
   /// inside one bundle only produce a warning.
@@ -79,7 +91,9 @@ class CheerBook {
       final entry = moods[mood.id];
       if (entry is! Map) throw FormatException('missing mood: ${mood.id}');
       for (final stage in CheerStage.values) {
-        if (stage == CheerStage.complete && entry[stage.id] == null) continue;
+        final optional =
+            stage == CheerStage.complete || stage == CheerStage.rare;
+        if (optional && entry[stage.id] == null) continue;
         final where = '${mood.id}/${stage.id}';
         final phrases = _phrases(entry[stage.id], where);
         warnings.addAll(_warningsFor(where, phrases));

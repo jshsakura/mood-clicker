@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'cheer.dart';
 import 'tuning.dart';
 
 /// An axis-aligned box in screen pixels.
@@ -44,10 +45,11 @@ class CheerRect {
 
 /// A phrase on screen: where it was born and when. Immutable.
 class CheerSlot {
-  const CheerSlot(this.bornBox, this.shownAt);
+  const CheerSlot(this.bornBox, this.shownAt, {this.kind = CheerKind.normal});
 
   final CheerRect bornBox;
   final DateTime shownAt;
+  final CheerKind kind;
 }
 
 /// The result of one tap: the new slot list and where the new phrase goes.
@@ -86,34 +88,59 @@ abstract final class CheerLayout {
     );
   }
 
+  /// The font size for a phrase. It grows with the fill level, the complete phrase has its own
+  /// size, and any phrase is shrunk until its box fits in [CheerTuning.maxWidthShare] of
+  /// [screenWidth].
+  static double fontSizeFor({
+    required double level,
+    required CheerKind kind,
+    required int length,
+    required double screenWidth,
+  }) {
+    final wanted = kind == CheerKind.complete
+        ? CheerTuning.fontSizeComplete
+        : CheerTuning.fontSizeBase +
+              level.clamp(0.0, 1.0) * CheerTuning.fontSizePerFill;
+    final room =
+        screenWidth * CheerTuning.maxWidthShare - CheerTuning.boxPadding;
+    if (length <= 0 || room <= 0) return wanted;
+    final fits = room / (length * CheerTuning.widthPerSize);
+    return fits < wanted ? fits : wanted;
+  }
+
   /// How far up a phrase of the given age has floated, in pixels.
-  static double riseAt(Duration age) {
-    final progress = age.inMicroseconds / CheerTuning.lifetime.inMicroseconds;
+  static double riseAt(Duration age, {CheerKind kind = CheerKind.normal}) {
+    final progress = age.inMicroseconds / kind.lifetime.inMicroseconds;
     return CheerTuning.riseDistance * progress.clamp(0.0, 1.0);
   }
 
   /// Where the slot is drawn at [now].
   static CheerRect currentBox(CheerSlot slot, DateTime now) =>
-      slot.bornBox.shifted(0, -riseAt(_age(slot, now)));
+      slot.bornBox.shifted(0, -riseAt(_age(slot, now), kind: slot.kind));
 
   /// The share of its lifetime a phrase keeps once [newerCount] newer phrases exist:
-  /// 1 for the newest, 0.6 for the one before it, 0.35 for the one before that and older.
+  /// 1 for the newest, 0.85 for the one before it, 0.7 for the one before that and older.
   static double lifetimeShare(int newerCount) => switch (newerCount) {
     <= 0 => 1,
     1 => CheerTuning.previousLifetimeShare,
     _ => CheerTuning.olderLifetimeShare,
   };
 
-  static Duration lifetimeFor(int newerCount) => Duration(
-    microseconds:
-        (CheerTuning.lifetime.inMicroseconds * lifetimeShare(newerCount))
-            .round(),
+  /// How long a phrase of [kind] lives once [newerCount] newer phrases exist.
+  static Duration lifetimeFor(
+    int newerCount, {
+    CheerKind kind = CheerKind.normal,
+  }) => Duration(
+    microseconds: (kind.lifetime.inMicroseconds * lifetimeShare(newerCount))
+        .round(),
   );
 
   /// Slots that have not run out of life yet, oldest first.
   static List<CheerSlot> alive(List<CheerSlot> slots, DateTime now) => [
     for (var i = 0; i < slots.length; i++)
-      if (_age(slots[i], now) < lifetimeFor(slots.length - 1 - i)) slots[i],
+      if (_age(slots[i], now) <
+          lifetimeFor(slots.length - 1 - i, kind: slots[i].kind))
+        slots[i],
   ];
 
   /// The boxes that block a new phrase at [now]: only phrases still in the first 70 percent
@@ -154,8 +181,40 @@ abstract final class CheerLayout {
 
   static double _distance(Point<double> p) => p.x * p.x + p.y * p.y;
 
+  /// -1 for the left half, 1 for the right half, 0 within the dead zone around the center or
+  /// when the screen center is not known.
+  static int _sideOf(double x, double? centerX) {
+    if (centerX == null) return 0;
+    if (x < centerX - CheerTuning.sideDeadZone) return -1;
+    if (x > centerX + CheerTuning.sideDeadZone) return 1;
+    return 0;
+  }
+
+  static bool _isOnSide(CheerRect box, int side, double? centerX) {
+    if (side == 0 || centerX == null) return true;
+    final middle = (box.left + box.right) / 2;
+    return side < 0 ? middle < centerX : middle > centerX;
+  }
+
+  /// The moment the gauge becomes full: one complete phrase at [center], and every other phrase
+  /// is cleared.
+  static CheerPlacement showComplete({
+    required Point<double> center,
+    required int length,
+    required double fontSize,
+    required DateTime now,
+  }) {
+    final box = boxFor(center: center, length: length, fontSize: fontSize);
+    return CheerPlacement(
+      slots: List.unmodifiable([CheerSlot(box, now, kind: CheerKind.complete)]),
+      box: box,
+      evictedOldest: false,
+    );
+  }
+
   /// Handles one tap. A phrase always appears: at the tap if it is free, else at the nearest
-  /// free grid spot (kept on screen when [bounds] is given), else at the tap after the oldest
+  /// free grid spot (kept on screen when [bounds] is given, and on the tap's own side of
+  /// [screenCenterX] unless the tap is within the dead zone of the center), else at the tap after the oldest
   /// phrase is removed. Expired phrases are dropped first.
   static CheerPlacement show({
     required Point<double> tap,
@@ -163,25 +222,29 @@ abstract final class CheerLayout {
     required double fontSize,
     required List<CheerSlot> slots,
     required DateTime now,
+    CheerKind kind = CheerKind.normal,
     CheerRect? bounds,
+    double? screenCenterX,
   }) {
     final live = alive(slots, now);
+    final side = _sideOf(tap.x, screenCenterX);
     final blocking = blockers(live, now);
     final wanted = boxFor(center: tap, length: length, fontSize: fontSize);
 
     for (final offset in spotOffsets()) {
       final box = wanted.shifted(offset.x, offset.y);
       if (bounds != null && !box.isInside(bounds)) continue;
+      if (!_isOnSide(box, side, screenCenterX)) continue;
       if (blocking.any(box.overlaps)) continue;
       return CheerPlacement(
-        slots: List.unmodifiable([...live, CheerSlot(box, now)]),
+        slots: List.unmodifiable([...live, CheerSlot(box, now, kind: kind)]),
         box: box,
         evictedOldest: false,
       );
     }
     final kept = live.isEmpty ? live : live.sublist(1);
     return CheerPlacement(
-      slots: List.unmodifiable([...kept, CheerSlot(wanted, now)]),
+      slots: List.unmodifiable([...kept, CheerSlot(wanted, now, kind: kind)]),
       box: wanted,
       evictedOldest: live.isNotEmpty,
     );
