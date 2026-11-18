@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:mood_clicker/app/app_services.dart';
 import 'package:mood_clicker/app/journal_store.dart';
 import 'package:mood_clicker/design/app_theme.dart';
+import 'package:mood_clicker/design/theme_choice.dart';
 import 'package:mood_clicker/design/tokens.g.dart';
 import 'package:mood_clicker/domain/cheer_picker.dart';
 import 'package:mood_clicker/domain/feel_settings.dart';
@@ -16,9 +17,25 @@ import 'package:mood_clicker/l10n/app_localizations_ko.g.dart';
 
 import '../domain/cheer_fixtures.dart';
 import '../feedback/fakes.dart';
+import '../surfaces/fakes.dart';
+import 'package:mood_clicker/surfaces/native_surfaces.dart';
 
 /// The Korean strings, so tests read labels from the translations instead of typing them.
 final ko = AppLocalizationsKo();
+
+/// The three fake ports of the native surfaces, so a test can look at what was sent.
+class FakeSurfaces {
+  final publisher = FakeWidgetPublisher();
+  final shortcuts = FakeIconShortcuts();
+  final links = FakeLaunchLinks();
+
+  NativeSurfaces build() => NativeSurfaces(
+    widget: publisher,
+    shortcuts: shortcuts,
+    links: links,
+    onLaunchMood: (_) {},
+  );
+}
 
 class MemoryRepository implements MoodRepository {
   MemoryRepository({this.loadResult});
@@ -56,6 +73,7 @@ class TestApp {
     FeelSettings feel = const FeelSettings(),
     DateTime? start,
     this.settingsBuilder,
+    this.fakeSurfaces,
   }) : repository = repository ?? MemoryRepository(),
        clock = start ?? DateTime(2026, 11, 18, 12),
        haptics = FakeHaptics(),
@@ -76,7 +94,9 @@ class TestApp {
       deckStore: store,
       feel: this.feel,
       tilt: () => tiltEvents.stream,
+      theme: ValueNotifier(const ThemeChoice.named('light')),
       settingsBuilder: settingsBuilder,
+      surfaces: fakeSurfaces?.build(),
       now: () => clock,
     );
   }
@@ -87,6 +107,9 @@ class TestApp {
   final ValueNotifier<FeelSettings> feel;
   final StreamController<double> tiltEvents;
   final WidgetBuilder? settingsBuilder;
+
+  /// Fakes for the home widget and shortcuts. Null leaves the surfaces out.
+  final FakeSurfaces? fakeSurfaces;
   late final JournalStore journal;
   late final AppServices services;
   DateTime clock;

@@ -90,6 +90,9 @@ class _TapScreenState extends State<TapScreen>
 
   @override
   void dispose() {
+    // Closed some way other than the back button (a widget link replaced this screen): the taps
+    // still must not wait for the next timer.
+    unawaited(_services.journal.save(SaveTrigger.leaveScreen));
     _services.feel.removeListener(_onFeelChanged);
     _tiltSubscription?.cancel();
     _ticker.dispose();

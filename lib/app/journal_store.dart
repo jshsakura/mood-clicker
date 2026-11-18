@@ -19,6 +19,11 @@ class JournalStore extends ChangeNotifier {
   MoodJournal _journal;
   SavePolicy _policy = const SavePolicy.clean();
 
+  bool _isLoaded = false;
+
+  /// True once [load] has run, so a launch request can wait for the real journal.
+  bool get isLoaded => _isLoaded;
+
   MoodJournal get journal => _journal;
 
   /// Whether some taps wait to be written.
@@ -27,6 +32,7 @@ class JournalStore extends ChangeNotifier {
   /// Replaces the journal right after loading. Nothing is pending.
   void load(MoodJournal journal) {
     _journal = journal;
+    _isLoaded = true;
     _policy = const SavePolicy.clean();
     notifyListeners();
   }

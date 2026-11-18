@@ -24,7 +24,11 @@ class FeedbackEntry {
 const _happy = HapticCue(
   steps: [HapticStep(HapticStyle.light)],
   ios: [IosHapticEvent(IosHapticType.transient, 0.55, 0.85)],
-  android: AndroidHaptic([0, 15], [0, 140]),
+  android: AndroidHaptic(
+    [0, 15],
+    [0, 140],
+    primitives: [AndroidPrimitiveStep(AndroidPrimitiveType.tick, 0.65)],
+  ),
 );
 
 const _excited = HapticCue(
@@ -36,13 +40,24 @@ const _excited = HapticCue(
     IosHapticEvent(IosHapticType.transient, 0.45, 0.75),
     IosHapticEvent(IosHapticType.transient, 0.65, 0.75, startMs: 45),
   ],
-  android: AndroidHaptic([0, 12, 35, 15], [0, 110, 0, 165]),
+  android: AndroidHaptic(
+    [0, 12, 35, 15],
+    [0, 110, 0, 165],
+    primitives: [
+      AndroidPrimitiveStep(AndroidPrimitiveType.tick, 0.50),
+      AndroidPrimitiveStep(AndroidPrimitiveType.click, 0.70, delayMs: 35),
+    ],
+  ),
 );
 
 const _angry = HapticCue(
   steps: [HapticStep(HapticStyle.heavy)],
   ios: [IosHapticEvent(IosHapticType.transient, 0.95, 0.25)],
-  android: AndroidHaptic([0, 32], [0, 245]),
+  android: AndroidHaptic(
+    [0, 32],
+    [0, 245],
+    primitives: [AndroidPrimitiveStep(AndroidPrimitiveType.thud, 0.95)],
+  ),
 );
 
 const _sad = HapticCue(
@@ -62,7 +77,15 @@ const _anxious = HapticCue(
     IosHapticEvent(IosHapticType.transient, 0.35, 0.90, startMs: 22),
     IosHapticEvent(IosHapticType.transient, 0.35, 0.90, startMs: 44),
   ],
-  android: AndroidHaptic([0, 10, 14, 10, 14, 10], [0, 95, 0, 95, 0, 95]),
+  android: AndroidHaptic(
+    [0, 10, 14, 10, 14, 10],
+    [0, 95, 0, 95, 0, 95],
+    primitives: [
+      AndroidPrimitiveStep(AndroidPrimitiveType.tick, 0.40),
+      AndroidPrimitiveStep(AndroidPrimitiveType.tick, 0.40, delayMs: 14),
+      AndroidPrimitiveStep(AndroidPrimitiveType.tick, 0.40, delayMs: 14),
+    ],
+  ),
 );
 
 const _full = HapticCue(
@@ -74,7 +97,33 @@ const _full = HapticCue(
     IosHapticEvent(IosHapticType.continuous, 0.90, 0.45, durationMs: 220),
     IosHapticEvent(IosHapticType.transient, 1.0, 0.80, startMs: 230),
   ],
-  android: AndroidHaptic([0, 140, 30, 60], [0, 220, 0, 255]),
+  android: AndroidHaptic(
+    [0, 140, 30, 60],
+    [0, 220, 0, 255],
+    primitives: [
+      AndroidPrimitiveStep(AndroidPrimitiveType.thud, 0.85),
+      AndroidPrimitiveStep(AndroidPrimitiveType.click, 1.0, delayMs: 60),
+    ],
+  ),
+);
+
+const _rare = HapticCue(
+  steps: [
+    HapticStep(HapticStyle.light),
+    HapticStep(HapticStyle.light, delay: Duration(milliseconds: 55)),
+  ],
+  ios: [
+    IosHapticEvent(IosHapticType.transient, 0.50, 0.80),
+    IosHapticEvent(IosHapticType.transient, 0.55, 0.85, startMs: 55),
+  ],
+  android: AndroidHaptic(
+    [0, 12, 43, 12],
+    [0, 120, 0, 130],
+    primitives: [
+      AndroidPrimitiveStep(AndroidPrimitiveType.tick, 0.55),
+      AndroidPrimitiveStep(AndroidPrimitiveType.tick, 0.60, delayMs: 43),
+    ],
+  ),
 );
 
 const _select = HapticCue(
@@ -99,6 +148,7 @@ const _tapAnxious = FeedbackEntry(haptic: _anxious, soundId: 'tap_anxious');
 const _fullAll = FeedbackEntry(haptic: _full, soundId: 'full');
 const _selectAll = FeedbackEntry(haptic: _select, soundId: 'select');
 const _dropAll = FeedbackEntry(haptic: _drop);
+const _rareAll = FeedbackEntry(haptic: _rare);
 
 /// Lookup table for all feedback cues. Edit only here to adjust mappings.
 /// Every kind and mood combination must be present; enforced by tests.
@@ -131,6 +181,13 @@ abstract final class FeedbackTable {
       'angry': _dropAll,
       'sad': _dropAll,
       'anxious': _dropAll,
+    },
+    FeedbackKind.rare: {
+      'happy': _rareAll,
+      'excited': _rareAll,
+      'angry': _rareAll,
+      'sad': _rareAll,
+      'anxious': _rareAll,
     },
   };
 

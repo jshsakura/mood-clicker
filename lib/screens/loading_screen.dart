@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../app/app_services.dart';
@@ -7,6 +9,7 @@ import '../domain/mood_journal.dart';
 import '../domain/mood_repository.dart';
 import '../l10n/app_localizations.g.dart';
 import 'mood_select_screen.dart';
+import 'tap/tap_screen.dart';
 
 /// The first screen: the wordmark in the middle while the journal loads. A journal that cannot
 /// be read is never deleted. The user is told, and starts with an empty one; the unreadable file
@@ -41,14 +44,27 @@ class _LoadingScreenState extends State<LoadingScreen> {
         await _tellBroken();
         if (!mounted) return;
     }
-    await Navigator.of(context).pushReplacement(
-      PageRouteBuilder<void>(
-        transitionDuration: Motion.page,
-        pageBuilder: (_, _, _) => const MoodSelectScreen(),
-        transitionsBuilder: (_, animation, _, child) =>
-            FadeTransition(opacity: animation, child: child),
+    final navigator = Navigator.of(context);
+    unawaited(
+      navigator.pushReplacement(
+        PageRouteBuilder<void>(
+          transitionDuration: Motion.page,
+          pageBuilder: (_, _, _) => const MoodSelectScreen(),
+          transitionsBuilder: (_, animation, _, child) =>
+              FadeTransition(opacity: animation, child: child),
+        ),
       ),
     );
+    // A widget or shortcut that started the app asked for a mood: open it on top of the picker.
+    final launch = services.launchMood.value;
+    if (launch != null) {
+      services.launchMood.value = null;
+      unawaited(
+        navigator.push(
+          MaterialPageRoute<void>(builder: (_) => TapScreen(mood: launch)),
+        ),
+      );
+    }
   }
 
   Future<void> _tellBroken() {

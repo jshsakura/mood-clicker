@@ -184,4 +184,16 @@ abstract final class FeedbackTuning {
 
   /// Pitch jitter range around the original pitch (1.0 +/- this value).
   static const double pitchJitter = 0.03;
+
+  /// Fill-proportional tap haptic scaling bounds (iOS Core Haptics & Android scale).
+  static const double fillIntensityMin = 0.35;
+  static const double fillIntensityMax = 1.0;
+  static const double fillSharpnessMin = 0.25;
+  static const double fillSharpnessMax = 0.95;
+
+  /// Sudden acceleration delta (m/s^2) required to emit a liquid slosh signal.
+  static const double shakeThresholdDelta = 14.0;
+
+  /// Minimum interval between emitted slosh signals.
+  static const Duration shakeCooldown = Duration(milliseconds: 450);
 }

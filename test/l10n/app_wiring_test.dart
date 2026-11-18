@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mood_clicker/l10n/app_localizations.g.dart';
 import 'package:mood_clicker/l10n/locale_resolution.dart';
-import 'package:mood_clicker/main.dart';
+import 'package:mood_clicker/app/app.dart';
+import '../screens/fake_app.dart';
 
 /// Pumps the same localization wiring main.dart uses and shows the localized
 /// strings, so the delegates, supported locales and the fallback rule are
@@ -44,8 +45,10 @@ void main() {
 
   testWidgets('the real app builds with localizations wired', (tester) async {
     tester.platformDispatcher.localesTestValue = const [Locale('fr')];
-    await tester.pumpWidget(const MoodClickerApp());
-    await tester.pumpAndSettle();
+    final app = TestApp();
+    await tester.pumpWidget(MoodClickerApp(services: app.services));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
     expect(tester.takeException(), isNull);
   });
 }
