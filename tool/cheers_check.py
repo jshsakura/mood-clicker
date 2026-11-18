@@ -1,24 +1,26 @@
 #!/usr/bin/env python3
 """Validate cheer phrase bundles (assets/cheers/ko.json and en.json).
 
-Checks schema, per-mood tier minimum counts, character lengths, exact and
-punctuation/whitespace-normalized duplicates across all moods, forbidden words,
-dashes, curly quotes, and emojis.
+Checks schema, per-mood tier minimum counts, per-mood minimum unique bases,
+max variations per base, grapheme cluster lengths, exact and normalized
+duplicates, forbidden words, dashes, and curly quotes.
 """
 import argparse
 import json
 import re
 import sys
+import unicodedata
 from pathlib import Path
 
 MOODS = ("happy", "excited", "angry", "sad", "anxious")
 TIERS = ("low", "high", "full", "complete", "rare")
 DEFAULT_MIN_COUNTS = {"low": 400, "high": 400, "full": 150, "complete": 50, "rare": 60}
-LENGTH_BOUNDS = {"ko": (2, 12), "en": (2, 18)}
+DEFAULT_MIN_BASES_PER_MOOD = 300
+MAX_GROUP_SIZE = 4  # 1 base + up to 3 text-play variations
+LENGTH_BOUNDS = {"ko": (2, 14), "en": (2, 20)}
 
 DASH_RE = re.compile(r"[\u2013\u2014]")
 CURLY_RE = re.compile(r"[\u2018\u2019\u201c\u201d]")
-EMOJI_RE = re.compile(r"[\U0001F300-\U0001FAFF\u2600-\u27BF\u2B50\u2B06\u2194-\u21FF]")
 NORM_RE = re.compile(r"[\s\W_]+", re.UNICODE)
 
 # Korean forbidden roots encoded as unicode escapes to keep Python source ASCII-clean.
@@ -57,19 +59,70 @@ EN_BANNED_RE = re.compile(
 )
 
 
+def count_graphemes(text: str) -> int:
+    """Count extended-grapheme-like clusters without external dependencies."""
+    count = 0
+    zwj_join = False
+    ri_pending = False
+    for ch in text:
+        cp = ord(ch)
+        if ch == "\u200D":  # ZWJ joins next char to current cluster
+            zwj_join = True
+            ri_pending = False
+            continue
+        if zwj_join:
+            zwj_join = False
+            continue
+        if ch in ("\uFE0E", "\uFE0F") or 0x1F3FB <= cp <= 0x1F3FF:
+            continue
+        if unicodedata.category(ch) in ("Mn", "Mc", "Me"):
+            continue
+        if 0x1F1E6 <= cp <= 0x1F1FF:
+            if ri_pending:
+                ri_pending = False
+                continue
+            ri_pending = True
+            count += 1
+            continue
+        ri_pending = False
+        count += 1
+    return count
+
+
 def normalize_phrase(text: str) -> str:
     return NORM_RE.sub("", text).lower()
+
+
+def _parse_item(item: object, loc: str) -> tuple[str | None, str | None, str | None]:
+    if isinstance(item, str):
+        return item, None, None
+    if isinstance(item, dict):
+        keys = set(item.keys())
+        if not keys.issubset({"t", "b"}) or "t" not in keys or "b" not in keys:
+            return None, None, f"{loc}: object must have exactly 't' and 'b' keys"
+        t = item["t"]
+        b = item["b"]
+        if not isinstance(t, str) or not isinstance(b, str) or not b.strip():
+            return None, None, f"{loc}: 't' and 'b' must be strings with non-empty 'b'"
+        return t, b, None
+    return None, None, f"{loc}: expected string or {{'t', 'b'}} object"
 
 
 def check_bundle(
     data: dict,
     lang: str,
     min_counts: dict[str, int] | None = None,
+    min_bases_per_mood: int | None = None,
 ) -> list[str]:
     errors: list[str] = []
     if lang not in LENGTH_BOUNDS:
         return [f"unsupported language: {lang}"]
     counts = DEFAULT_MIN_COUNTS if min_counts is None else min_counts
+    req_bases = (
+        DEFAULT_MIN_BASES_PER_MOOD
+        if min_bases_per_mood is None and min_counts is None
+        else (min_bases_per_mood or 0)
+    )
     min_len, max_len = LENGTH_BOUNDS[lang]
 
     if data.get("version") != 1:
@@ -79,13 +132,17 @@ def check_bundle(
         return errors + [f"{lang}: missing moods object"]
 
     seen_exact: dict[str, str] = {}
-    seen_norm: dict[str, str] = {}
+    seen_norm: dict[str, tuple[str, str | None]] = {}
+    base_mood: dict[str, str] = {}
 
     for mood in MOODS:
         mood_obj = moods.get(mood)
         if not isinstance(mood_obj, dict):
             errors.append(f"{lang}.{mood}: missing mood object")
             continue
+        base_group_counts: dict[str, int] = {}
+        standalone_bases = 0
+
         for tier in TIERS:
             arr = mood_obj.get(tier)
             if not isinstance(arr, list):
@@ -96,21 +153,38 @@ def check_bundle(
                 errors.append(
                     f"{lang}.{mood}.{tier}: expected >= {req}, got {len(arr)}"
                 )
-            for idx, item in enumerate(arr):
+            for idx, raw in enumerate(arr):
                 loc = f"{lang}.{mood}.{tier}[{idx}]"
-                if not isinstance(item, str):
-                    errors.append(f"{loc}: not a string")
+                item, base_id, parse_err = _parse_item(raw, loc)
+                if parse_err is not None or item is None:
+                    errors.append(parse_err or f"{loc}: invalid item")
                     continue
-                if not (min_len <= len(item) <= max_len):
+
+                if base_id is not None:
+                    prev_mood = base_mood.get(base_id)
+                    if prev_mood is not None and prev_mood != mood:
+                        errors.append(
+                            f"{loc}: base {base_id!r} already used in mood {prev_mood!r}"
+                        )
+                    else:
+                        base_mood[base_id] = mood
+                    base_group_counts[base_id] = base_group_counts.get(base_id, 0) + 1
+                    if base_group_counts[base_id] > MAX_GROUP_SIZE:
+                        errors.append(
+                            f"{loc}: base {base_id!r} exceeds max {MAX_GROUP_SIZE} items (1 base + 3 variations)"
+                        )
+                else:
+                    standalone_bases += 1
+
+                g_len = count_graphemes(item)
+                if not (min_len <= g_len <= max_len):
                     errors.append(
-                        f"{loc}: length {len(item)} outside {min_len}..{max_len} ({item!r})"
+                        f"{loc}: length {g_len} outside {min_len}..{max_len} ({item!r})"
                     )
                 if DASH_RE.search(item):
                     errors.append(f"{loc}: contains dash ({item!r})")
                 if CURLY_RE.search(item):
                     errors.append(f"{loc}: contains curly quote ({item!r})")
-                if EMOJI_RE.search(item):
-                    errors.append(f"{loc}: contains emoji ({item!r})")
                 if lang == "ko" and any(bad in item for bad in KO_BANNED):
                     errors.append(f"{loc}: contains forbidden word ({item!r})")
                 if lang == "en" and EN_BANNED_RE.search(item):
@@ -124,15 +198,21 @@ def check_bundle(
                     seen_exact[item] = loc
 
                 norm = normalize_phrase(item)
-                if norm in seen_norm and item not in seen_exact:
-                    pass
-                if norm in seen_norm:
-                    if seen_norm[norm] != loc and seen_exact.get(item) == loc:
+                if norm and norm in seen_norm:
+                    prev_loc, prev_base = seen_norm[norm]
+                    same_base = base_id is not None and base_id == prev_base
+                    if not same_base and seen_exact.get(item) == loc:
                         errors.append(
-                            f"{loc}: normalized duplicate of {seen_norm[norm]} ({item!r})"
+                            f"{loc}: normalized duplicate of {prev_loc} ({item!r})"
                         )
-                else:
-                    seen_norm[norm] = loc
+                elif norm:
+                    seen_norm[norm] = (loc, base_id)
+
+        total_bases = len(base_group_counts) + standalone_bases
+        if total_bases < req_bases:
+            errors.append(
+                f"{lang}.{mood}: expected >= {req_bases} unique bases, got {total_bases}"
+            )
     return errors
 
 
@@ -154,13 +234,18 @@ def main(argv: list[str] | None = None) -> int:
     all_errors: list[str] = []
     for lang in args.langs:
         path = root / "assets" / "cheers" / f"{lang}.json"
-        data = json.loads(path.read_text(encoding="utf-8"))
+        if not path.is_file():
+            all_errors.append(f"missing file: {path}")
+            continue
+        with path.open(encoding="utf-8") as fh:
+            data = json.load(fh)
         all_errors.extend(check_bundle(data, lang))
+
     if all_errors:
         for err in all_errors[:40]:
             print(err, file=sys.stderr)
         if len(all_errors) > 40:
-            print(f"... and {len(all_errors) - 40} more", file=sys.stderr)
+            print(f"... and {len(all_errors) - 40} more errors", file=sys.stderr)
         return 1
     print(f"cheers_check OK ({', '.join(args.langs)})")
     return 0
