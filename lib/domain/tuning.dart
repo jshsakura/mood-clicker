@@ -159,11 +159,26 @@ abstract final class FillTuning {
   static const double drainJiggle = 160;
   static const double drainTiltPull = 14;
 
-  /// Water spills like out of a cup: the high edge of the tilted surface sits
-  /// (half the screen width) * tan(tilt) above the middle of the surface. For every second, the
-  /// share of the screen height that edge is above the top of the screen, times this number, is
-  /// the fill level that spills. Nothing over the top, nothing spills.
-  static const double spillRate = 2;
+  /// The slope of the surface is tan(tilt) with the tilt limited to this many radians.
+  static const double slopeLimitRadians = 1.48;
+
+  /// The surface is measured at this many places across the width when the water area is
+  /// worked out.
+  static const int areaSamples = 40;
+
+  /// Water spills like out of a cup. A tilted cup holds less: the most it can hold is the water
+  /// area when the high edge just touches the top of the screen. Only the part of the level over
+  /// that capacity spills. Every second it spills [spillRate] times the excess, at least
+  /// [pourMin] of the level, and never more than the excess itself.
+  static const double spillRate = 1.2;
+  static const double pourMin = 0.08;
+
+  /// A full gauge shakes the screen and shows the big phrase once. It can do that again only
+  /// after the level has fallen below this.
+  static const double rearm = 0.8;
+
+  /// A tap on a gauge that is already full pushes the water this much of the usual strength.
+  static const double fullKick = 0.3;
 
   /// Settings that can turn the effects off, and the larger text scale.
   static const double largeTextScale = 1.18;

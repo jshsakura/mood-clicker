@@ -63,10 +63,26 @@ void main() {
 
   test('the surface line follows the level and the tilt', () {
     final s = sim();
-    expect(s.surfaceYAt(100), closeTo(400, 1e-9));
+    expect(s.surfaceYAt(100), closeTo(400, 1e-3));
     s.tiltRadians = 0.3;
     expect(s.surfaceYAt(390), greaterThan(s.surfaceYAt(0)));
-    expect(s.surfaceYAt(195), closeTo(400, 1e-9));
+    expect(s.surfaceYAt(195), closeTo(400, 1e-3));
+  });
+
+  test('a steep tilt gathers the water in the low corner and keeps its area', () {
+    final s = sim()..level = 0.3;
+    s.tiltRadians = 1.4;
+    // The surface is held on the screen and the middle sinks below the flat height.
+    expect(s.surfaceYAt(195), greaterThan(s.size.height * 0.7));
+    for (var x = 0.0; x <= s.size.width; x += 10) {
+      expect(s.restingYAt(x), inInclusiveRange(0, s.size.height));
+    }
+    var area = 0.0;
+    const n = 400;
+    for (var i = 0; i < n; i++) {
+      area += s.size.height - s.restingYAt((i + 0.5) / n * s.size.width);
+    }
+    expect(area / n / s.size.height, closeTo(0.3, 0.01));
   });
 
   group('droplets', () {
