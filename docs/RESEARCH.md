@@ -644,3 +644,14 @@ Flutter 앱이 웹앱처럼 어색해 보이지 않고 iOS·Android·macOS 에�
 출처 및 확인일 (2026-11-18):
 - GitHub Actions Artifact 내려받기: https://docs.github.com/en/actions/managing-workflow-runs-and-deployments/managing-workflow-runs/downloading-workflow-artifacts
 - Firebase App Distribution: https://firebase.google.com/docs/app-distribution
+
+---
+
+## 12. 개인정보 처리방침 초안 및 스토어 신고표
+
+확인일: 2026-11-18
+
+3단계 지도 기능 및 스토어 제출을 위한 한국어 개인정보 처리방침 초안과 Apple App Privacy / Google Play Data Safety 체크표는 [docs/PRIVACY.md](PRIVACY.md) 에 별도 문서로 작성했습니다.
+
+- **핵심 구분**: 1단계(내 기록)는 기기 내 SQLite 에만 저장하고, 3단계(내 주변 지도)는 사용자가 직접 켠 경우에만 `H3 해상도 7`(약 `5.16km²`) 격자 번호·기분·횟수·날짜·익명 계정 ID 를 전송합니다. 원본 GPS 좌표·실명·연락처·광고 식별자는 수집하지 않습니다.
+- **법률 기준**: 대한민국 「개인정보 보호법」 제30조 제1항 필수 기재사항(국가법령정보센터 https://www.law.go.kr , 개인정보보호위원회 https://www.privacy.go.kr )을 반영했으며, 상단에 법률 자문이 아님을 명시했습니다.
