@@ -26,6 +26,9 @@ class AppPalette extends ThemeExtension<AppPalette> {
     required this.mapLine,
     required this.error,
     required this.onError,
+    required this.dawnYellow,
+    required this.dawnMint,
+    required this.dawnPeach,
   });
 
   final String name;
@@ -48,6 +51,9 @@ class AppPalette extends ThemeExtension<AppPalette> {
   final Color mapLine;
   final Color error;
   final Color onError;
+  final Color dawnYellow;
+  final Color dawnMint;
+  final Color dawnPeach;
 
   @override
   AppPalette copyWith({
@@ -71,6 +77,9 @@ class AppPalette extends ThemeExtension<AppPalette> {
     Color? mapLine,
     Color? error,
     Color? onError,
+    Color? dawnYellow,
+    Color? dawnMint,
+    Color? dawnPeach,
   }) {
     return AppPalette(
       name: name ?? this.name,
@@ -93,6 +102,9 @@ class AppPalette extends ThemeExtension<AppPalette> {
       mapLine: mapLine ?? this.mapLine,
       error: error ?? this.error,
       onError: onError ?? this.onError,
+      dawnYellow: dawnYellow ?? this.dawnYellow,
+      dawnMint: dawnMint ?? this.dawnMint,
+      dawnPeach: dawnPeach ?? this.dawnPeach,
     );
   }
 
@@ -120,6 +132,9 @@ class AppPalette extends ThemeExtension<AppPalette> {
       mapLine: Color.lerp(mapLine, other.mapLine, t)!,
       error: Color.lerp(error, other.error, t)!,
       onError: Color.lerp(onError, other.onError, t)!,
+      dawnYellow: Color.lerp(dawnYellow, other.dawnYellow, t)!,
+      dawnMint: Color.lerp(dawnMint, other.dawnMint, t)!,
+      dawnPeach: Color.lerp(dawnPeach, other.dawnPeach, t)!,
     );
   }
 }
@@ -145,6 +160,9 @@ const AppPalette darkPalette = AppPalette(
   mapLine: Color(0xFF383840),
   error: Color(0xFFF0685C),
   onError: Color(0xFF16161A),
+  dawnYellow: Color(0xFF5C5330),
+  dawnMint: Color(0xFF2F5A4D),
+  dawnPeach: Color(0xFF6B4636),
 );
 
 const AppPalette lightPalette = AppPalette(
@@ -168,6 +186,9 @@ const AppPalette lightPalette = AppPalette(
   mapLine: Color(0xFFD4D4DC),
   error: Color(0xFFC93A2F),
   onError: Color(0xFFFFFFFF),
+  dawnYellow: Color(0xFFFFF1B8),
+  dawnMint: Color(0xFFCDEFE2),
+  dawnPeach: Color(0xFFFFD9C7),
 );
 
 const AppPalette pinkPalette = AppPalette(
@@ -191,6 +212,9 @@ const AppPalette pinkPalette = AppPalette(
   mapLine: Color(0xFFF2C2D3),
   error: Color(0xFFC93A2F),
   onError: Color(0xFFFFFFFF),
+  dawnYellow: Color(0xFFFFEAA8),
+  dawnMint: Color(0xFFBFE8DC),
+  dawnPeach: Color(0xFFFFC9BD),
 );
 
 const List<AppPalette> allPalettes = [darkPalette, lightPalette, pinkPalette];

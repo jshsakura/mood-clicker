@@ -599,4 +599,17 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get settings_deleteFailed =>
       '記録を消せませんでした。しばらくしてからもう一度お試しください。記録はそのまま残っています。';
+
+  @override
+  String get release_settleAngry => '十分にたたきました。少し息を整えてみませんか？';
+
+  @override
+  String get release_settleSad => 'ここまで来ました。今のままでも大丈夫です。';
+
+  @override
+  String get release_settleAnxious => '少し休んでも大丈夫です。呼吸に合わせても、合わせなくてもかまいません。';
+
+  @override
+  String get release_breathingRing =>
+      '息を整えるための円です。大きくなるときに吸い、小さくなるときに吐いてもよく、合わせなくてもかまいません。';
 }

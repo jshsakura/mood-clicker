@@ -601,4 +601,17 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get settings_deleteFailed =>
       '기록을 지우지 못했습니다. 잠시 뒤 다시 시도해 주세요. 기록은 그대로 남아 있습니다.';
+
+  @override
+  String get release_settleAngry => '충분히 두드렸어요. 잠시 숨을 골라 볼까요?';
+
+  @override
+  String get release_settleSad => '여기까지 왔어요. 지금 이대로도 괜찮아요.';
+
+  @override
+  String get release_settleAnxious => '잠시 쉬어 가도 괜찮아요. 숨을 따라 해도, 안 해도 됩니다.';
+
+  @override
+  String get release_breathingRing =>
+      '숨 고르기를 돕는 원입니다. 커질 때 들이쉬고 작아질 때 내쉬어도 좋고, 따라 하지 않아도 됩니다.';
 }

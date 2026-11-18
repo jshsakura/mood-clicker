@@ -28,6 +28,10 @@ void main() {
   for (final screen in goldenScreens) {
     for (final choice in goldenThemes) {
       for (final device in goldenDevices) {
+        final only = screen.deviceNames;
+        if (only != null && !only.contains(device.name)) {
+          continue;
+        }
         final name = '${screen.name}_${choice.name}_${device.name}';
         testWidgets(name, (tester) async {
           await pumpOnDevice(
