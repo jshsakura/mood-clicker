@@ -149,5 +149,6 @@
   "tap_todayCount": "{count, plural, =1{Today 1} other{Today {count}}}",
   "note_reason": "You filled it up. Leave a line for today.",
   "note_privacy": "Words you write stay on this device. Only a sentence picked from the list is shown on the map, with no name.",
-  "note_saveFailed": "Could not save. Try again in a moment. Your text is still here."
+  "note_saveFailed": "Could not save. Try again in a moment. Your text is still here.",
+  "tap_action": "Tap"
 }

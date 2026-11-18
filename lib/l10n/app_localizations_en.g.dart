@@ -511,4 +511,7 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get note_saveFailed =>
       'Could not save. Try again in a moment. Your text is still here.';
+
+  @override
+  String get tap_action => 'Tap';
 }

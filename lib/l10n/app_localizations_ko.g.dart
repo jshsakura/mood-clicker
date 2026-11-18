@@ -501,4 +501,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get note_saveFailed => '저장하지 못했습니다. 잠시 뒤 다시 눌러 주세요. 쓴 글은 그대로 있습니다.';
+
+  @override
+  String get tap_action => '두드리기';
 }

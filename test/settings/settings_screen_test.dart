@@ -361,7 +361,11 @@ void main() {
     expect(find.text('1.2.3'), findsOneWidget);
     final l10n = lookupAppLocalizations(const Locale('ko'));
     await tester.tap(find.text(l10n.settings_licenses));
-    await tester.pumpAndSettle();
+    // The license page keeps a progress spinner running until the framework has read the license
+    // files in a real isolate. pumpAndSettle waits for the spinner and times out when that read is
+    // slow (a loaded machine), so pump fixed frames: the route is there once its transition is done.
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
     expect(find.byType(LicensePage), findsOneWidget);
   });
 }

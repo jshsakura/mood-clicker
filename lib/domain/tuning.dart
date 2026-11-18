@@ -217,6 +217,12 @@ abstract final class FillTuning {
   /// Settings that can turn the effects off, and the larger text scale.
   static const double largeTextScale = 1.18;
 
+  /// A touch that starts within [edgeGuard] px of the left or right edge may be the system back
+  /// gesture. It counts as a tap only when it lifts after moving less than [edgeTapSlop] px; a
+  /// drag or a cancelled touch counts for nothing.
+  static const double edgeGuard = 20;
+  static const double edgeTapSlop = 18;
+
   /// The hint in the middle of the tap screen goes away after this many taps today.
   static const int hintUntilCount = 130;
 }

@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter/services.dart';
 
 import '../../app/app_services.dart';
 import '../../design/app_theme.dart';
@@ -182,7 +183,54 @@ class _TapScreenState extends State<TapScreen>
 
   // --- a tap -----------------------------------------------------------------------------
 
+  /// An edge touch waits: it may be the system back gesture. Null when none is waiting.
+  int? _edgePointer;
+  Offset _edgeStart = Offset.zero;
+
+  bool _atEdge(Offset at) =>
+      at.dx < FillTuning.edgeGuard ||
+      at.dx > _size.width - FillTuning.edgeGuard;
+
   void _onPointerDown(PointerDownEvent event) {
+    if (_atEdge(event.localPosition)) {
+      _edgePointer = event.pointer;
+      _edgeStart = event.localPosition;
+      return;
+    }
+    _registerTap(event.localPosition);
+  }
+
+  void _onPointerMove(PointerMoveEvent event) {
+    if (event.pointer != _edgePointer) return;
+    if ((event.localPosition - _edgeStart).distance > FillTuning.edgeTapSlop) {
+      _edgePointer = null;
+    }
+  }
+
+  void _onPointerUp(PointerUpEvent event) {
+    if (event.pointer != _edgePointer) return;
+    _edgePointer = null;
+    _registerTap(event.localPosition);
+  }
+
+  void _onPointerCancel(PointerCancelEvent event) {
+    if (event.pointer == _edgePointer) _edgePointer = null;
+  }
+
+  /// A tap from the keyboard or from assistive technology: the middle of the screen.
+  void _tapFromAction() => _registerTap(_size.center(Offset.zero));
+
+  KeyEventResult _onKey(FocusNode node, KeyEvent event) {
+    if (event is! KeyDownEvent) return KeyEventResult.ignored;
+    final key = event.logicalKey;
+    if (key != LogicalKeyboardKey.space && key != LogicalKeyboardKey.enter) {
+      return KeyEventResult.ignored;
+    }
+    _tapFromAction();
+    return KeyEventResult.handled;
+  }
+
+  void _registerTap(Offset at) {
     if (_size.isEmpty || _leaving) return;
     final now = _services.now();
     final wasFull = _gauge.isFullAt(now);
@@ -194,8 +242,8 @@ class _TapScreenState extends State<TapScreen>
       filled ? FeedbackKind.full : FeedbackKind.tap,
       widget.mood.id,
     );
-    _hitWater(event.localPosition, filled, wasFull: wasFull);
-    if (_feel.cheerPhrases) _showCheer(event.localPosition, now, filled);
+    _hitWater(at, filled, wasFull: wasFull);
+    if (_feel.cheerPhrases) _showCheer(at, now, filled);
     if (filled && _feel.screenShake) _shakeStart = now;
     setState(() {});
   }
@@ -256,6 +304,20 @@ class _TapScreenState extends State<TapScreen>
     _phrases = placement.slots;
   }
 
+  /// Whether leaving must first ask for the note: the gauge was filled in this visit and the day
+  /// has no note yet.
+  bool get _noteDue =>
+      _filledThisVisit &&
+      _services.journal.journal
+          .dayOf(DayKey.of(_services.now()))
+          .shouldAskNote(filledThisVisit: true);
+
+  /// The screen is already gone (the system back gesture): write what is waiting.
+  Future<void> _saveOnExit() async {
+    await _services.journal.save(SaveTrigger.leaveScreen);
+    await _services.cheerPicker.persist(_services.deckStore);
+  }
+
   // --- leaving ---------------------------------------------------------------------------
 
   Future<void> _leave() async {
@@ -290,9 +352,15 @@ class _TapScreenState extends State<TapScreen>
     final p = context.palette;
     final l10n = AppLocalizations.of(context);
     return PopScope(
-      canPop: false,
+      // The default back gesture stays on. Only a day that still owes a note blocks it, because
+      // the note sheet is asked before leaving.
+      canPop: !_noteDue,
       onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) unawaited(_leave());
+        if (didPop) {
+          unawaited(_saveOnExit());
+        } else {
+          unawaited(_leave());
+        }
       },
       child: Scaffold(
         body: LayoutBuilder(
@@ -302,29 +370,41 @@ class _TapScreenState extends State<TapScreen>
               fit: StackFit.expand,
               children: [
                 Positioned.fill(
-                  child: Listener(
-                    behavior: HitTestBehavior.opaque,
-                    onPointerDown: _onPointerDown,
-                    child: AnimatedBuilder(
-                      animation: _sim,
-                      builder: (context, _) => ClipRect(
-                        child: Transform.translate(
-                          offset: _shakeOffset(_services.now()),
-                          child: Stack(
-                            fit: StackFit.expand,
-                            children: [
-                              CustomPaint(
-                                painter: WaterPainter(
-                                  sim: _sim,
-                                  palette: p,
-                                  bleed: CompleteTuning.shakeAmplitude,
-                                ),
+                  child: Semantics(
+                    button: true,
+                    label: l10n.tap_action,
+                    onTap: _tapFromAction,
+                    child: Focus(
+                      autofocus: true,
+                      onKeyEvent: _onKey,
+                      child: Listener(
+                        behavior: HitTestBehavior.opaque,
+                        onPointerDown: _onPointerDown,
+                        onPointerMove: _onPointerMove,
+                        onPointerUp: _onPointerUp,
+                        onPointerCancel: _onPointerCancel,
+                        child: AnimatedBuilder(
+                          animation: _sim,
+                          builder: (context, _) => ClipRect(
+                            child: Transform.translate(
+                              offset: _shakeOffset(_services.now()),
+                              child: Stack(
+                                fit: StackFit.expand,
+                                children: [
+                                  CustomPaint(
+                                    painter: WaterPainter(
+                                      sim: _sim,
+                                      palette: p,
+                                      bleed: CompleteTuning.shakeAmplitude,
+                                    ),
+                                  ),
+                                  CheerOverlay(
+                                    phrases: _phrases,
+                                    now: _services.now,
+                                  ),
+                                ],
                               ),
-                              CheerOverlay(
-                                phrases: _phrases,
-                                now: _services.now,
-                              ),
-                            ],
+                            ),
                           ),
                         ),
                       ),

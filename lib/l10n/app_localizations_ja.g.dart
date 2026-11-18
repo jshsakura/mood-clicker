@@ -500,4 +500,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get note_saveFailed => '保存できませんでした。しばらくしてからもう一度押してください。書いた文はそのままです。';
+
+  @override
+  String get tap_action => 'タップ';
 }
