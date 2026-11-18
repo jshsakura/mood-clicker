@@ -134,13 +134,26 @@ void main() {
       expect(filled.tap(at(10)).justFilled, isFalse);
     });
 
+    test('does not fire again while the level only dips a little', () {
+      var gauge = tapTimes(const FillGauge.empty(), tapsToFill, t0);
+      final later = at(grace + 2000);
+      expect(gauge.valueAt(later), greaterThan(0.8));
+      expect(gauge.valueAt(later), lessThan(1));
+      var fires = 0;
+      for (var i = 0; i < tapsToFill; i++) {
+        gauge = gauge.tap(later);
+        if (gauge.justFilled) fires++;
+      }
+      expect(fires, 0);
+      expect(gauge.isFullAt(later), isTrue);
+    });
+
     test(
-      'fires once per fill: again only after the gauge sinks and refills',
+      'fires again only after the level fell below 0.8 and filled again',
       () {
         var gauge = tapTimes(const FillGauge.empty(), tapsToFill, t0);
-        final later = at(grace + 2000);
-        expect(gauge.valueAt(later), lessThan(1));
-
+        final later = at(grace + 4000);
+        expect(gauge.valueAt(later), lessThan(0.8));
         var fires = 0;
         for (var i = 0; i < tapsToFill; i++) {
           gauge = gauge.tap(later);
@@ -150,6 +163,25 @@ void main() {
         expect(gauge.isFullAt(later), isTrue);
       },
     );
+
+    test('tapping on a full gauge never fires, however long it goes on', () {
+      var gauge = tapTimes(const FillGauge.empty(), tapsToFill, t0);
+      for (var i = 0; i < 200; i++) {
+        gauge = gauge.tap(t0);
+        expect(gauge.justFilled, isFalse);
+      }
+    });
+
+    test('water spilled below 0.8 arms the next fill', () {
+      var gauge = tapTimes(const FillGauge.empty(), tapsToFill, t0);
+      gauge = gauge.spilled(0.5);
+      var fires = 0;
+      for (var i = 0; i < tapsToFill; i++) {
+        gauge = gauge.tap(t0);
+        if (gauge.justFilled) fires++;
+      }
+      expect(fires, 1);
+    });
   });
 
   test('the display follow time is a plain tuning constant', () {

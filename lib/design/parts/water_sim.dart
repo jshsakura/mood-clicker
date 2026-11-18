@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'dart:ui' show Size;
 
+import '../../domain/spill.dart';
 import '../../domain/tuning.dart';
 
 /// A droplet thrown off the surface. Positions are in screen pixels, y grows downward.
@@ -48,9 +49,37 @@ class WaterSim extends ChangeNotifier {
   double _clock = 0;
   double _idleMs = 0;
 
+  // The middle of the surface is worked out again only when level, tilt or size change.
+  double _cachedCenter = 0;
+  double _cachedLevel = -1;
+  double _cachedTilt = 0;
+  Size _cachedSize = Size.zero;
+
+  double get _centerY {
+    if (level != _cachedLevel ||
+        tiltRadians != _cachedTilt ||
+        size != _cachedSize) {
+      _cachedLevel = level;
+      _cachedTilt = tiltRadians;
+      _cachedSize = size;
+      _cachedCenter = Spill.centerY(
+        level: level.clamp(0.0, 1.0),
+        slope: Spill.slope(tiltRadians),
+        screenWidth: size.width,
+        screenHeight: size.height,
+      );
+    }
+    return _cachedCenter;
+  }
+
   /// The resting height of the surface at [x], tilt included, without waves. y grows downward.
-  double restingYAt(double x) =>
-      size.height * (1 - level) + (x - size.width / 2) * tan(tiltRadians);
+  /// The tilted surface keeps the area of the water equal to the level, so the water gathers in
+  /// the low corner instead of keeping its height at the middle. It stays on the screen.
+  double restingYAt(double x) {
+    if (size.isEmpty) return 0;
+    final y = _centerY + (x - size.width / 2) * Spill.slope(tiltRadians);
+    return y.clamp(0.0, size.height);
+  }
 
   double _heightAt(double x) {
     if (size.width <= 0) return 0;

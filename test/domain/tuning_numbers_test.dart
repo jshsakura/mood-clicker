@@ -55,7 +55,12 @@ void main() {
 
   test('tilt and spill numbers', () {
     expect(FillTuning.tiltLimitDegrees, 85);
-    expect(FillTuning.spillRate, 2);
+    expect(FillTuning.slopeLimitRadians, 1.48);
+    expect(FillTuning.areaSamples, 40);
+    expect(FillTuning.spillRate, 1.2);
+    expect(FillTuning.pourMin, 0.08);
+    expect(FillTuning.rearm, 0.8);
+    expect(FillTuning.fullKick, 0.3);
     expect(FillTuning.largeTextScale, 1.18);
   });
 

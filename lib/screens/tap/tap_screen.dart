@@ -181,6 +181,7 @@ class _TapScreenState extends State<TapScreen>
   void _onPointerDown(PointerDownEvent event) {
     if (_size.isEmpty || _leaving) return;
     final now = _services.now();
+    final wasFull = _gauge.isFullAt(now);
     _gauge = _gauge.tap(now);
     _services.journal.recordTap(widget.mood, now);
     final filled = _gauge.justFilled;
@@ -189,19 +190,21 @@ class _TapScreenState extends State<TapScreen>
       filled ? FeedbackKind.full : FeedbackKind.tap,
       widget.mood.id,
     );
-    _hitWater(event.localPosition, filled);
+    _hitWater(event.localPosition, filled, wasFull: wasFull);
     if (_feel.cheerPhrases) _showCheer(event.localPosition, now, filled);
     if (filled && _feel.screenShake) _shakeStart = now;
     setState(() {});
   }
 
-  void _hitWater(Offset at, bool filled) {
+  void _hitWater(Offset at, bool filled, {required bool wasFull}) {
     final surfaceY = _sim.surfaceYAt(at.dx);
     final insideWater = at.dy >= surfaceY;
     _sim.hit(
       at.dx,
       insideWater: insideWater,
-      scale: filled ? CompleteTuning.waterKickScale : 1,
+      scale: filled
+          ? CompleteTuning.waterKickScale
+          : (wasFull ? FillTuning.fullKick : 1),
     );
     if ((at.dy - surfaceY).abs() <= FillTuning.dropletReach) {
       _sim.throwDroplets(at.dx, surfaceY, _sim.dropletCount(complete: filled));

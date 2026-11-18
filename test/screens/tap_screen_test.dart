@@ -249,4 +249,42 @@ void main() {
     }
     expect(todayCount(app), before);
   });
+
+  testWidgets('a fully tilted phone keeps a little water and spills the rest', (
+    tester,
+  ) async {
+    final app = await openTap(tester);
+    for (var i = 0; i < 60; i++) {
+      await tapOnce(tester, app, const Offset(200, 500), gapMs: 30);
+    }
+    final before = todayCount(app);
+    app.tiltEvents.add(1.48);
+    for (var i = 0; i < 100; i++) {
+      app.advance(const Duration(milliseconds: 16));
+      await tester.pump(const Duration(milliseconds: 16));
+    }
+    final spilled = before - todayCount(app);
+    expect(spilled, greaterThan(40));
+    final painter = tester
+        .widgetList<CustomPaint>(find.byType(CustomPaint))
+        .map((c) => c.painter)
+        .whereType<WaterPainter>()
+        .single;
+    expect(painter.sim.level, greaterThan(0.05));
+  });
+
+  testWidgets('tapping a full gauge nudges the water only 0.3 as hard', (
+    tester,
+  ) async {
+    final app = await openTap(tester);
+    for (var i = 0; i < 60; i++) {
+      await tapOnce(tester, app, const Offset(200, 500), gapMs: 30);
+    }
+    final countAtFull = todayCount(app);
+    for (var i = 0; i < 20; i++) {
+      await tapOnce(tester, app, const Offset(200, 500), gapMs: 30);
+    }
+    expect(todayCount(app), countAtFull + 20);
+    expect(FillTuning.fullKick, lessThan(1));
+  });
 }
