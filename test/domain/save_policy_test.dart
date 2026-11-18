@@ -46,8 +46,8 @@ void main() {
     test('stay pending, with their own interval', () {
       final policy = const SavePolicy.clean()
           .afterTap(t0)
-          .afterSaveStarted() // 쓰기를 시작했다
-          .afterTap(at(500)); // 쓰는 동안 두드렸다
+          .afterSaveStarted() // the write began
+          .afterTap(at(500)); // tapped while writing
       expect(policy.hasPending, isTrue);
       expect(policy.dueAt, at(500).add(SaveTuning.interval));
     });

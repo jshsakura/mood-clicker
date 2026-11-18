@@ -1,17 +1,17 @@
 enum MoodSide { happy, sad }
 
-/// 고를 수 있는 기분. 초안 목록이고 `id` 는 저장 파일에 들어가므로 바꾸지 않는다.
+/// The moods a user can pick. This is a draft list. `id` goes into the save file, so never change it.
+/// Display names live in the translation files, not here.
 enum Mood {
-  happy('happy', '행복해요', MoodSide.happy),
-  excited('excited', '설레요', MoodSide.happy),
-  angry('angry', '화나요', MoodSide.sad),
-  sad('sad', '슬퍼요', MoodSide.sad),
-  anxious('anxious', '불안해요', MoodSide.sad);
+  happy('happy', MoodSide.happy),
+  excited('excited', MoodSide.happy),
+  angry('angry', MoodSide.sad),
+  sad('sad', MoodSide.sad),
+  anxious('anxious', MoodSide.sad);
 
-  const Mood(this.id, this.label, this.side);
+  const Mood(this.id, this.side);
 
   final String id;
-  final String label;
   final MoodSide side;
 
   static Mood? byId(String id) {

@@ -2,7 +2,7 @@ import 'day_key.dart';
 import 'day_record.dart';
 import 'mood.dart';
 
-/// 모든 날의 기록. 갱신하면 새 객체를 돌려준다.
+/// The records of every day. Updating returns a new object.
 class MoodJournal {
   MoodJournal(Iterable<DayRecord> records) : _byDay = _index(records);
 
@@ -14,14 +14,14 @@ class MoodJournal {
     final map = <DayKey, DayRecord>{};
     for (final record in records) {
       if (map.containsKey(record.day)) {
-        throw ArgumentError('같은 날짜의 기록이 둘 있습니다: ${record.day}');
+        throw ArgumentError('two records for the same day: ${record.day}');
       }
       map[record.day] = record;
     }
     return Map.unmodifiable(map);
   }
 
-  /// 날짜순.
+  /// In date order.
   List<DayRecord> get days {
     final sorted = _byDay.values.toList()
       ..sort((a, b) => a.day.compareTo(b.day));
@@ -30,7 +30,7 @@ class MoodJournal {
 
   DayRecord dayOf(DayKey key) => _byDay[key] ?? DayRecord.empty(key);
 
-  /// 두드린 시각이 속한 날(기기 시간대)에 센다.
+  /// Counts the tap on the day it happened in (device time zone).
   MoodJournal withTap(Mood mood, DateTime at) {
     final record = dayOf(DayKey.of(at)).withTap(mood, at);
     return MoodJournal([

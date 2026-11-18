@@ -1,4 +1,4 @@
-/// 기기 시간대 기준의 날짜. 자정에 바뀐다.
+/// A calendar day in the device time zone. It changes at local midnight.
 class DayKey implements Comparable<DayKey> {
   const DayKey._(this.year, this.month, this.day);
 
@@ -13,7 +13,7 @@ class DayKey implements Comparable<DayKey> {
 
   static final RegExp _pattern = RegExp(r'^(\d{4})-(\d{2})-(\d{2})$');
 
-  /// `YYYY-MM-DD` 가 아니거나 없는 날짜면 null.
+  /// Null unless the text is a real date written as `YYYY-MM-DD`.
   static DayKey? tryParse(String text) {
     final match = _pattern.firstMatch(text);
     if (match == null) return null;

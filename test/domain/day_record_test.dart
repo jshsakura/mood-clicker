@@ -93,7 +93,7 @@ void main() {
   test(
     'a tie on count and on last tap time resolves the same way every time',
     () {
-      // 같은 시각에 같은 횟수면 선언 순서가 앞선 기분이다. 맵에 넣은 순서와 상관없다.
+      // Equal count and equal time: the mood declared first wins, whatever order the map was built in.
       final a = MoodTally(count: 2, lastTapAt: t0);
       final forward = DayRecord(day, {Mood.happy: a, Mood.sad: a});
       final backward = DayRecord(day, {Mood.sad: a, Mood.happy: a});

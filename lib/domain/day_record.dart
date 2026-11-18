@@ -8,7 +8,7 @@ class MoodTally {
   final DateTime lastTapAt;
 }
 
-/// 하루치 기록. 갱신하면 새 객체를 돌려준다.
+/// One day of records. Updating returns a new object.
 class DayRecord {
   DayRecord(this.day, Map<Mood, MoodTally> tallies)
     : tallies = Map.unmodifiable(tallies);
@@ -30,8 +30,8 @@ class DayRecord {
       .where((e) => e.key.side == side)
       .fold(0, (sum, e) => sum + e.value.count);
 
-  /// 누적 최다 기분. 동률이면 나중에 두드린 쪽, 시각도 같으면 `Mood` 선언 순서가 앞선 쪽.
-  /// 기록이 없으면 null.
+  /// The mood with the most taps. A tie goes to the one tapped later; if the times match too,
+  /// to the one declared first in `Mood`. Null when there are no records.
   Mood? get dominantMood {
     Mood? best;
     for (final mood in Mood.values) {
@@ -49,7 +49,11 @@ class DayRecord {
 
   DayRecord withTap(Mood mood, DateTime at) {
     if (DayKey.of(at) != day) {
-      throw ArgumentError.value(at, 'at', '$day 의 기록에 다른 날의 두드림을 넣을 수 없습니다');
+      throw ArgumentError.value(
+        at,
+        'at',
+        'a tap on another day cannot go into the record of $day',
+      );
     }
     final old = tallies[mood];
     final last = (old != null && old.lastTapAt.isAfter(at))

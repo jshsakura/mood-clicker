@@ -3,12 +3,12 @@ import 'package:mood_clicker/domain/mood.dart';
 
 void main() {
   test('draft catalog has five moods on the agreed sides', () {
-    expect(Mood.values.map((m) => (m.label, m.side)), [
-      ('행복해요', MoodSide.happy),
-      ('설레요', MoodSide.happy),
-      ('화나요', MoodSide.sad),
-      ('슬퍼요', MoodSide.sad),
-      ('불안해요', MoodSide.sad),
+    expect(Mood.values.map((m) => (m.id, m.side)), [
+      ('happy', MoodSide.happy),
+      ('excited', MoodSide.happy),
+      ('angry', MoodSide.sad),
+      ('sad', MoodSide.sad),
+      ('anxious', MoodSide.sad),
     ]);
   });
 

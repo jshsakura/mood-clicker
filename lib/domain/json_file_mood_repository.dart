@@ -7,7 +7,7 @@ import 'mood.dart';
 import 'mood_journal.dart';
 import 'mood_repository.dart';
 
-/// JSON 파일 한 개에 저장한다. 경로는 주입받는다.
+/// Stores the journal in one JSON file. The file is injected.
 class JsonFileMoodRepository implements MoodRepository {
   JsonFileMoodRepository(this.file);
 
@@ -15,7 +15,7 @@ class JsonFileMoodRepository implements MoodRepository {
 
   static const int _version = 1;
 
-  /// 쓰기를 차례로 잇는 줄. 같은 임시 파일을 두 쓰기가 함께 쓰지 못하게 한다.
+  /// Chains writes one after another so two saves never share the temp file.
   Future<void> _tail = Future.value();
 
   @override
@@ -31,15 +31,15 @@ class JsonFileMoodRepository implements MoodRepository {
     }
   }
 
-  /// 읽을 수 없는 파일을 `.unreadable` 로 복사해 둔다. 호출자가 비어 있는 기록으로
-  /// 이어 가서 저장해도 원본이 사라지지 않게 한다. 이미 복사본이 있으면 처음 것을 그대로 둔다.
+  /// Copies an unreadable file to `.unreadable`. If the caller carries on with an
+  /// empty journal and saves, the original still survives. An existing copy is kept as is.
   Future<String> _keepAside(String reason) async {
     final backup = File('${file.path}.unreadable');
     try {
       if (!await backup.exists()) await file.copy(backup.path);
       return reason;
     } on FileSystemException catch (e) {
-      return '$reason (원본을 따로 보관하지 못했습니다: ${e.message})';
+      return '$reason (could not keep the original aside: ${e.message})';
     }
   }
 
@@ -60,7 +60,7 @@ class JsonFileMoodRepository implements MoodRepository {
     return true;
   }
 
-  /// 지금 파일의 내용. 없거나 읽을 수 없으면 null.
+  /// The current file text. Null when the file is missing or unreadable.
   Future<String?> _currentText() async {
     try {
       return await file.readAsString();
@@ -71,7 +71,7 @@ class JsonFileMoodRepository implements MoodRepository {
     }
   }
 
-  /// 같은 기록은 늘 같은 글자로 만든다. 날짜와 기분을 정해진 순서로 쓴다.
+  /// The same journal always encodes to the same text: days and moods go in a fixed order.
   Map<String, Object?> _encode(MoodJournal journal) => {
     'version': _version,
     'days': {
@@ -88,9 +88,9 @@ class JsonFileMoodRepository implements MoodRepository {
   };
 
   MoodJournal _decode(Object? root) {
-    final map = _asMap(root, '파일 최상위');
+    final map = _asMap(root, 'file root');
     if (map['version'] != _version) {
-      throw FormatException('지원하지 않는 버전입니다: ${map['version']}');
+      throw FormatException('unsupported version: ${map['version']}');
     }
     final days = _asMap(map['days'], 'days');
     return MoodJournal([
@@ -100,23 +100,23 @@ class JsonFileMoodRepository implements MoodRepository {
 
   DayRecord _decodeDay(String key, Object? value) {
     final day =
-        DayKey.tryParse(key) ?? (throw FormatException('날짜 키가 잘못됐습니다: $key'));
+        DayKey.tryParse(key) ?? (throw FormatException('bad day key: $key'));
     final tallies = <Mood, MoodTally>{};
     for (final MapEntry(key: moodId, value: raw) in _asMap(
       value,
       key,
     ).entries) {
       final mood =
-          Mood.byId(moodId) ?? (throw FormatException('모르는 기분입니다: $moodId'));
+          Mood.byId(moodId) ?? (throw FormatException('unknown mood: $moodId'));
       final tally = _asMap(raw, '$key/$moodId');
       final count = tally['count'];
       if (count is! int || count < 1) {
-        throw FormatException('$key/$moodId 의 횟수가 잘못됐습니다');
+        throw FormatException('bad count at $key/$moodId');
       }
       final at = tally['lastTapAt'];
       final parsed = at is String ? DateTime.tryParse(at) : null;
       if (parsed == null) {
-        throw FormatException('$key/$moodId 의 시각이 잘못됐습니다');
+        throw FormatException('bad timestamp at $key/$moodId');
       }
       tallies[mood] = MoodTally(count: count, lastTapAt: parsed);
     }
@@ -125,6 +125,6 @@ class JsonFileMoodRepository implements MoodRepository {
 
   Map<String, Object?> _asMap(Object? value, String where) {
     if (value is Map<String, Object?>) return value;
-    throw FormatException('$where 가 객체가 아닙니다');
+    throw FormatException('$where is not an object');
   }
 }

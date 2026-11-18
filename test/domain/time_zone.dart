@@ -6,8 +6,9 @@ typedef _MallocD = Pointer<Uint8> Function(int);
 typedef _SetenvC = Int32 Function(Pointer<Uint8>, Pointer<Uint8>, Int32);
 typedef _SetenvD = int Function(Pointer<Uint8>, Pointer<Uint8>, int);
 
-/// 테스트 안에서만 기기 시간대를 [zone] 으로 바꾼다(리눅스, 맥). `DateTime.toLocal` 이 따라온다.
-/// 시간대 데이터가 없는 환경이면 zone 이 UTC 로 취급되므로 호출한 쪽이 확인한다.
+/// Switches the device time zone to [zone] for the duration of [body] (Linux and macOS).
+/// `DateTime.toLocal` follows the change.
+/// Without time zone data the zone behaves as UTC, so callers should check with `hasDaylightSaving`.
 T withTimeZone<T>(String zone, T Function() body) {
   final libc = DynamicLibrary.process();
   final malloc = libc.lookupFunction<_MallocC, _MallocD>('malloc');
@@ -34,7 +35,7 @@ T withTimeZone<T>(String zone, T Function() body) {
   }
 }
 
-/// 이 환경에서 [zone] 의 서머타임이 실제로 적용되는지. 아니면 시간대 테스트를 건너뛴다.
+/// Whether daylight saving really applies to [zone] here. If not, the zone tests are skipped.
 bool hasDaylightSaving(String zone) => withTimeZone(
   zone,
   () =>

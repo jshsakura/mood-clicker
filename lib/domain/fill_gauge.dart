@@ -1,14 +1,18 @@
 import 'tuning.dart';
 
-/// 두드림의 세기를 0~1 로 나타내는 불변 값. 시계는 읽지 않고 시각을 인자로 받는다.
+/// An immutable value for how hard the user is tapping, from 0 to 1. It never reads the clock; callers pass the time.
 class FillGauge {
-  const FillGauge.empty() : _level = 0, _lastTapAt = null;
+  const FillGauge.empty() : _level = 0, _lastTapAt = null, justFilled = false;
 
-  const FillGauge._(this._level, this._lastTapAt);
+  const FillGauge._(this._level, this._lastTapAt, {this.justFilled = false});
 
-  /// 마지막 두드림 직후의 채움.
+  /// The level right after the last tap.
   final double _level;
   final DateTime? _lastTapAt;
+
+  /// True only on the value returned by the tap that took the gauge from not full to full.
+  /// Use it to play the one-time full effect. It is false on every later value.
+  final bool justFilled;
 
   static const double _epsilon = 1e-9;
 
@@ -25,16 +29,21 @@ class FillGauge {
     return value > 1 ? 1 : value;
   }
 
-  bool isFullAt(DateTime now) => valueAt(now) >= 1 - _epsilon;
+  bool isFullAt(DateTime now) => _isFull(valueAt(now));
 
   FillGauge tap(DateTime now) {
     final last = _lastTapAt;
     final at = (last != null && now.isBefore(last)) ? last : now;
-    final next = valueAt(at) + GaugeTuning.stepPerTap;
-    return FillGauge._(next > 1 ? 1 : next, at);
+    final before = valueAt(at);
+    final next = before + GaugeTuning.stepPerTap;
+    final level = next > 1 ? 1.0 : next;
+    final filled = _isFull(level) && !_isFull(before);
+    return FillGauge._(level, at, justFilled: filled);
   }
 
-  /// 두드림이 멈춘 채로 0 이 되는 시각. 비어 있으면 null.
+  static bool _isFull(double level) => level >= 1 - _epsilon;
+
+  /// When the level reaches 0 if the taps stop now. Null when already empty.
   DateTime? get emptiesAt {
     final last = _lastTapAt;
     if (last == null || _level <= 0) return null;

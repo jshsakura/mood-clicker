@@ -1,17 +1,21 @@
-/// 채움 게이지의 숫자. 손맛은 실기기에서 보고 여기서만 조정한다.
+/// Numbers for the fill gauge. Judge the feel on a real device and adjust only here.
 abstract final class GaugeTuning {
-  /// 한 번 두드릴 때 오르는 양.
-  static const double stepPerTap = 0.04;
+  /// How much one tap raises the level.
+  static const double stepPerTap = 0.025;
 
-  /// 마지막 두드림 뒤 그대로 머무는 시간.
+  /// How long the level holds after the last tap.
   static const Duration grace = Duration(milliseconds: 300);
 
-  /// 유예가 끝난 뒤 초당 떨어지는 양.
-  static const double decayPerSecond = 0.25;
+  /// How much the level falls per second once the grace time is over.
+  static const double decayPerSecond = 0.2;
+
+  /// How long the on-screen gauge takes to catch up with the real level (exponential smoothing).
+  /// For display only: the domain never uses it, and the screen does the smoothing.
+  static const Duration displayFollow = Duration(milliseconds: 220);
 }
 
-/// 저장 배치의 숫자.
+/// Numbers for save batching.
 abstract final class SaveTuning {
-  /// 두드리는 동안 디스크에 쓰는 간격.
+  /// How often to write to disk while the user keeps tapping.
   static const Duration interval = Duration(seconds: 2);
 }

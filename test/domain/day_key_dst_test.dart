@@ -5,12 +5,14 @@ import 'package:mood_clicker/domain/mood_journal.dart';
 
 import 'time_zone.dart';
 
-/// 서머타임이 있는 시간대(미국 동부)에서도 날짜는 기기의 자정에 바뀐다.
-/// 그날의 길이가 23시간이나 25시간이어도 한 날로 센다.
+/// In a time zone with daylight saving (US Eastern) the day still changes at local midnight.
+/// A day that lasts 23 or 25 hours still counts as one day.
 void main() {
   const zone = 'America/New_York';
   final supported = hasDaylightSaving(zone);
-  final skip = supported ? null : '이 환경에는 $zone 시간대 데이터가 없습니다';
+  final skip = supported
+      ? null
+      : 'no time zone data for $zone in this environment';
 
   List<String> keysOfHours(DateTime startUtc, int hours) => [
     for (var h = 0; h < hours; h++)
@@ -19,7 +21,7 @@ void main() {
 
   test('spring forward: the 23 hour day is one day', () {
     withTimeZone(zone, () {
-      // 2026-03-08 00:00 EST 는 05:00Z. 02:00 에 한 시간 건너뛰어 그날은 23시간이다.
+      // 2026-03-08 00:00 EST is 05:00Z. The clock skips an hour at 02:00, so that day has 23 hours.
       final start = DateTime.utc(2026, 3, 8, 5);
       final keys = keysOfHours(start, 24);
       expect(keys.take(23).toSet(), {'2026-03-08'});
@@ -29,7 +31,7 @@ void main() {
 
   test('fall back: the 25 hour day is one day', () {
     withTimeZone(zone, () {
-      // 2026-11-01 00:00 EDT 는 04:00Z. 02:00 EDT 가 01:00 EST 로 돌아가 그날은 25시간이다.
+      // 2026-11-01 00:00 EDT is 04:00Z. 02:00 EDT falls back to 01:00 EST, so that day has 25 hours.
       final start = DateTime.utc(2026, 11, 1, 4);
       final keys = keysOfHours(start, 26);
       expect(keys.take(25).toSet(), {'2026-11-01'});
@@ -39,7 +41,7 @@ void main() {
 
   test('the boundary is local midnight, not the UTC date', () {
     withTimeZone(zone, () {
-      // 03:59Z 는 UTC 로는 3월 9일이지만 뉴욕은 아직 8일 23:59 다.
+      // 03:59Z is March 9 in UTC, but it is still 23:59 on the 8th in New York.
       expect(
         DayKey.of(DateTime.utc(2026, 3, 9, 3, 59)).toString(),
         '2026-03-08',
