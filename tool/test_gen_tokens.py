@@ -695,7 +695,27 @@ def with_ground(light=None, dark=None):
 
 
 class Splash(RefusesWith):
-    A_LIGHT, SET, STORY = (SPLASH_FILES[k] for k in ("android_light", "ios_colorset", "ios_storyboard"))
+    A_LIGHT, SET, STORY, WIDGET = (
+        SPLASH_FILES[k] for k in ("android_light", "ios_colorset", "ios_storyboard", "ios_widget_colors")
+    )
+
+    def test_widget_colors_come_from_the_light_theme(self):
+        out = splash_outputs(with_ground("#F6F6F8"), STORYBOARD)
+        ink = BASE["light"]["color"]["ink"]["$value"].lstrip("#")[:6].upper()
+        self.assertIn('<color name="widget_ground">#F6F6F8</color>', out[self.A_LIGHT])
+        self.assertIn(f'<color name="widget_ink">#{ink}</color>', out[self.A_LIGHT])
+        line = BASE["light"]["color"]["line"]["$value"].lstrip("#")[:6].upper()
+        self.assertIn(f'<color name="widget_line">#{line}</color>', out[self.A_LIGHT])
+        swift = out[self.WIDGET]
+        self.assertIn("Generated file. Do not edit.", swift)
+        self.assertIn("static let ground = Color(red: 246.0 / 255, green: 246.0 / 255, blue: 248.0 / 255)", swift)
+        r, g, b = (int(ink[i:i + 2], 16) for i in (0, 2, 4))
+        self.assertIn(f"static let ink = Color(red: {r}.0 / 255, green: {g}.0 / 255, blue: {b}.0 / 255)", swift)
+
+    def test_an_ink_with_alpha_is_refused_for_the_widget(self):
+        def change(t):
+            t["light"]["color"]["ink"]["$value"] = "#16161A80"
+        self.assertRefuses_splash(edited(change), "ink")
 
     def test_android_color_comes_from_the_light_ground(self):
         out = splash_outputs(with_ground("#F6F6F8", "#101820"), STORYBOARD)
@@ -784,7 +804,7 @@ class Splash(RefusesWith):
             changed = stale(outputs(with_ground(light="#F6F6F8"), root), root)
             self.assertEqual(
                 sorted(p.name for p in changed),
-                sorted([self.A_LIGHT.name, self.SET.name, self.STORY.name, OUT.name]),
+                sorted([self.A_LIGHT.name, self.SET.name, self.STORY.name, self.WIDGET.name, OUT.name]),
             )
             (root / self.A_LIGHT).unlink()
             self.assertIn(self.A_LIGHT, stale(outputs(BASE, root), root))

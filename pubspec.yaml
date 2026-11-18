@@ -45,6 +45,8 @@ dependencies:
   # Haptic and sound layer (lib/feedback). Sound uses a low-latency engine that can overlap clips.
   flutter_soloud: ^4.1.7
   audio_session: ^0.2.4
+  home_widget: ^0.10.0
+  quick_actions: ^1.1.1
 
 dev_dependencies:
   flutter_test:
