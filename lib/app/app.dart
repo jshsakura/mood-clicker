@@ -24,7 +24,6 @@ class _MoodClickerAppState extends State<MoodClickerApp> {
   @override
   Widget build(BuildContext context) {
     final platform = MediaQuery.platformBrightnessOf(context);
-    final palette = paletteFor(widget.services.theme.value, platform);
     return AppScope(
       services: widget.services,
       child: ListenableBuilder(
@@ -38,7 +37,8 @@ class _MoodClickerAppState extends State<MoodClickerApp> {
           title: 'Unknown',
           onGenerateTitle: (context) => AppLocalizations.of(context).appName,
           debugShowCheckedModeBanner: false,
-          theme: buildTheme(palette),
+          // Read the choice here, inside the builder, so picking a theme in settings repaints the app.
+          theme: buildTheme(paletteFor(widget.services.theme.value, platform)),
           // Like a system dark switch, a theme change is immediate. An animation would blend colors mid-frame and break contrast.
           themeAnimationDuration: Duration.zero,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
