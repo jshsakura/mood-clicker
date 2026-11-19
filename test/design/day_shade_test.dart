@@ -1,9 +1,11 @@
 import 'dart:ui' show Color;
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mood_clicker/design/app_theme.dart';
 import 'package:mood_clicker/design/parts/calendar_day_cell.dart';
 import 'package:mood_clicker/design/parts/day_shade.dart';
 import 'package:mood_clicker/design/tokens.g.dart';
+import 'package:mood_clicker/domain/mood.dart';
 
 import 'contrast.dart';
 
@@ -14,11 +16,11 @@ void main() {
   for (final p in [lightPalette, darkPalette, pinkPalette]) {
     group(p.name, () {
       test('a day without taps is the ground, a busier day is darker', () {
-        expect(DayShade.fill(p, 0, 72), p.ground);
+        expect(DayShade.fill(p, 0, 72, Mood.happy), p.ground);
         var last = 0.0;
         for (final taps in [1, 20, 40, 72]) {
           final distance =
-              (DayShade.fill(p, taps, 72).computeLuminance() -
+              (DayShade.fill(p, taps, 72, Mood.happy).computeLuminance() -
                       p.ground.computeLuminance())
                   .abs();
           expect(distance, greaterThan(last), reason: '$taps taps');
@@ -26,38 +28,44 @@ void main() {
         }
       });
 
-      test('the busiest day is drawn at the strongest share of the ink', () {
-        final busiest = DayShade.fill(p, 72, 72);
-        final expected = Color.alphaBlend(
-          p.ink.withValues(alpha: DayShade.maxAlpha),
-          p.ground,
-        );
-        expect(busiest, expected);
-      });
+      test(
+        'the busiest day is drawn at the strongest share of its mood color',
+        () {
+          final busiest = DayShade.fill(p, 72, 72, Mood.sad);
+          final expected = Color.alphaBlend(
+            p.moodColor(Mood.sad).withValues(alpha: DayShade.maxAlpha),
+            p.ground,
+          );
+          expect(busiest, expected);
+        },
+      );
 
       // The number of a day must read on its own cell in every state a day can be in:
       // picked, today, both, with taps (quiet to busiest) and without.
-      for (final taps in [0, 1, 20, 36, 72]) {
-        for (final isPicked in [false, true]) {
-          for (final isToday in [false, true]) {
-            if (!isPicked && !isToday && taps == 0) continue;
-            test(
-              'the number reads: $taps taps, picked $isPicked, today $isToday',
-              () {
-                final look = CalendarDayLook.of(
-                  p,
-                  taps: taps,
-                  maxTaps: 72,
-                  isPicked: isPicked,
-                  isToday: isToday,
-                  isFuture: false,
-                );
-                expect(
-                  contrast(look.number, look.fill),
-                  greaterThanOrEqualTo(_readable),
-                );
-              },
-            );
+      for (final mood in Mood.values) {
+        for (final taps in [0, 1, 20, 36, 72]) {
+          for (final isPicked in [false, true]) {
+            for (final isToday in [false, true]) {
+              if (!isPicked && !isToday && taps == 0) continue;
+              test(
+                'the number reads: ${mood.id}, $taps taps, picked $isPicked, today $isToday',
+                () {
+                  final look = CalendarDayLook.of(
+                    p,
+                    taps: taps,
+                    maxTaps: 72,
+                    mood: mood,
+                    isPicked: isPicked,
+                    isToday: isToday,
+                    isFuture: false,
+                  );
+                  expect(
+                    contrast(look.number, look.fill),
+                    greaterThanOrEqualTo(_readable),
+                  );
+                },
+              );
+            }
           }
         }
       }
@@ -67,6 +75,7 @@ void main() {
           p,
           taps: 72,
           maxTaps: 72,
+          mood: Mood.happy,
           isPicked: true,
           isToday: false,
           isFuture: false,
@@ -82,6 +91,7 @@ void main() {
             p,
             taps: 0,
             maxTaps: 1,
+            mood: null,
             isPicked: false,
             isToday: true,
             isFuture: false,
@@ -90,6 +100,7 @@ void main() {
             p,
             taps: 0,
             maxTaps: 1,
+            mood: null,
             isPicked: true,
             isToday: true,
             isFuture: false,

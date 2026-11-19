@@ -5,20 +5,20 @@ import '../../domain/mood.dart';
 import '../app_theme.dart';
 
 /// The face of a mood: a circle, two eyes, a brow for some moods and a mouth. It is drawn in one
-/// color, the happy color for a happy side mood and the sad color for a sad side one.
+/// color, the color of its mood.
 class MoodFace extends StatelessWidget {
   const MoodFace({super.key, required this.mood, this.size = 36, this.color});
 
   final Mood mood;
   final double size;
 
-  /// Overrides the side color, for a preview drawn with another theme's palette.
+  /// Overrides the mood color, for a preview drawn with another theme's palette.
   final Color? color;
 
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    final tint = color ?? (mood.side == MoodSide.happy ? p.happy : p.sad);
+    final tint = color ?? p.moodColor(mood);
     return SvgPicture.asset(
       'assets/icons/mood_${mood.id}.svg',
       width: size,

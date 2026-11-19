@@ -252,7 +252,7 @@ class _MoodBarRow extends StatelessWidget {
     final p = context.palette;
     final l10n = AppLocalizations.of(context);
     final label = moodName(context, mood);
-    final barColor = mood.side == MoodSide.happy ? p.ink : p.mapLine;
+    final barColor = p.moodColor(mood);
     return Semantics(
       container: true,
       excludeSemantics: true,

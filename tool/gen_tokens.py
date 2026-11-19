@@ -96,7 +96,7 @@ REQUIRED_CORE = {
 }
 REQUIRED_COLORS = (
     "accent", "dawnMint", "dawnPeach", "dawnYellow", "error", "faint", "fill", "fillEdge", "ground", "happy", "ink", "ink2", "inkMuted",
-    "line", "mapLine", "onAccent", "onError", "onFill", "sad", "stamp", "surface",
+    "line", "mapLine", "moodAnxious", "moodAngry", "moodExcited", "moodHappy", "moodSad", "onAccent", "onError", "onFill", "sad", "stamp", "surface",
 )
 
 # Fields a typography token accepts. Tokens Studio adds a few more that are known but unused, so they are skipped.

@@ -30,6 +30,11 @@ class AppPalette extends ThemeExtension<AppPalette> {
     required this.dawnMint,
     required this.dawnPeach,
     required this.stamp,
+    required this.moodHappy,
+    required this.moodExcited,
+    required this.moodAngry,
+    required this.moodSad,
+    required this.moodAnxious,
   });
 
   final String name;
@@ -56,6 +61,11 @@ class AppPalette extends ThemeExtension<AppPalette> {
   final Color dawnMint;
   final Color dawnPeach;
   final Color stamp;
+  final Color moodHappy;
+  final Color moodExcited;
+  final Color moodAngry;
+  final Color moodSad;
+  final Color moodAnxious;
 
   @override
   AppPalette copyWith({
@@ -83,6 +93,11 @@ class AppPalette extends ThemeExtension<AppPalette> {
     Color? dawnMint,
     Color? dawnPeach,
     Color? stamp,
+    Color? moodHappy,
+    Color? moodExcited,
+    Color? moodAngry,
+    Color? moodSad,
+    Color? moodAnxious,
   }) {
     return AppPalette(
       name: name ?? this.name,
@@ -109,6 +124,11 @@ class AppPalette extends ThemeExtension<AppPalette> {
       dawnMint: dawnMint ?? this.dawnMint,
       dawnPeach: dawnPeach ?? this.dawnPeach,
       stamp: stamp ?? this.stamp,
+      moodHappy: moodHappy ?? this.moodHappy,
+      moodExcited: moodExcited ?? this.moodExcited,
+      moodAngry: moodAngry ?? this.moodAngry,
+      moodSad: moodSad ?? this.moodSad,
+      moodAnxious: moodAnxious ?? this.moodAnxious,
     );
   }
 
@@ -140,6 +160,11 @@ class AppPalette extends ThemeExtension<AppPalette> {
       dawnMint: Color.lerp(dawnMint, other.dawnMint, t)!,
       dawnPeach: Color.lerp(dawnPeach, other.dawnPeach, t)!,
       stamp: Color.lerp(stamp, other.stamp, t)!,
+      moodHappy: Color.lerp(moodHappy, other.moodHappy, t)!,
+      moodExcited: Color.lerp(moodExcited, other.moodExcited, t)!,
+      moodAngry: Color.lerp(moodAngry, other.moodAngry, t)!,
+      moodSad: Color.lerp(moodSad, other.moodSad, t)!,
+      moodAnxious: Color.lerp(moodAnxious, other.moodAnxious, t)!,
     );
   }
 }
@@ -169,6 +194,11 @@ const AppPalette darkPalette = AppPalette(
   dawnMint: Color(0xFF2F5A4D),
   dawnPeach: Color(0xFF6B4636),
   stamp: Color(0xFFD2402E),
+  moodHappy: Color(0xFFFFC93D),
+  moodExcited: Color(0xFFFF7DAE),
+  moodAngry: Color(0xFFFF6B5E),
+  moodSad: Color(0xFF6FA0FF),
+  moodAnxious: Color(0xFFB58CFF),
 );
 
 const AppPalette lightPalette = AppPalette(
@@ -196,6 +226,11 @@ const AppPalette lightPalette = AppPalette(
   dawnMint: Color(0xFFCDEFE2),
   dawnPeach: Color(0xFFFFD9C7),
   stamp: Color(0xFFD2402E),
+  moodHappy: Color(0xFFC47900),
+  moodExcited: Color(0xFFE04F8B),
+  moodAngry: Color(0xFFD2453A),
+  moodSad: Color(0xFF3F6EE8),
+  moodAnxious: Color(0xFF7C55D9),
 );
 
 const AppPalette pinkPalette = AppPalette(
@@ -223,6 +258,11 @@ const AppPalette pinkPalette = AppPalette(
   dawnMint: Color(0xFFBFE8DC),
   dawnPeach: Color(0xFFFFC9BD),
   stamp: Color(0xFFD2402E),
+  moodHappy: Color(0xFFC27500),
+  moodExcited: Color(0xFFE05A0C),
+  moodAngry: Color(0xFFC93A3A),
+  moodSad: Color(0xFF3F6EE8),
+  moodAnxious: Color(0xFF7B4FD6),
 );
 
 const List<AppPalette> allPalettes = [darkPalette, lightPalette, pinkPalette];

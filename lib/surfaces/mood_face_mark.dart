@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/widgets.dart';
 
+import '../design/app_theme.dart';
 import '../design/tokens.g.dart';
 import '../domain/mood.dart';
 
@@ -16,9 +17,7 @@ class MoodFaceMark extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = mood.side == MoodSide.happy
-        ? lightPalette.happy
-        : lightPalette.sad;
+    final color = lightPalette.moodColor(mood);
     return SizedBox.square(
       dimension: size,
       child: CustomPaint(

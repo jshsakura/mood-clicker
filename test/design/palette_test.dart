@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mood_clicker/domain/mood.dart';
 import 'package:mood_clicker/design/app_theme.dart';
 import 'package:mood_clicker/design/theme_choice.dart';
 import 'package:mood_clicker/design/tokens.g.dart';
@@ -19,6 +20,11 @@ final _roles = <String, Color Function(AppPalette)>{
   'onFill': (p) => p.onFill,
   'happy': (p) => p.happy,
   'sad': (p) => p.sad,
+  'moodHappy': (p) => p.moodHappy,
+  'moodExcited': (p) => p.moodExcited,
+  'moodAngry': (p) => p.moodAngry,
+  'moodSad': (p) => p.moodSad,
+  'moodAnxious': (p) => p.moodAnxious,
   'mapGround': (p) => p.mapGround,
   'mapLine': (p) => p.mapLine,
 };
@@ -33,7 +39,7 @@ const _graphic = 3.0;
 /// Pairs left out on purpose:
 /// - fill/surface: the fill is a large area and the number is shown separately, so no contrast with the empty ground is required.
 /// - mapLine/mapGround: map lines are decorative, so no contrast is required.
-const _pairs = <(String fg, String bg, double min, String use)>[
+final _pairs = <(String fg, String bg, double min, String use)>[
   ('ink', 'ground', _text, 'body text'),
   ('ink', 'surface', _text, 'body text on a card'),
   ('inkMuted', 'ground', _text, 'secondary text'),
@@ -42,6 +48,10 @@ const _pairs = <(String fg, String bg, double min, String use)>[
   ('onFill', 'fill', _largeText, 'large number on a risen fill (56px bold)'),
   ('happy', 'surface', _graphic, 'stripe of the happy side banner'),
   ('sad', 'surface', _graphic, 'stripe of the sad side banner'),
+  for (final mood in ['Happy', 'Excited', 'Angry', 'Sad', 'Anxious']) ...[
+    ('mood$mood', 'ground', _graphic, 'face and bar of a mood'),
+    ('mood$mood', 'surface', _graphic, 'face of a mood on a card'),
+  ],
 ];
 
 /// Pairs that miss the threshold with today's values. The key is 'palette/foreground/background'.
@@ -56,6 +66,20 @@ void main() {
         // A translucent text color changes contrast with the background, so one check cannot guarantee it.
         for (final c in [p.ink, p.inkMuted, p.onAccent]) {
           expect(c.a, 1.0);
+        }
+      });
+
+      test('the five mood colors differ from each other', () {
+        final colors = [for (final m in Mood.values) p.moodColor(m)];
+        for (var i = 0; i < colors.length; i++) {
+          for (var j = i + 1; j < colors.length; j++) {
+            final a = colors[i];
+            final b = colors[j];
+            final distance =
+                ((a.r - b.r).abs() + (a.g - b.g).abs() + (a.b - b.b).abs()) *
+                255;
+            expect(distance, greaterThan(60), reason: '$i and $j look alike');
+          }
         }
       });
 

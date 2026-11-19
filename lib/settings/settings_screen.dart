@@ -798,14 +798,14 @@ class _ThemeCard extends StatelessWidget {
                     const SizedBox(height: Space.xs),
                     _MiniRow(
                       mood: Mood.happy,
-                      color: preview.happy,
+                      color: preview.moodHappy,
                       line: preview.line,
                       surface: preview.surface,
                     ),
                     const SizedBox(height: Space.xs),
                     _MiniRow(
                       mood: Mood.sad,
-                      color: preview.sad,
+                      color: preview.moodSad,
                       line: preview.line,
                       surface: preview.surface,
                     ),
