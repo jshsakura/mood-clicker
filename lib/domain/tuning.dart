@@ -207,6 +207,21 @@ abstract final class FillTuning {
   static const double spillRate = 1.2;
   static const double pourMin = 0.08;
 
+  /// What the spilling looks like: water running over the low edge. The strength of the picture is
+  /// the spill rate (level per second) over [runoffFullRate], at most 1. At full strength
+  /// [runoffPerSecond] drops leave the edge each second, and the stream along the edge is
+  /// [runoffStreamMin] to [runoffStreamMax] px wide. Drops start [runoffInset] px inside the edge and
+  /// fly out at up to [runoffOut] px/s, then fall. At most [runoffLimit] fly at once.
+  static const double runoffFullRate = 0.1;
+  static const double runoffPerSecond = 45;
+  static const double runoffStreamMin = 6;
+  static const double runoffStreamMax = 16;
+  static const double runoffInset = 10;
+  static const double runoffOut = 160;
+  static const double runoffRadiusMin = 3;
+  static const double runoffRadiusMax = 6.5;
+  static const int runoffLimit = 40;
+
   /// A full gauge shakes the screen and shows the big phrase once. It can do that again only
   /// after the level has fallen below this.
   static const double rearm = 0.8;
@@ -289,23 +304,16 @@ abstract final class FeedbackTuning {
 
 /// Numbers for the release flow of the heavy moods (angry, sad, anxious): when the gauge is full the
 /// screen does not celebrate. It lets the water go, washes the screen with dawn light and settles into
-/// breathing. Judge the feel on a real device and adjust only here.
+/// one line. Judge the feel on a real device and adjust only here.
 abstract final class ReleaseTuning {
   /// From this level the gauge counts as approaching full.
   static const double approachAt = 0.85;
 
-  /// The cleanse that starts the moment the gauge is full. Touch is locked for all of it.
+  /// The cleanse that starts the moment the gauge is full. Tapping is never locked.
   static const Duration cleanse = Duration(milliseconds: 2500);
-
-  /// The quiet beat at the start of the settle, before the breathing ring shows (0.5 to 0.8 seconds).
-  static const Duration stillness = Duration(milliseconds: 650);
 
   /// How long the dawn light takes to dissolve into the settled screen.
   static const Duration crossfade = Duration(seconds: 3);
-
-  /// The breathing ring grows for this long, then shrinks for [exhale], and repeats.
-  static const Duration inhale = Duration(seconds: 4);
-  static const Duration exhale = Duration(seconds: 6);
 
   /// How long the one line after the settle stays on screen.
   static const Duration settleLineHold = Duration(seconds: 4);
@@ -318,9 +326,6 @@ abstract final class ReleaseTuning {
   /// lands this share of the way to the middle, and droplets drift toward it at this speed (px/s^2).
   static const double gatherPull = 0.6;
   static const double gatherDrift = 120;
-
-  /// The breathing ring is this share of the shorter side of the screen when full.
-  static const double ringShare = 0.45;
 }
 
 /// Numbers for the reward of holding the gauge just below full.

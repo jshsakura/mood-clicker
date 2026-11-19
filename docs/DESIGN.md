@@ -102,7 +102,6 @@ Figma 의 Tokens Studio 플러그인에서 한 번만 설정합니다. 메뉴 �
 | `pressable_surface.dart` | 눌리는 모든 면. 아이콘 버튼(44px 원, 0.92배)과 배너, 카드(0.98배)가 살짝 어두워지며 줄어듭니다. 잉크 번짐과 사각 하이라이트는 없습니다 |
 | `water_painter.dart` | 두드리기 화면의 물. 앞 물결, 뒤 물결, 물방울을 단색으로 그립니다 |
 | `water_sim.dart` | 물의 용수철 계산. 숫자는 `lib/domain/tuning.dart` 의 `FillTuning` 에 있습니다 |
-| `breathing_ring.dart` | 안착 뒤의 숨 고리. 4초 커지고 6초 작아집니다. 줄인 움직임 설정에서는 크기 대신 밝기가 바뀝니다 |
 | `dawn_wash.dart` | 정화 연출. 가득 찬 물이 아래로 빠지고 가장자리부터 새벽빛(`dawnYellow`, `dawnMint`, `dawnPeach`)이 번집니다 |
 | `settle_line.dart` | 안착 직후 떠올랐다 4초 뒤 사라지는 한 줄. 화나요, 슬퍼요, 불안해요에만 있습니다 |
 

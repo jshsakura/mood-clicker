@@ -597,10 +597,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get release_settleAnxious => '少し休んでも大丈夫です。呼吸に合わせても、合わせなくてもかまいません。';
 
   @override
-  String get release_breathingRing =>
-      '息を整えるための円です。大きくなるときに吸い、小さくなるときに吐いてもよく、合わせなくてもかまいません。';
-
-  @override
   String get howTo_label => '遊び方';
 
   @override

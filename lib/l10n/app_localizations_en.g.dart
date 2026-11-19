@@ -613,10 +613,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'It\'s okay to rest a little. You can follow the breath, or not.';
 
   @override
-  String get release_breathingRing =>
-      'A circle that helps you pace your breath. Breathe in as it grows and out as it shrinks, or ignore it.';
-
-  @override
   String get howTo_label => 'How to play';
 
   @override

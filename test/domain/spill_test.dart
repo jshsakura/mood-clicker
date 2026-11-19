@@ -97,10 +97,10 @@ void main() {
   });
 
   group('slope and tilt limit', () {
-    test('the slope is the tangent of the tilt limited to 1.48 rad', () {
-      expect(Spill.slope(0.5), closeTo(tan(0.5), 1e-12));
-      expect(Spill.slope(3), closeTo(tan(1.48), 1e-12));
-      expect(Spill.slope(-3), closeTo(-tan(1.48), 1e-12));
+    test('the slope is minus the tangent of the tilt limited to 1.48 rad', () {
+      expect(Spill.slope(0.5), closeTo(-tan(0.5), 1e-12));
+      expect(Spill.slope(3), closeTo(-tan(1.48), 1e-12));
+      expect(Spill.slope(-3), closeTo(tan(1.48), 1e-12));
     });
 
     test('the phone tilt is limited to 85 degrees', () {

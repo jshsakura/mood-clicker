@@ -65,7 +65,11 @@ void main() {
     final s = sim();
     expect(s.surfaceYAt(100), closeTo(400, 1e-3));
     s.tiltRadians = 0.3;
+    // Right edge down: the water runs right, so the surface is higher on the right.
+    expect(s.surfaceYAt(390), lessThan(s.surfaceYAt(0)));
+    s.tiltRadians = -0.3;
     expect(s.surfaceYAt(390), greaterThan(s.surfaceYAt(0)));
+    s.tiltRadians = 0.3;
     expect(s.surfaceYAt(195), closeTo(400, 1e-3));
   });
 
@@ -174,6 +178,45 @@ void main() {
       final right = s.heights.sublist(40).reduce((a, b) => a + b);
       final left = s.heights.sublist(0, 20).reduce((a, b) => a + b);
       expect(right, greaterThan(left));
+    });
+  });
+
+  group('spilling over the low edge', () {
+    WaterSim spilling(double tilt) => sim()
+      ..level = 0.8
+      ..tiltRadians = tilt
+      ..spillAt(0.2);
+
+    test('drops leave over the right edge when the right edge is low', () {
+      final s = spilling(0.9);
+      for (var i = 0; i < 30; i++) {
+        s.step(1 / 60);
+      }
+      expect(s.spillSide, 1);
+      expect(s.runoff, isNotEmpty);
+      expect(s.runoff.every((d) => d.x > s.size.width / 2), isTrue);
+    });
+
+    test('drops leave over the left edge when the left edge is low', () {
+      final s = spilling(-0.9);
+      for (var i = 0; i < 30; i++) {
+        s.step(1 / 60);
+      }
+      expect(s.spillSide, -1);
+      expect(s.runoff, isNotEmpty);
+      expect(s.runoff.every((d) => d.x < s.size.width / 2), isTrue);
+    });
+
+    test('no spill means no drops, and the ones in the air fall away', () {
+      final s = spilling(0.9);
+      for (var i = 0; i < 30; i++) {
+        s.step(1 / 60);
+      }
+      s.spillAt(0);
+      for (var i = 0; i < 120; i++) {
+        s.step(1 / 60);
+      }
+      expect(s.runoff, isEmpty);
     });
   });
 }

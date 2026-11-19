@@ -7,7 +7,6 @@ import 'package:flutter/services.dart';
 
 import '../../app/app_services.dart';
 import '../../design/app_theme.dart';
-import '../../design/parts/breathing_ring.dart';
 import '../../design/parts/dawn_wash.dart';
 import '../../design/parts/hint_bubble.dart';
 import '../../design/parts/how_to_button.dart';
@@ -236,7 +235,10 @@ class _TapScreenState extends State<TapScreen>
 
   /// Water running out of a tilted phone. Returns the level that was spilled this frame.
   double _spillFrame(DateTime now, double seconds, double level) {
-    if (!_feel.tiltSpill) return 0;
+    if (!_feel.tiltSpill) {
+      _sim.spillAt(0);
+      return 0;
+    }
     final spilled = Spill.spilledIn(
       Duration(
         microseconds: (seconds * Duration.microsecondsPerSecond).round(),
@@ -246,6 +248,7 @@ class _TapScreenState extends State<TapScreen>
       screenWidth: _size.width,
       screenHeight: _size.height,
     );
+    _sim.spillAt(seconds > 0 ? spilled / seconds : 0);
     if (spilled <= 0) return 0;
     _gauge = _gauge.spilled(spilled);
     final (ledger, lost) = _ledger.add(spilled);
@@ -310,8 +313,6 @@ class _TapScreenState extends State<TapScreen>
   void _registerTap(Offset at) {
     if (_size.isEmpty || _leaving) return;
     final now = _services.now();
-    // The cleanse locks the touch, so the next gauge cannot start by mistake.
-    if (_hasRelease && _flow.frameAt(now).touchLocked) return;
     _lastTapAt = at;
     final wasFull = _gauge.isFullAt(now);
     _gauge = _gauge.tap(now);
@@ -481,18 +482,13 @@ class _TapScreenState extends State<TapScreen>
     };
   }
 
-  /// The breathing ring and the one line, once the quiet beat of the settle is over.
+  /// The one line, once the dawn wash is over.
   List<Widget> _settleLayers(AppLocalizations l10n) {
     if (!_hasRelease) return const [];
     final frame = _flow.frameAt(_services.now());
-    if (frame.phase != ReleasePhase.settle || frame.quiet) return const [];
+    if (frame.phase != ReleasePhase.settle) return const [];
     final line = settleLineFor(l10n, widget.mood);
     return [
-      Center(
-        child: BreathingRing(
-          diameter: _size.shortestSide * ReleaseTuning.ringShare,
-        ),
-      ),
       if (line != null)
         Align(
           alignment: const Alignment(0, 0.6),
