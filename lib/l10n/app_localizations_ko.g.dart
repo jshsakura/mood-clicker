@@ -392,14 +392,14 @@ class AppLocalizationsKo extends AppLocalizations {
   String get map_openLabel => '지도 보기';
 
   @override
-  String get map_nearby => '내 주변 3km';
+  String get map_nearby => '이 지도 안';
 
   @override
   String get map_pickedPlace => '고른 동네';
 
   @override
   String get map_explain =>
-      '글씨는 사람들이 고른 한마디이고, 크기는 그 동네에서 두드린 수입니다. 약 5km² 넓이의 동네 칸으로 묶고, 5명이 안 되는 칸은 보이지 않습니다.';
+      '얼굴은 그 동네 칸의 대표 기분이고, 숫자는 남긴 사람 수입니다. 약 5km² 넓이의 칸으로 묶고, 5명이 안 되는 칸은 보이지 않습니다.';
 
   @override
   String get map_rangeToday => '오늘';
@@ -603,10 +603,10 @@ class AppLocalizationsKo extends AppLocalizations {
       '숨 고르기를 돕는 원입니다. 커질 때 들이쉬고 작아질 때 내쉬어도 좋고, 따라 하지 않아도 됩니다.';
 
   @override
-  String get howTo_label => '놀이 방법';
+  String get howTo_label => '도움말';
 
   @override
-  String get howTo_title => '놀이 방법';
+  String get howTo_title => '이렇게 해 보세요';
 
   @override
   String get howTo_fill => '두드리면 물이 차오릅니다.';
@@ -627,5 +627,37 @@ class AppLocalizationsKo extends AppLocalizations {
   String get howTo_finish => '가득 채우면 기분에 맞는 마무리가 펼쳐집니다.';
 
   @override
-  String get howTo_bubble => '놀이 방법';
+  String get howTo_bubble => '어떻게 하나요?';
+
+  @override
+  String get settings_weatherView => '날씨 보기';
+
+  @override
+  String get settings_weatherViewDesc =>
+      '소수 첫째 자리로 뭉갠 위치로 현재 날씨만 가져옵니다. 끄면 위치도 묻지 않습니다.';
+
+  @override
+  String get settings_weatherSource => '날씨 출처';
+
+  @override
+  String get weather_clear => '맑음';
+
+  @override
+  String get weather_partlyCloudy => '구름 조금';
+
+  @override
+  String get weather_cloudy => '흐림';
+
+  @override
+  String get weather_rain => '비';
+
+  @override
+  String get weather_snow => '눈';
+
+  @override
+  String get permission_locationWhenInUse =>
+      '앱을 쓰는 동안 소수 첫째 자리로 뭉갠 위치만 날씨를 가져오는 데 씁니다.';
+
+  @override
+  String get map_zoomIn => '지도를 조금 더 확대하면 동네 칸이 보입니다';
 }

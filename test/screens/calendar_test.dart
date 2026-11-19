@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:mood_clicker/design/app_theme.dart';
+import 'package:mood_clicker/design/parts/day_shade.dart';
 import 'package:mood_clicker/design/parts/mood_face.dart';
 import 'package:mood_clicker/design/parts/month_flow_bars.dart';
 import 'package:mood_clicker/design/parts/pressable_surface.dart';
@@ -57,17 +59,21 @@ void main() {
     expect(luma(mid), greaterThan(luma(dark)));
   });
 
-  testWidgets('the grid has no faces and no color: every shade is gray', (
-    tester,
-  ) async {
-    final app = TestApp();
-    var journal = MoodJournal.empty();
-    for (final mood in Mood.values) {
-      journal = journal.withTap(mood, DateTime(2026, 11, 3 + mood.index, 9));
-    }
-    app.journal.load(journal);
-    await tester.pumpWidget(app.wrap(const CalendarScreen()));
-    for (final mood in Mood.values) {
+  testWidgets(
+    'the grid has no faces, and each mood tints its day in its own color',
+    (tester) async {
+      final app = TestApp();
+      var journal = MoodJournal.empty();
+      for (final mood in Mood.values) {
+        for (var i = 0; i < 20; i++) {
+          journal = journal.withTap(
+            mood,
+            DateTime(2026, 11, 3 + mood.index, 9),
+          );
+        }
+      }
+      app.journal.load(journal);
+      await tester.pumpWidget(app.wrap(const CalendarScreen()));
       expect(
         find.descendant(
           of: find.byType(TableCalendar),
@@ -75,30 +81,15 @@ void main() {
         ),
         findsNothing,
       );
-      final color = shadeOf(tester, '${3 + mood.index}')!;
-      final hsl = HSLColor.fromColor(color);
-      expect(
-        hsl.saturation,
-        lessThan(0.15),
-        reason: '${mood.id} must not be colored',
-      );
-    }
-  });
-
-  testWidgets('a low mood is not drawn differently from a high one', (
-    tester,
-  ) async {
-    final app = TestApp();
-    var journal = MoodJournal.empty();
-    for (var i = 0; i < 20; i++) {
-      journal = journal
-          .withTap(Mood.sad, DateTime(2026, 11, 3, 9))
-          .withTap(Mood.happy, DateTime(2026, 11, 4, 9));
-    }
-    app.journal.load(journal);
-    await tester.pumpWidget(app.wrap(const CalendarScreen()));
-    expect(shadeOf(tester, '3'), shadeOf(tester, '4'));
-  });
+      final seen = <Color>{};
+      for (final mood in Mood.values) {
+        final color = shadeOf(tester, '${3 + mood.index}')!;
+        expect(color, DayShade.fill(lightPalette, 20, 20, mood));
+        seen.add(color);
+      }
+      expect(seen.length, Mood.values.length);
+    },
+  );
 
   testWidgets('a day without taps stays empty', (tester) async {
     final app = TestApp();
@@ -224,7 +215,7 @@ void main() {
     expect(find.bySemanticsLabel(ko.common_back), findsOneWidget);
   });
 
-  testWidgets('the bars are black and gray, with colors only in faces', (
+  testWidgets('the mood bars of the detail are drawn in the mood colors', (
     tester,
   ) async {
     final app = TestApp();
@@ -238,7 +229,12 @@ void main() {
         .map((c) => (c.decoration! as BoxDecoration).color)
         .toList();
     expect(bars, isNotEmpty);
-    expect(bars, everyElement(anyOf(lightPalette.ink, lightPalette.mapLine)));
+    expect(
+      bars,
+      everyElement(
+        anyOf([for (final mood in Mood.values) lightPalette.moodColor(mood)]),
+      ),
+    );
   });
 
   testWidgets('today button shows on past months and jumps back', (

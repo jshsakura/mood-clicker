@@ -65,6 +65,6 @@ class QuickActionsShortcuts implements IconShortcuts {
   Future<void> register(List<ShortcutEntry> entries) =>
       _quickActions.setShortcutItems([
         for (final e in entries)
-          ShortcutItem(type: e.type, localizedTitle: e.title),
+          ShortcutItem(type: e.type, localizedTitle: e.title, icon: e.icon),
       ]);
 }

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:flutter/widgets.dart';
 import 'package:flutter/services.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -19,14 +20,17 @@ import '../feedback/system_haptics.dart';
 import '../l10n/app_localizations.g.dart';
 import '../l10n/asset_paths.dart';
 import '../l10n/locale_resolution.dart';
+import '../location/coarse_location.dart';
 import '../reminder/flutter_local_notifications_port.dart';
 import '../reminder/reminder_controller.dart';
 import '../reminder/reminder_port.dart';
 import '../settings/records_port.dart';
+import '../weather/weather_source.dart';
 import '../settings/settings_screen.dart';
 import '../settings/settings_store.dart';
 import '../surfaces/home_widget_adapters.dart';
 import '../surfaces/native_surfaces.dart';
+import '../surfaces/shortcut_order.dart';
 import 'app_services.dart';
 import 'journal_store.dart';
 import 'seen_hints.dart';
@@ -88,6 +92,7 @@ Future<AppServices> createServices({WidgetBuilder? settingsBuilder}) async {
         theme: hub.theme,
         language: hub.language,
         mapView: hub.mapView,
+        weatherView: hub.weatherView,
         onApplied: hub.apply,
         reminder: reminder,
         records: records,
@@ -109,6 +114,9 @@ Future<AppServices> createServices({WidgetBuilder? settingsBuilder}) async {
     theme: hub.theme,
     language: hub.language,
     mapView: hub.mapView,
+    weatherView: hub.weatherView,
+    location: const GeolocatorCoarseLocation(),
+    weatherSource: MetNorwayWeatherSource(),
     settingsStore: settingsStore,
     hints: SharedPreferencesSeenHints(prefs),
     reminder: reminder,
@@ -119,6 +127,7 @@ Future<AppServices> createServices({WidgetBuilder? settingsBuilder}) async {
       widget: HomeWidgetPublisher(),
       shortcuts: QuickActionsShortcuts(),
       links: HomeWidgetLaunchLinks(),
+      shortcutLimit: shortcutLimitFor(defaultTargetPlatform),
       // The app replaces this once it is running (see SurfaceSync).
       onLaunchMood: (Mood _) {},
     ),

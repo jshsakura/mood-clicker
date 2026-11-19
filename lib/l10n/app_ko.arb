@@ -513,7 +513,7 @@
   "@map_openLabel": {
     "description": "기분 고르기 화면의 지도 버튼 숨김 이름(접근성)입니다. 설정에서 지도 보기를 켠 때만 보입니다."
   },
-  "map_nearby": "내 주변 3km",
+  "map_nearby": "이 지도 안",
   "@map_nearby": {
     "description": "지도 아래 시트의 기본 제목입니다. 아무 동네도 고르지 않았을 때 보입니다."
   },
@@ -521,7 +521,7 @@
   "@map_pickedPlace": {
     "description": "지도 아래 시트에서 동네 하나를 골랐을 때 제목 위에 붙는 작은 글씨입니다."
   },
-  "map_explain": "글씨는 사람들이 고른 한마디이고, 크기는 그 동네에서 두드린 수입니다. 약 5km² 넓이의 동네 칸으로 묶고, 5명이 안 되는 칸은 보이지 않습니다.",
+  "map_explain": "얼굴은 그 동네 칸의 대표 기분이고, 숫자는 남긴 사람 수입니다. 약 5km² 넓이의 칸으로 묶고, 5명이 안 되는 칸은 보이지 않습니다.",
   "@map_explain": {
     "description": "지도 아래 시트의 설명입니다. 묶는 단위 약 5km²(H3 해상도 7) 와 숨기는 기준 5명이 규칙과 같아야 합니다."
   },
@@ -804,13 +804,13 @@
   "@release_breathingRing": {
     "description": "숨 고리의 스크린리더 설명입니다. 따라 하기를 권할 뿐 강요하지 않습니다."
   },
-  "howTo_label": "놀이 방법",
+  "howTo_label": "도움말",
   "@howTo_label": {
     "description": "두드리기와 기분 고르기 머리글의 물음표 단추 이름입니다."
   },
-  "howTo_title": "놀이 방법",
+  "howTo_title": "이렇게 해 보세요",
   "@howTo_title": {
-    "description": "놀이 방법 시트의 제목입니다."
+    "description": "물음표 단추로 여는 사용법 시트의 제목입니다."
   },
   "howTo_fill": "두드리면 물이 차오릅니다.",
   "@howTo_fill": {
@@ -836,8 +836,48 @@
   "@howTo_finish": {
     "description": "놀이 방법 여섯째 줄입니다."
   },
-  "howTo_bubble": "놀이 방법",
+  "howTo_bubble": "어떻게 하나요?",
   "@howTo_bubble": {
     "description": "두드리기 화면에 처음 들어올 때 물음표 단추 옆에 잠깐 뜨는 말풍선입니다."
+  },
+  "settings_weatherView": "날씨 보기",
+  "@settings_weatherView": {
+    "description": "기분 고르기 화면 위 날짜 옆에 날씨를 보여 줄지 고르는 항목입니다."
+  },
+  "settings_weatherViewDesc": "소수 첫째 자리로 뭉갠 위치로 현재 날씨만 가져옵니다. 끄면 위치도 묻지 않습니다.",
+  "@settings_weatherViewDesc": {
+    "description": "날씨 보기 항목 아래에 붙는 설명입니다."
+  },
+  "settings_weatherSource": "날씨 출처",
+  "@settings_weatherSource": {
+    "description": "설정의 정보 묶음에 붙는 날씨 출처 줄 제목입니다."
+  },
+  "weather_clear": "맑음",
+  "@weather_clear": {
+    "description": "날씨 칩 접근성 이름입니다."
+  },
+  "weather_partlyCloudy": "구름 조금",
+  "@weather_partlyCloudy": {
+    "description": "날씨 칩 접근성 이름입니다."
+  },
+  "weather_cloudy": "흐림",
+  "@weather_cloudy": {
+    "description": "날씨 칩 접근성 이름입니다."
+  },
+  "weather_rain": "비",
+  "@weather_rain": {
+    "description": "날씨 칩 접근성 이름입니다."
+  },
+  "weather_snow": "눈",
+  "@weather_snow": {
+    "description": "날씨 칩 접근성 이름입니다."
+  },
+  "permission_locationWhenInUse": "앱을 쓰는 동안 소수 첫째 자리로 뭉갠 위치만 날씨를 가져오는 데 씁니다.",
+  "@permission_locationWhenInUse": {
+    "description": "위치 권한 안내 문구입니다."
+  },
+  "map_zoomIn": "지도를 조금 더 확대하면 동네 칸이 보입니다",
+  "@map_zoomIn": {
+    "description": "지도가 너무 넓어 동네 칸을 그리지 않을 때 시트에 보이는 안내입니다."
   }
 }

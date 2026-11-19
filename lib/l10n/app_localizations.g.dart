@@ -805,7 +805,7 @@ abstract class AppLocalizations {
   /// 지도 아래 시트의 기본 제목입니다. 아무 동네도 고르지 않았을 때 보입니다.
   ///
   /// In ko, this message translates to:
-  /// **'내 주변 3km'**
+  /// **'이 지도 안'**
   String get map_nearby;
 
   /// 지도 아래 시트에서 동네 하나를 골랐을 때 제목 위에 붙는 작은 글씨입니다.
@@ -817,7 +817,7 @@ abstract class AppLocalizations {
   /// 지도 아래 시트의 설명입니다. 묶는 단위 약 5km²(H3 해상도 7) 와 숨기는 기준 5명이 규칙과 같아야 합니다.
   ///
   /// In ko, this message translates to:
-  /// **'글씨는 사람들이 고른 한마디이고, 크기는 그 동네에서 두드린 수입니다. 약 5km² 넓이의 동네 칸으로 묶고, 5명이 안 되는 칸은 보이지 않습니다.'**
+  /// **'얼굴은 그 동네 칸의 대표 기분이고, 숫자는 남긴 사람 수입니다. 약 5km² 넓이의 칸으로 묶고, 5명이 안 되는 칸은 보이지 않습니다.'**
   String get map_explain;
 
   /// 지도 위 범위 전환의 오늘 버튼입니다.
@@ -1177,13 +1177,13 @@ abstract class AppLocalizations {
   /// 두드리기와 기분 고르기 머리글의 물음표 단추 이름입니다.
   ///
   /// In ko, this message translates to:
-  /// **'놀이 방법'**
+  /// **'도움말'**
   String get howTo_label;
 
-  /// 놀이 방법 시트의 제목입니다.
+  /// 물음표 단추로 여는 사용법 시트의 제목입니다.
   ///
   /// In ko, this message translates to:
-  /// **'놀이 방법'**
+  /// **'이렇게 해 보세요'**
   String get howTo_title;
 
   /// 놀이 방법 첫 줄입니다.
@@ -1225,8 +1225,68 @@ abstract class AppLocalizations {
   /// 두드리기 화면에 처음 들어올 때 물음표 단추 옆에 잠깐 뜨는 말풍선입니다.
   ///
   /// In ko, this message translates to:
-  /// **'놀이 방법'**
+  /// **'어떻게 하나요?'**
   String get howTo_bubble;
+
+  /// 기분 고르기 화면 위 날짜 옆에 날씨를 보여 줄지 고르는 항목입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'날씨 보기'**
+  String get settings_weatherView;
+
+  /// 날씨 보기 항목 아래에 붙는 설명입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'소수 첫째 자리로 뭉갠 위치로 현재 날씨만 가져옵니다. 끄면 위치도 묻지 않습니다.'**
+  String get settings_weatherViewDesc;
+
+  /// 설정의 정보 묶음에 붙는 날씨 출처 줄 제목입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'날씨 출처'**
+  String get settings_weatherSource;
+
+  /// 날씨 칩 접근성 이름입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'맑음'**
+  String get weather_clear;
+
+  /// 날씨 칩 접근성 이름입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'구름 조금'**
+  String get weather_partlyCloudy;
+
+  /// 날씨 칩 접근성 이름입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'흐림'**
+  String get weather_cloudy;
+
+  /// 날씨 칩 접근성 이름입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'비'**
+  String get weather_rain;
+
+  /// 날씨 칩 접근성 이름입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'눈'**
+  String get weather_snow;
+
+  /// 위치 권한 안내 문구입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'앱을 쓰는 동안 소수 첫째 자리로 뭉갠 위치만 날씨를 가져오는 데 씁니다.'**
+  String get permission_locationWhenInUse;
+
+  /// 지도가 너무 넓어 동네 칸을 그리지 않을 때 시트에 보이는 안내입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'지도를 조금 더 확대하면 동네 칸이 보입니다'**
+  String get map_zoomIn;
 }
 
 class _AppLocalizationsDelegate

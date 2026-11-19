@@ -125,30 +125,23 @@ void main() {
   });
 
   group('MoodFace', () {
-    testWidgets(
-      'happy and excited use the happy color, the others the sad color',
-      (tester) async {
-        final palette = lightPalette;
-        final expected = {
-          Mood.happy: palette.happy,
-          Mood.excited: palette.happy,
-          Mood.angry: palette.sad,
-          Mood.sad: palette.sad,
-          Mood.anxious: palette.sad,
-        };
-        for (final mood in Mood.values) {
-          await tester.pumpWidget(_host(MoodFace(mood: mood, size: 36)));
-          await tester.pump();
-          final picture = tester.widget<SvgPicture>(find.byType(SvgPicture));
-          expect(picture.width, 36, reason: mood.id);
-          expect(
-            picture.colorFilter,
-            ColorFilter.mode(expected[mood]!, BlendMode.srcIn),
-            reason: mood.id,
-          );
-        }
-      },
-    );
+    testWidgets('every mood has its own color', (tester) async {
+      final palette = lightPalette;
+      final expected = {
+        for (final mood in Mood.values) mood: palette.moodColor(mood),
+      };
+      for (final mood in Mood.values) {
+        await tester.pumpWidget(_host(MoodFace(mood: mood, size: 36)));
+        await tester.pump();
+        final picture = tester.widget<SvgPicture>(find.byType(SvgPicture));
+        expect(picture.width, 36, reason: mood.id);
+        expect(
+          picture.colorFilter,
+          ColorFilter.mode(expected[mood]!, BlendMode.srcIn),
+          reason: mood.id,
+        );
+      }
+    });
 
     testWidgets('follows the theme palette', (tester) async {
       await tester.pumpWidget(
@@ -156,7 +149,7 @@ void main() {
       );
       await tester.pump();
       final picture = tester.widget<SvgPicture>(find.byType(SvgPicture));
-      final dark = darkPalette.happy;
+      final dark = darkPalette.moodHappy;
       expect(picture.colorFilter, ColorFilter.mode(dark, BlendMode.srcIn));
     });
   });

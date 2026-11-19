@@ -68,7 +68,7 @@ UI 문구와 문서는 합니다체로 쓴다. 엠대시로 문장을 잇지 않
 
 ## 팀으로 일할 때
 
-자세한 것은 `docs/HARNESS.md`. 에이전트 종류와 상관없이 지킨다. Claude 훅이 없는 에이전트도 같은 규칙이다.
+자세한 것은 `docs/HARNESS.md`. 에이전트 종류와 상관없이 지킨다. Codex 는 `.codex/hooks.json` 으로 Claude 와 같은 가드(`.claude/hooks/`)를 돌린다. 처음 열 때 Codex 가 묻는 훅 신뢰를 허용한다. 훅이 없는 에이전트도 같은 규칙이다.
 
 일을 시작하기 전에 `docs/LESSONS.md` 에서 자기 일과 닿는 절을 읽는다. 이 팀이 실제로 한 실수와 그것을 막는 검사가 있다. 소리, 음악, 글꼴을 넣을 때는 출처를 `THIRD_PARTY_NOTICES.md` 에 먼저 적는다(`tool/test_asset_licenses.py` 가 본다). 수노 녹음본은 넣지 않는다.
 

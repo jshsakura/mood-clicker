@@ -47,10 +47,14 @@ class Settings {
     this.mapView = mapViewDefault,
     this.mapContribute = false,
     this.mapComment = false,
+    this.weatherView = weatherViewDefault,
   });
 
   /// Whether the map entry shows up. On: the map is a core feature.
   static const bool mapViewDefault = true;
+
+  /// Whether the weather chip shows up on the mood select screen.
+  static const bool weatherViewDefault = true;
 
   /// The name of the chosen palette, or `system` to follow the device.
   final String theme;
@@ -67,6 +71,7 @@ class Settings {
   final bool mapView;
   final bool mapContribute;
   final bool mapComment;
+  final bool weatherView;
 
   ThemeChoice get themeChoice => theme == ThemeChoice.system.name
       ? ThemeChoice.system
@@ -103,6 +108,7 @@ class Settings {
     bool? mapView,
     bool? mapContribute,
     bool? mapComment,
+    bool? weatherView,
   }) {
     return Settings(
       theme: theme ?? this.theme,
@@ -119,6 +125,7 @@ class Settings {
       mapView: mapView ?? this.mapView,
       mapContribute: mapContribute ?? this.mapContribute,
       mapComment: mapComment ?? this.mapComment,
+      weatherView: weatherView ?? this.weatherView,
     );
   }
 
@@ -133,5 +140,5 @@ class Settings {
   String toString() =>
       'Settings($theme, $language, $hapticsOn, $hapticStrength, $soundOn, '
       '$soundPack, $cheersOn, $cheerSize, $shakeOnFull, $tiltToPour, '
-      '$reminder, $mapView, $mapContribute, $mapComment)';
+      '$reminder, $mapView, $mapContribute, $mapComment, $weatherView)';
 }

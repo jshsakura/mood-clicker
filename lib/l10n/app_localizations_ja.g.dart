@@ -391,14 +391,14 @@ class AppLocalizationsJa extends AppLocalizations {
   String get map_openLabel => '地図を見る';
 
   @override
-  String get map_nearby => 'まわり3km';
+  String get map_nearby => 'この地図の中';
 
   @override
   String get map_pickedPlace => '選んだ場所';
 
   @override
   String get map_explain =>
-      '文字は人が選んだひとことで、大きさはその場所で押した数です。約5km²の広さのマスにまとめ、5人に満たないマスは表示されません。';
+      '顔はそのマスを代表する気分で、数字は記録を残した人の数です。約5km²の広さのマスにまとめ、5人に満たないマスは表示されません。';
 
   @override
   String get map_rangeToday => '今日';
@@ -626,4 +626,36 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get howTo_bubble => '遊び方';
+
+  @override
+  String get settings_weatherView => '天気を表示';
+
+  @override
+  String get settings_weatherViewDesc =>
+      '小数第1位に丸めた位置だけで天気を取得します。オフにすると位置も求めません。';
+
+  @override
+  String get settings_weatherSource => '天気データの提供元';
+
+  @override
+  String get weather_clear => '晴れ';
+
+  @override
+  String get weather_partlyCloudy => '晴れ時々くもり';
+
+  @override
+  String get weather_cloudy => 'くもり';
+
+  @override
+  String get weather_rain => '雨';
+
+  @override
+  String get weather_snow => '雪';
+
+  @override
+  String get permission_locationWhenInUse =>
+      'アプリ使用中に小数第1位に丸めた位置だけを使って天気を取得します。';
+
+  @override
+  String get map_zoomIn => 'もう少し拡大すると、まちのマスが見えます';
 }

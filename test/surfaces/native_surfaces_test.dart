@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mood_clicker/domain/day_key.dart';
@@ -7,6 +9,7 @@ import 'package:mood_clicker/domain/mood_journal.dart';
 import 'package:mood_clicker/l10n/app_localizations.g.dart';
 import 'package:mood_clicker/surfaces/mood_links.dart';
 import 'package:mood_clicker/surfaces/native_surfaces.dart';
+import 'package:mood_clicker/surfaces/shortcut_order.dart';
 import 'package:mood_clicker/surfaces/surfaces_ports.dart';
 import 'package:mood_clicker/surfaces/widget_snapshot.dart';
 
@@ -28,6 +31,7 @@ void main() {
       widget: widget,
       shortcuts: shortcuts,
       links: links,
+      shortcutLimit: shortcutLimitIos,
       onLaunchMood: launched.add,
     );
   }
@@ -63,6 +67,7 @@ void main() {
       widget: failing,
       shortcuts: shortcuts,
       links: links,
+      shortcutLimit: shortcutLimitIos,
       onLaunchMood: launched.add,
     );
     await expectLater(surfaces.publishToday(today(1)), throwsStateError);
@@ -107,7 +112,7 @@ void main() {
     },
   );
 
-  test('shortcuts hold four moods with their translated names', () async {
+  test('shortcuts hold their moods with their translated names', () async {
     final s = build();
     final ko = await AppLocalizations.delegate.load(const Locale('ko'));
     await s.registerShortcuts(ko, MoodJournal.empty(), noon);
@@ -120,6 +125,84 @@ void main() {
     final en = await AppLocalizations.delegate.load(const Locale('en'));
     await s.registerShortcuts(en, MoodJournal.empty(), noon);
     expect(shortcuts.registered.last.first.title, 'Happy');
+  });
+
+  test(
+    'every registered shortcut has an icon with a resource on both sides',
+    () async {
+      final s = build();
+      final en = await AppLocalizations.delegate.load(const Locale('en'));
+      await s.registerShortcuts(en, MoodJournal.empty(), noon);
+      for (final e in shortcuts.registered.single) {
+        expect(e.icon, isNotEmpty);
+        expect(
+          File('android/app/src/main/res/drawable/${e.icon}.xml').existsSync(),
+          isTrue,
+          reason: 'android ${e.icon}',
+        );
+        expect(
+          File(
+            'ios/Runner/Assets.xcassets/${e.icon}.imageset/${e.icon}.svg',
+          ).existsSync(),
+          isTrue,
+          reason: 'ios ${e.icon}',
+        );
+      }
+    },
+  );
+
+  test('all five moods have an icon resource', () {
+    for (final mood in Mood.values) {
+      final name = shortcutIconFor(mood);
+      expect(name, 'shortcut_${mood.id}');
+      expect(
+        File('android/app/src/main/res/drawable/$name.xml').existsSync(),
+        isTrue,
+      );
+      expect(
+        File(
+          'ios/Runner/Assets.xcassets/$name.imageset/Contents.json',
+        ).existsSync(),
+        isTrue,
+      );
+    }
+  });
+
+  test('Android registers five shortcuts and iOS four', () async {
+    final en = await AppLocalizations.delegate.load(const Locale('en'));
+    for (final (platform, count) in [
+      (TargetPlatform.android, 5),
+      (TargetPlatform.iOS, 4),
+    ]) {
+      final fake = FakeIconShortcuts();
+      final surfaces = NativeSurfaces(
+        widget: FakeWidgetPublisher(),
+        shortcuts: fake,
+        links: FakeLaunchLinks(),
+        shortcutLimit: shortcutLimitFor(platform),
+        onLaunchMood: (_) {},
+      );
+      await surfaces.registerShortcuts(en, MoodJournal.empty(), noon);
+      expect(fake.registered.single, hasLength(count), reason: '$platform');
+    }
+    expect(shortcutLimitAndroid, 5);
+    expect(shortcutLimitIos, 4);
+  });
+
+  test('iOS keeps the most picked moods when it drops one', () async {
+    final en = await AppLocalizations.delegate.load(const Locale('en'));
+    final fake = FakeIconShortcuts();
+    final surfaces = NativeSurfaces(
+      widget: FakeWidgetPublisher(),
+      shortcuts: fake,
+      links: FakeLaunchLinks(),
+      shortcutLimit: shortcutLimitIos,
+      onLaunchMood: (_) {},
+    );
+    final journal = MoodJournal.empty().withTap(Mood.anxious, noon);
+    await surfaces.registerShortcuts(en, journal, noon);
+    expect(fake.registered.single.first.type, shortcutTypeFor(Mood.anxious));
+    expect(fake.registered.single, hasLength(4));
   });
 
   test('shortcuts follow what was picked in the last 14 days', () async {

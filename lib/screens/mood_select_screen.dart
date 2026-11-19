@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../app/app_services.dart';
@@ -12,8 +13,10 @@ import '../domain/mood.dart';
 import '../feedback/feedback_kind.dart';
 import '../l10n/app_localizations.g.dart';
 import '../l10n/date_labels.dart';
+import '../location/coarse_location.dart';
 import '../map/map_rules.dart';
 import '../map/map_screen.dart';
+import '../weather/weather_source.dart';
 import 'how_to_play_sheet.dart';
 import 'calendar_screen.dart';
 import 'mood_labels.dart';
@@ -60,11 +63,25 @@ class MoodSelectScreen extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              dayWithWeekday(locale, services.now()),
-                              style: TypeScale.label.copyWith(
-                                color: p.inkMuted,
-                              ),
+                            Wrap(
+                              spacing: Space.sm,
+                              runSpacing: Space.xs,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              children: [
+                                _HeaderChip(
+                                  child: Text(
+                                    dayWithWeekday(locale, services.now()),
+                                    style: TypeScale.label.copyWith(
+                                      color: p.inkMuted,
+                                    ),
+                                  ),
+                                ),
+                                _WeatherChip(
+                                  weatherView: services.weatherView,
+                                  location: services.location,
+                                  weatherSource: services.weatherSource,
+                                ),
+                              ],
                             ),
                             const SizedBox(height: Space.xs),
                             Text(
@@ -129,6 +146,160 @@ class MoodSelectScreen extends StatelessWidget {
               ),
             );
           },
+        ),
+      ),
+    );
+  }
+}
+
+class _HeaderChip extends StatelessWidget {
+  const _HeaderChip({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: p.surface,
+        borderRadius: BorderRadius.circular(Radii.pill),
+        border: Border.all(color: p.line),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: Space.md,
+          vertical: Space.xs,
+        ),
+        child: child,
+      ),
+    );
+  }
+}
+
+class _WeatherChip extends StatefulWidget {
+  const _WeatherChip({
+    required this.weatherView,
+    required this.location,
+    required this.weatherSource,
+  });
+
+  final ValueListenable<bool> weatherView;
+  final CoarseLocation? location;
+  final WeatherSource? weatherSource;
+
+  @override
+  State<_WeatherChip> createState() => _WeatherChipState();
+}
+
+class _WeatherChipState extends State<_WeatherChip> {
+  WeatherSnapshot? _snapshot;
+  bool _loading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.weatherView.addListener(_onToggleChanged);
+    _loadIfEnabled();
+  }
+
+  @override
+  void didUpdateWidget(covariant _WeatherChip oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.weatherView != widget.weatherView) {
+      oldWidget.weatherView.removeListener(_onToggleChanged);
+      widget.weatherView.addListener(_onToggleChanged);
+    }
+    if (oldWidget.location != widget.location ||
+        oldWidget.weatherSource != widget.weatherSource ||
+        oldWidget.weatherView != widget.weatherView) {
+      _loadIfEnabled();
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.weatherView.removeListener(_onToggleChanged);
+    super.dispose();
+  }
+
+  void _onToggleChanged() {
+    if (!widget.weatherView.value) {
+      if (_snapshot != null) {
+        setState(() => _snapshot = null);
+      }
+      return;
+    }
+    _loadIfEnabled();
+  }
+
+  Future<void> _loadIfEnabled() async {
+    if (!widget.weatherView.value || _loading) return;
+    final location = widget.location;
+    final source = widget.weatherSource;
+    if (location == null || source == null) return;
+
+    _loading = true;
+    try {
+      final coord = await location.current();
+      if (!mounted || !widget.weatherView.value || coord == null) {
+        if (mounted && _snapshot != null) {
+          setState(() => _snapshot = null);
+        }
+        return;
+      }
+      final snap = await source.current(coord);
+      if (!mounted || !widget.weatherView.value) return;
+      setState(() => _snapshot = snap);
+    } catch (_) {
+      if (mounted && _snapshot != null) {
+        setState(() => _snapshot = null);
+      }
+    } finally {
+      _loading = false;
+    }
+  }
+
+  static LineIcons _iconFor(WeatherKind kind) => switch (kind) {
+    WeatherKind.clear => LineIcons.weatherClear,
+    WeatherKind.partlyCloudy => LineIcons.weatherPartlyCloudy,
+    WeatherKind.cloudy => LineIcons.weatherCloudy,
+    WeatherKind.rain => LineIcons.weatherRain,
+    WeatherKind.snow => LineIcons.weatherSnow,
+  };
+
+  static String _labelFor(AppLocalizations l10n, WeatherKind kind) =>
+      switch (kind) {
+        WeatherKind.clear => l10n.weather_clear,
+        WeatherKind.partlyCloudy => l10n.weather_partlyCloudy,
+        WeatherKind.cloudy => l10n.weather_cloudy,
+        WeatherKind.rain => l10n.weather_rain,
+        WeatherKind.snow => l10n.weather_snow,
+      };
+
+  @override
+  Widget build(BuildContext context) {
+    final snap = _snapshot;
+    if (!widget.weatherView.value || snap == null) {
+      return const SizedBox.shrink();
+    }
+    final p = context.palette;
+    final l10n = AppLocalizations.of(context);
+    final iconSize = TypeScale.label.fontSize ?? Space.lg;
+    return _HeaderChip(
+      child: Semantics(
+        label: '${_labelFor(l10n, snap.kind)} ${snap.tempC}\u00B0',
+        excludeSemantics: true,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            LineIcon(_iconFor(snap.kind), size: iconSize, color: p.inkMuted),
+            const SizedBox(width: Space.xs),
+            Text(
+              '${snap.tempC}\u00B0',
+              style: TypeScale.label.copyWith(color: p.inkMuted),
+            ),
+          ],
         ),
       ),
     );

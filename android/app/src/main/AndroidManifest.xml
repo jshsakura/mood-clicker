@@ -1,4 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- The map downloads its tiles and the weather chip asks for the weather. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <uses-permission android:name="android.permission.VIBRATE"/>
     <!-- Evening reminder (T35). The plugin declares POST_NOTIFICATIONS itself;
          the receivers that keep the schedule across a reboot live here. -->

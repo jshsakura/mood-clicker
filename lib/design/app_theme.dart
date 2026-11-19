@@ -1,6 +1,19 @@
 import 'package:flutter/material.dart';
 
+import '../domain/mood.dart';
 import 'tokens.g.dart';
+
+/// The color of each mood. Happy and sad (the two sides) stay for the share of one side against
+/// the other.
+extension MoodColors on AppPalette {
+  Color moodColor(Mood mood) => switch (mood) {
+    Mood.happy => moodHappy,
+    Mood.excited => moodExcited,
+    Mood.angry => moodAngry,
+    Mood.sad => moodSad,
+    Mood.anxious => moodAnxious,
+  };
+}
 
 /// Builds the app-wide ThemeData from one palette.
 /// Screen code never names colors directly; it uses `context.palette` and TypeScale.

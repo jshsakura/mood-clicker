@@ -27,6 +27,9 @@ Mood? moodFromUri(Uri? uri) {
 /// The id of the app icon shortcut of a mood. Unique per mood.
 String shortcutTypeFor(Mood mood) => '$_shortcutPrefix${mood.id}';
 
+/// The name of the icon resource of a mood shortcut, made by tool/gen_shortcut_icons.py.
+String shortcutIconFor(Mood mood) => 'shortcut_${mood.id}';
+
 Mood? moodFromShortcutType(String type) {
   if (!type.startsWith(_shortcutPrefix)) return null;
   return Mood.byId(type.substring(_shortcutPrefix.length));
