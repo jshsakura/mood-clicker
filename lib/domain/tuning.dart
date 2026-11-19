@@ -184,6 +184,14 @@ abstract final class FillTuning {
   /// The phone can tilt the surface up to this far either way.
   static const double tiltLimitDegrees = 85;
 
+  /// A phone lying flat has gravity almost only through the screen, so its sideways readings are
+  /// noise. The share of gravity that lies in the screen plane (0 flat, 1 upright) scales the tilt:
+  /// below [flatBelow] the surface is level and nothing spills, above [flatFull] the tilt counts in
+  /// full, and in between it eases in with a smoothstep. Standard gravity is [gravity] m/s^2.
+  static const double flatBelow = 0.15;
+  static const double flatFull = 0.4;
+  static const double gravity = 9.80665;
+
   /// While the level is falling, the surface ripples: each frame, for the height lost in px (at
   /// most [drainMaxPx]), [drainColumns] random columns are pushed by
   /// (random - 0.5) * lostPx * [drainJiggle]. If the phone is tilted, the water also leans toward
