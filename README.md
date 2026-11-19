@@ -45,6 +45,7 @@
 | 조사 기록(음악 라이선스, 날씨 API 등) | `docs/research/` |
 | 리뷰 기록 | `docs/reviews/` |
 | **이 팀이 실제로 한 실수와 막는 검사** | [docs/LESSONS.md](docs/LESSONS.md). 일 시작 전에 자기 일과 닿는 절을 읽습니다 |
+| AI 에이전트에게 새 컴퓨터 세팅 맡기기 | [docs/AI_SETUP.md](docs/AI_SETUP.md). 에이전트에게 "이 문서대로 세팅해 줘" 한 줄이면 됩니다 |
 | 개발 규칙(에이전트 포함) | [AGENTS.md](AGENTS.md) |
 | 여러 에이전트로 일하는 방법 | [docs/HARNESS.md](docs/HARNESS.md) · [English](docs/HARNESS.en.md) |
 
