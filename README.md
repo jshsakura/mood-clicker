@@ -4,10 +4,10 @@
 `Unknown` 은 이름이 정해질 때까지 쓰는 가제입니다. 패키지 이름 `mood_clicker` 와 앱 식별자 `com.example.mood_clicker` 도 아직 그대로입니다.
 
 > **새 컴퓨터 세팅은 AI 에게 맡깁니다.** 저장소 폴더에서 Claude Code 나 Codex 를 열고 이 한 줄을 붙여 넣습니다.
-> 자세한 것은 [docs/AI_SETUP.md](docs/AI_SETUP.md).
+> 문서는 에이전트가 읽도록 영어로 씁니다. [docs/AI_SETUP.md](docs/AI_SETUP.md).
 >
 > ```text
-> docs/AI_SETUP.md 를 읽고 그대로 이 컴퓨터를 세팅해 줘. 단계마다 확인 결과를 보여 주고, "사람에게 묻습니다" 에서는 멈춰.
+> Read docs/AI_SETUP.md and set up this machine exactly as it says. Show the real output of every check, and stop at every "ASK THE HUMAN".
 > ```
 
 이 문서는 팀이 처음 들어와 "지금 무엇이 있고, 어디를 보고, 어떻게 돌리는지" 를 한 번에 잡도록 씁니다.
