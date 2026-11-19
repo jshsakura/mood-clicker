@@ -27,28 +27,23 @@ jobs:
           python3 tool/privacy_scan.py --message "$RUNNER_TEMP/pr-text.txt"
   check:
     if: github.event.action != 'edited'
+    # Plain runner instead of the ~7 GB cirruslabs image: ubuntu-latest already ships the
+    # Android SDK and Java, so only the Flutter SDK is fetched (and cached), as the apple job does.
     runs-on: ubuntu-latest
-    container: ghcr.io/cirruslabs/flutter:3.44.0
-    env:
-      # Container jobs change HOME, so pin the cache paths.
-      PUB_CACHE: /tmp/pub-cache
-      GRADLE_USER_HOME: /tmp/gradle
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: actions/cache@v4
+      - uses: actions/setup-java@v4
         with:
-          path: /tmp/pub-cache
-          key: pub-${{ runner.os }}-${{ hashFiles('pubspec.lock') }}
-          restore-keys: pub-${{ runner.os }}-
-      - uses: actions/cache@v4
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+      - uses: subosito/flutter-action@v2
         with:
-          path: |
-            /tmp/gradle/caches
-            /tmp/gradle/wrapper
-          key: gradle-${{ runner.os }}-${{ hashFiles('android/**/*.gradle*', 'android/gradle/wrapper/gradle-wrapper.properties', 'pubspec.lock') }}
-          restore-keys: gradle-${{ runner.os }}-
+          flutter-version: 3.44.0
+          channel: stable
+          cache: true
       - name: privacy and slop scan
         if: github.event_name == 'pull_request'
         run: |
@@ -97,6 +92,17 @@ jobs:
           path: build/app/outputs/flutter-apk/app-debug.apk
           retention-days: 14
           if-no-files-found: error
+  # Release the APK and refresh the download page as soon as check has built it, without
+  # waiting for the Apple builds below.
+  deploy:
+    needs: check
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+      actions: read
+    uses: ./.github/workflows/deploy.yml
   apple:
     needs: check
     runs-on: macos-latest
