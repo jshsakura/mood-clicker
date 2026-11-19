@@ -1,12 +1,18 @@
 name: ios-test
 # Builds an unsigned iOS app for test installs (signed on the tester's side with a personal
 # Apple ID, for example with Sideloadly). Store builds need a paid developer account instead.
+#
+# On a push to main it also hands the IPA to the download page: it waits for the release that
+# deploy made for this commit, attaches the IPA as mood-clicker.ipa, and runs deploy again so the
+# page republishes with the iPhone download. contents: write uploads the asset and actions: write
+# starts deploy. Nothing else is granted.
 on:
   workflow_dispatch:
   push:
     branches: [main]
 permissions:
-  contents: read
+  contents: write
+  actions: write
 concurrency:
   group: ios-test-${{ github.ref }}
   cancel-in-progress: true
@@ -33,3 +39,25 @@ jobs:
           name: ios-unsigned
           path: dist/*.ipa
           retention-days: 14
+      - name: attach the IPA to the release of this commit and republish the page
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          # deploy makes the release while the Android build is tested, so it may not exist yet.
+          tag=""
+          for attempt in $(seq 1 20); do
+            tag=$(gh api "repos/$GH_REPO/releases?per_page=30" \
+              --jq ".[] | select(.target_commitish == \"$GITHUB_SHA\") | .tag_name" | head -n 1)
+            [ -n "$tag" ] && break
+            echo "no release for $GITHUB_SHA yet (try $attempt of 20)"
+            sleep 30
+          done
+          if [ -z "$tag" ]; then
+            echo "::error::no release targets $GITHUB_SHA after 10 minutes. Check that the deploy workflow ran."
+            exit 1
+          fi
+          cp dist/*.ipa dist/mood-clicker.ipa
+          gh release upload "$tag" dist/mood-clicker.ipa --clobber
+          gh workflow run deploy.yml --ref main

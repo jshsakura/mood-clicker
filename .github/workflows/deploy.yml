@@ -9,6 +9,8 @@ name: deploy
 # names from its own origin (no 302 to another host, which iOS turns into a cross-origin tab).
 #
 # workflow_dispatch republishes the site only (for copy changes), with the newest release.
+# ios-test calls it this way after it attaches mood-clicker.ipa to the release of the same
+# commit. The page offers the iPhone download only when the newest release carries that file.
 on:
   workflow_call:
   workflow_dispatch:
@@ -66,11 +68,17 @@ jobs:
             exit 0
           fi
           gh release download "$tag" -D _site/download --pattern 'mood-clicker.apk'
-          gh release view "$tag" --json tagName,targetCommitish,publishedAt --jq '{
+          ios=false
+          if [ "$(gh release view "$tag" --json assets --jq '[.assets[].name] | index("mood-clicker.ipa") != null')" = "true" ]; then
+            gh release download "$tag" -D _site/download --pattern 'mood-clicker.ipa'
+            ios=true
+          fi
+          gh release view "$tag" --json tagName,targetCommitish,publishedAt | jq --argjson ios "$ios" '{
               version: (.tagName | sub("^v"; "") | sub("-build\\.[0-9]+$"; "")),
               build: (.tagName | capture("build\\.(?<n>[0-9]+)$").n),
               sha: .targetCommitish,
-              date: (.publishedAt | fromdateiso8601 + 32400 | strftime("%Y-%m-%d %H:%M"))
+              date: (.publishedAt | fromdateiso8601 + 32400 | strftime("%Y-%m-%d %H:%M")),
+              ios: $ios
             }' > _site/build.json
           cat _site/build.json
           ls -l _site/download

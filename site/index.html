@@ -142,9 +142,21 @@
         <div class="link-row small">
           <a href="https://github.com/jshsakura/mood-clicker/releases"><span lang="ko">지난 빌드 보기</span><span lang="en">Previous builds</span><span lang="ja">過去のビルド</span></a>
         </div>
-        <p class="later small muted" lang="ko">아이폰과 맥용은 아직 내려받을 수 없습니다.</p>
-        <p class="later small muted" lang="en">There is no iPhone or Mac download yet.</p>
-        <p class="later small muted" lang="ja">iPhone 版と Mac 版はまだ配布していません。</p>
+        <div class="ios" data-ios hidden>
+          <p class="muted" lang="ko">아이폰용 테스트 빌드입니다. 서명이 되어 있지 않아 컴퓨터에서 본인 애플 계정으로 서명해 설치합니다. 방법은 아래 설치하는 법에 있습니다.</p>
+          <p class="muted" lang="en">This is a test build for iPhone. It is not signed, so you sign it on a computer with your own Apple ID when you install it. The steps are under How to install below.</p>
+          <p class="muted" lang="ja">iPhone 向けのテスト版です。署名されていないため、パソコンで自分の Apple ID を使って署名してインストールします。手順は下のインストール方法にあります。</p>
+          <a class="button" href="download/mood-clicker.ipa" download>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>
+            <span lang="ko">아이폰 IPA 내려받기</span><span lang="en">Download the iPhone IPA</span><span lang="ja">iPhone 版 IPA をダウンロード</span>
+          </a>
+        </div>
+        <p class="later small muted" data-ios-off lang="ko">아이폰과 맥용은 아직 내려받을 수 없습니다.</p>
+        <p class="later small muted" data-ios-off lang="en">There is no iPhone or Mac download yet.</p>
+        <p class="later small muted" data-ios-off lang="ja">iPhone 版と Mac 版はまだ配布していません。</p>
+        <p class="later small muted" data-ios-on hidden lang="ko">맥용은 아직 내려받을 수 없습니다.</p>
+        <p class="later small muted" data-ios-on hidden lang="en">There is no Mac download yet.</p>
+        <p class="later small muted" data-ios-on hidden lang="ja">Mac 版はまだ配布していません。</p>
       </div>
     </section>
 
@@ -168,6 +180,37 @@
       <p class="note" lang="ko">"앱이 설치되지 않았습니다" 가 뜨며 덮어 설치가 막히면 서명이 다른 빌드입니다. 이때는 기존 앱을 지운 뒤 설치해야 하고, 기기 안의 기록도 함께 지워집니다.</p>
       <p class="note" lang="en">If Android says "App not installed" and will not install over the current app, the new build was signed differently. You would have to uninstall the current app first, and that also deletes the records on the device.</p>
       <p class="note" lang="ja">「アプリはインストールされていません」と表示されて上書きできない場合は、署名の異なるビルドです。その場合は今のアプリを削除してからインストールする必要があり、端末内の記録も一緒に消えます。</p>
+    </section>
+
+    <section id="install-ios" data-ios hidden aria-labelledby="install-ios-title">
+      <h2 id="install-ios-title"><span lang="ko">아이폰에 설치하는 법</span><span lang="en">How to install on iPhone</span><span lang="ja">iPhone へのインストール方法</span></h2>
+      <ol class="steps" lang="ko">
+        <li>컴퓨터(윈도우나 맥)에서 이 페이지를 열고 위 단추로 IPA 파일을 받습니다. 아이폰 앱은 컴퓨터를 거쳐 설치합니다.</li>
+        <li>컴퓨터에 Sideloadly를 설치합니다. 아이폰에 앱을 넣어 주는 프로그램입니다. 맥에서 "Sideloadly를 차단했습니다"가 뜨면 시스템 설정 › 개인정보 보호 및 보안 아래쪽의 "그래도 열기"를 누르고 Sideloadly를 다시 엽니다.</li>
+        <li>아이폰을 케이블로 연결하고, 받은 IPA 파일을 Sideloadly에 끌어 놓습니다. 본인 애플 계정으로 로그인하면 설치됩니다.</li>
+        <li>앱을 엽니다. 그냥 열리면 끝입니다. 아이폰이 막을 때만 다음 두 가지를 합니다.</li>
+        <li>"개발자 모드 필요"가 뜨면 설정 › 개인정보 보호 및 보안 맨 아래에서 개발자 모드를 켭니다. 아이폰이 재시동하고, 재시동 뒤 뜨는 창에서 켜기를 누르고 암호를 넣습니다. 메뉴가 안 보이면 Sideloadly로 앱을 먼저 한 번 설치한 뒤 다시 봅니다.</li>
+        <li>"신뢰하지 않는 개발자"가 뜨면 설정 › 일반 › VPN 및 기기 관리에서 본인 애플 계정 이름을 눌러 신뢰합니다.</li>
+      </ol>
+      <ol class="steps" lang="en">
+        <li>On a computer (Windows or Mac), open this page and download the IPA file with the button above. iPhone apps are installed through a computer.</li>
+        <li>Install Sideloadly on the computer. It is the program that puts the app on your iPhone. If a Mac says "Sideloadly was blocked", open System Settings &gt; Privacy &amp; Security, press "Open Anyway" near the bottom, and open Sideloadly again.</li>
+        <li>Connect the iPhone with a cable and drag the IPA file into Sideloadly. Sign in with your own Apple ID and it installs.</li>
+        <li>Open the app. If it just opens, you are done. Only if the iPhone blocks it, do the next two.</li>
+        <li>If it says "Developer Mode required", go to Settings &gt; Privacy &amp; Security, scroll to the bottom and turn on Developer Mode. The iPhone restarts. When the prompt appears after the restart, tap Turn On and enter your passcode. If the menu is missing, install the app once with Sideloadly first and look again.</li>
+        <li>If it says "Untrusted Developer", go to Settings &gt; General &gt; VPN &amp; Device Management, tap your Apple ID name and trust it.</li>
+      </ol>
+      <ol class="steps" lang="ja">
+        <li>パソコン(Windows か Mac)でこのページを開き、上のボタンから IPA ファイルをダウンロードします。iPhone のアプリはパソコンを通してインストールします。</li>
+        <li>パソコンに Sideloadly をインストールします。iPhone にアプリを入れてくれるプログラムです。Mac で「Sideloadly がブロックされました」と出たら、システム設定 › プライバシーとセキュリティの下の方にある「このまま開く」を押して、Sideloadly をもう一度開きます。</li>
+        <li>iPhone をケーブルでつなぎ、ダウンロードした IPA ファイルを Sideloadly にドラッグします。自分の Apple ID でサインインするとインストールされます。</li>
+        <li>アプリを開きます。そのまま開けば完了です。iPhone にブロックされたときだけ、次の二つを行います。</li>
+        <li>「デベロッパモードが必要です」と出たら、設定 › プライバシーとセキュリティの一番下でデベロッパモードをオンにします。iPhone が再起動し、再起動後に出る画面でオンにするを押してパスコードを入力します。メニューが見つからないときは、先に Sideloadly でアプリを一度インストールしてからもう一度見ます。</li>
+        <li>「信頼されていない開発元」と出たら、設定 › 一般 › VPN とデバイス管理で自分の Apple ID の名前を押して信頼します。</li>
+      </ol>
+      <p class="note" lang="ko">무료 애플 계정으로 설치한 앱은 7일 뒤 열리지 않습니다. 그때 같은 방법으로 다시 설치합니다. 같은 앱 위에 덮어 설치하면 기록은 그대로 남습니다.</p>
+      <p class="note" lang="en">An app installed with a free Apple ID stops opening after 7 days. Install it again the same way then. Installing over the same app keeps your records.</p>
+      <p class="note" lang="ja">無料の Apple ID でインストールしたアプリは、7 日後に開けなくなります。そのときは同じ手順でもう一度インストールします。同じアプリの上に重ねてインストールすれば、記録はそのまま残ります。</p>
     </section>
 
     <section id="about" aria-labelledby="about-title">
@@ -263,13 +306,14 @@
     };
 
     function clean(data) {
-      var out = {};
+      var out = { ios: false };
       if (!data || typeof data !== "object") return out;
       Object.keys(PATTERNS).forEach(function (key) {
         var value = data[key];
         if (typeof value === "number") value = String(value);
         if (typeof value === "string" && PATTERNS[key].test(value)) out[key] = value;
       });
+      out.ios = data.ios === true;
       return out;
     }
 
@@ -279,6 +323,10 @@
     }
 
     function show(info) {
+      // The iPhone download and its guide appear only when the release carries the IPA.
+      each("[data-ios]", function (n) { n.hidden = !info.ios; });
+      each("[data-ios-on]", function (n) { n.hidden = !info.ios; });
+      each("[data-ios-off]", function (n) { n.hidden = !!info.ios; });
       if (!info.version) { each("[data-build-missing]", function (n) { n.hidden = false; }); return; }
       each('[data-build="version"]', function (n) { n.textContent = info.version; });
       each('[data-build="build"]', function (n) { n.textContent = info.build || ""; });

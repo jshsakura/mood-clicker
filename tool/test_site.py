@@ -77,6 +77,21 @@ class SitePages(unittest.TestCase):
         self.assertIn(APK_HREF, hrefs)
         self.assertTrue((SITE / "icon.png").is_file())
 
+    def test_iphone_section_is_hidden_until_build_json_says_ios(self):
+        page = read("index.html")
+        self.assertIn('href="download/mood-clicker.ipa"', page)
+        self.assertRegex(page, r'<div class="ios" data-ios hidden>')
+        self.assertRegex(page, r'<section id="install-ios" data-ios hidden')
+        self.assertIn("data.ios === true", page)
+        self.assertIn('each("[data-ios-off]"', page)
+        for lang in LANGS:
+            self.assertRegex(page, rf'data-ios-off lang="{lang}"')
+
+    def test_iphone_guide_names_the_expiry_and_the_trust_steps(self):
+        blocks = read("index.html").split('id="install-ios"')[1]
+        for word in ("Sideloadly", "7"):
+            self.assertIn(word, blocks)
+
     def test_index_links_the_privacy_page(self):
         hrefs = [a.get("href") for tag, a in tags("index.html") if tag == "a"]
         self.assertIn("privacy.html", hrefs)
