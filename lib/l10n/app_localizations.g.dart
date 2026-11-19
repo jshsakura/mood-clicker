@@ -1177,13 +1177,13 @@ abstract class AppLocalizations {
   /// 두드리기와 기분 고르기 머리글의 물음표 단추 이름입니다.
   ///
   /// In ko, this message translates to:
-  /// **'놀이 방법'**
+  /// **'도움말'**
   String get howTo_label;
 
-  /// 놀이 방법 시트의 제목입니다.
+  /// 물음표 단추로 여는 사용법 시트의 제목입니다.
   ///
   /// In ko, this message translates to:
-  /// **'놀이 방법'**
+  /// **'이렇게 해 보세요'**
   String get howTo_title;
 
   /// 놀이 방법 첫 줄입니다.
@@ -1225,7 +1225,7 @@ abstract class AppLocalizations {
   /// 두드리기 화면에 처음 들어올 때 물음표 단추 옆에 잠깐 뜨는 말풍선입니다.
   ///
   /// In ko, this message translates to:
-  /// **'놀이 방법'**
+  /// **'어떻게 하나요?'**
   String get howTo_bubble;
 
   /// 기분 고르기 화면 위 날짜 옆에 날씨를 보여 줄지 고르는 항목입니다.

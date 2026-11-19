@@ -603,10 +603,10 @@ class AppLocalizationsKo extends AppLocalizations {
       '숨 고르기를 돕는 원입니다. 커질 때 들이쉬고 작아질 때 내쉬어도 좋고, 따라 하지 않아도 됩니다.';
 
   @override
-  String get howTo_label => '놀이 방법';
+  String get howTo_label => '도움말';
 
   @override
-  String get howTo_title => '놀이 방법';
+  String get howTo_title => '이렇게 해 보세요';
 
   @override
   String get howTo_fill => '두드리면 물이 차오릅니다.';
@@ -627,7 +627,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get howTo_finish => '가득 채우면 기분에 맞는 마무리가 펼쳐집니다.';
 
   @override
-  String get howTo_bubble => '놀이 방법';
+  String get howTo_bubble => '어떻게 하나요?';
 
   @override
   String get settings_weatherView => '날씨 보기';
