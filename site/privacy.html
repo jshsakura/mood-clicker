@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en"
+  data-title-ko="개인정보 처리방침 (초안) · Unknown"
+  data-title-en="Privacy policy (draft) · Unknown"
+  data-title-ja="プライバシーポリシー(草案) · Unknown"
+  data-desc-ko="Unknown (가제) 앱이 개인정보를 어떻게 다루는지 알려 드리는 초안입니다."
+  data-desc-en="A draft of how the Unknown app (working title) handles personal information."
+  data-desc-ja="Unknown(仮)アプリが個人情報をどう扱うかを説明する草案です。">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#121216" media="(prefers-color-scheme: dark)">
+<meta name="referrer" content="no-referrer">
+<meta name="description" content="A draft of how the Unknown app (working title) handles personal information.">
+<title>Privacy policy (draft) · Unknown</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Unknown">
+<meta property="og:title" content="개인정보 처리방침 (초안)">
+<meta property="og:description" content="기분 기록은 기기 안에만 저장됩니다. Unknown (가제) 앱의 개인정보 처리방침 초안입니다.">
+<meta property="og:url" content="https://jshsakura.github.io/mood-clicker/privacy.html">
+<meta property="og:image" content="https://jshsakura.github.io/mood-clicker/icon.png">
+<meta property="og:locale" content="ko_KR">
+<meta property="og:locale:alternate" content="en_US">
+<meta property="og:locale:alternate" content="ja_JP">
+<meta name="twitter:card" content="summary">
+
+<!-- Same pick as index.html: ?lang=, then the saved choice, then the browser, else English. -->
+<script>
+  (function () {
+    var langs = ["ko", "en", "ja"], root = document.documentElement, lang = null;
+    try {
+      var q = new URLSearchParams(location.search).get("lang");
+      if (langs.indexOf(q) >= 0) { lang = q; localStorage.setItem("lang", q); }
+    } catch (e) {}
+    if (!lang) { try { var s = localStorage.getItem("lang"); if (langs.indexOf(s) >= 0) lang = s; } catch (e) {} }
+    if (!lang) {
+      var n = ((navigator.languages && navigator.languages[0]) || navigator.language || "").toLowerCase().slice(0, 2);
+      lang = langs.indexOf(n) >= 0 ? n : "en";
+    }
+    root.setAttribute("data-lang", lang);
+    root.lang = lang;
+    var t = root.getAttribute("data-title-" + lang);
+    if (t) document.title = t;
+  })();
+</script>
+<link rel="stylesheet" href="site.css">
+<style>
+  .policy { padding: var(--space-lg) 0 var(--space-xxl); }
+  .policy h1 { font-size: 34px; line-height: 1.2; font-weight: 700; margin-bottom: var(--space-sm); }
+  .policy .updated { color: var(--ink-muted); font-size: 14px; margin-bottom: var(--space-xl); }
+  .policy .note { margin-bottom: var(--space-md); }
+  .policy .note strong { color: var(--ink); }
+  .policy .intro { margin: var(--space-xl) 0 0; }
+  .policy h2 { font-size: 22px; margin: var(--space-xxl) 0 var(--space-md); padding-top: var(--space-xl); border-top: 1px solid var(--line); }
+  .policy ul.points li { margin-bottom: var(--space-md); }
+  .back { display: inline-block; margin-bottom: var(--space-lg); font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="topbar">
+    <a class="brand" href="./" data-keep-lang="./"><img src="favicon.png" alt="" width="28" height="28">Unknown</a>
+    <div class="lang-switch" role="group" aria-label="Language">
+      <button type="button" class="lang-opt" lang="ko" data-set-lang="ko" aria-pressed="false">한국어</button>
+      <button type="button" class="lang-opt" lang="en" data-set-lang="en" aria-pressed="false">English</button>
+      <button type="button" class="lang-opt" lang="ja" data-set-lang="ja" aria-pressed="false">日本語</button>
+    </div>
+  </header>
+
+  <main class="policy">
+    <article lang="ko">
+      <h1>개인정보 처리방침</h1>
+      <p class="updated">초안 · 작성일 2026년 11월 18일</p>
+      <p class="note"><strong>안내</strong>: 이 문서는 개발과 스토어 제출 준비를 위한 초안이며, 법률 자문이 아닙니다. 확정 문안이 아니며, 정식 출시 전에 개인정보 보호책임자와 법률 전문가의 검토를 받아 확정합니다.</p>
+      <p class="intro">이 앱(가제 Unknown)은 오늘의 기분을 고르고 두드린 횟수로 그날의 크기를 남기는 기록 도구입니다. 이 문서는 이 앱이 개인정보를 어떻게 다루는지 알려 드립니다.</p>
+
+      <h2>기분 기록은 기기 안에만 저장됩니다</h2>
+      <ul class="points">
+        <li>기분, 두드린 수, 그날 남긴 한마디는 기기 안의 파일 하나(<code>journal.json</code>)에만 저장합니다.</li>
+        <li>이미 보여 준 응원 문구 위치도 기기 안의 파일(<code>cheer_decks.json</code>)에만 남습니다. 문구 내용이 아니라 몇 번째까지 냈는지입니다.</li>
+        <li>테마, 언어, 진동, 소리, 응원 문구, 화면 흔들기, 기울여 쏟기, 저녁 알림, 날씨 보기, 지도 선택 같은 설정은 시스템 설정 저장소에 저장합니다.</li>
+        <li>어떤 기분 기록도 서버로 보내지 않습니다. 기분 기록을 보낼 서버가 없습니다.</li>
+        <li>계정 만들기, 로그인, 회원가입이 없습니다.</li>
+        <li>기기를 바꾸거나 앱을 지우면 기록은 새 기기로 옮겨지지 않습니다.</li>
+      </ul>
+
+      <h2>운영체제 백업에 포함될 수 있습니다</h2>
+      <ul class="points">
+        <li>안드로이드의 자동 백업과 기기 이전, 아이폰·아이패드의 iCloud 기기 백업과 컴퓨터 백업에 앱 데이터가 함께 저장될 수 있습니다. 이 앱은 백업을 막아 두지 않았습니다.</li>
+        <li>백업은 사용자의 운영체제 계정과 화면 잠금이 지키며, 이 앱이 직접 읽거나 보낼 수 없습니다.</li>
+        <li>기록을 잃지 않는 길을 남겨 두려고 백업을 끄지 않기로 했습니다.</li>
+      </ul>
+
+      <h2>알림</h2>
+      <ul class="points">
+        <li>저녁 알림은 기기 안에서 예약되고 기기 안에서만 동작합니다.</li>
+        <li>알림 문구는 미리 정해 둔 인사말이며, 그날 기분 내용이나 기록 사실을 담지 않습니다. 잠금 화면에 기분이 드러나지 않습니다.</li>
+      </ul>
+
+      <h2>기록 내보내기와 지우기</h2>
+      <ul class="points">
+        <li>기록 내보내기는 사용자가 직접 공유 시트로 파일을 저장합니다. 저장된 파일은 사용자가 관리합니다.</li>
+        <li>모든 기록 지우기는 확인 창을 거쳐 기기 안의 기록 파일을 지웁니다.</li>
+      </ul>
+
+      <h2>기분 기록과 민감정보</h2>
+      <ul class="points">
+        <li>기분 기록은 개인정보보호법상 민감정보가 될 수 있습니다. 이 앱은 기분 정보를 어떤 형태로도 기기 밖으로 보내지 않으므로, 별도로 수집하거나 제3자에게 제공하는 일이 없습니다.</li>
+        <li>광고 식별자를 수집하지 않으며, 광고나 추적 SDK 를 쓰지 않습니다.</li>
+      </ul>
+
+      <h2>날씨 보기와 위치 정보</h2>
+      <ul class="points">
+        <li>기분 고르기 화면 위 날짜 옆에 현재 날씨를 보여 줄 때만 위치와 네트워크를 씁니다. 날씨 보기는 처음에 켜져 있습니다.</li>
+        <li>앱을 쓰는 동안에만 위치 권한을 묻고, 기기 안에서 위도와 경도를 소수 첫째 자리(약 11km 격자)로 뭉갠 값만 MET Norway(<code>api.met.no</code>)로 보냅니다.</li>
+        <li>기분 기록이나 기기를 알아보는 값은 함께 보내지 않습니다. 받은 날씨는 기기 메모리에서 30분 동안 다시 씁니다.</li>
+        <li>위치 권한을 거절하거나 설정에서 "날씨 보기" 를 끄면 위치도 묻지 않고 날씨 요청도 보내지 않습니다.</li>
+      </ul>
+
+      <h2>지도 화면과 지도 참여</h2>
+      <ul class="points">
+        <li>지금의 지도 화면은 미리보기입니다. 동네 칸의 기분은 예시 자료이고, 내 기분은 어디로도 보내지 않습니다. 지도 화면은 위치 권한을 쓰지 않습니다.</li>
+        <li>지도 화면을 열면 지도 바탕(타일과 스타일)을 OpenFreeMap(<code>tiles.openfreemap.org</code>)에서 받아 옵니다. 이 요청에는 보고 있는 지도 범위가 담기며, 기분 기록은 담기지 않습니다. 설정에서 "지도 보기" 를 끄면 지도 화면이 사라집니다.</li>
+        <li>기분을 지도에 보태는 기능은 3단계에서 계정과 함께 생깁니다. 도입할 때는 미리 이 방침을 고치고 다시 알려 드립니다.</li>
+        <li>도입 시 위치는 기기에서 약 5km² 넓이의 동네 칸으로 바꾼 뒤 칸 번호만 보내고, 참여자가 5명 미만인 칸은 지도에 보이지 않습니다. 기분 보내기는 직접 켠 사람만 사용합니다.</li>
+      </ul>
+
+      <h2>이 앱에 대하여</h2>
+      <ul class="points">
+        <li>이 앱은 의료기기가 아니며 진료를 대신하지 않습니다.</li>
+        <li>마음이 많이 힘들 때는 자살예방 상담전화 109 에서 이야기를 들어 줍니다. 앱 안의 도움 화면은 기기에 설정된 지역의 상담 번호를 보여 줍니다.</li>
+      </ul>
+
+      <h2>연락</h2>
+      <ul class="points">
+        <li>개인정보 보호 문의처는 정식 출시 전에 이 자리에 적습니다. 그 전에는 <a href="https://github.com/jshsakura/mood-clicker">GitHub 저장소</a>로 알려 주십시오.</li>
+      </ul>
+    </article>
+
+    <article lang="en">
+      <h1>Privacy policy</h1>
+      <p class="updated">Draft · written November 18, 2026</p>
+      <p class="note"><strong>Notice</strong>: This is a draft prepared for development and store submission, and it is not legal advice. It is not the final text; before release it will be reviewed by a privacy officer and a legal professional.</p>
+      <p class="note">This is an English translation of the Korean draft. If the two differ, the Korean text prevails.</p>
+      <p class="intro">This app (working title Unknown) is a journal for picking today's mood and leaving its size as a tap count. This page explains how the app handles personal information.</p>
+
+      <h2>Mood records stay on the device</h2>
+      <ul class="points">
+        <li>Moods, tap counts and the short note of a day are stored in one file on the device (<code>journal.json</code>) and nowhere else.</li>
+        <li>How far the cheer phrases have been shown also stays in a file on the device (<code>cheer_decks.json</code>): only a position, never the words.</li>
+        <li>Settings such as the theme, language, vibration, sound, cheer phrases, screen shake, tilt to pour, the evening reminder, weather display and the map choices live in the system settings store.</li>
+        <li>No mood record is sent to a server. There is no server for mood records.</li>
+        <li>There is no account, sign-up or login.</li>
+        <li>Changing devices or deleting the app does not carry the records over to a new device.</li>
+      </ul>
+
+      <h2>Operating system backups may include the data</h2>
+      <ul class="points">
+        <li>App data can be saved along with device backups: automatic backup and device transfer on Android, iCloud device backup and computer backup on iPhone and iPad. This app does not block backups.</li>
+        <li>Backups are protected by your operating system account and screen lock. This app cannot read or send them.</li>
+        <li>Backups stay on so that there is a way not to lose your records.</li>
+      </ul>
+
+      <h2>Notifications</h2>
+      <ul class="points">
+        <li>The evening reminder is scheduled on the device and runs only on the device.</li>
+        <li>The reminder text is a fixed greeting. It never names a mood or reveals that a record exists, so the lock screen shows nothing about your moods.</li>
+      </ul>
+
+      <h2>Exporting and deleting records</h2>
+      <ul class="points">
+        <li>Export saves a file through the share sheet, done by you. The saved file is yours to manage.</li>
+        <li>Delete all records removes the record file on the device after a confirmation step.</li>
+      </ul>
+
+      <h2>Mood records as sensitive information</h2>
+      <ul class="points">
+        <li>Mood records can count as sensitive information under Korea's Personal Information Protection Act. This app never sends mood information off the device in any form, so it is not collected separately or given to third parties.</li>
+        <li>The app does not collect advertising IDs and uses no advertising or tracking SDKs.</li>
+      </ul>
+
+      <h2>Weather display and location</h2>
+      <ul class="points">
+        <li>Location and network access are used only to show the current weather next to the date on the mood select screen. Weather display starts on.</li>
+        <li>Location permission is requested only while the app is in use. On the device, latitude and longitude are rounded to one decimal place (roughly an 11 km grid), and only those values are sent to MET Norway (<code>api.met.no</code>).</li>
+        <li>No mood records or values that identify the device are sent with it. The weather that comes back is reused from the device's memory for 30 minutes.</li>
+        <li>If you deny location permission or turn off "Show weather" in Settings, location is never requested and no weather request is made.</li>
+      </ul>
+
+      <h2>The map screen and joining the map</h2>
+      <ul class="points">
+        <li>The map screen today is a preview. The moods in the neighbourhood cells are sample data, and your mood is not sent anywhere. The map screen does not use location permission.</li>
+        <li>Opening the map screen loads the map background (tiles and style) from OpenFreeMap (<code>tiles.openfreemap.org</code>). Those requests carry the area of the map you are looking at, and no mood records. Turning off "Show map" in Settings removes the map screen.</li>
+        <li>Adding your mood to the map arrives in stage three, together with an account. Before it is introduced, this policy will be updated and announced again.</li>
+        <li>When introduced, your location will be turned into a neighbourhood cell of about 5 km² on the device and only the cell number is sent. Cells with fewer than five participants stay hidden from the map. Sharing a mood is used only by people who turn it on themselves.</li>
+      </ul>
+
+      <h2>About this app</h2>
+      <ul class="points">
+        <li>This app is not a medical device and does not replace care from a doctor.</li>
+        <li>When things feel very heavy, Korea's suicide prevention line 109 will listen. The support sheet in the app shows the lines for the region your device is set to.</li>
+      </ul>
+
+      <h2>Contact</h2>
+      <ul class="points">
+        <li>A privacy contact will be listed here before the official release. Until then, please reach us through the <a href="https://github.com/jshsakura/mood-clicker">GitHub repository</a>.</li>
+      </ul>
+    </article>
+
+    <article lang="ja">
+      <h1>プライバシーポリシー</h1>
+      <p class="updated">草案 · 作成日 2026年11月18日</p>
+      <p class="note"><strong>ご案内</strong>: この文書は開発とストア申請の準備のための草案であり、法的助言ではありません。確定した文面ではなく、正式リリース前に個人情報保護責任者と法律の専門家の確認を受けて確定します。</p>
+      <p class="note">これは韓国語の草案を日本語に訳したものです。内容に違いがある場合は、韓国語版が優先されます。</p>
+      <p class="intro">このアプリ(仮称 Unknown)は、今日の気分を選び、たたいた回数でその日の大きさを残すための記録ノートです。このページでは、アプリが個人情報をどのように扱うかを説明します。</p>
+
+      <h2>気分の記録は端末の中にだけ保存されます</h2>
+      <ul class="points">
+        <li>気分、たたいた回数、その日のひとことは、端末の中の一つのファイル(<code>journal.json</code>)にだけ保存します。</li>
+        <li>すでに見せた応援メッセージの位置も、端末の中のファイル(<code>cheer_decks.json</code>)にだけ残ります。言葉の中身ではなく、何番目まで出したかだけです。</li>
+        <li>テーマ、言語、振動、サウンド、応援メッセージ、画面の揺れ、傾けてこぼす、夜のリマインダー、天気の表示、地図の選択といった設定は、端末の設定保存領域に保存します。</li>
+        <li>どの気分の記録もサーバーには送りません。気分の記録を送るサーバーがありません。</li>
+        <li>アカウント作成、ログイン、会員登録はありません。</li>
+        <li>端末を変えたりアプリを削除したりしても、記録は新しい端末には移りません。</li>
+      </ul>
+
+      <h2>端末のバックアップに含まれることがあります</h2>
+      <ul class="points">
+        <li>アプリのデータは、Android の自動バックアップと機種変更時のデータ移行、iPhone・iPad の iCloud バックアップとコンピュータへのバックアップに一緒に保存されることがあります。このアプリはバックアップを止めていません。</li>
+        <li>バックアップは、お使いの端末のアカウントと画面ロックによって守られます。このアプリがそれを読んだり送ったりすることはできません。</li>
+        <li>記録を失わずに済む手段を残すため、バックアップはオフにしないことにしました。</li>
+      </ul>
+
+      <h2>通知</h2>
+      <ul class="points">
+        <li>夜のリマインダーは端末の中で予約され、端末の中だけで動きます。</li>
+        <li>通知の文面はあらかじめ決めたあいさつです。その日の気分や記録したかどうかは含まないため、ロック画面に気分が表示されることはありません。</li>
+      </ul>
+
+      <h2>記録の書き出しと消去</h2>
+      <ul class="points">
+        <li>記録の書き出しは、共有シートからご自身でファイルを保存します。保存したファイルはご自身で管理します。</li>
+        <li>「すべての記録を消す」は、確認の画面を経てから端末の中の記録ファイルを消します。</li>
+      </ul>
+
+      <h2>気分の記録と要配慮情報</h2>
+      <ul class="points">
+        <li>気分の記録は、韓国の個人情報保護法上の機微情報に当たる可能性があります。このアプリは気分の情報をどのような形でも端末の外へ送らないため、別途収集したり第三者に提供したりすることはありません。</li>
+        <li>広告 ID は収集せず、広告やトラッキングの SDK も使いません。</li>
+      </ul>
+
+      <h2>天気の表示と位置情報</h2>
+      <ul class="points">
+        <li>気分選択画面の日付の横に今の天気を表示するときだけ、位置情報と通信を使います。天気の表示は最初からオンになっています。</li>
+        <li>アプリの使用中にだけ位置情報の許可を求め、端末の中で緯度と経度を小数第1位(約11km の格子)に丸めた値だけを MET Norway(<code>api.met.no</code>)へ送ります。</li>
+        <li>気分の記録や端末を識別する情報は一緒に送りません。受け取った天気は、端末のメモリで30分間使い回します。</li>
+        <li>位置情報の許可を断るか、設定で「天気を表示」をオフにすると、位置情報を求めることも天気を取得する通信もしません。</li>
+      </ul>
+
+      <h2>地図の画面と地図への参加</h2>
+      <ul class="points">
+        <li>今の地図の画面はプレビューです。近所のマスの気分はサンプルで、あなたの気分はどこにも送りません。地図の画面は位置情報の許可を使いません。</li>
+        <li>地図の画面を開くと、地図の背景(タイルとスタイル)を OpenFreeMap(<code>tiles.openfreemap.org</code>)から読み込みます。この通信には見ている地図の範囲が含まれますが、気分の記録は含まれません。設定で「地図を見る」をオフにすると、地図の画面はなくなります。</li>
+        <li>気分を地図に加える機能は、第3段階でアカウントと一緒に加わります。導入する前に、この方針を改めてお知らせします。</li>
+        <li>導入時、位置情報は端末の中で約5km²の広さの近所のマスに変換し、そのマス番号だけを送ります。参加者が5人に満たないマスは地図に表示しません。気分を送る機能は、自分でオンにした人だけが使います。</li>
+      </ul>
+
+      <h2>このアプリについて</h2>
+      <ul class="points">
+        <li>このアプリは医療機器ではなく、診療の代わりにはなりません。</li>
+        <li>とてもつらいときは、韓国では自殺予防相談電話 109 が話を聞いてくれます。アプリの中の相談先の画面には、端末に設定された地域の相談窓口が表示されます。</li>
+      </ul>
+
+      <h2>お問い合わせ</h2>
+      <ul class="points">
+        <li>個人情報に関するお問い合わせ先は、正式リリース前にここに記載します。それまでは <a href="https://github.com/jshsakura/mood-clicker">GitHub リポジトリ</a>からお知らせください。</li>
+      </ul>
+    </article>
+  </main>
+
+  <footer>
+    <nav>
+      <a href="./" data-keep-lang="./"><span lang="ko">내려받기 페이지</span><span lang="en">Download page</span><span lang="ja">ダウンロードページ</span></a>
+      <a href="https://github.com/jshsakura/mood-clicker">GitHub</a>
+    </nav>
+    <p lang="ko">Unknown 은 정식 이름이 정해질 때까지 쓰는 가제입니다.</p>
+    <p lang="en">Unknown is a working title until the app has a real name.</p>
+    <p lang="ja">Unknown は正式な名前が決まるまでの仮の名前です。</p>
+  </footer>
+</div>
+<script src="site.js"></script>
+</body>
+</html>

@@ -80,6 +80,16 @@ jobs:
           name: golden-diffs
           path: test/goldens/failures/
           if-no-files-found: ignore
+      # One debug key for every build, so a new APK installs over the old one and keeps the
+      # records on the phone. A fresh runner would otherwise mint a new key each run. The key
+      # lives in a repo secret, never in the tree. Fork PRs have no secret and fall back.
+      - name: fixed debug signing key
+        env:
+          DEBUG_KEYSTORE_B64: ${{ secrets.DEBUG_KEYSTORE_B64 }}
+        run: |
+          if [ -z "$DEBUG_KEYSTORE_B64" ]; then echo 'no DEBUG_KEYSTORE_B64 secret: using a throwaway key'; exit 0; fi
+          mkdir -p "$HOME/.android"
+          printf '%s' "$DEBUG_KEYSTORE_B64" | base64 -d > "$HOME/.android/debug.keystore"
       - run: flutter build apk --debug
       - uses: actions/upload-artifact@v4
         with:

@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="en"
+  data-title-ko="Unknown (가제) 내려받기"
+  data-title-en="Unknown (working title): download"
+  data-title-ja="Unknown(仮)ダウンロード"
+  data-desc-ko="오늘의 기분을 고르고 두드린 횟수로 그 기분의 크기를 남기는 앱의 안드로이드 시험 빌드입니다."
+  data-desc-en="Pick today's mood and tap. The number of taps records how big it was. Android test build."
+  data-desc-ja="今日の気分を選んでタップし、その回数で気分の大きさを残すアプリの Android テスト版です。">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#121216" media="(prefers-color-scheme: dark)">
+<meta name="referrer" content="no-referrer">
+<meta name="description" content="Pick today's mood and tap. The number of taps records how big it was. Android test build.">
+<title>Unknown (working title): download</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+
+<!-- Link preview. Crawlers do not run the language script, so this is the Korean copy with
+     English and Japanese declared as alternates. og:image must be an absolute URL. -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Unknown">
+<meta property="og:title" content="Unknown (가제)">
+<meta property="og:description" content="오늘의 기분을 고르고 두드립니다. 두드린 횟수가 그 기분의 크기로 남습니다. 안드로이드 시험 빌드입니다.">
+<meta property="og:url" content="https://jshsakura.github.io/mood-clicker/">
+<meta property="og:image" content="https://jshsakura.github.io/mood-clicker/icon.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1024">
+<meta property="og:image:height" content="1024">
+<meta property="og:image:alt" content="Unknown">
+<meta property="og:locale" content="ko_KR">
+<meta property="og:locale:alternate" content="en_US">
+<meta property="og:locale:alternate" content="ja_JP">
+<meta name="twitter:card" content="summary">
+
+<!-- Pick the language before paint: ?lang=, then the saved choice, then the browser, else English. -->
+<script>
+  (function () {
+    var langs = ["ko", "en", "ja"], root = document.documentElement, lang = null;
+    try {
+      var q = new URLSearchParams(location.search).get("lang");
+      if (langs.indexOf(q) >= 0) { lang = q; localStorage.setItem("lang", q); }
+    } catch (e) {}
+    if (!lang) { try { var s = localStorage.getItem("lang"); if (langs.indexOf(s) >= 0) lang = s; } catch (e) {} }
+    if (!lang) {
+      var n = ((navigator.languages && navigator.languages[0]) || navigator.language || "").toLowerCase().slice(0, 2);
+      lang = langs.indexOf(n) >= 0 ? n : "en";
+    }
+    root.setAttribute("data-lang", lang);
+    root.lang = lang;
+    var t = root.getAttribute("data-title-" + lang);
+    if (t) document.title = t;
+  })();
+</script>
+<link rel="stylesheet" href="site.css">
+<style>
+  .hero { padding: var(--space-xl) 0 var(--space-xxl); text-align: center; }
+  .hero .icon { width: 112px; height: 112px; border-radius: 26px; display: block; margin: 0 auto var(--space-xl); }
+  .wordmark { font-family: var(--font-brand); font-weight: 800; font-size: 40px; line-height: 1.1; }
+  .working { display: block; margin-top: var(--space-xs); font-size: 14px; color: var(--ink-muted); font-weight: 400; }
+  .pitch { font-size: 18px; line-height: 1.5; margin: var(--space-lg) auto 0; max-width: 30em; }
+  .badge {
+    display: inline-block; margin-top: var(--space-lg); padding: var(--space-xs) var(--space-md);
+    border: 1px solid var(--line); border-radius: var(--radius-pill); background: var(--surface);
+    font-size: 13px; color: var(--ink2);
+  }
+  .moods {
+    display: flex; justify-content: center; flex-wrap: wrap; gap: var(--space-sm) var(--space-xs);
+    margin: var(--space-xl) 0 0; padding: 0; list-style: none;
+  }
+  .moods li {
+    display: flex; flex-direction: column; align-items: center; gap: var(--space-xs);
+    width: 56px; font-size: 12px; line-height: 1.4; color: var(--ink-muted);
+  }
+  .moods svg { width: 40px; height: 40px; }
+  .download .button { margin-top: var(--space-lg); }
+  .version { margin: var(--space-md) 0 0; font-size: 13px; color: var(--ink-muted); text-align: center; }
+  .download .later { margin: var(--space-lg) 0 0; }
+  .split { display: grid; gap: var(--space-lg); }
+  @media (min-width: 640px) { .split { grid-template-columns: 1fr 1fr; } }
+  .panel h3 { margin-bottom: var(--space-md); }
+  .panel ul.points li:last-child { margin-bottom: 0; }
+  .online { margin-top: var(--space-lg); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="topbar">
+    <a class="brand" href="./"><img src="favicon.png" alt="" width="28" height="28">Unknown</a>
+    <div class="lang-switch" role="group" aria-label="Language">
+      <button type="button" class="lang-opt" lang="ko" data-set-lang="ko" aria-pressed="false">한국어</button>
+      <button type="button" class="lang-opt" lang="en" data-set-lang="en" aria-pressed="false">English</button>
+      <button type="button" class="lang-opt" lang="ja" data-set-lang="ja" aria-pressed="false">日本語</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero" aria-labelledby="app-name">
+      <img class="icon" src="icon.png" alt="" width="112" height="112">
+      <h1 id="app-name">
+        <span class="wordmark">Unknown</span>
+        <span class="working" lang="ko">가제입니다. 정식 이름은 아직 정하지 않았습니다.</span>
+        <span class="working" lang="en">Working title. The real name is not decided yet.</span>
+        <span class="working" lang="ja">仮の名前です。正式な名前はまだ決まっていません。</span>
+      </h1>
+      <p class="pitch" lang="ko">오늘의 기분을 하나 고르고 두드립니다. 두드린 횟수가 그 기분이 얼마나 컸는지로 남습니다.</p>
+      <p class="pitch" lang="en">Pick the mood you are in today and tap. However many times you tap is how big that mood was, and that is what the app keeps.</p>
+      <p class="pitch" lang="ja">今日の気分を一つ選んで、タップします。タップした回数が、その気分の大きさとして残ります。</p>
+      <span class="badge" lang="ko">파일럿 · 안드로이드 시험 빌드</span>
+      <span class="badge" lang="en">Pilot · Android test build</span>
+      <span class="badge" lang="ja">パイロット版 · Android テスト版</span>
+      <ul class="moods">
+        <li style="color: var(--mood-happy)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9 10h.01M15 10h.01" stroke-width="2.4"/><path d="M8 14c1.2 1.6 2.6 2.4 4 2.4s2.8-.8 4-2.4"/></svg><span lang="ko">행복해요</span><span lang="en">Happy</span><span lang="ja">幸せ</span></li>
+        <li style="color: var(--mood-excited)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9 10h.01M15 10h.01" stroke-width="2.4"/><path d="M7.5 7.5l2-1M16.5 7.5l-2-1"/><path d="M8 13.5h8c0 2.4-1.8 4-4 4s-4-1.6-4-4z"/></svg><span lang="ko">설레요</span><span lang="en">Excited</span><span lang="ja">わくわく</span></li>
+        <li style="color: var(--mood-angry)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9 10h.01M15 10h.01" stroke-width="2.4"/><path d="M7.5 7.5l3 1.5M16.5 7.5l-3 1.5"/><path d="M8.5 16.5c1-1.2 2.2-1.8 3.5-1.8s2.5.6 3.5 1.8"/></svg><span lang="ko">화나요</span><span lang="en">Angry</span><span lang="ja">イライラ</span></li>
+        <li style="color: var(--mood-sad)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9 10h.01M15 10h.01" stroke-width="2.4"/><path d="M8 9l2.5-1.2M16 9l-2.5-1.2"/><path d="M8.5 16.5c1-1.2 2.2-1.8 3.5-1.8s2.5.6 3.5 1.8"/></svg><span lang="ko">슬퍼요</span><span lang="en">Sad</span><span lang="ja">悲しい</span></li>
+        <li style="color: var(--mood-anxious)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9 10h.01M15 10h.01" stroke-width="2.4"/><path d="M8 15.5c.7-.7 1.3-.7 2 0s1.3.7 2 0 1.3-.7 2 0 1.3.7 2 0"/></svg><span lang="ko">불안해요</span><span lang="en">Anxious</span><span lang="ja">不安</span></li>
+      </ul>
+    </section>
+
+    <section id="download" class="download" aria-labelledby="download-title">
+      <div class="panel">
+        <h2 id="download-title"><span lang="ko">내려받기</span><span lang="en">Download</span><span lang="ja">ダウンロード</span></h2>
+        <p class="muted" lang="ko">안드로이드용 테스트 빌드(디버그 빌드)입니다. 정식 출시 전이라 기능과 화면이 자주 바뀝니다.</p>
+        <p class="muted" lang="en">This is a test build (debug build) for Android. It is not released yet, so features and screens change often.</p>
+        <p class="muted" lang="ja">Android 向けのテスト版(デバッグビルド)です。正式リリース前のため、機能や画面はよく変わります。</p>
+        <a class="button" href="download/mood-clicker.apk" download>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>
+          <span lang="ko">안드로이드 APK 내려받기</span><span lang="en">Download the Android APK</span><span lang="ja">Android 版 APK をダウンロード</span>
+        </a>
+        <p class="version" data-build-line hidden>
+          <span lang="ko">버전</span><span lang="en">Version</span><span lang="ja">バージョン</span>
+          <span data-build="version"></span><span data-part="build"> · <span lang="ko">빌드</span><span lang="en">build</span><span lang="ja">ビルド</span> <span data-build="build"></span></span><span data-part="date"> · <span data-build="date"></span></span><span data-part="sha"> · <a data-build="commit" href="https://github.com/jshsakura/mood-clicker/commits/main"><span lang="ko">커밋</span><span lang="en">commit</span><span lang="ja">コミット</span> <code data-build="sha"></code></a></span>
+        </p>
+        <p class="version" data-build-missing hidden>
+          <span lang="ko">빌드 정보를 불러오지 못했습니다. 아래 지난 빌드 목록에서도 받을 수 있습니다.</span>
+          <span lang="en">Could not load the build details. You can also get a build from the list of previous builds below.</span>
+          <span lang="ja">ビルド情報を読み込めませんでした。下の過去のビルド一覧からも入手できます。</span>
+        </p>
+        <div class="link-row small">
+          <a href="https://github.com/jshsakura/mood-clicker/releases"><span lang="ko">지난 빌드 보기</span><span lang="en">Previous builds</span><span lang="ja">過去のビルド</span></a>
+        </div>
+        <p class="later small muted" lang="ko">아이폰과 맥용은 아직 내려받을 수 없습니다.</p>
+        <p class="later small muted" lang="en">There is no iPhone or Mac download yet.</p>
+        <p class="later small muted" lang="ja">iPhone 版と Mac 版はまだ配布していません。</p>
+      </div>
+    </section>
+
+    <section id="install" aria-labelledby="install-title">
+      <h2 id="install-title"><span lang="ko">설치하는 법</span><span lang="en">How to install</span><span lang="ja">インストール方法</span></h2>
+      <ol class="steps" lang="ko">
+        <li>휴대폰에서 위 버튼을 눌러 APK 파일을 받습니다.</li>
+        <li>받은 파일을 엽니다. 처음 한 번은 브라우저나 파일 앱에 "출처를 알 수 없는 앱 설치" 를 허용할지 묻습니다. 허용한 뒤 설치를 누릅니다.</li>
+        <li>새 빌드가 나오면 같은 방법으로 받아 그대로 설치합니다. 지금 앱 위에 덮어 설치되고, 기록은 그대로 남습니다.</li>
+      </ol>
+      <ol class="steps" lang="en">
+        <li>On your phone, tap the button above to download the APK file.</li>
+        <li>Open the file. The first time, your browser or file app asks whether to allow "Install unknown apps". Allow it, then tap Install.</li>
+        <li>When a new build comes out, download it the same way and install it. It installs over the current app, and your records stay.</li>
+      </ol>
+      <ol class="steps" lang="ja">
+        <li>スマートフォンで上のボタンを押し、APK ファイルをダウンロードします。</li>
+        <li>ダウンロードしたファイルを開きます。初回だけ、ブラウザやファイルアプリに「不明なアプリのインストール」を許可するか聞かれます。許可してから「インストール」を押します。</li>
+        <li>新しいビルドが出たら、同じ手順でダウンロードしてそのままインストールします。今のアプリに上書きされ、記録はそのまま残ります。</li>
+      </ol>
+      <p class="note" lang="ko">"앱이 설치되지 않았습니다" 가 뜨며 덮어 설치가 막히면 서명이 다른 빌드입니다. 이때는 기존 앱을 지운 뒤 설치해야 하고, 기기 안의 기록도 함께 지워집니다.</p>
+      <p class="note" lang="en">If Android says "App not installed" and will not install over the current app, the new build was signed differently. You would have to uninstall the current app first, and that also deletes the records on the device.</p>
+      <p class="note" lang="ja">「アプリはインストールされていません」と表示されて上書きできない場合は、署名の異なるビルドです。その場合は今のアプリを削除してからインストールする必要があり、端末内の記録も一緒に消えます。</p>
+    </section>
+
+    <section id="about" aria-labelledby="about-title">
+      <h2 id="about-title"><span lang="ko">하는 일과 하지 않는 일</span><span lang="en">What it does, and what it does not</span><span lang="ja">できること、しないこと</span></h2>
+      <div class="split">
+        <div class="panel">
+          <h3><span lang="ko">하는 일</span><span lang="en">What it does</span><span lang="ja">できること</span></h3>
+          <ul class="points" lang="ko">
+            <li>다섯 가지 기분 가운데 하나를 고릅니다.</li>
+            <li>두드릴 때마다 물이 차오르고, 두드린 횟수가 그날 그 기분의 크기로 남습니다. 같은 날 다시 두드리면 더해집니다.</li>
+            <li>그날의 한마디를 짧게 남길 수 있습니다.</li>
+            <li>지난 날의 기록을 달력으로 봅니다.</li>
+            <li>저녁 알림을 켜 두면 아직 기록하지 않은 날 한 번만 알려 줍니다.</li>
+            <li>기록을 파일 하나로 내보낼 수 있습니다.</li>
+          </ul>
+          <ul class="points" lang="en">
+            <li>You pick one of five moods.</li>
+            <li>Each tap raises the water a little, and the number of taps becomes the size of that mood for the day. Tapping again the same day adds to it.</li>
+            <li>You can leave a short note for the day.</li>
+            <li>Past days show on a calendar.</li>
+            <li>With the evening reminder on, it reminds you once, only on days without a record.</li>
+            <li>You can export your records to a single file.</li>
+          </ul>
+          <ul class="points" lang="ja">
+            <li>五つの気分から一つを選びます。</li>
+            <li>タップするたびに水が満ちていき、タップした回数がその日のその気分の大きさとして残ります。同じ日にもう一度タップすると足されます。</li>
+            <li>その日のひとことを短く残せます。</li>
+            <li>過去の記録をカレンダーで見られます。</li>
+            <li>夜のリマインダーをオンにすると、まだ記録していない日に一度だけ知らせます。</li>
+            <li>記録を一つのファイルに書き出せます。</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <h3><span lang="ko">하지 않는 일</span><span lang="en">What it does not do</span><span lang="ja">しないこと</span></h3>
+          <ul class="points" lang="ko">
+            <li>기분 기록을 기기 밖으로 보내지 않습니다. 기록은 기기 안의 파일에만 저장됩니다.</li>
+            <li>계정, 회원가입, 로그인이 없습니다.</li>
+            <li>광고, 광고 식별자, 분석이나 추적 SDK 를 넣지 않았습니다.</li>
+            <li>연속 기록이나 점수, 순위로 재촉하지 않습니다.</li>
+            <li>의료기기가 아니며 진료를 대신하지 않습니다.</li>
+          </ul>
+          <ul class="points" lang="en">
+            <li>Mood records never leave the device. They are saved only in files on your phone.</li>
+            <li>There is no account, sign-up or login.</li>
+            <li>No ads, no advertising ID, and no analytics or tracking SDKs.</li>
+            <li>No streaks, scores or rankings to push you.</li>
+            <li>It is not a medical device and does not replace care from a doctor.</li>
+          </ul>
+          <ul class="points" lang="ja">
+            <li>気分の記録を端末の外へ送りません。記録は端末の中のファイルにだけ保存されます。</li>
+            <li>アカウント作成も登録もログインもありません。</li>
+            <li>広告、広告 ID、分析やトラッキングの SDK は入っていません。</li>
+            <li>連続記録やスコア、ランキングで急かしません。</li>
+            <li>医療機器ではなく、診療の代わりにはなりません。</li>
+          </ul>
+        </div>
+      </div>
+      <div class="online">
+        <p class="note" lang="ko">기기 밖으로 나가는 것은 두 가지입니다. "날씨 보기" 가 켜져 있으면(처음엔 켜져 있습니다) 소수 첫째 자리로 뭉갠 위치를 MET Norway 로 보내 현재 날씨를 받습니다. 지도 화면을 열면 지도 바탕을 OpenFreeMap 에서 받아 옵니다. 지도의 동네 기분은 아직 예시 자료이고, 내 기분은 보내지 않습니다. 둘 다 설정에서 끌 수 있습니다.</p>
+        <p class="note" lang="en">Two things do go online. With "Show weather" on (it starts on), a location rounded to one decimal place goes to MET Norway to fetch the current weather. Opening the map screen loads the map background from OpenFreeMap. The neighbourhood moods on the map are sample data for now, and your mood is not sent. Both can be turned off in Settings.</p>
+        <p class="note" lang="ja">端末の外へ出るものは二つです。「天気を表示」がオンのとき(最初はオンです)、小数第1位に丸めた位置を MET Norway に送って今の天気を取得します。地図の画面を開くと、地図の背景を OpenFreeMap から読み込みます。地図に出る近所の気分はまだサンプルで、あなたの気分は送りません。どちらも設定でオフにできます。</p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <nav>
+      <a href="privacy.html" data-keep-lang="privacy.html"><span lang="ko">개인정보 처리방침</span><span lang="en">Privacy policy</span><span lang="ja">プライバシーポリシー</span></a>
+      <a href="https://github.com/jshsakura/mood-clicker">GitHub</a>
+    </nav>
+    <p class="version" data-build-line hidden style="text-align: left; margin: 0 0 var(--space-sm);">
+      <span lang="ko">버전</span><span lang="en">Version</span><span lang="ja">バージョン</span>
+      <span data-build="version"></span><span data-part="build"> · <span lang="ko">빌드</span><span lang="en">build</span><span lang="ja">ビルド</span> <span data-build="build"></span></span><span data-part="sha"> · <a data-build="commit" href="https://github.com/jshsakura/mood-clicker/commits/main"><code data-build="sha"></code></a></span>
+    </p>
+    <p lang="ko">Unknown 은 정식 이름이 정해질 때까지 쓰는 가제입니다. 이 페이지는 쿠키, 분석 도구, 외부 글꼴을 쓰지 않습니다.</p>
+    <p lang="en">Unknown is a working title until the app has a real name. This page uses no cookies, analytics or outside fonts.</p>
+    <p lang="ja">Unknown は正式な名前が決まるまでの仮の名前です。このページは Cookie、分析ツール、外部フォントを使いません。</p>
+  </footer>
+</div>
+
+<script src="site.js"></script>
+<!-- Version line. The deploy workflow writes build.json next to this page; without it the
+     line stays hidden and the page still works. Every value is checked before it is shown. -->
+<script>
+  (function () {
+    "use strict";
+    var REPO = "https://github.com/jshsakura/mood-clicker";
+    var PATTERNS = {
+      version: /^[0-9A-Za-z.+_-]{1,40}$/,
+      build: /^[0-9]{1,10}$/,
+      sha: /^[0-9a-f]{7,40}$/,
+      date: /^[0-9: -]{1,32}$/
+    };
+
+    function clean(data) {
+      var out = {};
+      if (!data || typeof data !== "object") return out;
+      Object.keys(PATTERNS).forEach(function (key) {
+        var value = data[key];
+        if (typeof value === "number") value = String(value);
+        if (typeof value === "string" && PATTERNS[key].test(value)) out[key] = value;
+      });
+      return out;
+    }
+
+    function each(selector, fn) {
+      var nodes = document.querySelectorAll(selector);
+      for (var i = 0; i < nodes.length; i++) fn(nodes[i]);
+    }
+
+    function show(info) {
+      if (!info.version) { each("[data-build-missing]", function (n) { n.hidden = false; }); return; }
+      each('[data-build="version"]', function (n) { n.textContent = info.version; });
+      each('[data-build="build"]', function (n) { n.textContent = info.build || ""; });
+      each('[data-build="date"]', function (n) { n.textContent = info.date ? info.date + " KST" : ""; });
+      each('[data-build="sha"]', function (n) { n.textContent = info.sha ? info.sha.slice(0, 7) : ""; });
+      each('[data-build="commit"]', function (n) { if (info.sha) n.href = REPO + "/commit/" + info.sha; });
+      ["build", "date", "sha"].forEach(function (part) {
+        each('[data-part="' + part + '"]', function (n) { n.hidden = !info[part]; });
+      });
+      each("[data-build-line]", function (n) { n.hidden = false; });
+    }
+
+    if (!window.fetch) return;
+    fetch("build.json", { cache: "no-store" })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) { show(clean(data)); })
+      .catch(function () { show({}); });
+  })();
+</script>
+</body>
+</html>
