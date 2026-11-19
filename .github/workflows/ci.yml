@@ -66,6 +66,7 @@ jobs:
           python3 tool/l10n_check.py
       - run: python3 tool/cheers_check.py
       - run: python3 tool/gen_tokens.py --check
+      - run: python3 tool/gen_shortcut_icons.py --check
       - run: dart format --output=none --set-exit-if-changed $(find lib test -name '*.dart' ! -name '*.g.dart')
       - run: flutter analyze
       - run: flutter test --exclude-tags golden
