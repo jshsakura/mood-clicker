@@ -391,14 +391,14 @@ class AppLocalizationsJa extends AppLocalizations {
   String get map_openLabel => '地図を見る';
 
   @override
-  String get map_nearby => 'まわり3km';
+  String get map_nearby => 'この地図の中';
 
   @override
   String get map_pickedPlace => '選んだ場所';
 
   @override
   String get map_explain =>
-      '文字は人が選んだひとことで、大きさはその場所で押した数です。約5km²の広さのマスにまとめ、5人に満たないマスは表示されません。';
+      '顔はそのマスを代表する気分で、数字は記録を残した人の数です。約5km²の広さのマスにまとめ、5人に満たないマスは表示されません。';
 
   @override
   String get map_rangeToday => '今日';
@@ -626,4 +626,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get howTo_bubble => '遊び方';
+
+  @override
+  String get map_zoomIn => 'もう少し拡大すると、まちのマスが見えます';
 }

@@ -117,9 +117,9 @@
   "settings_mindCareSosJapan": "#いのちSOS",
   "settings_mindCareYorisoiJapan": "よりそいホットライン",
   "map_openLabel": "地図を見る",
-  "map_nearby": "まわり3km",
+  "map_nearby": "この地図の中",
   "map_pickedPlace": "選んだ場所",
-  "map_explain": "文字は人が選んだひとことで、大きさはその場所で押した数です。約5km²の広さのマスにまとめ、5人に満たないマスは表示されません。",
+  "map_explain": "顔はそのマスを代表する気分で、数字は記録を残した人の数です。約5km²の広さのマスにまとめ、5人に満たないマスは表示されません。",
   "map_rangeToday": "今日",
   "map_rangeWeek": "今週",
   "map_you": "自分の場所",
@@ -194,5 +194,6 @@
   "howTo_spark": "ときどき、きらきら光る特別な言葉が出ます。",
   "howTo_hold": "95パーセントから100パーセントの間を数秒保つと、特別なごほうびがあります。",
   "howTo_finish": "いっぱいにすると、気分に合った締めくくりが始まります。",
-  "howTo_bubble": "遊び方"
+  "howTo_bubble": "遊び方",
+  "map_zoomIn": "もう少し拡大すると、まちのマスが見えます"
 }

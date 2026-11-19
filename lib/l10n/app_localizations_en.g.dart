@@ -400,14 +400,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get map_openLabel => 'Open map';
 
   @override
-  String get map_nearby => 'Within 3 km of me';
+  String get map_nearby => 'On this map';
 
   @override
   String get map_pickedPlace => 'Picked place';
 
   @override
   String get map_explain =>
-      'Each word is a line people picked, and its size is how much that place tapped. Places are grouped into cells of about 5km², and cells with fewer than five people stay hidden.';
+      'The face is the mood that stands for the cell, and the number is how many people left one. Places are grouped into cells of about 5km², and cells with fewer than five people stay hidden.';
 
   @override
   String get map_rangeToday => 'Today';
@@ -645,4 +645,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get howTo_bubble => 'How to play';
+
+  @override
+  String get map_zoomIn => 'Zoom in a little to see the neighborhood cells';
 }

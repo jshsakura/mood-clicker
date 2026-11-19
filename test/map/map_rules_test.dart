@@ -4,15 +4,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mood_clicker/domain/day_key.dart';
 import 'package:mood_clicker/domain/day_record.dart';
 import 'package:mood_clicker/domain/mood.dart';
+import 'package:mood_clicker/map/map_defaults.dart';
 import 'package:mood_clicker/map/map_rules.dart';
 import 'package:mood_clicker/map/map_source.dart';
 
 H3CellId _id(int n) => H3CellId('87${n.toRadixString(16).padLeft(13, '0')}');
 
+List<H3CellId> _ids(int n) => [for (var i = 0; i < n; i++) _id(i * 977 + 1)];
+
 MapCell cell(int row, int people, {double happy = 0.5}) => MapCell(
   id: _id(row),
-  eastKm: 0,
-  northKm: 0,
+  mood: Mood.happy,
   people: people,
   taps: people * 10,
   happyShare: happy,
@@ -51,27 +53,25 @@ void main() {
 
     test('a block with fewer than five people is dropped', () {
       final snap = MapSnapshot(
-        viewer: _id(0),
         cells: [cell(0, 4), cell(1, 5), cell(2, 1), cell(3, 99)],
       );
       expect([for (final c in snap.cells) c.people], [5, 99]);
     });
 
     test('totals count the shown blocks only', () {
-      final snap = MapSnapshot(viewer: _id(0), cells: [cell(0, 4), cell(1, 6)]);
+      final snap = MapSnapshot(cells: [cell(0, 4), cell(1, 6)]);
       expect(snap.people, 6);
       expect(snap.taps, 60);
     });
 
     test('nothing shown means no share', () {
-      final snap = MapSnapshot(viewer: _id(0), cells: [cell(0, 2)]);
+      final snap = MapSnapshot(cells: [cell(0, 2)]);
       expect(snap.cells, isEmpty);
       expect(snap.happyShare, isNull);
     });
 
     test('the share is weighted by people', () {
       final snap = MapSnapshot(
-        viewer: _id(0),
         cells: [cell(0, 5, happy: 1), cell(1, 15, happy: 0)],
       );
       expect(snap.happyShare, closeTo(0.25, 1e-9));
@@ -79,16 +79,65 @@ void main() {
 
     test('the sample source never returns a small block', () async {
       for (final range in MapRange.values) {
-        final snap = await const SampleMapSource().load(range);
+        final snap = await const SampleMapSource().load(range, _ids(200));
         expect(snap.cells, isNotEmpty);
         expect(snap.cells.every((c) => c.people >= MapRules.minPeople), isTrue);
       }
     });
 
-    test('the sample source does include small blocks that get hidden', () {
-      // Guards the sample data: if it had none, the rule would show nothing in the picture.
-      final raw = SampleMapSource.rowsForTest;
-      expect(raw.any((r) => r.$3 < MapRules.minPeople), isTrue);
+    test('the sample source makes blocks that get hidden too', () async {
+      // Guards the sample data: if no block fell under the minimum, the rule would show
+      // nothing in the picture.
+      final snap = await const SampleMapSource().load(
+        MapRange.today,
+        _ids(200),
+      );
+      expect(snap.cells.length, lessThan(200));
+    });
+
+    test('the same block id always gets the same block', () async {
+      final ids = _ids(60);
+      final a = await const SampleMapSource().load(MapRange.today, ids);
+      final b = await const SampleMapSource().load(MapRange.today, ids);
+      expect(
+        [for (final c in a.cells) (c.id, c.people, c.taps, c.mood)],
+        [for (final c in b.cells) (c.id, c.people, c.taps, c.mood)],
+      );
+      // And asking for fewer blocks does not change the ones that stay.
+      final some = await const SampleMapSource().load(
+        MapRange.today,
+        ids.sublist(10, 30),
+      );
+      for (final c in some.cells) {
+        expect(a.cells.firstWhere((o) => o.id == c.id).people, c.people);
+      }
+    });
+
+    test('the face follows the side of the block', () async {
+      final snap = await const SampleMapSource().load(
+        MapRange.today,
+        _ids(300),
+      );
+      for (final c in snap.cells) {
+        expect(
+          c.mood.side,
+          c.happyShare >= 0.5 ? MoodSide.happy : MoodSide.sad,
+        );
+      }
+      expect({for (final c in snap.cells) c.mood}.length, greaterThan(2));
+    });
+
+    test('a week of blocks counts more people than a day', () async {
+      final ids = _ids(60);
+      final day = await const SampleMapSource().load(MapRange.today, ids);
+      final week = await const SampleMapSource().load(MapRange.week, ids);
+      expect(week.people, greaterThan(day.people));
+    });
+
+    test('the map is on, and the start is a rounded place', () {
+      expect(MapRules.available, isTrue);
+      expect(MapDefaults.startCenter.lat, 37.57);
+      expect(MapDefaults.startCenter.lng, 126.98);
     });
 
     test('the ratio shows by default, like the weather of a place', () {
@@ -167,7 +216,7 @@ void main() {
     });
 
     test('a snapshot carries blocks and counts only', () async {
-      final snap = await const SampleMapSource().load(MapRange.today);
+      final snap = await const SampleMapSource().load(MapRange.today, _ids(80));
       for (final c in snap.cells) {
         expect(H3CellId.isValid(c.id.value), isTrue);
       }

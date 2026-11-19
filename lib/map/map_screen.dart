@@ -1,23 +1,32 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 
 import '../app/app_services.dart';
 import '../design/app_theme.dart';
 import '../design/parts/line_icon.dart';
+import '../design/parts/mood_face.dart';
 import '../design/parts/pressable_surface.dart';
 import '../design/tokens.g.dart';
-import '../l10n/app_localizations.g.dart';
 import '../domain/mood.dart';
+import '../l10n/app_localizations.g.dart';
+import 'geo.dart';
+import 'h3_grid.dart';
+import 'hex_grid.dart';
+import 'map_backdrop.dart';
+import 'map_defaults.dart';
 import 'map_rules.dart';
 import 'map_source.dart';
+import 'maplibre_backdrop.dart';
 
-/// The map around me: a dotted ground, rings at 1 and 3 km, one word per block (sized by taps),
-/// a range switch on top and a sheet below. Gray only; no mood gets a color here.
+/// The map around me: a real map to drag and zoom, a hexagon grid of one-kilometer blocks over
+/// it with a mood face and a head count on every block that is shown, a range switch on top and
+/// a sheet below. The map ground is drawn by a [MapBackdropBuilder]; everything on top of it is
+/// drawn here.
 class MapScreen extends StatefulWidget {
   const MapScreen({
     super.key,
     this.source,
+    this.grid,
+    this.backdrop = _realBackdrop,
     this.ratio = const RatioPolicy(),
     this.justRecorded,
   });
@@ -25,11 +34,20 @@ class MapScreen extends StatefulWidget {
   /// Defaults to the source of the app services.
   final MapSource? source;
 
+  /// Defaults to the H3 grid.
+  final HexGrid? grid;
+
+  /// Draws the ground. Defaults to the MapLibre map.
+  final MapBackdropBuilder backdrop;
+
   /// The ratio switches. The defaults are the constants of [MapRules].
   final RatioPolicy ratio;
 
   /// The mood tapped last today, which [RatioPolicy.hideAfterHeavyMood] looks at.
   final Mood? justRecorded;
+
+  static Widget _realBackdrop(BuildContext context, MapBackdropLink link) =>
+      MapLibreBackdrop(link: link);
 
   @override
   State<MapScreen> createState() => _MapScreenState();
@@ -39,229 +57,209 @@ class _MapScreenState extends State<MapScreen> {
   MapRange _range = MapRange.today;
   MapSnapshot? _snapshot;
   H3CellId? _picked;
-  bool _started = false;
   bool _sheetOpen = true;
+
+  MapViewport? _viewport;
+  bool _tooWide = false;
+  bool _moving = false;
+  Map<H3CellId, Offset> _spots = const {};
+  int _round = 0;
+  HexGrid? _grid;
+  late final MapBackdropLink _link;
+  bool _linked = false;
+
+  HexGrid get _hexGrid => _grid ??= widget.grid ?? H3Grid();
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (_started) return;
-    _started = true;
-    _load();
+    if (_linked) return;
+    _linked = true;
+    _link = MapBackdropLink(
+      dark: context.palette.brightness == Brightness.dark,
+      onViewport: _onViewport,
+      onMoving: _onMoving,
+      onTapGround: () {
+        if (_picked != null) setState(() => _picked = null);
+      },
+    );
   }
 
-  Future<void> _load() async {
+  @override
+  void dispose() {
+    _link.hexes.dispose();
+    super.dispose();
+  }
+
+  void _onMoving() {
+    if (_moving || !mounted) return;
+    setState(() => _moving = true);
+  }
+
+  void _onViewport(MapViewport viewport) {
+    _viewport = viewport;
+    _refresh();
+  }
+
+  /// Asks for the blocks in view and places them. A newer look at the map wins over an older one
+  /// still on its way.
+  Future<void> _refresh() async {
+    final viewport = _viewport;
+    if (viewport == null || !mounted) return;
+    final round = ++_round;
+    final wide = viewport.zoom < MapDefaults.minGridZoom;
+    var cells = const <H3CellId>[];
+    if (!wide) {
+      try {
+        cells = _hexGrid.cellsIn(viewport.bounds, limit: MapDefaults.maxBlocks);
+      } on Object catch (error, stack) {
+        FlutterError.reportError(
+          FlutterErrorDetails(exception: error, stack: stack, library: 'map'),
+        );
+      }
+    }
+    final tooWide = wide || cells.isEmpty;
     final source = widget.source ?? AppScope.of(context).mapSource;
-    final range = _range;
-    final snapshot = await source.load(range);
-    if (!mounted || range != _range) return;
-    setState(() => _snapshot = snapshot);
+    final snapshot = tooWide
+        ? MapSnapshot(cells: const [])
+        : await source.load(_range, cells);
+    if (!mounted || round != _round) return;
+    final shapes = [
+      for (final c in snapshot.cells) HexShape(c.id, _hexGrid.boundary(c.id)),
+    ];
+    _link.hexes.value = shapes;
+    final points = await _link.project([
+      for (final s in shapes) centerOf(s.ring),
+    ]);
+    if (!mounted || round != _round) return;
+    setState(() {
+      _tooWide = tooWide;
+      _snapshot = snapshot;
+      _moving = false;
+      _spots = {
+        for (var i = 0; i < points.length; i++) shapes[i].id: points[i],
+      };
+      if (_picked != null && !_spots.containsKey(_picked)) _picked = null;
+    });
   }
 
   void _setRange(MapRange range) {
     if (range == _range) return;
     setState(() => _range = range);
-    _load();
+    _refresh();
   }
 
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    final l10n = AppLocalizations.of(context);
     final snapshot = _snapshot;
     return Scaffold(
       backgroundColor: p.mapGround,
-      body: LayoutBuilder(
-        builder: (context, box) {
-          final size = box.biggest;
-          final unit = size.width * _unitShare;
-          final center = Offset(size.width * _centerX, size.height * _centerY);
-          return Stack(
-            fit: StackFit.expand,
-            children: [
-              Positioned.fill(
-                child: GestureDetector(
-                  behavior: HitTestBehavior.translucent,
-                  onTap: () {
-                    if (_picked != null) setState(() => _picked = null);
-                  },
-                  child: CustomPaint(
-                    painter: _GroundPainter(
-                      dot: p.mapLine,
-                      center: center,
-                      unit: unit,
+      body: Column(
+        children: [
+          Expanded(
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                widget.backdrop(context, _link),
+                if (snapshot != null && !_moving)
+                  for (final c in snapshot.cells)
+                    if (_spots[c.id] case final spot?)
+                      _marker(context, c, spot),
+                Positioned(
+                  left: Space.md,
+                  bottom: Space.xs,
+                  child: IgnorePointer(
+                    child: Text(
+                      MapDefaults.attribution,
+                      style: TypeScale.label.copyWith(
+                        color: p.inkMuted,
+                        fontSize: 10,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              _RingLabel(
-                text: _ring1,
-                at: center - Offset(0, unit),
-                color: p.inkMuted,
-              ),
-              _RingLabel(
-                text: _ring3,
-                at: center - Offset(0, unit * 3),
-                color: p.inkMuted,
-              ),
-              if (snapshot != null) ..._words(context, snapshot, center, unit),
-              Positioned(
-                left: center.dx,
-                top: center.dy,
-                child: IgnorePointer(
-                  child: Semantics(
-                    label: l10n.map_you,
-                    child: FractionalTranslation(
-                      translation: const Offset(-0.5, -0.5),
-                      child: Stack(
-                        alignment: Alignment.center,
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  child: SafeArea(
+                    bottom: false,
+                    child: Padding(
+                      padding: const EdgeInsets.all(Space.lg),
+                      child: Row(
                         children: [
-                          DecoratedBox(
-                            decoration: BoxDecoration(
-                              color: p.ink.withValues(alpha: 0.08),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const SizedBox.square(dimension: Space.xxxl),
+                          PressableSurface.icon(
+                            icon: LineIcons.back,
+                            semanticLabel: MaterialLocalizations.of(
+                              context,
+                            ).backButtonTooltip,
+                            onTap: () => Navigator.of(context).maybePop(),
                           ),
-                          DecoratedBox(
-                            decoration: BoxDecoration(
-                              color: p.ink,
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: p.mapGround,
-                                width: Space.xs,
-                              ),
-                            ),
-                            child: const SizedBox.square(dimension: Space.xl),
-                          ),
+                          const Spacer(),
+                          _RangeSwitch(range: _range, onPick: _setRange),
                         ],
                       ),
                     ),
                   ),
                 ),
-              ),
-              Positioned(
-                top: 0,
-                left: 0,
-                right: 0,
-                child: SafeArea(
-                  bottom: false,
-                  child: Padding(
-                    padding: const EdgeInsets.all(Space.lg),
-                    child: Row(
-                      children: [
-                        PressableSurface.icon(
-                          icon: LineIcons.back,
-                          semanticLabel: MaterialLocalizations.of(
-                            context,
-                          ).backButtonTooltip,
-                          onTap: () => Navigator.of(context).maybePop(),
-                        ),
-                        const Spacer(),
-                        _RangeSwitch(range: _range, onPick: _setRange),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                child: _Sheet(
-                  snapshot: snapshot,
-                  picked: _picked,
-                  ratio: widget.ratio,
-                  justRecorded: widget.justRecorded,
-                  isSample:
-                      (widget.source ?? AppScope.of(context).mapSource)
-                          is SampleMapSource,
-                  open: _sheetOpen,
-                  onToggle: () => setState(() => _sheetOpen = !_sheetOpen),
-                ),
-              ),
-            ],
-          );
-        },
+              ],
+            ),
+          ),
+          _Sheet(
+            snapshot: snapshot,
+            picked: _picked,
+            ratio: widget.ratio,
+            justRecorded: widget.justRecorded,
+            tooWide: _tooWide,
+            isSample:
+                (widget.source ?? AppScope.of(context).mapSource)
+                    is SampleMapSource,
+            open: _sheetOpen,
+            onToggle: () => setState(() => _sheetOpen = !_sheetOpen),
+          ),
+        ],
       ),
     );
   }
 
-  List<Widget> _words(
-    BuildContext context,
-    MapSnapshot snapshot,
-    Offset center,
-    double unit,
-  ) {
+  /// The face and the head count of one shown block, on the middle of the block.
+  Widget _marker(BuildContext context, MapCell c, Offset spot) {
     final p = context.palette;
     final l10n = AppLocalizations.of(context);
-    final most = snapshot.cells.fold<int>(1, (m, c) => math.max(m, c.taps));
-    return [
-      for (final c in snapshot.cells)
-        _word(context, c, center, unit, most, p, l10n),
-    ];
-  }
-
-  Widget _word(
-    BuildContext context,
-    MapCell c,
-    Offset center,
-    double unit,
-    int most,
-    AppPalette p,
-    AppLocalizations l10n,
-  ) {
-    final dx = c.eastKm;
-    final dy = -c.northKm;
-    final ratio = math.sqrt(c.taps / most);
-    final size = (_wordMin + ratio * _wordSpan).roundToDouble();
-    final angle = ((((dx * 7 + dy).round()) % 7) - 3) * math.pi / 180;
     final on = _picked == c.id;
     final text = wordText(l10n, c.word);
-    return Positioned.fill(
-      child: CustomSingleChildLayout(
-        delegate: _CenteredAt(center + Offset(dx * unit, dy * unit)),
-        child: Transform.rotate(
-          angle: angle,
-          child: Opacity(
-            opacity: _wordOpacityMin + ratio * (1 - _wordOpacityMin),
-            child: PressableSurface(
-              kind: PressableKind.card,
-              radius: Radii.pill,
-              color: on ? p.surface : Colors.transparent,
-              semanticLabel: l10n.map_spotLabel(text, c.taps),
-              onTap: () => setState(() => _picked = on ? null : c.id),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: Space.sm,
-                  vertical: Space.xs,
-                ),
-                child: Text(
-                  text,
-                  maxLines: 1,
-                  softWrap: false,
-                  style: TypeScale.label.copyWith(
-                    color: p.ink,
-                    fontSize: size,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
+    return Positioned(
+      left: spot.dx - _markerWidth / 2,
+      top: spot.dy - _markerHeight / 2,
+      width: _markerWidth,
+      height: _markerHeight,
+      child: PressableSurface(
+        kind: PressableKind.card,
+        radius: Radii.pill,
+        color: on ? p.surface : Colors.transparent,
+        semanticLabel: l10n.map_spotLabel(text, c.taps),
+        onTap: () => setState(() => _picked = on ? null : c.id),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            MoodFace(mood: c.mood, size: _faceSize),
+            Text(
+              '${c.people}',
+              style: TypeScale.label.copyWith(
+                color: p.ink,
+                fontWeight: FontWeight.w700,
               ),
             ),
-          ),
+          ],
         ),
       ),
     );
   }
 
-  static const double _unitShare = 0.2;
-  static const double _centerX = 0.44;
-  static const double _centerY = 0.355;
-  static const double _wordMin = 11;
-  static const double _wordSpan = 9;
-  static const double _wordOpacityMin = 0.35;
-  static const String _ring1 = '1km';
-  static const String _ring3 = '3km';
+  static const double _markerWidth = 44;
+  static const double _markerHeight = 52;
+  static const double _faceSize = 28;
 }
 
 /// The prepared sentence behind a word id.
@@ -273,62 +271,6 @@ String wordText(AppLocalizations l10n, MapWord word) => switch (word) {
   MapWord.tomorrowToo => l10n.map_wordTomorrowToo,
   MapWord.thankful => l10n.map_wordThankful,
 };
-
-class _RingLabel extends StatelessWidget {
-  const _RingLabel({required this.text, required this.at, required this.color});
-
-  final String text;
-  final Offset at;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Positioned(
-      left: at.dx,
-      top: at.dy,
-      child: FractionalTranslation(
-        translation: const Offset(-0.5, 0),
-        child: Text(text, style: TypeScale.label.copyWith(color: color)),
-      ),
-    );
-  }
-}
-
-class _GroundPainter extends CustomPainter {
-  _GroundPainter({required this.dot, required this.center, required this.unit});
-
-  final Color dot;
-  final Offset center;
-  final double unit;
-
-  static const double _gap = 22;
-  static const double _dotRadius = 1;
-  static const int _dashes = 90;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final fill = Paint()..color = dot;
-    for (var y = _gap / 2; y < size.height; y += _gap) {
-      for (var x = _gap / 2; x < size.width; x += _gap) {
-        canvas.drawCircle(Offset(x, y), _dotRadius, fill);
-      }
-    }
-    final line = Paint()
-      ..color = dot
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1;
-    canvas.drawCircle(center, unit, line);
-    final outer = Rect.fromCircle(center: center, radius: unit * 3);
-    const step = 2 * math.pi / _dashes;
-    for (var i = 0; i < _dashes; i++) {
-      canvas.drawArc(outer, i * step, step / 3, false, line);
-    }
-  }
-
-  @override
-  bool shouldRepaint(_GroundPainter old) =>
-      old.dot != dot || old.center != center || old.unit != unit;
-}
 
 class _RangeSwitch extends StatelessWidget {
   const _RangeSwitch({required this.range, required this.onPick});
@@ -389,6 +331,7 @@ class _Sheet extends StatelessWidget {
     required this.ratio,
     required this.justRecorded,
     required this.isSample,
+    required this.tooWide,
     required this.open,
     required this.onToggle,
   });
@@ -398,6 +341,9 @@ class _Sheet extends StatelessWidget {
   final RatioPolicy ratio;
   final Mood? justRecorded;
   final bool isSample;
+
+  /// The view is too wide for blocks: the sheet asks to zoom in.
+  final bool tooWide;
   final bool open;
   final VoidCallback onToggle;
 
@@ -406,17 +352,21 @@ class _Sheet extends StatelessWidget {
     final p = context.palette;
     final l10n = AppLocalizations.of(context);
     final snap = snapshot;
-    final isEmpty = snap != null && snap.cells.isEmpty;
+    final isEmpty = snap != null && snap.cells.isEmpty && !tooWide;
     MapCell? cell;
     for (final c in snap?.cells ?? const <MapCell>[]) {
       if (c.id == picked) cell = c;
     }
-    final showRatio = !isEmpty && ratio.visible(justRecorded);
+    final showRatio = !isEmpty && !tooWide && ratio.visible(justRecorded);
     final share = cell?.happyShare ?? snap?.happyShare;
     final String? where;
     final String headline;
     final String? line;
-    if (isEmpty) {
+    if (tooWide) {
+      where = null;
+      headline = l10n.map_zoomIn;
+      line = null;
+    } else if (isEmpty) {
       where = l10n.map_nearby;
       headline = l10n.map_empty;
       line = null;
@@ -517,7 +467,7 @@ class _Sheet extends StatelessWidget {
                   const SizedBox(height: Space.lg),
                   _RatioBar(happyShare: share),
                 ],
-                if (isSample && !isEmpty) ...[
+                if (isSample && !isEmpty && !tooWide) ...[
                   const SizedBox(height: Space.md),
                   Text(
                     l10n.map_sampleNotice,
@@ -572,25 +522,6 @@ class _RatioBar extends StatelessWidget {
       ),
     );
   }
-}
-
-/// Puts the child's center on a point. Unlike a translation, the child's box really sits there,
-/// so a tap on it is found.
-class _CenteredAt extends SingleChildLayoutDelegate {
-  _CenteredAt(this.point);
-
-  final Offset point;
-
-  @override
-  BoxConstraints getConstraintsForChild(BoxConstraints constraints) =>
-      constraints.loosen();
-
-  @override
-  Offset getPositionForChild(Size size, Size childSize) =>
-      point - Offset(childSize.width / 2, childSize.height / 2);
-
-  @override
-  bool shouldRelayout(_CenteredAt old) => old.point != point;
 }
 
 /// The handle of the sheet: a tap folds or opens it, and so does a drag that is fast enough or
