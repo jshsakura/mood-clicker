@@ -39,18 +39,19 @@ class WaterSim extends ChangeNotifier {
   /// Drops running over the low edge while the water spills. They fall past the edge and go.
   final List<Droplet> runoff = [];
   double _spillStrength = 0;
+  double _spillTarget = 0;
+  int _spillSide = 0;
   double _runoffCarry = 0;
 
-  /// How strong the spilling looks, 0 (none) to 1, and the edge it runs over: 1 right, -1 left.
+  /// How strong the spilling looks, 0 (none) to 1. It eases toward what [spillAt] last said.
   double get spillStrength => _spillStrength;
-  int get spillSide => Spill.lowSide(tiltRadians);
+
+  /// The edge it runs over: 1 right, -1 left, 0 while the tilt is too small to choose one.
+  int get spillSide => _spillSide;
 
   /// Tells the sim that [levelPerSecond] of the level is running out this moment (0 when none).
   void spillAt(double levelPerSecond) {
-    _spillStrength = (levelPerSecond / FillTuning.runoffFullRate).clamp(
-      0.0,
-      1.0,
-    );
+    _spillTarget = (levelPerSecond / FillTuning.runoffFullRate).clamp(0.0, 1.0);
   }
 
   final Queue<({double time, List<double> heights})> _history = Queue();
@@ -263,7 +264,15 @@ class WaterSim extends ChangeNotifier {
 
   /// Throws drops over the low edge while spilling, and moves the ones in the air.
   void _runOff(double seconds) {
-    final side = spillSide;
+    _spillSide = Spill.lowSide(tiltRadians, current: _spillSide);
+    final rising = _spillTarget > _spillStrength;
+    final tau = rising ? FillTuning.spillAttack : FillTuning.spillRelease;
+    _spillStrength +=
+        (_spillTarget - _spillStrength) * (1 - exp(-seconds / tau));
+    if (_spillStrength < FillTuning.spillFloor && _spillTarget == 0) {
+      _spillStrength = 0;
+    }
+    final side = _spillSide;
     if (_spillStrength > 0 && side != 0 && !size.isEmpty) {
       _runoffCarry += seconds * FillTuning.runoffPerSecond * _spillStrength;
       final edge = side > 0 ? size.width : 0.0;

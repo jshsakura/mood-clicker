@@ -230,6 +230,21 @@ abstract final class FillTuning {
   static const double runoffRadiusMax = 6.5;
   static const int runoffLimit = 40;
 
+  /// The spill picture eases toward the real spill instead of following it frame by frame: the
+  /// stream strength rises with time constant [spillAttack] and dies away with [spillRelease]
+  /// seconds, so a spill that stutters at capacity fades rather than blinks.
+  static const double spillAttack = 0.12;
+  static const double spillRelease = 0.5;
+
+  /// Below this strength, with no spill left, the stream is off.
+  static const double spillFloor = 0.02;
+
+  /// The edge the water runs over is chosen with hysteresis. A side is taken once the tilt passes
+  /// [sideOnDegrees]. It is kept until the tilt falls inside [sideOffDegrees] (no side, so no
+  /// stream) or passes [sideOnDegrees] the other way, so noise around level never flips it.
+  static const double sideOnDegrees = 4;
+  static const double sideOffDegrees = 2;
+
   /// A full gauge shakes the screen and shows the big phrase once. It can do that again only
   /// after the level has fallen below this.
   static const double rearm = 0.8;

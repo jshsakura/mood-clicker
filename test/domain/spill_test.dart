@@ -262,4 +262,42 @@ void main() {
     expect(FillTuning.spillRate, 1.2);
     expect(FillTuning.pourMin, 0.08);
   });
+
+  group('low side hysteresis', () {
+    test('level and near level pick no side', () {
+      expect(Spill.lowSide(0), 0);
+      expect(Spill.lowSide(deg(1)), 0);
+      expect(Spill.lowSide(deg(-1.5)), 0);
+    });
+
+    test('a real lean picks its side without history', () {
+      expect(Spill.lowSide(deg(10)), 1);
+      expect(Spill.lowSide(deg(-10)), -1);
+    });
+
+    test('a side is kept between the off and on margins', () {
+      expect(Spill.lowSide(deg(3), current: 1), 1);
+      expect(Spill.lowSide(deg(-3), current: 1), 1);
+      expect(Spill.lowSide(deg(3), current: -1), -1);
+      expect(Spill.lowSide(deg(3), current: 0), 0);
+    });
+
+    test('inside the off margin the side is dropped', () {
+      expect(Spill.lowSide(deg(1), current: 1), 0);
+      expect(Spill.lowSide(deg(-1), current: -1), 0);
+    });
+
+    test('noise around level never flips the side', () {
+      var side = 0;
+      for (var i = 0; i < 200; i++) {
+        side = Spill.lowSide(deg(i.isEven ? 1.5 : -1.5), current: side);
+        expect(side, 0);
+      }
+    });
+
+    test('the other side needs the tilt past the on margin', () {
+      expect(Spill.lowSide(deg(-3.9), current: 1), 1);
+      expect(Spill.lowSide(deg(-4.1), current: 1), -1);
+    });
+  });
 }
