@@ -18,12 +18,16 @@ class NativeSurfaces {
     required this.widget,
     required this.shortcuts,
     required this.links,
+    required this.shortcutLimit,
     required this.onLaunchMood,
   });
 
   final WidgetPublisher widget;
   final IconShortcuts shortcuts;
   final LaunchLinks links;
+
+  /// How many moods the icon menu takes (see [shortcutLimitFor]).
+  final int shortcutLimit;
 
   /// Opens the tap screen of this mood.
   void Function(Mood mood) onLaunchMood;
@@ -52,16 +56,24 @@ class NativeSurfaces {
     _lastPublished = snapshot;
   }
 
-  /// Sets the long press shortcuts in the language of [l]: the four moods picked most in the last
-  /// 14 days (see [shortcutOrder]). Call it every time the app opens and when the language changes,
+  /// Sets the long press shortcuts in the language of [l]: the moods picked most in the last
+  /// 14 days, up to [shortcutLimit] (see [shortcutOrder]). Call it every time the app opens and when the language changes,
   /// so the menu follows what the user picks.
   Future<void> registerShortcuts(
     AppLocalizations l,
     MoodJournal journal,
     DateTime now,
   ) => shortcuts.register([
-    for (final mood in shortcutOrder(journal, DayKey.of(now)))
-      ShortcutEntry(type: shortcutTypeFor(mood), title: moodLabel(l, mood)),
+    for (final mood in shortcutOrder(
+      journal,
+      DayKey.of(now),
+      limit: shortcutLimit,
+    ))
+      ShortcutEntry(
+        type: shortcutTypeFor(mood),
+        title: moodLabel(l, mood),
+        icon: shortcutIconFor(mood),
+      ),
   ]);
 
   void _launchShortcut(String type) {

@@ -16,6 +16,7 @@ import 'package:mood_clicker/feedback/feedback_controller.dart';
 import 'package:mood_clicker/l10n/app_localizations.g.dart';
 import 'package:mood_clicker/l10n/locale_choice.dart';
 import 'package:mood_clicker/l10n/app_localizations_ko.g.dart';
+import 'package:mood_clicker/surfaces/shortcut_order.dart';
 
 import '../domain/cheer_fixtures.dart';
 import '../feedback/fakes.dart';
@@ -35,6 +36,7 @@ class FakeSurfaces {
     widget: publisher,
     shortcuts: shortcuts,
     links: links,
+    shortcutLimit: shortcutLimitIos,
     onLaunchMood: (_) {},
   );
 }

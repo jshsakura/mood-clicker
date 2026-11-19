@@ -6,10 +6,17 @@ abstract interface class WidgetPublisher {
 }
 
 class ShortcutEntry {
-  const ShortcutEntry({required this.type, required this.title});
+  const ShortcutEntry({
+    required this.type,
+    required this.title,
+    required this.icon,
+  });
 
   final String type;
   final String title;
+
+  /// The name of the icon resource: a drawable on Android, an image set on iOS.
+  final String icon;
 }
 
 /// The shortcuts of a long press on the app icon.

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:flutter/widgets.dart';
 import 'package:flutter/services.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -29,6 +30,7 @@ import '../settings/settings_screen.dart';
 import '../settings/settings_store.dart';
 import '../surfaces/home_widget_adapters.dart';
 import '../surfaces/native_surfaces.dart';
+import '../surfaces/shortcut_order.dart';
 import 'app_services.dart';
 import 'journal_store.dart';
 import 'seen_hints.dart';
@@ -125,6 +127,7 @@ Future<AppServices> createServices({WidgetBuilder? settingsBuilder}) async {
       widget: HomeWidgetPublisher(),
       shortcuts: QuickActionsShortcuts(),
       links: HomeWidgetLaunchLinks(),
+      shortcutLimit: shortcutLimitFor(defaultTargetPlatform),
       // The app replaces this once it is running (see SurfaceSync).
       onLaunchMood: (Mood _) {},
     ),
