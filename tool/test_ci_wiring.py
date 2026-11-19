@@ -49,3 +49,23 @@ class Wiring(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class IpaOnThePage(unittest.TestCase):
+    def test_ios_test_attaches_the_ipa_to_this_commits_release_and_redeploys(self):
+        wf = read(".github/workflows/ios-test.yml")
+        self.assertRegex(wf, r"permissions:\s*\n\s+contents: write\s*\n\s+actions: write\s*\n(?!\s+\w+:\s*(read|write))")
+        self.assertIn("target_commitish == ", wf)
+        self.assertIn("seq 1 20", wf)
+        self.assertIn("sleep 30", wf)
+        self.assertIn("gh release upload", wf)
+        self.assertIn("mood-clicker.ipa", wf)
+        self.assertIn("gh workflow run deploy.yml", wf)
+        self.assertIn("github.ref == 'refs/heads/main'", wf)
+
+    def test_deploy_offers_the_ipa_only_when_the_release_has_it(self):
+        wf = read(".github/workflows/deploy.yml")
+        self.assertIn("mood-clicker.ipa", wf)
+        self.assertIn("ios: $ios", wf)
+        self.assertIn("ios=false", wf)
+        self.assertIn("workflow_dispatch:", wf)
