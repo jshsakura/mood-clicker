@@ -23,7 +23,7 @@ English: [HARNESS.en.md](HARNESS.en.md)
 | 층 | 어디에 | 하는 일 |
 |---|---|---|
 | 규칙 | `AGENTS.md`, `CLAUDE.md` | 모든 에이전트가 먼저 읽습니다. Claude, Codex, Antigravity, opencode 가 같은 파일을 봅니다 |
-| 기계 검사 | `.githooks/`, `.claude/hooks/`, `.github/workflows/` | 규칙을 어기면 커밋, push, 명령 실행 단계에서 거절합니다 |
+| 기계 검사 | `.githooks/`, `.claude/hooks/`, `.codex/hooks.json`, `.github/workflows/` | 규칙을 어기면 커밋, push, 명령 실행 단계에서 거절합니다 |
 | 스킬 | `.claude/skills/` | 자주 하는 일의 순서와 기준 문서를 묶어 둡니다 |
 | 팀 도구 | `tool/team/` | tmux 팬 사이로 일을 보내고(`itl`), 팀을 한 번에 띄웁니다(`start.sh`) |
 
@@ -138,6 +138,7 @@ tool/team/start.sh         # 팀장 1, 작업자 N 팬을 띄웁니다. 사용�
 | `docs/SPEC.md`, `docs/DESIGN.md`, `docs/I18N.md`, `docs/PRIVACY.md` | 명세, 디자인, 다국어, 개인정보 |
 | `.githooks/` | 커밋과 push 검사 |
 | `.claude/settings.json`, `.claude/hooks/` | Claude Code 플러그인, 허용 명령, 훅 |
+| `.codex/hooks.json` | Codex 가 같은 가드를 `codex_adapter.py` 로 돌립니다. 두 목록이 같은지 `tool/test_codex_hooks.py` 가 봅니다 |
 | `.claude/skills/` | 프로젝트 스킬 |
 | `.github/workflows/` | CI 와 iOS 테스트 빌드 |
 | `tool/` | 도커 Flutter 실행기(`fl`), 검사기, 생성기, 그리고 그 테스트 |

@@ -69,4 +69,5 @@
 | 테스트 배포에 빌드한 커밋과 다른 커밋이 적힐 뻔했습니다 | 빌드 중에는 합치지 않습니다. 배포할 때 HEAD 가 빌드한 커밋과 같아야 합니다 | 배포 스크립트가 HEAD 보다 오래된 APK 를 거절합니다 |
 | 날짜가 바뀌자 달력 골든이 깨졌습니다(table_calendar 가 진짜 시계로 오늘을 그림) | 화면은 오늘을 앱 시계(`services.now()`)에서만 얻습니다 | 달력 골든 |
 | 테스트 빌드를 깔 때마다 '기존 패키지와 충돌' 로 지우고 다시 깔아야 했습니다. 릴리스 빌드가 도커 안에서 매번 새로 생기는 디버그 키로 서명됐습니다 | 릴리스 빌드는 고정 키로 서명합니다. 키(`android/app/release.jks`)와 `android/key.properties` 는 저장소 밖에 보관하고 빌드하는 작업 트리에만 복사합니다(커밋 금지, `.gitignore`). 키를 잃으면 스토어 업데이트를 못 하니 따로 백업합니다 | `android/app/build.gradle.kts` |
+| Codex 에는 훅이 없어 폴링 금지, stash, push 규칙이 글로만 있었습니다. Codex 의 셸 도구는 이름(`exec_command`)과 입력(`cmd`, 명령 배열)이 Claude 와 다릅니다 | Codex 도 같은 가드를 돌립니다. 가드는 하나만 두고 `.claude/hooks/codex_adapter.py` 가 입력을 Claude 모양으로 바꿉니다. 가드를 늘리면 `.claude/settings.json` 과 `.codex/hooks.json` 에 같이 넣습니다 | `tool/test_codex_hooks.py` |
 | tmux 를 쓰는 테스트가 가끔 실패했습니다 | 기다리는 조건을 결과 상태로 겁니다(시간으로 기다리지 않습니다) | `tool/test_team.py` |
