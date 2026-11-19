@@ -628,4 +628,33 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get howTo_bubble => '놀이 방법';
+
+  @override
+  String get settings_weatherView => '날씨 보기';
+
+  @override
+  String get settings_weatherViewDesc =>
+      '소수 첫째 자리로 뭉갠 위치로 현재 날씨만 가져옵니다. 끄면 위치도 묻지 않습니다.';
+
+  @override
+  String get settings_weatherSource => '날씨 출처';
+
+  @override
+  String get weather_clear => '맑음';
+
+  @override
+  String get weather_partlyCloudy => '구름 조금';
+
+  @override
+  String get weather_cloudy => '흐림';
+
+  @override
+  String get weather_rain => '비';
+
+  @override
+  String get weather_snow => '눈';
+
+  @override
+  String get permission_locationWhenInUse =>
+      '앱을 쓰는 동안 소수 첫째 자리로 뭉갠 위치만 날씨를 가져오는 데 씁니다.';
 }

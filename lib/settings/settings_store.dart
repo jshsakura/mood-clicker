@@ -37,6 +37,7 @@ class SharedPreferencesSettingsStore implements SettingsStore {
   static const String _mapView = 'settings.mapView';
   static const String _mapContribute = 'settings.mapContribute';
   static const String _mapComment = 'settings.mapComment';
+  static const String _weatherView = 'settings.weatherView';
 
   @override
   Future<Settings> read() async {
@@ -71,6 +72,7 @@ class SharedPreferencesSettingsStore implements SettingsStore {
       mapView: _prefs.getBool(_mapView) ?? Settings.mapViewDefault,
       mapContribute: _prefs.getBool(_mapContribute) ?? false,
       mapComment: _prefs.getBool(_mapComment) ?? false,
+      weatherView: _prefs.getBool(_weatherView) ?? Settings.weatherViewDefault,
     );
   }
 
@@ -89,6 +91,7 @@ class SharedPreferencesSettingsStore implements SettingsStore {
     await _prefs.setBool(_mapView, settings.mapView);
     await _prefs.setBool(_mapContribute, settings.mapContribute);
     await _prefs.setBool(_mapComment, settings.mapComment);
+    await _prefs.setBool(_weatherView, settings.weatherView);
     await _prefs.setBool(_reminderEnabled, settings.reminder.enabled);
     await _prefs.setInt(
       _reminderMinutes,

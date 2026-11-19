@@ -83,5 +83,7 @@
 			</array>
 		</dict>
 	</array>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Used only to show local weather while the app is open, using a location rounded to one decimal place.</string>
 </dict>
 </plist>

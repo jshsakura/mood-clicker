@@ -626,4 +626,33 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get howTo_bubble => '遊び方';
+
+  @override
+  String get settings_weatherView => '天気を表示';
+
+  @override
+  String get settings_weatherViewDesc =>
+      '小数第1位に丸めた位置だけで天気を取得します。オフにすると位置も求めません。';
+
+  @override
+  String get settings_weatherSource => '天気データの提供元';
+
+  @override
+  String get weather_clear => '晴れ';
+
+  @override
+  String get weather_partlyCloudy => '晴れ時々くもり';
+
+  @override
+  String get weather_cloudy => 'くもり';
+
+  @override
+  String get weather_rain => '雨';
+
+  @override
+  String get weather_snow => '雪';
+
+  @override
+  String get permission_locationWhenInUse =>
+      'アプリ使用中に小数第1位に丸めた位置だけを使って天気を取得します。';
 }

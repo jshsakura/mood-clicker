@@ -14,13 +14,15 @@ class SettingsHub {
     : feel = ValueNotifier(settings.feelSettings),
       theme = ValueNotifier(settings.themeChoice),
       language = ValueNotifier(settings.language),
-      mapView = ValueNotifier(settings.mapView);
+      mapView = ValueNotifier(settings.mapView),
+      weatherView = ValueNotifier(settings.weatherView);
 
   final FeedbackController feedback;
   final ValueNotifier<FeelSettings> feel;
   final ValueNotifier<ThemeChoice> theme;
   final ValueNotifier<LocaleChoice> language;
   final ValueNotifier<bool> mapView;
+  final ValueNotifier<bool> weatherView;
 
   /// Reads the store and starts every consumer from what it holds.
   static Future<SettingsHub> open({
@@ -39,6 +41,7 @@ class SettingsHub {
     theme.value = settings.themeChoice;
     language.value = settings.language;
     mapView.value = settings.mapView;
+    weatherView.value = settings.weatherView;
     feedback.settings = settings.feedbackSettings;
   }
 }

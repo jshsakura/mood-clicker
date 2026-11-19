@@ -8,8 +8,8 @@ This app is a journal for picking today's mood and leaving its size as a tap cou
 
 - Moods, tap counts and the short note of a day are stored in one file on the device (`journal.json`) and nowhere else.
 - How far the cheer phrases have been shown also stays in a file on the device (`cheer_decks.json`): only a position, never the words.
-- Settings such as the theme, language, vibration, sound, cheer phrases, screen shake, tilt to pour, the evening reminder and the map choices live in the system settings store.
-- No record is sent to a server. There is no server to send to.
+- Settings such as the theme, language, vibration, sound, cheer phrases, screen shake, tilt to pour, the evening reminder, weather display and the map choices live in the system settings store.
+- No mood record is sent to a server. There is no server for mood records.
 - There is no account, sign-up or login.
 - Changing or wiping the device does not carry the records over.
 
@@ -32,6 +32,13 @@ This app is a journal for picking today's mood and leaving its size as a tap cou
 ## Mood records as sensitive information
 
 - Mood records can qualify as sensitive information under privacy law. This app never sends mood information off the device in any form, so nothing is collected by others or shared with third parties.
+
+## Weather display and location
+
+- Location and network access are used only to show current weather next to the date on the mood select screen.
+- Location permission is requested only while the app is in use. Coordinates are rounded on the device to one decimal place (roughly an 11 km grid) before being sent to MET Norway (`api.met.no`).
+- No mood records or device identifiers are included in the request.
+- If you deny location permission or turn off "Show weather" in Settings, location is never requested and no network call is made.
 
 ## Notice for when the map arrives
 

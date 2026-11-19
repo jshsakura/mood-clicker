@@ -839,5 +839,41 @@
   "howTo_bubble": "놀이 방법",
   "@howTo_bubble": {
     "description": "두드리기 화면에 처음 들어올 때 물음표 단추 옆에 잠깐 뜨는 말풍선입니다."
+  },
+  "settings_weatherView": "날씨 보기",
+  "@settings_weatherView": {
+    "description": "기분 고르기 화면 위 날짜 옆에 날씨를 보여 줄지 고르는 항목입니다."
+  },
+  "settings_weatherViewDesc": "소수 첫째 자리로 뭉갠 위치로 현재 날씨만 가져옵니다. 끄면 위치도 묻지 않습니다.",
+  "@settings_weatherViewDesc": {
+    "description": "날씨 보기 항목 아래에 붙는 설명입니다."
+  },
+  "settings_weatherSource": "날씨 출처",
+  "@settings_weatherSource": {
+    "description": "설정의 정보 묶음에 붙는 날씨 출처 줄 제목입니다."
+  },
+  "weather_clear": "맑음",
+  "@weather_clear": {
+    "description": "날씨 칩 접근성 이름입니다."
+  },
+  "weather_partlyCloudy": "구름 조금",
+  "@weather_partlyCloudy": {
+    "description": "날씨 칩 접근성 이름입니다."
+  },
+  "weather_cloudy": "흐림",
+  "@weather_cloudy": {
+    "description": "날씨 칩 접근성 이름입니다."
+  },
+  "weather_rain": "비",
+  "@weather_rain": {
+    "description": "날씨 칩 접근성 이름입니다."
+  },
+  "weather_snow": "눈",
+  "@weather_snow": {
+    "description": "날씨 칩 접근성 이름입니다."
+  },
+  "permission_locationWhenInUse": "앱을 쓰는 동안 소수 첫째 자리로 뭉갠 위치만 날씨를 가져오는 데 씁니다.",
+  "@permission_locationWhenInUse": {
+    "description": "위치 권한 안내 문구입니다."
   }
 }

@@ -1227,6 +1227,60 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'놀이 방법'**
   String get howTo_bubble;
+
+  /// 기분 고르기 화면 위 날짜 옆에 날씨를 보여 줄지 고르는 항목입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'날씨 보기'**
+  String get settings_weatherView;
+
+  /// 날씨 보기 항목 아래에 붙는 설명입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'소수 첫째 자리로 뭉갠 위치로 현재 날씨만 가져옵니다. 끄면 위치도 묻지 않습니다.'**
+  String get settings_weatherViewDesc;
+
+  /// 설정의 정보 묶음에 붙는 날씨 출처 줄 제목입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'날씨 출처'**
+  String get settings_weatherSource;
+
+  /// 날씨 칩 접근성 이름입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'맑음'**
+  String get weather_clear;
+
+  /// 날씨 칩 접근성 이름입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'구름 조금'**
+  String get weather_partlyCloudy;
+
+  /// 날씨 칩 접근성 이름입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'흐림'**
+  String get weather_cloudy;
+
+  /// 날씨 칩 접근성 이름입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'비'**
+  String get weather_rain;
+
+  /// 날씨 칩 접근성 이름입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'눈'**
+  String get weather_snow;
+
+  /// 위치 권한 안내 문구입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'앱을 쓰는 동안 소수 첫째 자리로 뭉갠 위치만 날씨를 가져오는 데 씁니다.'**
+  String get permission_locationWhenInUse;
 }
 
 class _AppLocalizationsDelegate

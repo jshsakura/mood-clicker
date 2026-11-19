@@ -21,7 +21,12 @@ enum LineIcons {
   howTilt('how_tilt'),
   howSpark('how_spark'),
   howHold('how_hold'),
-  howFinish('how_finish');
+  howFinish('how_finish'),
+  weatherClear('weather_clear'),
+  weatherPartlyCloudy('weather_partly_cloudy'),
+  weatherCloudy('weather_cloudy'),
+  weatherRain('weather_rain'),
+  weatherSnow('weather_snow');
 
   const LineIcons(this.file);
 

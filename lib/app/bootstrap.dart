@@ -19,10 +19,12 @@ import '../feedback/system_haptics.dart';
 import '../l10n/app_localizations.g.dart';
 import '../l10n/asset_paths.dart';
 import '../l10n/locale_resolution.dart';
+import '../location/coarse_location.dart';
 import '../reminder/flutter_local_notifications_port.dart';
 import '../reminder/reminder_controller.dart';
 import '../reminder/reminder_port.dart';
 import '../settings/records_port.dart';
+import '../weather/weather_source.dart';
 import '../settings/settings_screen.dart';
 import '../settings/settings_store.dart';
 import '../surfaces/home_widget_adapters.dart';
@@ -88,6 +90,7 @@ Future<AppServices> createServices({WidgetBuilder? settingsBuilder}) async {
         theme: hub.theme,
         language: hub.language,
         mapView: hub.mapView,
+        weatherView: hub.weatherView,
         onApplied: hub.apply,
         reminder: reminder,
         records: records,
@@ -109,6 +112,9 @@ Future<AppServices> createServices({WidgetBuilder? settingsBuilder}) async {
     theme: hub.theme,
     language: hub.language,
     mapView: hub.mapView,
+    weatherView: hub.weatherView,
+    location: const GeolocatorCoarseLocation(),
+    weatherSource: MetNorwayWeatherSource(),
     settingsStore: settingsStore,
     hints: SharedPreferencesSeenHints(prefs),
     reminder: reminder,
