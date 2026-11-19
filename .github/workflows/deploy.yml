@@ -1,0 +1,91 @@
+name: deploy
+# Ships what main just built, then publishes the site.
+#
+# After ci passes on a push to main (with branch protection, that is a merged pull request),
+# the APK that run already built and tested becomes a GitHub release. Nothing is rebuilt.
+# The same job then publishes site/ to GitHub Pages with that APK copied into download/,
+# so the page hands out the release it names, from its own origin (no 302 to another host,
+# which iOS turns into a cross-origin tab).
+#
+# Pages is deployed here and not from a `release: published` workflow: a release created
+# with GITHUB_TOKEN raises no further workflow runs.
+#
+# workflow_dispatch republishes the site only (for copy changes), with the newest release.
+on:
+  workflow_run:
+    workflows: [ci]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+  actions: read
+# Never let two deploys race, and never cancel one in flight.
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+jobs:
+  deploy:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: github-pages
+      url: ${{ steps.pages.outputs.page_url }}
+    env:
+      GH_TOKEN: ${{ github.token }}
+      IS_RELEASE: ${{ github.event_name == 'workflow_run' }}
+      SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+      BUILD: ${{ github.event.workflow_run.run_number }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SHA }}
+      - name: fetch the tested APK
+        if: env.IS_RELEASE == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: mood-clicker-debug-apk
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+          path: dist
+      - name: release it
+        if: env.IS_RELEASE == 'true'
+        run: |
+          version=$(sed -n 's/^version: *\([^+]*\).*/\1/p' pubspec.yaml)
+          mv dist/app-debug.apk dist/mood-clicker.apk
+          gh release create "v$version-build.$BUILD" dist/mood-clicker.apk --target "$SHA" --latest \
+            --title "$version (build $BUILD)" \
+            --notes "Debug build of main ${SHA::7}, made and tested by ci run $BUILD."
+      - name: keep the latest 10 releases
+        if: env.IS_RELEASE == 'true'
+        run: gh release list --limit 100 --json tagName --jq '.[10:][].tagName' | xargs -r -n1 gh release delete --yes --cleanup-tag
+      # The page reads build.json for its version line, so it always names the APK it serves.
+      - name: assemble the site with the newest release
+        run: |
+          mkdir -p _site/download
+          cp -R site/. _site/
+          tag=$(gh release list --limit 1 --exclude-drafts --exclude-pre-releases --json tagName --jq '.[0].tagName // empty')
+          if [ -z "$tag" ]; then
+            echo "no release yet: publishing the page without a download"
+            exit 0
+          fi
+          gh release download "$tag" -D _site/download --pattern 'mood-clicker.apk'
+          gh release view "$tag" --json tagName,targetCommitish,publishedAt --jq '{
+              version: (.tagName | sub("^v"; "") | sub("-build\\.[0-9]+$"; "")),
+              build: (.tagName | capture("build\\.(?<n>[0-9]+)$").n),
+              sha: .targetCommitish,
+              date: (.publishedAt | fromdateiso8601 + 32400 | strftime("%Y-%m-%d %H:%M"))
+            }' > _site/build.json
+          cat _site/build.json
+          ls -l _site/download
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: pages
+        uses: actions/deploy-pages@v4
