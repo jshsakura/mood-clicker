@@ -52,6 +52,23 @@ class Base(unittest.TestCase):
 class PushGuard(Base):
     hook = "push_guard.py"
 
+    # The hook checks the branch of cwd before anything else. Run in a scratch repository on a
+    # feature branch, so the verdicts do not depend on what the real checkout is on (CI on main).
+    @classmethod
+    def setUpClass(cls):
+        cls._repo = tempfile.TemporaryDirectory()
+        run_git(cls._repo.name, "init", "-q", "-b", "feat/x")
+
+    @classmethod
+    def tearDownClass(cls):
+        cls._repo.cleanup()
+
+    def deny(self, command, mention=None, cwd=None):
+        super().deny(command, mention, cwd or self._repo.name)
+
+    def allow(self, command, cwd=None):
+        super().allow(command, cwd or self._repo.name)
+
     def test_push_to_main_or_master_is_denied(self):
         for cmd in [
             "tool/test.sh && git push origin main",
