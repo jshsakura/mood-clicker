@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mood_clicker/design/parts/breathing_ring.dart';
 import 'package:mood_clicker/design/parts/dawn_wash.dart';
 import 'package:mood_clicker/design/parts/settle_line.dart';
 import 'package:mood_clicker/domain/day_key.dart';
@@ -104,7 +103,7 @@ void main() {
       return app;
     }
 
-    testWidgets('touch is locked during the cleanse and the count stays', (
+    testWidgets('tapping is never locked: every tap in the cleanse counts', (
       tester,
     ) async {
       final app = await filled(tester);
@@ -114,27 +113,17 @@ void main() {
       await _tap(tester, app);
       await _wait(tester, app, 1000);
       await _tap(tester, app);
-      expect(_count(app, Mood.angry), before);
-      expect(app.sound.played, hasLength(sounds));
+      expect(_count(app, Mood.angry), before + 2);
+      expect(app.sound.played, hasLength(sounds + 2));
     });
 
-    testWidgets('touch is back once the cleanse is over', (tester) async {
-      final app = await filled(tester);
-      await _wait(tester, app, ReleaseTuning.cleanse.inMilliseconds + 100);
-      final before = _count(app, Mood.angry);
-      await _tap(tester, app);
-      expect(_count(app, Mood.angry), before + 1);
-    });
-
-    testWidgets('the ring and the line wait for the quiet beat', (
+    testWidgets('the line shows as soon as the cleanse is over', (
       tester,
     ) async {
       final app = await filled(tester);
-      await _wait(tester, app, ReleaseTuning.cleanse.inMilliseconds + 300);
-      expect(find.byType(BreathingRing), findsNothing);
+      await _wait(tester, app, ReleaseTuning.cleanse.inMilliseconds - 300);
       expect(find.byType(SettleLine), findsNothing);
-      await _wait(tester, app, ReleaseTuning.stillness.inMilliseconds);
-      expect(find.byType(BreathingRing), findsOneWidget);
+      await _wait(tester, app, 400);
       expect(find.text(_ko.release_settleAngry), findsOneWidget);
     });
 
@@ -144,7 +133,6 @@ void main() {
         tester,
         app,
         ReleaseTuning.cleanse.inMilliseconds +
-            ReleaseTuning.stillness.inMilliseconds +
             ReleaseTuning.settleLineHold.inMilliseconds +
             800,
       );
@@ -164,23 +152,20 @@ void main() {
       expect(app.sound.played.map((p) => p.pitch), [1.0, 1.122, 1.260]);
     });
 
-    testWidgets('the order is cleanse sound, locked, then the calm tap', (
-      tester,
-    ) async {
-      final app = await filled(tester);
-      final trail = <String>[app.sound.played.last.cue.id];
-      await _wait(tester, app, 1200);
-      await _tap(tester, app);
-      trail.add('locked:${app.sound.played.length}');
-      await _wait(tester, app, ReleaseTuning.cleanse.inMilliseconds);
-      await _tap(tester, app);
-      trail.add(app.sound.played.last.cue.id);
-      expect(trail, [
-        'cleanse',
-        'locked:${app.sound.played.length - 1}',
-        'kalimba',
-      ]);
-    });
+    testWidgets(
+      'the cleanse sound is followed by ordinary taps with no pause',
+      (tester) async {
+        final app = await filled(tester);
+        final trail = <String>[app.sound.played.last.cue.id];
+        await _wait(tester, app, 1200);
+        await _tap(tester, app);
+        trail.add(app.sound.played.last.cue.id);
+        await _wait(tester, app, ReleaseTuning.cleanse.inMilliseconds);
+        await _tap(tester, app);
+        trail.add(app.sound.played.last.cue.id);
+        expect(trail, ['cleanse', 'kalimba', 'kalimba']);
+      },
+    );
   });
 
   group('the approach', () {

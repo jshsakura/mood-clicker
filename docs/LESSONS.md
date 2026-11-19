@@ -71,3 +71,5 @@
 | 테스트 빌드를 깔 때마다 '기존 패키지와 충돌' 로 지우고 다시 깔아야 했습니다. 릴리스 빌드가 도커 안에서 매번 새로 생기는 디버그 키로 서명됐습니다 | 릴리스 빌드는 고정 키로 서명합니다. 키(`android/app/release.jks`)와 `android/key.properties` 는 저장소 밖에 보관하고 빌드하는 작업 트리에만 복사합니다(커밋 금지, `.gitignore`). 키를 잃으면 스토어 업데이트를 못 하니 따로 백업합니다 | `android/app/build.gradle.kts` |
 | Codex 에는 훅이 없어 폴링 금지, stash, push 규칙이 글로만 있었습니다. Codex 의 셸 도구는 이름(`exec_command`)과 입력(`cmd`, 명령 배열)이 Claude 와 다릅니다 | Codex 도 같은 가드를 돌립니다. 가드는 하나만 두고 `.claude/hooks/codex_adapter.py` 가 입력을 Claude 모양으로 바꿉니다. 가드를 늘리면 `.claude/settings.json` 과 `.codex/hooks.json` 에 같이 넣습니다 | `tool/test_codex_hooks.py` |
 | tmux 를 쓰는 테스트가 가끔 실패했습니다 | 기다리는 조건을 결과 상태로 겁니다(시간으로 기다리지 않습니다) | `tool/test_team.py` |
+| 가득 찬 뒤의 쉬는 시간(터치 잠금)과 숨쉬기 원이 연타 흐름을 끊었습니다 | 쉬는 시간과 숨쉬기 원은 연타 흐름을 끊어 뺐다. 가득 찬 뒤에도 터치는 잠기지 않고 맑아지는 빛과 마무리 한 줄만 남깁니다 | `test/screens/tap_release_test.dart` |
+| 기울이면 물이 반대쪽으로 쏠려 보였습니다. 센서가 아니라 물 표면 기울기의 부호가 거꾸로였습니다(sensors_plus 는 iOS 도 안드로이드와 같은 부호로 내보냅니다) | 센서 부호는 `TiltSign` 한 곳에 두고, 오른쪽으로 기울이면 물이 오른쪽으로 쏠리는 것을 두 플랫폼 모두 테스트로 고정합니다 | `test/app/phone_tilt_test.dart` |

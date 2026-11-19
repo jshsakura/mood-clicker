@@ -12,10 +12,10 @@ enum ReleasePhase {
   /// Tapping. From [ReleaseTuning.approachAt] on, the frame says it is approaching.
   release,
 
-  /// The automatic dawn wash after the gauge is full. Touch is locked.
+  /// The dawn wash after the gauge is full. Tapping goes on through it.
   cleanse,
 
-  /// Touch is back. The breathing ring is on screen until the level falls again.
+  /// The wash has run its course. The one line shows until the level falls again.
   settle,
 }
 
@@ -26,9 +26,7 @@ class ReleaseFrame {
     this.approaching = false,
     this.approach = 0,
     this.cleanse = 0,
-    this.quiet = false,
     this.blend = 0,
-    this.settled = Duration.zero,
   });
 
   final ReleasePhase phase;
@@ -42,16 +40,8 @@ class ReleaseFrame {
   /// How far the cleanse has gone, 0 to 1. It stays 1 in the settle.
   final double cleanse;
 
-  /// True for the quiet beat at the start of the settle, before the breathing ring shows.
-  final bool quiet;
-
   /// How far the dawn light has dissolved into the settled screen, 0 to 1.
   final double blend;
-
-  /// How long the settle has lasted.
-  final Duration settled;
-
-  bool get touchLocked => phase == ReleasePhase.cleanse;
 }
 
 /// The state machine behind the release flow. An immutable value that never reads the clock: callers
@@ -102,9 +92,7 @@ class ReleaseFlow {
     return ReleaseFrame(
       phase: ReleasePhase.settle,
       cleanse: 1,
-      quiet: settled < ReleaseTuning.stillness,
       blend: _ratio(settled, ReleaseTuning.crossfade),
-      settled: settled,
     );
   }
 

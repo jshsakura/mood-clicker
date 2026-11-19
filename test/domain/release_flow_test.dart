@@ -7,12 +7,11 @@ void main() {
   DateTime after(Duration d) => t0.add(d);
 
   group('release', () {
-    test('starts in release with nothing approaching and touch free', () {
+    test('starts in release with nothing approaching', () {
       final frame = const ReleaseFlow.start().frameAt(t0);
       expect(frame.phase, ReleasePhase.release);
       expect(frame.approaching, isFalse);
       expect(frame.approach, 0);
-      expect(frame.touchLocked, isFalse);
     });
 
     test('below the threshold is not approaching, at it is', () {
@@ -38,10 +37,9 @@ void main() {
   group('cleanse', () {
     final full = const ReleaseFlow.start().withLevel(1, t0);
 
-    test('starts the moment the level is full and locks touch', () {
+    test('starts the moment the level is full', () {
       final frame = full.frameAt(t0);
       expect(frame.phase, ReleasePhase.cleanse);
-      expect(frame.touchLocked, isTrue);
       expect(frame.cleanse, 0);
     });
 
@@ -53,7 +51,6 @@ void main() {
         after(ReleaseTuning.cleanse - const Duration(milliseconds: 1)),
       );
       expect(last.phase, ReleasePhase.cleanse);
-      expect(last.touchLocked, isTrue);
     });
 
     test('level changes during the cleanse do not stop or restart it', () {
@@ -79,26 +76,10 @@ void main() {
     final full = const ReleaseFlow.start().withLevel(1, t0);
     DateTime settleAt(Duration d) => after(ReleaseTuning.cleanse + d);
 
-    test('opens touch right after the cleanse, with the quiet beat first', () {
+    test('starts right after the cleanse with no pause in between', () {
       final frame = full.frameAt(settleAt(Duration.zero));
       expect(frame.phase, ReleasePhase.settle);
-      expect(frame.touchLocked, isFalse);
       expect(frame.cleanse, 1);
-      expect(frame.quiet, isTrue);
-    });
-
-    test('the quiet beat ends and the breathing starts after stillness', () {
-      expect(full.frameAt(settleAt(ReleaseTuning.stillness)).quiet, isFalse);
-      expect(
-        full
-            .frameAt(
-              settleAt(
-                ReleaseTuning.stillness - const Duration(milliseconds: 1),
-              ),
-            )
-            .quiet,
-        isTrue,
-      );
     });
 
     test('the dawn light dissolves over the crossfade and stays dissolved', () {
@@ -108,17 +89,6 @@ void main() {
         closeTo(0.5, 1e-9),
       );
       expect(full.frameAt(settleAt(const Duration(minutes: 5))).blend, 1);
-    });
-
-    test('the settled time counts from the start of the settle', () {
-      expect(
-        full.frameAt(settleAt(const Duration(seconds: 4))).settled,
-        const Duration(seconds: 4),
-      );
-      expect(
-        full.frameAt(after(const Duration(seconds: 1))).settled,
-        Duration.zero,
-      );
     });
 
     test(
@@ -137,7 +107,6 @@ void main() {
       final back = full.withLevel(FillTuning.rearm - 0.01, later);
       final frame = back.frameAt(later);
       expect(frame.phase, ReleasePhase.release);
-      expect(frame.touchLocked, isFalse);
       // And a new full level starts a new cleanse.
       final again = back.withLevel(1, later);
       expect(again.frameAt(later).phase, ReleasePhase.cleanse);

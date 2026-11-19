@@ -599,10 +599,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get release_settleAnxious => '잠시 쉬어 가도 괜찮아요. 숨을 따라 해도, 안 해도 됩니다.';
 
   @override
-  String get release_breathingRing =>
-      '숨 고르기를 돕는 원입니다. 커질 때 들이쉬고 작아질 때 내쉬어도 좋고, 따라 하지 않아도 됩니다.';
-
-  @override
   String get howTo_label => '도움말';
 
   @override

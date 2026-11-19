@@ -1168,12 +1168,6 @@ abstract class AppLocalizations {
   /// **'잠시 쉬어 가도 괜찮아요. 숨을 따라 해도, 안 해도 됩니다.'**
   String get release_settleAnxious;
 
-  /// 숨 고리의 스크린리더 설명입니다. 따라 하기를 권할 뿐 강요하지 않습니다.
-  ///
-  /// In ko, this message translates to:
-  /// **'숨 고르기를 돕는 원입니다. 커질 때 들이쉬고 작아질 때 내쉬어도 좋고, 따라 하지 않아도 됩니다.'**
-  String get release_breathingRing;
-
   /// 두드리기와 기분 고르기 머리글의 물음표 단추 이름입니다.
   ///
   /// In ko, this message translates to:

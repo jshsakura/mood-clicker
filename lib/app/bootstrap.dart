@@ -33,14 +33,14 @@ import '../surfaces/native_surfaces.dart';
 import '../surfaces/shortcut_order.dart';
 import 'app_services.dart';
 import 'journal_store.dart';
+import 'phone_tilt.dart';
 import 'seen_hints.dart';
 import 'settings_hub.dart';
 
 /// The tilt of the phone as an angle: 0 upright, positive when the right edge leans down.
-/// The accelerometer reads the direction opposite to gravity, so a right edge that goes down
-/// makes x negative. The sign needs a check on a real device.
-Stream<double> phoneTilt() =>
-    accelerometerEventStream().map((event) => atan2(-event.x, event.y));
+Stream<double> phoneTilt() => accelerometerEventStream().map(
+  (event) => tiltFromAcceleration(event.x, event.y),
+);
 
 /// Builds the real services: files in the app's own folder, the phone's haptics, sound and tilt.
 Future<AppServices> createServices({WidgetBuilder? settingsBuilder}) async {

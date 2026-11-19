@@ -10,12 +10,17 @@ abstract final class Spill {
     return radians.clamp(-limit, limit);
   }
 
-  /// The slope of the surface for a tilt: tan of the tilt limited to
-  /// [FillTuning.slopeLimitRadians]. Positive leans the right edge down.
+  /// The slope of the surface for a tilt, in px of y (which grows downward) per px across: minus
+  /// the tan of the tilt limited to [FillTuning.slopeLimitRadians]. The water stays level in the
+  /// world, so a phone whose right edge goes down (positive tilt) shows the surface rising to the
+  /// right: the water runs to the low edge.
   static double slope(double tiltRadians) {
     final limit = FillTuning.slopeLimitRadians;
-    return tan(tiltRadians.clamp(-limit, limit));
+    return -tan(tiltRadians.clamp(-limit, limit));
   }
+
+  /// The edge the water runs to: 1 for the right edge, -1 for the left, 0 when the phone is level.
+  static int lowSide(double tiltRadians) => tiltRadians.sign.toInt();
 
   /// The share of the screen that is water when the surface, `centerY` px down from the top at
   /// the middle, has the [slope] (px of height per px across). Measured at
