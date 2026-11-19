@@ -9,9 +9,9 @@ import '../domain/day_record.dart';
 import '../domain/mood.dart';
 
 abstract final class MapRules {
-  /// Whether the map is in the app at all. The map is stage 3 (docs/PLAN.md): until a server
-  /// exists it can only show made-up blocks, so release builds hide the button and the settings.
-  static const bool available = false;
+  /// Whether the map is in the app at all. Until a server exists the blocks are made up
+  /// (SampleMapSource), and the sheet says so.
+  static const bool available = true;
 
   /// H3 resolution of a block. At 7 a hexagon is about 1.2 km on a side, the "about one
   /// kilometer" block of the screen text.
@@ -123,8 +123,7 @@ enum MapWord {
 class MapCell {
   const MapCell({
     required this.id,
-    required this.eastKm,
-    required this.northKm,
+    required this.mood,
     required this.people,
     required this.taps,
     required this.happyShare,
@@ -133,10 +132,8 @@ class MapCell {
 
   final H3CellId id;
 
-  /// Where the block sits from the viewer's own block, in kilometers east and north. Worked out
-  /// from block centers, so it is as coarse as the block.
-  final double eastKm;
-  final double northKm;
+  /// The mood that stands for the block today: the face the map draws on it.
+  final Mood mood;
   final int people;
   final int taps;
 
@@ -149,13 +146,11 @@ class MapCell {
 /// can never carry one, whoever built it.
 @immutable
 class MapSnapshot {
-  MapSnapshot({required this.viewer, required Iterable<MapCell> cells})
+  MapSnapshot({required Iterable<MapCell> cells})
     : cells = List.unmodifiable(
         cells.where((c) => c.people >= MapRules.minPeople),
       );
 
-  /// The block the viewer stands in.
-  final H3CellId viewer;
   final List<MapCell> cells;
 
   /// People in the shown blocks only, so a hidden block cannot be told from the total.

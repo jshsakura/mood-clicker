@@ -392,14 +392,14 @@ class AppLocalizationsKo extends AppLocalizations {
   String get map_openLabel => '지도 보기';
 
   @override
-  String get map_nearby => '내 주변 3km';
+  String get map_nearby => '이 지도 안';
 
   @override
   String get map_pickedPlace => '고른 동네';
 
   @override
   String get map_explain =>
-      '글씨는 사람들이 고른 한마디이고, 크기는 그 동네에서 두드린 수입니다. 약 5km² 넓이의 동네 칸으로 묶고, 5명이 안 되는 칸은 보이지 않습니다.';
+      '얼굴은 그 동네 칸의 대표 기분이고, 숫자는 남긴 사람 수입니다. 약 5km² 넓이의 칸으로 묶고, 5명이 안 되는 칸은 보이지 않습니다.';
 
   @override
   String get map_rangeToday => '오늘';
@@ -657,4 +657,7 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get permission_locationWhenInUse =>
       '앱을 쓰는 동안 소수 첫째 자리로 뭉갠 위치만 날씨를 가져오는 데 씁니다.';
+
+  @override
+  String get map_zoomIn => '지도를 조금 더 확대하면 동네 칸이 보입니다';
 }
