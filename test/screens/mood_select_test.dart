@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mood_clicker/map/map_rules.dart';
 import 'package:mood_clicker/design/parts/how_to_button.dart';
 import 'package:mood_clicker/domain/mood.dart';
 import 'package:mood_clicker/domain/mood_journal.dart';
@@ -100,8 +101,8 @@ void main() {
       settingsBuilder: (_) => const Scaffold(body: Text('settings page')),
     );
     await tester.pumpWidget(app.wrap(const MoodSelectScreen()));
-    // The header order is help, map, calendar, settings.
-    for (var i = 0; i < 4; i++) {
+    // The header order is help, map (when available), calendar, settings.
+    for (var i = 0; i < (MapRules.available ? 4 : 3); i++) {
       await tester.sendKeyEvent(LogicalKeyboardKey.tab);
     }
     await tester.pump();

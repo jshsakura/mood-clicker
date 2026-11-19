@@ -75,7 +75,7 @@ class MoodSelectScreen extends StatelessWidget {
                         ),
                       ),
                       HowToButton(onTap: () => showHowToPlaySheet(context)),
-                      if (services.mapView.value) ...[
+                      if (MapRules.available && services.mapView.value) ...[
                         PressableSurface.icon(
                           icon: LineIcons.map,
                           semanticLabel: l10n.map_openLabel,

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mood_clicker/map/map_rules.dart';
 import 'package:mood_clicker/design/app_theme.dart';
 import 'package:mood_clicker/design/theme_choice.dart';
 import 'package:mood_clicker/design/tokens.g.dart';
@@ -191,6 +192,18 @@ void main() {
       expect(harness.store.settings.mapView, isFalse);
       expect(harness.mapView.value, isFalse);
     },
+    skip: !MapRules.available,
+  );
+
+  testWidgets(
+    'the map settings stay hidden while the map is not available',
+    (tester) async {
+      await pumpScreen(tester, harness: Harness());
+      final l10n = lookupAppLocalizations(const Locale('ko'));
+      expect(find.text(l10n.settings_map), findsNothing);
+      expect(find.text(l10n.settings_mapView), findsNothing);
+    },
+    skip: MapRules.available,
   );
 
   testWidgets('picking a language persists it and moves the app notifier', (

@@ -9,6 +9,10 @@ import '../domain/day_record.dart';
 import '../domain/mood.dart';
 
 abstract final class MapRules {
+  /// Whether the map is in the app at all. The map is stage 3 (docs/PLAN.md): until a server
+  /// exists it can only show made-up blocks, so release builds hide the button and the settings.
+  static const bool available = false;
+
   /// H3 resolution of a block. At 7 a hexagon is about 1.2 km on a side, the "about one
   /// kilometer" block of the screen text.
   static const int h3Resolution = 7;

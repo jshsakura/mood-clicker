@@ -14,6 +14,7 @@ import '../l10n/app_localizations.g.dart';
 import '../l10n/locale_choice.dart';
 import '../reminder/reminder_controller.dart';
 import '../reminder/reminder_port.dart';
+import '../map/map_rules.dart';
 import 'crisis_sheet.dart';
 import 'records_port.dart';
 import 'privacy_screen.dart';
@@ -239,32 +240,33 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                     ],
                   ),
-                  _Section(
-                    label: l10n.settings_map,
-                    card: [
-                      _ToggleBlock(
-                        label: l10n.settings_mapView,
-                        description: l10n.settings_mapViewDesc,
-                        value: _settings.mapView,
-                        onChanged: (on) =>
-                            _save(_settings.copyWith(mapView: on)),
-                      ),
-                      _ToggleBlock(
-                        label: l10n.settings_mapContribute,
-                        description: l10n.settings_mapContributeDesc,
-                        value: _settings.mapContribute,
-                        onChanged: (on) =>
-                            _save(_settings.copyWith(mapContribute: on)),
-                      ),
-                      _ToggleBlock(
-                        label: l10n.settings_mapComment,
-                        description: l10n.settings_mapCommentDesc,
-                        value: _settings.mapComment,
-                        onChanged: (on) =>
-                            _save(_settings.copyWith(mapComment: on)),
-                      ),
-                    ],
-                  ),
+                  if (MapRules.available)
+                    _Section(
+                      label: l10n.settings_map,
+                      card: [
+                        _ToggleBlock(
+                          label: l10n.settings_mapView,
+                          description: l10n.settings_mapViewDesc,
+                          value: _settings.mapView,
+                          onChanged: (on) =>
+                              _save(_settings.copyWith(mapView: on)),
+                        ),
+                        _ToggleBlock(
+                          label: l10n.settings_mapContribute,
+                          description: l10n.settings_mapContributeDesc,
+                          value: _settings.mapContribute,
+                          onChanged: (on) =>
+                              _save(_settings.copyWith(mapContribute: on)),
+                        ),
+                        _ToggleBlock(
+                          label: l10n.settings_mapComment,
+                          description: l10n.settings_mapCommentDesc,
+                          value: _settings.mapComment,
+                          onChanged: (on) =>
+                              _save(_settings.copyWith(mapComment: on)),
+                        ),
+                      ],
+                    ),
                   _Section(
                     label: l10n.settings_records,
                     card: [

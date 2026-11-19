@@ -234,7 +234,18 @@ void main() {
       await tester.pumpWidget(app.wrap(const MoodSelectScreen()));
       expect(app.services.mapView.value, isTrue);
       expect(find.bySemanticsLabel(ko.map_openLabel), findsOneWidget);
-    });
+    }, skip: !MapRules.available);
+
+    testWidgets(
+      'hidden while the map is not available, even with the switch on',
+      (tester) async {
+        final app = TestApp();
+        app.services.mapView.value = true;
+        await tester.pumpWidget(app.wrap(const MoodSelectScreen()));
+        expect(find.bySemanticsLabel(ko.map_openLabel), findsNothing);
+      },
+      skip: MapRules.available,
+    );
 
     testWidgets('hidden while the switch is off', (tester) async {
       final app = TestApp();
@@ -257,7 +268,7 @@ void main() {
       await tester.pump();
       await tester.pump();
       expect(find.byType(MapScreen), findsOneWidget);
-    });
+    }, skip: !MapRules.available);
 
     testWidgets(
       'back button and range toggle sit in the top row under SafeArea',

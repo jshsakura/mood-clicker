@@ -271,6 +271,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                   firstDay: firstCalendarDay,
                                   lastDay: lastCalendarDay,
                                   focusedDay: month,
+                                  // The app clock, not DateTime.now(), so today is the same day the rest of the screen uses.
+                                  currentDay: services.now(),
                                   headerVisible: false,
                                   startingDayOfWeek: StartingDayOfWeek.sunday,
                                   sixWeekMonthsEnforced: false,
