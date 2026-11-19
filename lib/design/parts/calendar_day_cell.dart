@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../domain/mood.dart';
 import '../tokens.g.dart';
 import 'calmap_marks.dart';
 import 'day_shade.dart';
@@ -38,6 +39,7 @@ class CalendarDayLook {
     AppPalette p, {
     required int taps,
     required int maxTaps,
+    required Mood? mood,
     required bool isPicked,
     required bool isToday,
     required bool isFuture,
@@ -52,7 +54,7 @@ class CalendarDayLook {
       number = p.faint;
     }
     return CalendarDayLook(
-      fill: DayShade.fill(p, taps, maxTaps),
+      fill: DayShade.fill(p, taps, maxTaps, mood),
       number: number,
       ring: isPicked ? p.ink : (isToday ? p.fillEdge : null),
       ringWidth: isPicked ? pickedRingWidth : todayRingWidth,

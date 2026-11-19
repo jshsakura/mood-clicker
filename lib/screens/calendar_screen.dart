@@ -15,6 +15,7 @@ import '../design/parts/pressable_surface.dart';
 import '../design/tokens.g.dart';
 import '../domain/day_key.dart';
 import '../domain/day_record.dart';
+import '../domain/mood.dart';
 import '../domain/mood_journal.dart';
 import '../domain/tuning.dart';
 import '../l10n/app_localizations.g.dart';
@@ -123,6 +124,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
               locale.toLanguageTag(),
             ).format(month);
 
+            final dayMoods = [
+              for (var d = 1; d <= daysInMonth; d++)
+                journal
+                    .dayOf(DayKey.of(DateTime(month.year, month.month, d)))
+                    .dominantMood,
+            ];
             final dayTaps = [
               for (var d = 1; d <= daysInMonth; d++)
                 journal
@@ -320,6 +327,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                           context,
                                           services,
                                           dayTaps,
+                                          dayMoods,
                                           maxTaps,
                                           day,
                                           effectivePicked: picked,
@@ -331,6 +339,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                           context,
                                           services,
                                           dayTaps,
+                                          dayMoods,
                                           maxTaps,
                                           day,
                                           effectivePicked: picked,
@@ -342,6 +351,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                           context,
                                           services,
                                           dayTaps,
+                                          dayMoods,
                                           maxTaps,
                                           day,
                                           effectivePicked: picked,
@@ -377,27 +387,21 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                 const SizedBox(height: Space.sm),
                                 MonthFlowBars(
                                   taps: dayTaps,
+                                  moods: dayMoods,
+                                  lastDay: isCurrentMonth ? now.day : null,
                                   picked:
                                       picked.year == month.year &&
                                           picked.month == month.month
                                       ? picked.day
                                       : null,
-                                  semanticLabel: (d) => l10n.calendar_openDay(
-                                    dayTitle(
-                                      locale,
+                                  label: (d) =>
+                                      '${dayTitle(locale, DateTime(month.year, month.month, d))}'
+                                      ' · ${l10n.calendar_tappedTimes(dayTaps[d - 1])}',
+                                  onPick: (d) => setState(
+                                    () => _picked = DayKey.of(
                                       DateTime(month.year, month.month, d),
                                     ),
                                   ),
-                                  onPick: (d) {
-                                    final date = DateTime(
-                                      month.year,
-                                      month.month,
-                                      d,
-                                    );
-                                    if (!date.isAfter(now)) {
-                                      setState(() => _picked = DayKey.of(date));
-                                    }
-                                  },
                                 ),
                                 const SizedBox(height: Space.xl),
                                 if (recordedDays == 0) ...[
@@ -440,6 +444,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
     BuildContext context,
     AppServices services,
     List<int> dayTaps,
+    List<Mood?> dayMoods,
     int maxTaps,
     DateTime day, {
     required DayKey effectivePicked,
@@ -458,6 +463,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
         p,
         taps: taps,
         maxTaps: maxTaps,
+        mood: dayMoods[day.day - 1],
         isPicked: isPicked,
         isToday: isToday,
         isFuture: isFuture,
