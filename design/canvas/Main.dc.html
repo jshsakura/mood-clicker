@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>로딩</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:Pretendard;src:url(/_blob/eac3a98fdd643af8c80b7f3daead90fa);font-weight:400}
+@font-face{font-family:Pretendard;src:url(/_blob/6dd9f1d0495ff325d173b1d71cb974c9);font-weight:700}
+@font-face{font-family:Baloo2;src:url(/_blob/9e63b2a37355a7a1fd1bae16467bdbb5);font-weight:800;font-display:block}
+body{margin:0}
+a,button{-webkit-tap-highlight-color:transparent;outline:none}
+a:focus-visible,button:focus-visible{outline:2px solid #16161A;outline-offset:2px}
+.press{transition:transform 90ms ease-out,filter 90ms ease-out}.press:active{transform:scale(0.98);filter:brightness(0.94)}.tap{transition:transform 90ms ease-out,filter 90ms ease-out}.tap:active{transform:scale(0.92);filter:brightness(0.9)}
+
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: {{p.ground}}; color: {{p.ink}}; font-family: Pretendard, system-ui, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px">
+<div style="font-family: Baloo2, Pretendard, system-ui, sans-serif; font-size: 40px; font-weight: 800; line-height: 1.1">Unknown<span style="color: {{p.faint}}">.</span></div>
+<div style="font-size: 13px; color: {{p.inkMuted}}">기록을 불러오는 중입니다</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+// Theme colors. Same values as design/tokens.json. The theme picked in settings is remembered in this browser and changes every screen together
+const PALETTES = {
+  light: { id: 'light', ground: '#FFFFFF', surface: '#F5F5F7', line: '#E8E8EC', ink: '#16161A', ink2: '#3A3A42', inkMuted: '#62626C', muted: '#62626C', faint: '#A0A0AA', fill: '#EDEDF0', fillEdge: '#C8C8D0', mapLine: '#D4D4DC', happy: '#B07A00', sad: '#4C6FE0', error: '#C93A2F', inkRgb: '22,22,26' },
+  dark: { id: 'dark', ground: '#121216', surface: '#222228', line: '#383840', ink: '#ECECF0', ink2: '#C8C8D0', inkMuted: '#A0A0AA', muted: '#A0A0AA', faint: '#6E6E78', fill: '#2A2A30', fillEdge: '#4A4A52', mapLine: '#383840', happy: '#FFC23D', sad: '#7A9CFF', error: '#F0685C', inkRgb: '236,236,240' },
+  pink: { id: 'pink', ground: '#FFF1F5', surface: '#FFFFFF', line: '#F6D3DF', ink: '#3A1E2B', ink2: '#5A3445', inkMuted: '#80505F', muted: '#80505F', faint: '#B08392', fill: '#FF8FB8', fillEdge: '#FF5C9A', mapLine: '#F2C2D3', happy: '#D9407A', sad: '#7B68E8', error: '#C93A2F', inkRgb: '58,30,43' }
+};
+function themeChoice() {
+  try { return localStorage.getItem('mc-theme') || 'light'; } catch (e) { return 'light'; }
+}
+function themePalette(forced) {
+  let id = forced || themeChoice();
+  if (id === 'system') id = typeof matchMedia !== 'undefined' && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  return PALETTES[id] || PALETTES.light;
+}
+function appSettings() {
+  try { return JSON.parse(localStorage.getItem('mc-settings') || '{}'); } catch (e) { return {}; }
+}
+let P = themePalette();
+
+class Component extends DCLogic {
+renderVals() {
+    P = themePalette(this.props && this.props.theme);
+    return Object.assign({ p: P }, this.renderVals0());
+  }
+  renderVals0() { return {}; }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,760 @@
+# 기술 조사 결과
+
+확인일: 2026-11-18
+
+이 문서는 `docs/PLAN.md` 와 `docs/SPEC.md` 의 요구사항을 바탕으로, 0단계·1단계 파일럿과 3단계 지도에 필요한 네 가지 기술 항목을 공식 문서와 저장소 기준으로 조사한 결과입니다. 직접 확인하지 못한 동작은 **추측**으로 표시합니다.
+
+---
+
+## 1. 선 위주 지도
+
+### 1.1 타일 제공자 비교
+
+| 항목 | OpenFreeMap | Protomaps (PMTiles) | Stadia Maps (Stamen Toner Lines) |
+|---|---|---|---|
+| **앱 사용 조건** | 상업·비상업 모두 허용합니다. 단, 오프라인 다운로드는 1회 최대 3,000타일 또는 50MB, 동시 요청 최대 4개, 앱을 식별하는 고유 `User-Agent` 헤더가 필요합니다. 공개 인스턴스는 SLA 없이 best-effort 로 제공합니다. | PMTiles 명세는 CC0, 도구와 라이브러리는 BSD-3-Clause 입니다. 자체 호스팅(S3, R2 등) 시 별도 이용 제한이 없습니다. 지도 데이터(OSM)는 ODbL 이므로 출처 표기가 필요합니다. | Stadia Maps 계정과 프로퍼티 설정이 필요합니다. 상업용 앱이나 광고 포함 앱은 유료 플랜(Starter 월 20달러부터)이 필요합니다. |
+| **비상업 무료 범위** | 요청 수·조회 수 하드 캡이 없는 완전 무료입니다. | 자체 호스팅 시 Protomaps 측 요금이 없으며 클라우드 저장소·전송 비용만 듭니다(Cloudflare R2 등은 무료 범위 존재). Protomaps 호스티드 API 도 비상업은 무료입니다. | 개발·평가·학술·비상업 프로젝트에 한해 월 **200,000 크레딧**까지 무료입니다(신용카드 불필요, 초과 시 과금 대신 429 차단). |
+| **API 키 필요 여부** | 불필요합니다. 계정과 쿠키도 필요 없습니다. | 자체 호스팅 시 불필요합니다(호스티드 API 사용 시에는 필요). | **필요합니다.** 스타일 URL 등에 `?api_key=...` 또는 도메인 인증을 붙입니다. |
+| **벡터 / 래스터 여부** | 벡터 타일(`.mvt`, OpenMapTiles 스키마)과 스타일 JSON 을 제공합니다. | 벡터 타일(PMTiles 단일 아카이브 안에 MVT 포함)입니다. | **벡터와 래스터 모두** 제공합니다. (레거시 Toner Hybrid 래스터는 폐기되었고 레이어 그룹 조합으로 대체합니다.) |
+| **다크·라이트·핑크 색 변경** | **가능합니다.** 클라이언트에서 MapLibre 스타일 JSON 의 배경색, 도로·경계선 색, 라벨 색을 직접 바꾸거나 커스텀 스타일 JSON 을 연결하면 됩니다. | **가능합니다.** 벡터 타일과 CC0 기반 기본 테마(`basemaps-flavors`)를 제공하므로 MapLibre 스타일 JSON 으로 자유롭게 색을 바꿀 수 있습니다. | **벡터 스타일은 가능합니다.** Stamen Toner 벡터 타일은 클라이언트 렌더링이므로 색과 레이어를 바꿀 수 있습니다. 반면 래스터 PNG 타일은 흑백·투명 고정이라 색 테마 변경이 어렵습니다. |
+
+출처 및 확인일 (2026-11-18):
+- OpenFreeMap 공식 사이트 및 이용약관: https://openfreemap.org/ , https://openfreemap.org/terms/
+- OpenFreeMap GitHub 저장소: https://github.com/hyperknot/openfreemap
+- Protomaps 공식 문서 및 라이선스: https://docs.protomaps.com/ , https://protomaps.com/
+- PMTiles GitHub 저장소: https://github.com/protomaps/PMTiles
+- Stadia Maps 요금 및 무료 티어 문서: https://docs.stadiamaps.com/pricing/ , https://stadiamaps.com/pricing/
+- Stadia Maps Stamen 스타일 문서: https://docs.stadiamaps.com/map-styles/stamen-toner/
+- Stamen 공식 안내: https://stamen.com/stadia-maps-stamen-styles/
+
+### 1.2 Flutter 에서 벡터 스타일을 쓰는 방법
+
+| 패키지 | 최신 버전 | 유지 상태 | iOS | Android | macOS | 비고 |
+|---|---|---|---|---|---|---|
+| `maplibre_gl` | `0.28.0` | 유지 중입니다. | 지원 (iOS 15.5+) | 지원 (API 24+) | **미지원** | 기존 플러그인 구조이며 Android, iOS, Web 위주입니다. |
+| `maplibre` | `0.3.7+1` (프리릴리즈 `0.4.0-pre.2`) | 활발히 개발 중입니다. | 지원 (iOS 15+, Metal) | 지원 (API 24+) | **지원** (macOS 14.3+, Metal) | FFI/JNI 기반의 차세대 공식 MapLibre Flutter 바인딩입니다. 6개 플랫폼을 지원합니다. |
+| `flutter_map` + `vector_map_tiles` | `flutter_map` `8.3.2` / `vector_map_tiles` `8.0.0` (프리뷰 `10.0.0-beta`) | `vector_map_tiles` `8.x` 는 주로 `flutter_map` `7.x` 에 맞춰져 있습니다. `10.x` 는 `flutter_gpu` 기반 실험 채널입니다. | 지원 | 지원 | 지원 | 순수 Dart/Flutter 캔버스 렌더링이라 macOS 포함 모든 플랫폼에서 동작하지만, 복잡한 벡터 스타일 성능·호환성은 네이티브 MapLibre 보다 제한적일 수 있습니다. |
+| `flutter_map` + `flutter_map_vector_tiles` | `2.11.0` | 유지 중입니다. | 지원 | 지원 | 지원 | `flutter_map` `8.0+` 와 Impeller 환경에 맞춰 새로 작성된 벡터 타일 레이어입니다. |
+
+정리:
+- 아이폰·안드로이드 본선과 맥 파일럿을 모두 포함하면 `maplibre` (`0.3.7+1`) 또는 `flutter_map` (`8.3.2`) + `flutter_map_vector_tiles` (`2.11.0`) 조합이 macOS 를 공식 지원합니다.
+- `maplibre_gl` (`0.28.0`) 은 안정적이지만 macOS 를 지원하지 않습니다.
+
+출처 및 확인일 (2026-11-18):
+- `maplibre_gl`: https://pub.dev/packages/maplibre_gl
+- `maplibre`: https://pub.dev/packages/maplibre , https://maplibre.org/flutter-maplibre/
+- `flutter_map`: https://pub.dev/packages/flutter_map
+- `vector_map_tiles`: https://pub.dev/packages/vector_map_tiles , https://github.com/greensopinion/flutter-vector-map-tiles
+- `flutter_map_vector_tiles`: https://pub.dev/packages/flutter_map_vector_tiles
+
+---
+
+## 2. 진동 (Haptics)
+
+### 2.1 Flutter 기본 `HapticFeedback` 으로 되는 것과 안 되는 것
+
+`package:flutter/services.dart` 의 `HapticFeedback` 은 추가 의존성 없이 플랫폼 기본 진동 API 를 호출합니다.
+
+- **되는 것**:
+  - 미리 정해진 짧은 촉각 신호 호출: `lightImpact()`, `mediumImpact()`, `heavyImpact()`, `selectionClick()`, `vibrate()`.
+  - iOS 의 `UIImpactFeedbackGenerator` / `UISelectionFeedbackGenerator` 계열과 Android 의 `HapticFeedbackConstants` 계열로 연결됩니다.
+- **안 되는 것**:
+  - **진동 세기(진폭) 수치 조절**과 **날카로움(sharpness)** 조절이 불가능합니다.
+  - **커스텀 시간 패턴(파형, 연속 엔벨로프, `.ahap` 파일)** 재생이 불가능합니다.
+  - Android 제조사(OEM)별 구현 편차가 큽니다. 기기에 따라 특정 상수가 무시되거나 둔탁한 진동으로 나옵니다.
+  - **macOS**: 맥에는 일반 진동 모터가 없으며, `HapticFeedback` 만으로는 트랙패드 포스터치 햅틱(`NSHapticFeedbackManager`) 세밀 제어가 어렵습니다.
+
+출처 및 확인일 (2026-11-18):
+- Flutter `HapticFeedback` API 문서: https://api.flutter.dev/flutter/services/HapticFeedback-class.html
+
+### 2.2 세기·패턴 패키지 유지 상태와 iOS Core Haptics 지원
+
+| 패키지 | 최신 버전 | 유지 상태 | 세기·패턴 지원 | iOS Core Haptics | macOS |
+|---|---|---|---|---|---|
+| `vibration` | `3.2.1` | 유지 중입니다(Dart 3 / 최신 Flutter 호환). | Android 에서 밀리초 배열 패턴과 진폭(amplitude) 조절을 지원합니다. iOS 는 시스템 기본 진동/사운드 fallback 이 중심이라 세밀한 패턴 제어가 어렵습니다. | 미지원(또는 제한적 fallback) | 미지원 |
+| `gaimon` | `1.5.1` | 유지 중입니다(AGP/Kotlin, Swift Package Manager 대응). | **지원합니다.** Apple `.ahap` JSON 파일 기반 커스텀 패턴과 기본 프리셋(`light`, `medium`, `heavy`, `rigid`, `soft`, `selection`, `success`, `error`, `warning`)을 제공합니다. | **지원합니다.** (iPhone 8 이상 Taptic Engine / Core Haptics) | 미지원 |
+| `core_haptics` 등 | 다양함 | 소규모 유지 | Core Haptics 직접 래핑을 제공합니다. | 지원 | 미지원 |
+
+참고: `vibration` 은 Android 에서 `android.permission.VIBRATE` 권한 선언이 필요합니다.
+
+출처 및 확인일 (2026-11-18):
+- `vibration`: https://pub.dev/packages/vibration
+- `gaimon`: https://pub.dev/packages/gaimon
+- `core_haptics`: https://pub.dev/packages/core_haptics
+
+### 2.3 초당 10회 연타(10Hz)에서 알려진 문제
+
+초당 10회(100ms 간격)로 진동을 즉시 호출하면 물리적 모터(LRA/ERM)의 기동·감쇠 시간과 OS 보호 정책 때문에 문제가 발생합니다.
+
+- **iOS (Core Haptics)**:
+  - 메인 스레드에서 매 탭마다 새 `CHHapticPatternPlayer` 를 만들거나 엔진을 껐다 켜면 지연과 이벤트 누락(dropped haptics)이 발생합니다.
+  - 해결 방향: `CHHapticEngine` 을 한 번 켜 두고 유지하면서 `resetHandler` / `stoppedHandler` 를 처리해야 하며, 짧은 간격의 연속 입력은 사전 정의 패턴 또는 앱 측 간격 제한(예: `docs/SPEC.md` 초안의 최소 40ms~50ms 쓰로틀)이 필요합니다.
+- **Android (`VibrationEffect`)**:
+  - 매 100ms 마다 `VibrationEffect.createOneShot()` 을 반복 호출하면 `VibratorService` 바인더 큐가 밀리거나 이전 진동과 겹쳐 명령이 드롭될 수 있습니다.
+  - 저가형 기기의 ERM(회전) 모터는 10Hz 단위로 끊어 치지 못해 뭉개진 연속 진동으로 들립니다.
+  - 해결 방향: API 30+(Android 11+) 에서 `VibrationEffect.startComposition()` 과 `PRIMITIVE_CLICK` 같은 하드웨어 프리미티브를 쓰면 바인더 오버헤드를 줄일 수 있습니다. 또한 앱 코드에서 최소 간격 쓰로틀링을 두어 뭉개짐을 막아야 합니다.
+
+출처 및 확인일 (2026-11-18):
+- Android `VibrationEffect.Composition` 및 Haptics 가이드: https://developer.android.com/develop/ui/views/haptics/custom-haptic-effects
+- Apple Core Haptics 공식 문서: https://developer.apple.com/documentation/corehaptics
+
+---
+
+## 3. 저지연 소리
+
+### 3.1 `flutter_soloud` 와 대안의 유지 상태
+
+| 패키지 | 최신 버전 | 유지 상태 | 특징 |
+|---|---|---|---|
+| `flutter_soloud` | `5.3.0` | **매우 활발히 유지 중입니다.** | C++ SoLoud + `miniaudio` 기반 FFI 엔진입니다. 게임·인터랙티브 앱용 초저지연 재생, 다중 보이스, 내장 DSP 필터를 제공합니다. |
+| `audioplayers` | 활발히 유지 중 | 유지 중입니다. | `PlayerMode.lowLatency` 를 지원하지만, 다중 동시 겹침과 실시간 피치 변조는 SoLoud 에 비해 기능이 적습니다. |
+| `flame_audio` | 활발히 유지 중 | 유지 중입니다. | Flame 게임 엔진용 SFX 래퍼입니다(단독 사용 가능). |
+| `just_audio` | 활발히 유지 중 | 유지 중입니다. | 스트리밍과 긴 음원에 강점이 있으며, 짧은 타격음 10Hz 연타용 사운드 풀 엔진은 아닙니다. |
+| `soundpool` | - | **개발 중단(discontinued)** | 더 이상 권장하지 않습니다. |
+
+출처 및 확인일 (2026-11-18):
+- `flutter_soloud`: https://pub.dev/packages/flutter_soloud
+- `audioplayers`: https://pub.dev/packages/audioplayers
+- `flame_audio`: https://pub.dev/packages/flame_audio
+- `just_audio`: https://pub.dev/packages/just_audio
+
+### 3.2 짧은 소리 겹쳐 내기(Polyphony)와 음 높이 바꾸기(Pitch Shift)
+
+`flutter_soloud` 는 두 가지 요구사항을 모두 기본으로 지원합니다.
+
+- **짧은 소리 겹쳐 내기**: `SoLoud.instance.loadAsset(...)` 으로 음원을 한 번 메모리에 올린 뒤 `SoLoud.instance.play(sound)` 를 호출할 때마다 별도 보이스(`SoundHandle`)로 동시 재생합니다. 직전 소리를 끊지 않고 자연스럽게 겹칩니다.
+- **음 높이 바꾸기**:
+  1. 재생 속도 연동 방식: 개별 `SoundHandle` 의 `setRelativePlaySpeed(handle, speed)` 로 재생 속도와 함께 피치를 미세하게 흔들 수 있습니다(짧은 타격음에는 속도 변화가 거의 거슬리지 않고 CPU 부담이 작습니다).
+  2. 독립 DSP 필터 방식: 내장 **Pitch Shift** 필터(`FilterType.pitchShiftFilter`)를 활성화하고 `setFilterParameter` 로 세미톤/피치 비율을 조절해 속도 변화 없이 음 높이만 바꿀 수 있습니다.
+
+출처 및 확인일 (2026-11-18):
+- `flutter_soloud` 공식 문서 및 pub.dev: https://pub.dev/packages/flutter_soloud , https://docs.page/alnitak/flutter_soloud_docs
+
+### 3.3 아이폰 무음 스위치 존중 방법
+
+`docs/SPEC.md` 요구사항은 **"아이폰 무음 스위치를 켜면 소리를 내지 않는다. 진동은 그대로 낸다."** 입니다.
+
+- iOS `AVAudioSession` 에서 무음 스위치(Ring/Silent switch)를 **존중**하는 카테고리는 `AVAudioSessionCategory.ambient`(다른 앱 음악과 섞이면서 무음 시 소리 안 남) 또는 `soloAmbient` 입니다. 반대로 `playback` 카테고리는 무음 스위치를 **무시**하고 소리를 냅니다.
+- `flutter_soloud` 자체는 `miniaudio` 로 오디오를 출력하며 OS 오디오 세션 정책을 직접 세밀하게 제어하려면 **`audio_session`** 패키지와 함께 씁니다.
+- `SoLoud.instance.init()` 을 부르기 **전**에 `audio_session` 으로 카테고리를 `AVAudioSessionCategory.ambient` + `mixWithOthers` 로 설정하면, 무음 스위치 켜짐 시 소리가 나지 않고 다른 앱 배경음악도 끊지 않습니다.
+- 참고(**추측**): `flutter_soloud` 의 내부 `miniaudio` 기본 초기화만으로도 iOS 에서 `ambient` 와 유사하게 동작할 가능성이 있으나, iOS 버전·다른 플러그인 간 세션 충돌을 막으려면 `audio_session` 으로 `AVAudioSessionCategory.ambient` 를 명시적으로 활성화하는 편이 안전합니다.
+
+출처 및 확인일 (2026-11-18):
+- `audio_session`: https://pub.dev/packages/audio_session
+- Apple `AVAudioSession.Category` 공식 문서: https://developer.apple.com/documentation/avfaudio/avaudiosession/category-swift.struct
+- `flutter_soloud` + `audio_session` 연동 이슈 참고: https://github.com/alnitak/flutter_soloud/issues
+
+---
+
+## 4. Figma Tokens Studio 와 `design/tokens.json` 호환성
+
+### 4.1 Tokens Studio 의 W3C 디자인 토큰 형식(`$type`, `$value`) 지원
+
+- **지원합니다.** Tokens Studio for Figma 는 설정(Settings / Storage Provider 옵션)에서 토큰 형식을 Legacy(`type`, `value`) 와 **W3C DTCG(`$type`, `$value`, `$description`)** 중 하나로 선택해 읽고 내보낼 수 있습니다.
+- JSON 파일 직접 Import/Export 와 GitHub/GitLab 동기화 모두 W3C DTCG 형식을 지원합니다.
+
+출처 및 확인일 (2026-11-18):
+- Tokens Studio W3C DTCG 형식 문서: https://docs.tokens.studio/manage-tokens/token-format/w3c-dtcg
+
+### 4.2 현재 `design/tokens.json` 구조와의 호환성 판단
+
+현재 `feat/design-tokens` 브랜치의 `design/tokens.json` 초안을 확인한 결과, **그대로는 Tokens Studio 에서 바로 읽어 들이기 어렵고 일부 조정이 필요합니다.**
+
+1. **테마별 `color` 묶음 (`color.dark`, `color.light`, `color.pink`)**:
+   - 현재 구조는 단일 JSON 파일 안에 `color.dark.*`, `color.light.*`, `color.pink.*` 로 중첩되어 있습니다.
+   - Tokens Studio 는 기본적으로 **토큰 세트(Token Sets)** 단위로 테마를 나눕니다(예: `global`, `dark`, `light`, `pink` 를 최상위 세트 키나 별도 JSON 파일로 분리하고, Pro 기능인 Themes 또는 세트 활성화 순서로 `color.ground` 같은 동일 경로를 덮어씁니다).
+   - 단일 파일 안에 `color.dark.ground` 처럼 넣어 두면 Tokens Studio 에서 테마 전환이 아니라 이름이 다른 별개 토큰(`color.dark.ground`, `color.light.ground`)으로 인식합니다.
+2. **토큰이 아닌 일반 문자열 필드 (`"brightness": "dark"`)**:
+   - `color.dark` 안에 `"brightness": "dark"` 가 `$type`/`$value` 없이 들어 있습니다. Tokens Studio 나 W3C DTCG 파서는 이를 유효한 토큰으로 인식하지 못해 무시하거나 오류를 낼 수 있습니다.
+3. **`dimension` 값의 단위 표기 (`"$value": 4`)**:
+   - 현재 `space` 와 `radius` 가 단위 없는 숫자(`4`, `24`)로 되어 있습니다. Tokens Studio 와 W3C DTCG 표준에서는 `"4px"` 처럼 단위를 붙이는 것이 원칙입니다(숫자만 넣으면 Tokens Studio UI 에서 `px` 로 암묵 처리되는 경우가 있으나, W3C DTCG 호환을 위해서는 `"4px"` 형태가 안전합니다).
+4. **`typography` 값 객체**:
+   - 현재 `type.display.$value` 에 `{ "fontSize": 34, "fontWeight": 700, "lineHeight": 1.2 }` 가 들어 있습니다.
+   - Tokens Studio 의 `typography` 복합 토큰은 `fontFamily` 를 포함하는 것이 기본이며(9개 속성: `fontFamily`, `fontWeight`, `fontSize`, `lineHeight`, `letterSpacing`, `paragraphIndent`, `paragraphSpacing`, `textDecoration`, `textCase`), `fontSize` 는 `"34px"`, `fontWeight` 는 문자열(`"700"` 또는 `"Bold"`) 또는 참조(`"{font.weight.bold}"`), `lineHeight` 는 `"120%"` 또는 `"1.2"` 형태를 권장합니다. `fontFamily` 가 빠진 `typography` 토큰은 Figma 텍스트 스타일로 적용할 때 누락 경고가 날 수 있습니다.
+
+권장 방향:
+- 디자이너가 Tokens Studio 를 직접 쓰게 하려면 `tokens/` 아래에 세트별 파일(`core.json`, `dark.json`, `light.json`, `pink.json`)을 두고, `gen_tokens.py` 또는 Style Dictionary 변환 단계에서 지금의 `design/tokens.json` 처럼 Flutter 코드 생성에 쓰기 좋은 형태로 합치거나 바로 Dart 상수를 생성하는 파이프라인을 추천합니다.
+
+출처 및 확인일 (2026-11-18):
+- Tokens Studio Typography 복합 토큰 문서: https://docs.tokens.studio/manage-tokens/token-types/typography
+- Tokens Studio Token Sets 및 Themes 문서: https://docs.tokens.studio/manage-tokens/token-sets/ , https://docs.tokens.studio/manage-tokens/themes/
+
+---
+
+## 5. 비슷한 앱과 벤치마킹
+
+확인일: 2026-11-18
+
+우리 앱의 핵심은 세 가지입니다. 첫째, 기분을 고르고 연타한 수로 그 기분의 크기를 남깁니다. 둘째, 달력으로 날짜별 기분을 돌아봅니다. 셋째, 위치 기반 지도로 내 주변 사람들의 오늘 기분을 봅니다. 여기에 산사·명상 앱처럼 캐릭터가 합장하며 마음을 다스리는 콘셉트를 검토하고 있습니다.
+
+### 5.1 기분 기록 앱
+
+#### Daylio (Daylio Journal - Mood Tracker)
+- **플랫폼**: iOS, Android
+- **핵심 동작 한 줄**: 글쓰기 없이 기분과 활동 아이콘을 한 번씩 눌러 하루를 남기고, 연도별 픽셀 달력과 통계로 돌아봅니다.
+- **우리가 배울 점**: 텍스트 입력을 강요하지 않는 2초 컷 기록 흐름, 달력을 색으로 채워 한눈에 흐름을 보게 하는 시각화("Year in Pixels"), 기기 내 로컬 저장 중심의 프라이버시 설계.
+- **피할 점**: 활동 태그·목표·습관 추적까지 화면이 복잡해지는 점(우리 앱은 기분과 연타 강도에만 집중합니다).
+- **출처**: https://daylio.net/ , Apple App Store / Google Play (`Daylio Journal - Mood Tracker`, 확인일 2026-11-18)
+
+#### How We Feel
+- **플랫폼**: iOS, Android
+- **핵심 동작 한 줄**: 에너지·유쾌함 사분면에서 144개 이상의 세밀한 감정 단어를 고르고, 그 자리에서 마음을 다스리는 짧은 조절 가이드를 봅니다.
+- **우리가 배울 점**: 감정을 고른 뒤 바로 "지금 마음을 다루는 행동"으로 이어지는 구조, 비영리·광고 없는 차분한 톤.
+- **피할 점**: 144개 감정 단어 선택은 고르는 데 시간이 걸리고 부담을 줍니다(우리 앱은 4~5개 큰 기분 배너로 즉시 진입합니다).
+- **출처**: https://howwefeel.org/ , Apple App Store / Google Play (`How We Feel`, 확인일 2026-11-18)
+
+#### Bearable (Bearable Health & Mood Tracker)
+- **플랫폼**: iOS, Android
+- **핵심 동작 한 줄**: 기분·수면·증상·약을 한 타임라인에 기록하고 상관관계("Impacts")와 병원 제출용 리포트를 뽑습니다.
+- **우리가 배울 점**: "판단이나 조언 없이 기록과 변화만 보여 준다"는 데이터 중심 태도.
+- **피할 점**: 의료·증상 관리 앱 특유의 입력 항목 과다와 무거운 대시보드(우리 앱은 연타라는 신체적 해소에 초점을 둡니다).
+- **출처**: https://bearable.app/ , Apple App Store / Google Play (`Bearable`, 확인일 2026-11-18)
+
+### 5.2 연타·목탁형 힐링 클리커
+
+#### Muyu: Wooden Fish / Wooden Fish - Electronic MuYu (전자목어 계열)
+- **플랫폼**: iOS, Android
+- **핵심 동작 한 줄**: 화면의 목탁을 두드릴 때마다 실제 목탁 소리와 진동이 나고 "공덕 +1" 문구가 떠오르며 횟수가 쌓입니다.
+- **우리가 배울 점**: 한 번 누를 때마다 즉각 오는 **소리 + 진동 + 시각 반응**의 손맛, 눈을 감고도 리듬을 타게 만드는 단순한 전체 화면 터치.
+- **피할 점**: 자동 연타(auto-tap) 모드나 밈 중심의 가벼운 장난감 느낌(우리 앱은 내 기분의 크기를 직접 손으로 두드려 남기는 경험이 핵심입니다).
+- **출처**: Apple App Store (`Muyu: Wooden Fish`, `Wooden Fish - Electronic MuYu`), Google Play (`Wooden Fish`, 확인일 2026-11-18)
+
+### 5.3 위치 기반 기분 공유·감정 지도 서비스
+
+#### The Mood Map
+- **플랫폼**: iOS
+- **핵심 동작 한 줄**: 지역별 익명 감정 데이터를 모아 "감정 날씨"처럼 동네의 전반적인 기분 흐름을 보여 줍니다.
+- **우리가 배울 점**: 개인 점(pin)을 드러내지 않고 지역 단위 집계로 보여 주는 방식("감정 날씨" 은유).
+- **피할 점**: 지역 집계 단위가 너무 크거나 개인의 감정 해소 경험 없이 구경만 하게 되는 구조.
+- **출처**: Apple App Store (`The Mood Map`, 개발자 Xavier Platforms, 확인일 2026-11-18)
+
+#### Moodi Map
+- **플랫폼**: iOS
+- **핵심 동작 한 줄**: 이모지를 고르고 슬라이더로 강도를 조절하면 3D 지구본 위에 빛나는 점으로 올라가 전 세계 기분 맥박을 봅니다.
+- **우리가 배울 점**: 기분 종류에 더해 **강도**를 함께 남기고, 지도에서 시각적으로 바로 읽히게 하는 발상.
+- **피할 점**: 슬라이더 조작은 연타의 카타르시스가 없고, 개별 점(dot) 표시는 동네 단위 프라이버시 위험이 있습니다(우리 앱은 1~2km 격자 집계와 최소 인원 임계치로 보호합니다).
+- **출처**: Apple App Store (`Moodi Map`, 확인일 2026-11-18)
+
+#### Mood Map (A&K LABS DMCC)
+- **플랫폼**: Android
+- **핵심 동작 한 줄**: 카페·공원·바 같은 실제 장소에 빨강~초록 기분 스티커를 붙여 현재 장소의 분위기를 공유합니다.
+- **우리가 배울 점**: 지도를 텍스트 리뷰 대신 기분 색·아이콘으로 직관화한 점.
+- **피할 점**: 사람 기분이 아니라 상업 장소 평점(리뷰)으로 변질되는 점(우리 앱은 장소 평점이 아니라 동네 사람들의 기분 합계만 봅니다).
+- **출처**: Google Play (`Mood Map`, 개발자 A&K LABS DMCC, 확인일 2026-11-18)
+
+### 5.4 국내 산사·명상·캐릭터 힐링 앱
+
+#### 하루콩 (Daily Bean)
+- **플랫폼**: iOS, Android
+- **핵심 동작 한 줄**: 귀여운 콩 캐릭터 이모지와 아이콘 몇 번의 터치로 하루 기분·일상을 기록하고 월별 감정 달력으로 봅니다.
+- **우리가 배울 점**: 한눈에 들어오는 둥글고 부담 없는 감정 달력, 짧은 온보딩, 캐릭터가 과한 설명 없이 정서적 친근감을 주는 방식.
+- **피할 점**: 일기·스티커 꾸미기 요소가 많아지면 기록이 숙제처럼 느껴질 수 있습니다.
+- **출처**: Apple App Store / Google Play (`하루콩`, `Daily Bean`, 블루시그넘, 확인일 2026-11-18)
+
+#### 산사 (가상 산사 체험 앱) 및 템플로 (TEMPLO)
+- **플랫폼**: iOS, Android (`산사` 는 iOS App Store 확인, `템플로` 는 iOS·Android)
+- **핵심 동작 한 줄**: 가상 법당에서 절을 하거나 염주를 넘기고(산사), 사찰 방문 스탬프·108배·명상을 기록합니다(템플로).
+- **우리가 배울 점**: 합장·절·염주 같은 한국적·산사 모티프를 디지털 터치 행위와 연결해 마음을 가라앉히는 리추얼 감각.
+- **피할 점**: 특정 종교 색채가 너무 강하면 비종교인 사용자가 거리감을 느낄 수 있습니다(콘셉트 채택 시 특정 종교 교리보다 "고요한 쉼·합장·자연" 톤으로 중립화하는 편이 안전합니다).
+- **출처**: Apple App Store (`산사`, `템플로`), Google Play (`템플로(TEMPLO)`, 확인일 2026-11-18)
+
+#### 마보 (Mabo) · 코끼리
+- **플랫폼**: iOS, Android
+- **핵심 동작 한 줄**: 한국어 음성 가이드 명상·수면 사운드와 기분·상황별 마음챙김 프로그램을 제공합니다.
+- **우리가 배울 점**: 한국 사용자 정서에 맞는 차분한 문구 톤과 짧은 5분 단위 세션 감각.
+- **피할 점**: 수동적인 오디오 청취 중심이라 사용자가 직접 손으로 감정을 털어 내는 즉각적 상호작용이 약합니다.
+- **출처**: https://www.mabopractice.com/ , Apple App Store / Google Play (`마보`, `코끼리`, 확인일 2026-11-18)
+
+---
+
+### 5.5 우리 앱이 다른 점과 벤치마킹 포인트
+
+**우리 앱이 다른 점**:
+기존 기분 앱은 "글이나 아이콘 1회 선택"으로 기분을 기록하고, 기존 목탁 클리커는 "기분 분류나 달력·지도 맥락 없이" 횟수만 쌓습니다. 우리 앱은 **기분 선택 -> 손맛 있는 연타로 크기 측정 및 해소 -> 달력 회고 -> 익명 격자 지도 공감**을 하나로 잇는 점이 다릅니다.
+
+**벤치마킹할 포인트 (5개)**:
+1. **초간단 진입(Daylio·하루콩)**: 기분 배너를 누르자마자 확인 단계 없이 곧바로 두드리기 화면으로 들어가게 합니다.
+2. **타격감의 3박자(전자목어·Wooden Fish)**: 탭마다 저지연 소리(미세 피치 흔들기) + 진동 + 채움 상승이 한 박자로 맞물려 눈을 감고도 몰입할 수 있게 합니다.
+3. **판단 없는 달력과 비교(Daylio·Bearable)**: 달력에서는 색·이모지 위주로 한 달 흐름을 보여 주고, 돌아보기에서도 조언 없이 사실 비교만 한 줄로 알려 줍니다.
+4. **감정 날씨형 익명 지도(The Mood Map·Moodi Map)**: 개인 점이나 장소 평점 대신 1~2km 동네 격자의 대표 기분과 행복/슬픔 비율만 보여 줍니다.
+5. **보편적인 산사 리추얼 감각(산사·마보)**: 캐릭터 힐링 콘셉트를 채택하더라도 특정 종교 색채를 빼고, 합장·자연 배경·고요한 상태 전환으로 "마음을 털어 내는 리추얼" 분위기만 취합니다.
+
+---
+
+## 6. iOS 배포(맥 없음), 탭 효과음(CC0), 캐릭터 애니메이션(Rive vs Lottie)
+
+확인일: 2026-11-18
+
+### 6.1 맥이 없는 상태에서 아이폰에 Flutter 앱 올리기 (TestFlight)
+
+맥이 없어도 **GitHub Actions macOS 러너**에서 `.ipa` 를 빌드해 **TestFlight 내부 테스트**로 사장님 아이폰에 올릴 수 있습니다.
+
+1. **필요한 애플 측 준비물**:
+   - **Apple Developer Program 유료 계정** (연 $99): TestFlight 사용에 필수입니다.
+   - **App Store Connect API Key** (`.p8` 파일, `Key ID`, `Issuer ID`): App Store Connect 의 `사용자 및 액세스 > 통합` 에서 **App Manager** 이상 권한으로 발급합니다. CI 에서 2단계 인증(2FA) 없이 업로드할 때 씁니다.
+   - **Apple Distribution 인증서(`.p12`)** 와 **App Store 프로비저닝 프로파일(`.mobileprovision`)**.
+2. **GitHub Actions -> TestFlight 빌드 절차**:
+   - `macos-latest` 러너에서 Flutter SDK 를 설정하고 `flutter build ipa --export-options-plist=...` 또는 `fastlane` (`build_app` + `upload_to_testflight`) 으로 아카이브 및 업로드를 수행합니다.
+3. **`fastlane match` 필요 여부**:
+   - **필수는 아닙니다.** 인증서(`.p12`)와 프로비저닝 프로파일(`.mobileprovision`)을 GitHub Secrets 에 Base64 로 넣어 CI 키체인에 설치하는 수동 방식이나, `xcodebuild -allowProvisioningUpdates` + API Key 조합도 가능합니다.
+   - 다만 인증서 만료·재발급과 팀 공유를 생각하면 `fastlane match` 가 편합니다. **맥 없이도** Linux/Windows 에서 `openssl` 로 개인키와 CSR 을 만든 뒤 Apple Developer 포털에서 `.cer` 을 내려받아 `.p12` 로 변환하고, match 전용 비공개 Git 저장소에 직접 올린 뒤 CI 에서 `readonly: true` 로 불러올 수 있습니다.
+4. **GitHub Actions macOS 러너 비용**:
+   - 공개(public) 저장소는 무료입니다.
+   - 비공개(private) 저장소는 표준 Linux(`$0.006/분`) 대비 **약 10배** 요율로 차감됩니다(`macos-latest` 표준 `$0.062/분`, 대형 러너 `$0.102/분`, 작업 시간은 1분 단위로 올림). GitHub Free 플랜은 월 `$12`(Pro/Team 은 월 `$18`) 무료 크레딧을 제공하므로, 파일럿 단계에서 수동 트리거(`workflow_dispatch`)나 태그 푸시 때만 iOS 빌드를 돌리면 무료 크레딧 안에서 충분히 감당할 수 있습니다.
+5. **사장님(내부 테스터) 초대 방식**:
+   - App Store Connect `사용자 및 액세스` 에 사장님 Apple ID 를 팀원(Account Holder, Admin, App Manager, Developer, Marketing 중 하나)으로 추가하고, TestFlight **내부 테스트(Internal Testing)** 그룹에 배정합니다.
+   - 내부 테스터는 앱당 최대 **100명**까지 가능하며, **Beta App Review(외부 심사) 없이** 업로드·처리 직후 TestFlight 앱에서 바로 설치할 수 있습니다(빌드 유효기간 90일).
+6. **안드로이드 `.apk` 직접 전달로 충분한가**:
+   - 파일럿·사내 확인 단계에서는 `flutter build apk --release`(또는 `--debug`) 로 만든 `.apk` 파일을 메신저나 드라이브로 직접 전달해 설치("출처를 알 수 없는 앱 허용")하는 것으로 충분합니다. Play Console 계정이나 심사 없이 즉시 동작합니다. 버전 관리나 자동 알림이 필요해지면 Firebase App Distribution(무료)을 붙이면 됩니다.
+
+출처 및 확인일 (2026-11-18):
+- Apple Developer Program 및 TestFlight 내부 테스트 안내: https://developer.apple.com/testflight/
+- GitHub Actions 요금 및 macOS 러너 분당 단가: https://docs.github.com/en/billing/managing-billing-for-github-actions/about-billing-for-github-actions
+- Fastlane `match` 공식 문서: https://docs.fastlane.tools/actions/match/
+- 맥 없이 OpenSSL 로 Distribution 인증서(`.p12`) 및 `match` 구성 참고: https://simondalvai.org/blog/fastlane-match-without-mac/
+
+### 6.2 탭 효과음 (상업 이용·재배포 가능한 CC0 출처 및 후보)
+
+파일럿 이후 회사에 코드를 넘기는 조건이므로, 상업 이용과 앱 번들 재배포가 자유로운 **CC0 1.0 (퍼블릭 도메인)** 음원을 우선 쓰는 것이 가장 안전합니다. (`docs/SPEC.md` 방침대로 출처와 라이선스는 `THIRD_PARTY_NOTICES` 에 남깁니다.)
+
+| 출처 | 라이선스 | 상업 이용·앱 번들 | 저작자 표기 의무 | 비고 |
+|---|---|---|---|---|
+| **Kenney.nl** (`Interface Sounds`, `UI Audio`, `Impact Sounds`, `RPG Audio`) | **CC0 1.0** | 가능 | 불필요(권장 사항) | 음질과 톤이 고르게 마스터링되어 있어 UI·타격음 조합에 가장 무난합니다. |
+| **Freesound.org** (`CC0` 필터) | 파일별 상이(**CC0**, CC-BY, CC-BY-NC) | CC0 만 조건 없이 가능 | CC0 불필요 / CC-BY **필수** | 반드시 검색 시 CC0 로 필터링하고, 원저작자가 타인의 저작물을 무단 업로드한 음원이 아닌지 확인해야 합니다. CC-BY-NC 는 상업 불가입니다. |
+
+기분별 효과음 후보:
+- **행복해요 (높고 맑은 톡)**: Kenney `Interface Sounds` / `UI Audio` 의 `click`, `pop`, `tap` 계열
+- **설레요 (방울 소리)**: Kenney `Interface Sounds` 의 `confirmation` / `tone` 계열 또는 Freesound CC0 `bell` / `chime`
+- **화나요 (낮은 북소리)**: Kenney `Impact Sounds` / `RPG Audio` 의 `thud` / `impact` 계열 또는 Freesound CC0 `low drum`
+- **슬퍼요 (낮은 물방울)**: Freesound CC0 `water drop` / `droplet` (짧은 단일 타격음)
+- **불안해요 (짧은 째깍)**: Kenney `Interface Sounds` 의 짧은 `switch` / `tick` 계열 또는 Freesound CC0 `clock tick`
+
+출처 및 확인일 (2026-11-18):
+- Kenney 오디오 에셋 (CC0): https://kenney.nl/assets?q=audio
+- Freesound 라이선스 안내: https://freesound.org/help/faq/#licenses
+
+### 6.3 캐릭터 애니메이션: Flutter 에서 Rive vs Lottie
+
+`docs/SPEC.md` 의 캐릭터 상태(`가만히`, `반응`, `합장`, `마무리`)와 초당 여러 번 두드리는 연타 상황을 기준으로 비교했습니다.
+
+| 비교 항목 | Rive (`rive` `0.14.11`) | Lottie (`lottie` `3.8.1`) |
+|---|---|---|
+| **런타임·번들 크기** | `rive_native` C++ 네이티브 바이너리를 포함하므로 앱 크기가 플랫폼별 수 MB 늘어납니다. 대신 `.riv` 에셋 파일 자체는 바이너리라 매우 작습니다. | **순수 Dart 구현**이라 네이티브 바이너리 증가가 거의 없습니다. 대신 JSON 에셋이 크면 앱 크기에 반영됩니다(dotLottie 압축으로 완화 가능). |
+| **상태 머신 지원** | **매우 강함.** Rive Editor 안에서 `가만히 -> 반응 -> 합장 -> 마무리` 상태 그래프와 트리거·숫자 입력(`채움` 값 연동)을 직접 설계합니다. Flutter 코드에서는 상태 이름·입력값만 바꿉니다. | 전통적으로 타임라인 재생 중심이라 구간(마커) 전환과 블렌딩을 Dart 코드로 직접 제어해야 합니다. (dotLottie/Lottie Creator 에서 기본 상태 머신이 추가되었으나 복합 캐릭터 제어는 Rive 가 더 성숙합니다.) |
+| **연타 중 성능** | 실시간 인터랙션용 바이너리 런타임(또는 Rive Renderer)이라 연타 중 트리거 반복 호출과 상태 전환 블렌딩이 부드럽습니다. | 복잡한 벡터 패스나 큰 JSON 은 저사양 안드로이드에서 프레임 드롭이 생길 수 있어 에셋 경량화가 중요합니다. |
+| **디자이너 작업 흐름** | **Rive Editor**(웹/데스크톱)에서 그리기·리깅·애니메이션·상태 머신을 한 번에 만듭니다. 내보내기 깨짐이 없으나 디자이너가 새 도구를 익혀야 합니다. | **After Effects**(Bodymovin) 또는 **Lottie Creator** 를 씁니다. 기존 모션 디자이너에게 익숙하지만 AE 기능 일부가 내보내기에서 누락될 수 있습니다. |
+
+정리:
+- 캐릭터가 연타(`반응`)와 `채움`(`합장`, `마무리`)에 실시간으로 반응해야 한다면 **Rive** 가 상태 머신과 연타 성능 면에서 유리합니다.
+- 디자이너가 After Effects 만 쓰고 상태 전환이 단순한 루프 교체 수준이라면 **Lottie** 도 가능합니다.
+
+출처 및 확인일 (2026-11-18):
+- `rive` 패키지 (pub.dev) 및 공식 문서: https://pub.dev/packages/rive , https://rive.app/docs/runtimes/flutter/flutter
+- `lottie` 패키지 (pub.dev): https://pub.dev/packages/lottie
+
+---
+
+## 7. 익명 기분 집계 서버, 위치 격자, 스토어 개인정보 요구사항
+
+확인일: 2026-11-18
+
+### 7.1 익명 기분 집계 서버 후보 비교
+
+| 항목 | Supabase | Firebase (Spark 무료 플랜) | Cloudflare Workers + D1 |
+|---|---|---|---|
+| **무료 범위** | DB 500MB, MAU 50,000, 스토리지 1GB, 대역폭 5GB, API 요청 무제한, 활성 프로젝트 최대 2개. **1주일 비활성 시 프로젝트 자동 일시정지**됩니다. | 인증(익명 포함) MAU 50,000, Firestore 일 5만 읽기 / 2만 쓰기 / 2만 삭제, 1GiB 저장, 월 10GB 전송. (Cloud Functions 는 Blaze 종량제 전환 필요) | Workers 일 10만 요청(호출당 CPU 10ms). D1(SQLite) 단일 DB 최대 500MB(계정 합산 5GB), 일 500만 행 읽기 / 10만 행 쓰기(초과 시 자정 UTC 까지 차단). 일시정지 없음. |
+| **익명 인증 방식** | `signInAnonymously()` 기본 제공 (`auth.users` 에 `is_anonymous` 클레임 JWT 발급, RLS 연동 가능). | Firebase Auth 익명 로그인 기본 제공 (Spark 플랜 무료 50,000 MAU 포함). | 기본 인증 서비스 없음. 앱에서 익명 토큰/UUID 를 발급하거나 Worker 에서 자체 JWT 를 서명해 D1 에 저장해야 합니다. |
+| **서버 격자 집계 방법** | Postgres RPC / View / SQL 에서 `GROUP BY grid_id HAVING COUNT(DISTINCT user_id) >= 5` 로 1회 쿼리로 `k-익명성` 필터링까지 처리합니다. | Firestore 는 `COUNT(DISTINCT)` 와 `HAVING` 집계가 약해, 격자별 카운터 문서로 증분 쓰기 후 조회 시 `>= 5` 필터링하거나 Cloud Functions(Blaze) 가 필요합니다. | D1(SQLite) 에서 `GROUP BY grid_id HAVING COUNT(DISTINCT user_id) >= 5` SQL 로 바로 집계·필터링합니다. |
+| **운영 부담** | 낮음(단, 무료 플랜 7일 미사용 시 자동 일시정지 복구 또는 주기적 핑 필요). | 낮음(다만 SQL 집계가 안 되어 NoSQL 데이터 모델 설계와 Blaze 전환 주의 필요). | 중간(익명 토큰·중복 방지 로직을 Worker 코드로 직접 짜야 하지만, 일시정지가 없고 SQLite 라 단순함). |
+
+**비상업 파일럿 추천: Supabase**
+- 이유:
+  1. `signInAnonymously()` 와 Postgres RLS 를 바로 쓸 수 있어 익명 인증 구현 비용이 가장 낮습니다.
+  2. 격자 집계와 "한 격자 최소 5명(`HAVING COUNT(DISTINCT user_id) >= 5`)" 조건을 Postgres SQL 한 줄(RPC)로 안전하게 강제할 수 있어, 클라이언트에 5명 미만 격자 데이터가 아예 내려가지 않습니다.
+  3. 추후 회사에 코드를 넘길 때도 표준 PostgreSQL 스키마와 SQL 로 인수인계하기 쉽습니다. (무료 플랜 7일 비활성 일시정지만 테스트 기간 중 유념하면 됩니다.)
+
+출처 및 확인일 (2026-11-18):
+- Supabase 요금 및 익명 로그인 문서: https://supabase.com/pricing , https://supabase.com/docs/guides/auth/auth-anonymous
+- Firebase 요금(Spark) 및 익명 인증 문서: https://firebase.google.com/pricing , https://firebase.google.com/docs/auth/flutter/anonymous-auth
+- Cloudflare Workers 및 D1 무료 범위 문서: https://developers.cloudflare.com/workers/platform/pricing/ , https://developers.cloudflare.com/d1/platform/pricing/
+
+### 7.2 위치 격자 크기, Flutter 패키지, k-익명성
+
+#### 1) Geohash vs H3 칸 크기 비교
+
+| 격자 체계 | 해상도 / 정밀도 | 실제 칸 크기 (넓이·변 길이) | 특징 |
+|---|---|---|---|
+| **Geohash** | 정밀도 **5** | 약 **4.9km x 4.9km** (적도 기준, 약 24km²) | 위도가 높아질수록 동서 폭이 좁아지는 직사각형입니다. |
+| **Geohash** | 정밀도 **6** | 약 **1.2km x 0.61km** (적도 기준, 약 0.73km²) | 3km² 보다 작아 스토어 정책상 정밀 위치로 분류될 수 있습니다. |
+| **Uber H3** | 해상도 **7** | 평균 면적 **약 5.16km²**, 평균 변 길이 **약 1.22km** (인접 중심 거리 약 2.04km) | 정육각형이라 위도 왜곡이 적고 인접 칸 거리가 균일합니다. |
+| **Uber H3** | 해상도 **8** | 평균 면적 **약 0.74km²**, 평균 변 길이 **약 0.46km** (인접 중심 거리 약 0.70km) | 3km² 보다 작아 동네 단위보다는 블록 단위에 가깝습니다. |
+
+#### 2) Flutter 패키지 유지 상태
+- **`dart_geohash` (`2.1.0`) / `geohash_plus` (`1.1.1`)**: 각각 약 2년·4년 전 이후 업데이트가 멈춘 레거시 상태입니다. Geohash 를 쓴다면 최신 순수 Dart 패키지(`fast_geohash` 등)나 직접 인코더(수십 줄) 구현을 권장합니다.
+- **`h3_flutter` (`0.8.0`) / `h3_dart` (`0.8.0`)**: `festelo.net` 이 유지 중이며 FFI/JS 바인딩을 제공합니다(커뮤니티 포크인 `h3_flutter_plus` 등도 존재합니다).
+
+#### 3) k-익명성(한 칸 최소 인원) 실무 사례
+- 공간 데이터 k-익명성은 한 격자·구간에 최소 `k` 명의 고유 사용자가 있을 때만 통계를 공개하는 방식입니다.
+- 이동·공간 통계 실무(소지역 통계, Strava Metro 등)에서는 **`k = 5`** 를 최소 기준선으로 삼고 구간별 임계치 미만은 숨기거나(suppression) 반올림·차분 프라이버시(Google Mobility 등)를 결합합니다.
+- `docs/SPEC.md` 의 초안("최소 5명 미만 비표시")은 실무 기준에 부합하며, `H3 해상도 7`(변 약 1.22km, 면적 약 5.16km²) 은 동네 크기 감각과 아래 스토어 "대략적 위치(3km² 이상)" 기준을 동시에 만족합니다.
+
+출처 및 확인일 (2026-11-18):
+- Uber H3 해상도별 면적·변 길이 공식 표: https://h3geo.org/docs/core-library/restable/
+- `h3_flutter` / `h3_dart` / `dart_geohash`: https://pub.dev/packages/h3_flutter , https://pub.dev/packages/h3_dart , https://pub.dev/packages/dart_geohash
+- Google Research 공간 집계 및 차분 프라이버시: https://research.google/blog/
+- 공간 역학·모빌리티 k-익명성 참고: https://www.gov.uk/government/publications/strava-metro-privacy-and-data-governance (Strava Metro 집계·임계치 사례)
+
+### 7.3 위치 기반 앱의 스토어 요구사항 (App Store / Google Play)
+
+| 항목 | Apple App Store | Google Play |
+|---|---|---|
+| **권한 및 설명 문구** | `Info.plist` 에 `NSLocationWhenInUseUsageDescription` 필수. 사용자가 왜 위치를 쓰는지 구체적 목적을 적어야 합니다("내 주변 동네 기분을 보여 주기 위해 사용합니다"). 백그라운드 권한은 요청하지 않습니다. | `AndroidManifest.xml` 에 `ACCESS_COARSE_LOCATION` 선언(대략적 위치만으로도 충분하면 `ACCESS_FINE_LOCATION` 제외 가능). |
+| **개인정보 처리방침** | App Store Connect 제출 및 앱 내 접근 가능한 Privacy Policy URL 필수. | Play Console 제출 및 앱 내 접근 가능한 개인정보 처리방침 URL 필수. |
+| **스토어 개인정보 신고** | **App Privacy (영양 라벨)**: 수집 항목, 사용자 연결 여부(Linked to User), 목적(App Functionality) 신고. | **Data Safety (데이터 보안 양식)**: 수집·공유 여부, 암호화, 삭제 요청 가능 여부 신고. |
+
+**기기에서 격자로 바꿔 보내는 경우의 기재 방법**:
+- **정밀 위치 vs 대략적 위치 기준**:
+  - Google Play Data Safety 는 **3km² 이상**을 대략적 위치(Approximate location), **3km² 미만**을 정밀 위치(Precise location)로 구분합니다.
+  - Apple App Privacy 도 약 3km 반경 수준 이상의 일반화 여부를 기준으로 정밀(Precise)과 대략적(Coarse) 위치를 구분합니다.
+- **기재 시 주의할 점**:
+  1. 기기에서 GPS 를 읽어 **H3 해상도 7(약 5.16km²) 또는 Geohash 5(약 24km²)** 로 바꾼 뒤 격자 번호만 서버로 보내고 원본 좌표는 즉시 버린다면, 서버로 전송되는 데이터는 **대략적 위치(Coarse / Approximate Location)** 로 기재할 수 있습니다.
+  2. 반대로 Geohash 6(약 0.73km²) 이나 H3 해상도 8(약 0.74km²) 은 3km² 미만이므로, 격자로 바꿨더라도 Google Play 기준상 **정밀 위치**로 신고해야 할 수 있습니다.
+  3. 서버 접속 로그에 사용자 IP 가 남거나 서드파티 SDK 가 좌표를 수집하면 별도로 위치·기기 정보 수집을 신고해야 하므로, 서드파티 SDK 유무와 서버 IP 로그 보관 여부를 함께 맞춰야 합니다.
+
+출처 및 확인일 (2026-11-18):
+- Apple App Privacy Details 공식 안내: https://developer.apple.com/app-store/app-privacy-details/
+- Apple `NSLocationWhenInUseUsageDescription`: https://developer.apple.com/documentation/bundleresources/information_property_list/nslocationwheninuseusagedescription
+- Google Play Data safety 공식 가이드: https://support.google.com/googleplay/android-developer/answer/10787469
+- Android 대략적 위치(`ACCESS_COARSE_LOCATION`) 가이드: https://developer.android.com/develop/sensors-and-location/location/permissions
+
+---
+
+## 8. 기분별 진동 패턴 설계 및 Kenney CC0 효과음 후보
+
+확인일: 2026-11-18
+
+### 8.1 기분별 진동 패턴 설계 (iOS Core Haptics / Android VibrationEffect)
+
+Apple HIG(Playing haptics)에 따라 단발성 타격은 `transient`, 여운이 남는 진동은 `continuous` 로 두고 `intensity`(세기, `0.0~1.0`)와 `sharpness`(날카로움·질감, `0.0~1.0`)를 조합합니다. Android 는 API 30+ 지원 기기에서는 `VibrationEffect.Composition` 프리미티브(`PRIMITIVE_TICK`, `PRIMITIVE_CLICK`, `PRIMITIVE_THUD`)를 우선 쓰고, 일반 진폭 지원 기기(`hasAmplitudeControl() == true`, API 26+)는 `createWaveform(timings, amplitudes, -1)`(진폭 `0~255`)을 사용합니다.
+
+| 반응 / 기분 | 느낌 설명 | iOS Core Haptics (`intensity`, `sharpness`, 타입, 지속/간격) | Android `VibrationEffect` (`timings` ms / `amplitudes` 0~255 또는 Composition 프리미티브) |
+|---|---|---|---|
+| `tap` · **행복해요** | 가볍고 튀는 톡 | `transient`, `intensity: 0.55`, `sharpness: 0.85` (단발 1회) | 파형: `[0, 15]` / `[0, 140]` · Composition: `PRIMITIVE_TICK(0.65)` |
+| `tap` · **설레요** | 짧게 두 번 톡톡 | `transient` 2회, `intensity: 0.45 -> 0.65`, `sharpness: 0.75`, 간격 `45ms` (`t=0ms`, `45ms`) | 파형: `[0, 12, 35, 15]` / `[0, 110, 0, 165]` · Composition: `PRIMITIVE_TICK(0.5)` + 지연 `35ms` + `PRIMITIVE_CLICK(0.7)` |
+| `tap` · **화나요** | 무겁고 짧은 쿵 | `transient`, `intensity: 0.95`, `sharpness: 0.25` (낮은 sharpness 로 묵직한 타격) | 파형: `[0, 32]` / `[0, 245]` · Composition: `PRIMITIVE_THUD(0.95)` |
+| `tap` · **슬퍼요** | 부드럽고 긴 웅 | `continuous`, `intensity: 0.45`, `sharpness: 0.15`, 지속 `80ms` | 파형: `[0, 30, 50]` / `[0, 110, 65]` (부드러운 감쇠, 연타 시 이전 진동 덮어쓰기) |
+| `tap` · **불안해요** | 잘게 떨리는 진동 | `transient` 3회 연속, `intensity: 0.35`, `sharpness: 0.90`, 간격 `22ms` (`t=0, 22, 44ms`) | 파형: `[0, 10, 14, 10, 14, 10]` / `[0, 95, 0, 95, 0, 95]` · Composition: `PRIMITIVE_TICK(0.4)` 3회 (`14ms` 간격) |
+| `full` | 채움 끝까지 참 (길고 센 진동) | `continuous` (`intensity: 0.90`, `sharpness: 0.45`, 지속 `220ms`) + 종료 `transient` (`intensity: 1.0`, `sharpness: 0.80`, `t=230ms`) | 파형: `[0, 140, 30, 60]` / `[0, 220, 0, 255]` · Composition: `PRIMITIVE_THUD(0.85)` + `60ms` + `PRIMITIVE_CLICK(1.0)` |
+| `select` | 기분 배너 누름 (가벼운 선택) | `transient`, `intensity: 0.45`, `sharpness: 0.65` | 파형: `[0, 12]` / `[0, 115]` · Composition: `PRIMITIVE_CLICK(0.5)` |
+| `drop` | 채움 0으로 떨어짐 (아주 약한 진동) | `transient`, `intensity: 0.25`, `sharpness: 0.20` | 파형: `[0, 15]` / `[0, 60]` · Composition: `PRIMITIVE_LOW_TICK` 또는 `PRIMITIVE_TICK(0.25)` |
+
+참고:
+- `tap` 연타 시에는 `docs/SPEC.md` 초안대로 최소 `40ms` 간격으로 쓰로틀링합니다. `설레요`(총 47ms~60ms)와 `불안해요`(총 54ms~58ms)는 짧은 연타 시 이전 패턴이 끝나기 전에 새 패턴이 들어올 수 있으므로, 직전 패턴을 취소(cancel)하거나 최소 간격을 기분별 패턴 길이 이상으로 맞춥니다.
+
+#### Android 진폭 미지원 기기(`!vibrator.hasAmplitudeControl()`) 대체안
+1. **기본 진폭 + 짧은 온오프 `timings` 구분**: 진폭을 바꿀 수 없는 구형·보급형 기기에서는 `0` 이 아닌 진폭이 모두 최대 세기(100%)로 울립니다. `VibrationEffect.createWaveform(timings, -1)`(진폭 배열 없이 시간만 지정) 또는 `VibrationEffect.createOneShot(ms, VibrationEffect.DEFAULT_AMPLITUDE)` 로 바꾸고, 기분 차이는 펄스 길이와 횟수로만 구분합니다(예: 행복해요 `[0, 12]`, 설레요 `[0, 10, 40, 12]`, 화나요 `[0, 28]`, 슬퍼요 `[0, 45]`, 불안해요 `[0, 8, 18, 8]`, `drop` 은 생략하거나 `8ms` 1회).
+2. **`HapticFeedbackConstants` 대체**: `hasAmplitudeControl()` 이 거짓이거나 ERM 모터라 뭉개짐이 심할 때는 `View.performHapticFeedback()` 의 OS 기본 상수(`CLOCK_TICK` -> 가벼운 톡, `CONTEXT_CLICK` -> 선택, `LONG_PRESS` -> 묵직한 확인)로 내리는 편이 오히려 불쾌한 윙윙거림을 줄입니다.
+
+출처 및 확인일 (2026-11-18):
+- Apple HIG Playing haptics: https://developer.apple.com/design/human-interface-guidelines/playing-haptics
+- Android Haptics 설계 원칙 및 `VibrationEffect` / `Composition` / `hasAmplitudeControl()`: https://developer.android.com/develop/ui/views/haptics/haptics-principles , https://developer.android.com/develop/ui/views/haptics/custom-haptic-effects
+
+### 8.2 Kenney CC0 오디오 팩 효과음 후보 목록
+
+아래 파일들은 모두 **CC0 1.0** 라이선스로 상업 이용 및 앱 번들 재배포가 가능합니다. (실제 파일 다운로드는 하지 않았으며, 팩 목록에서 용도에 맞는 후보를 골랐습니다.)
+
+| 용도 | 느낌 | 추천 팩 이름 | 후보 파일 이름 | 팩 페이지 URL |
+|---|---|---|---|---|
+| `tap` · **행복해요** | 높고 맑은 톡 | **Interface Sounds** (또는 UI Audio) | `pluck_001.ogg`, `click_001.ogg` (`UI Audio` 는 `click1.ogg`) | https://kenney.nl/assets/interface-sounds , https://kenney.nl/assets/ui-audio |
+| `tap` · **설레요** | 방울 소리 | **Interface Sounds** | `glass_001.ogg`, `confirmation_001.ogg` | https://kenney.nl/assets/interface-sounds |
+| `tap` · **화나요** | 낮은 북소리 | **Impact Sounds** | `impactSoft_heavy_000.ogg`, `impactWood_heavy_000.ogg` | https://kenney.nl/assets/impact-sounds |
+| `tap` · **슬퍼요** | 낮은 물방울 | **Interface Sounds** | `drop_001.ogg`, `bong_001.ogg` | https://kenney.nl/assets/interface-sounds |
+| `tap` · **불안해요** | 짧은 째깍 | **Interface Sounds** | `tick_001.ogg`, `switch_001.ogg` | https://kenney.nl/assets/interface-sounds |
+| `full` | 채움 완료 짧은 효과음 | **Interface Sounds** | `confirmation_002.ogg`, `maximize_001.ogg` | https://kenney.nl/assets/interface-sounds |
+| `select` | 기분 배너 선택 작은 소리 | **Interface Sounds** | `select_001.ogg`, `switch_002.ogg` | https://kenney.nl/assets/interface-sounds |
+
+출처 및 확인일 (2026-11-18):
+- Kenney Interface Sounds: https://kenney.nl/assets/interface-sounds
+- Kenney UI Audio: https://kenney.nl/assets/ui-audio
+- Kenney Impact Sounds: https://kenney.nl/assets/impact-sounds
+
+---
+
+## 9. 네이티브 퍼스트 체크리스트 (Flutter 3.44 기준)
+
+확인일: 2026-11-18
+
+Flutter 앱이 웹앱처럼 어색해 보이지 않고 iOS·Android·macOS 에서 네이티브처럼 느껴지게 하려면 아래 11가지 지점을 점검해야 합니다.
+
+### 1) 화면 전환 (iOS 스와이프 뒤로가기, Android 예측형 뒤로가기)
+- **어색한 지점**: Android 스타일 위아래 전환이나 스와이프 뒤로가기 먹통, Android 14+ 에서 뒤로가기 시 미리보기 없이 뚝 끊김.
+- **iOS**: `CupertinoPageRoute` 를 쓰거나 `ThemeData.pageTransitionsTheme` 에 `TargetPlatform.iOS: CupertinoPageTransitionsBuilder()` 를 지정해 왼쪽 가장자리 스와이프 뒤로가기를 살립니다. `PopScope(canPop: false)` 를 무심코 두면 iOS 스와이프 제스처 자체가 막히므로 주의합니다.
+- **Android**: `TargetPlatform.android: PredictiveBackPageTransitionsBuilder()` 를 지정하고, `android/app/src/main/AndroidManifest.xml` 의 `<application>`(또는 `<activity>`)에 `android:enableOnBackInvokedCallback="true"` 를 추가합니다. 뒤로가기 제어는 `WillPopScope` 대신 `PopScope(canPop: ..., onPopInvokedWithResult: ...)` 를 씁니다.
+
+### 2) 스크롤 물리
+- **어색한 지점**: iOS 에서 튕기지 않고 딱 멈추는 스크롤, 또는 Android 에서 iOS 식 바운스나 구형 글로우가 나오는 현상.
+- **iOS / Android**: 기본 `MaterialApp` 은 `MaterialScrollBehavior` 를 통해 플랫폼별로 iOS 는 `BouncingScrollPhysics`, Android 12+ 는 `ClampingScrollPhysics` + `StretchingOverscrollIndicator` 를 자동 적용합니다. 커스텀 `ScrollPhysics` 로 `BouncingScrollPhysics()` 를 전역 고정하지 말고, `ScrollBehavior.getScrollPhysics(context)` 기본 분기를 유지합니다.
+
+### 3) 눌림 피드백 (물결 효과 대신)
+- **어색한 지점**: iOS 나 미니멀 화면에서 Material 잉크 물결(`InkRipple` / `InkSplash`)이 퍼지면 웹앱이나 안드로이드 이식작처럼 보입니다.
+- **iOS / Android 공통(앱 톤에 따라)**: `ThemeData` 에 `splashFactory: NoSplash.splashFactory` 와 `highlightColor: Colors.transparent` 를 두고, 대신 눌릴 때 `AnimatedScale`(예: `0.97`) + `AnimatedOpacity`(예: `0.75`) + `Motion.tap`(`90ms`) 같은 물리적 눌림을 줍니다. iOS 표준 버튼에는 `CupertinoButton` 을 씁니다.
+
+### 4) 상태바와 내비게이션 바 (Edge-to-Edge)
+- **어색한 지점**: 상단 상태바나 하단 제스처 바 뒤가 검거나 흰 띠로 잘려 보이는 현상.
+- **iOS / Android**: Android 15(API 35) 타깃부터는 Edge-to-Edge 가 기본입니다. `SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge)` 를 호출하고, 화면마다 `AnnotatedRegion<SystemUiOverlayStyle>` 로 `statusBarColor: Colors.transparent`, `systemNavigationBarColor: Colors.transparent`, 그리고 테마 밝기에 맞는 `statusBarIconBrightness` / `statusBarBrightness` 를 맞춰 줍니다. 콘텐츠 겹침은 `SafeArea` 나 `MediaQuery.viewPaddingOf(context)` 로 피합니다.
+
+### 5) 글자 렌더링과 시스템 글자 크기
+- **어색한 지점**: 시스템 글자 크기를 키웠을 때 텍스트가 잘리거나(`RenderFlex overflow`), 고정 `TextScaler.noScaling` 으로 접근성을 무시하는 현상.
+- **iOS / Android**: `MediaQuery.textScalerOf(context)`(구 `textScaleFactor` 대체)를 그대로 존중합니다. 큰 숫자(연타 카운트 등)만 레이아웃이 깨지지 않도록 `FittedBox` 나 상한 클램프(`TextScaler.clamp(maxScaleFactor: ...)`)를 부분 적용합니다. 폰트는 `design/tokens.json` 의 `Pretendard` 등을 쓰되 iOS/Android 기본 시스템 폰트 fallback 이 어긋나지 않게 `ThemeData.fontFamilyFallback` 을 정리합니다.
+
+### 6) 키보드
+- **어색한 지점**: 스크롤해도 키보드가 안 내려가거나, 바깥을 눌러도 포커스가 안 풀림, 키보드에 가려 입력창이 안 보임.
+- **iOS / Android**: `Scaffold(resizeToAvoidBottomInset: true)` 를 유지하고, 스크롤 가능한 화면에는 `keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag` 를 켜 iOS 네이티브처럼 드래그로 키보드가 닫히게 합니다. 바깥 탭 시 `FocusManager.instance.primaryFocus?.unfocus()` 를 호출하고, `TextInputAction.done` / `next` 를 지정합니다. (파일럿 1단계는 텍스트 입력이 거의 없으나 메모 기능 추가 시 필수입니다.)
+
+### 7) 텍스트 선택
+- **어색한 지점**: 본문 복사가 안 되거나, 툴바가 플랫폼 기본 메뉴와 다르게 보임.
+- **iOS / Android**: 복사가 필요한 텍스트 영역은 `SelectionArea` 또는 `SelectableText` 로 감싸고, `contextMenuBuilder` 기본값인 `AdaptiveTextSelectionToolbar` 를 유지해 iOS/Android/macOS 각각의 네이티브 선택 핸들과 메뉴가 뜨게 합니다.
+
+### 8) 첫 실행 시간과 셰이더 끊김 (Impeller)
+- **어색한 지점**: 첫 애니메이션·화면 전환 순간에 프레임이 뚝 끊기는 셰이더 컴파일 쟁크(jank).
+- **iOS**: **Impeller(Metal)** 가 기본이자 유일한 렌더러입니다. 모든 기본 셰이더가 빌드 시 사전 컴파일됩니다.
+- **Android**: API 29+ Vulkan 기기에서는 **Impeller** 가 기본 활성화되며, Vulkan 미지원·구형 기기에서는 OpenGLES 로 자동 fallback 됩니다. (`docs/PLAN.md` 의 호일 금속 광택 GLSL 셰이더를 추가할 때는 첫 실행 시 1프레임 워밍업이나 `FragmentProgram.fromAsset` 사전 로드를 해 두어야 첫 탭 끊김을 막을 수 있습니다.)
+
+### 9) 접근성 (VoiceOver, TalkBack)
+- **어색한 지점**: `GestureDetector` 로 만든 커스텀 버튼이나 연타 영역을 스크린 리더가 읽지 못하거나 터치 영역이 너무 작음.
+- **iOS (VoiceOver) / Android (TalkBack)**: 커스텀 터치 위젯에 `Semantics(button: true, label: ...)` 를 반드시 붙이고, 아이콘+텍스트 묶음은 `MergeSemantics`, 장식 요소는 `ExcludeSemantics` 로 감쌉니다. 터치 영역은 최소 **iOS `44x44pt` / Android `48x48dp`** 를 확보하고, 위젯 테스트에서 `meetsGuideline(androidTapTargetGuideline)` 와 `labeledTapTargetGuideline` 으로 자동 검증합니다. 연타 중 매 탭마다 읽어 주면 방해되므로 `liveRegion` 은 완료(`full`) 등 핵심 상태 변화에만 씁니다.
+
+### 10) 다크 모드 전환
+- **어색한 지점**: OS 다크 모드를 바꿨는데 앱이 안 따라가거나, 바탕색만 바뀌고 상태바 아이콘 색이 안 바뀌어 글자가 안 보임.
+- **iOS / Android**: `MaterialApp(themeMode: ThemeMode.system, theme: ..., darkTheme: ...)` 또는 커스텀 `ThemeController` 에서 `MediaQuery.platformBrightnessOf(context)` 를 구독해 즉시 반응하게 합니다. 테마 전환 시 `SystemUiOverlayStyle`(상태바·내비게이션 바 아이콘 밝기)도 함께 갱신해야 합니다.
+
+### 11) 맥에서의 창과 메뉴
+- **어색한 지점**: 맥 앱을 실행했는데 상단 메뉴바가 비어 있거나 `Cmd+Q`, `Cmd+W`, 창 최소 크기 제어가 안 됨.
+- **macOS**: 루트 위젯에 `PlatformMenuBar` 를 두고 `PlatformProvidedMenuItem`(종료, 창 닫기, 최소화, 확대 등 macOS 기본 메뉴)과 `PlatformMenu` 를 연결합니다. 단축키는 `Shortcuts` + `Actions` 에서 `SingleActivator(..., meta: true)` 로 `Cmd` 키 조합을 지원하고, 창 최소 크기·타이틀바 스타일은 `macos/Runner/MainFlutterWindow.swift` 에서 설정합니다.
+
+출처 및 확인일 (2026-11-18):
+- Flutter `PageTransitionsTheme` / `PredictiveBackPageTransitionsBuilder` / `PopScope`: https://api.flutter.dev/flutter/material/PageTransitionsTheme-class.html , https://api.flutter.dev/flutter/widgets/PopScope-class.html
+- Flutter Impeller 렌더링 엔진: https://docs.flutter.dev/perf/impeller
+- Flutter Android Edge-to-Edge (`SystemUiMode.edgeToEdge`): https://docs.flutter.dev/release/breaking-changes/android-15-edge-to-edge
+- Flutter `TextScaler`, `AdaptiveTextSelectionToolbar`, `ScrollViewKeyboardDismissBehavior`, `PlatformMenuBar`: https://api.flutter.dev/flutter/painting/TextScaler-class.html , https://api.flutter.dev/flutter/material/AdaptiveTextSelectionToolbar-class.html , https://api.flutter.dev/flutter/widgets/ScrollViewKeyboardDismissBehavior.html , https://api.flutter.dev/flutter/widgets/PlatformMenuBar-class.html
+- Flutter 접근성 (`Semantics`, 가이드라인 테스트): https://docs.flutter.dev/ui/accessibility-and-localization/accessibility
+
+---
+
+## 10. 기존 프로젝트(`freetv`, `oc-cookingfoil`, `oc-cookingfoil-client`) 최적화 이식 후보
+
+확인일: 2026-11-18
+
+세 프로젝트의 코드와 커밋 이력을 읽고, 현재 기기 안 저장 단계와 3단계(Supabase + 지도 타일)에 그대로 옮길 수 있는 최적화만 골랐습니다.
+
+### 10.1 앱 시작 속도 및 첫 화면 깜빡임
+
+1. **디스크 캐시 선로딩 후 백그라운드 갱신 (Warm-Restart Cache)**
+   - **원래 위치**: `oc-cookingfoil/src/meta/library-cache.js:14-22`, `freetv/www/app/main.js:866-867`
+   - **왜 그렇게 했는지**: `oc-cookingfoil` 은 직렬화 결과와 ETag 를 디스크에 저장해 두고 재시작 첫 요청에 즉시 응답한 뒤 백그라운드에서 새 목록으로 교체합니다(`library-cache.js:14-18`). `freetv`(`f8e407e`) 역시 하루 이내에 저장된 필터 목록이 있으면 시작 화면을 막지 않고 바로 그린 뒤 뒤에서 새 목록을 받습니다.
+   - **우리 앱에서 쓸 곳**: 1단계 로딩 화면(최소 대기 시간 없음)에서 SQLite `DayRecord` 를 즉시 읽어 기분 고르기 화면으로 넘어가고, 3단계 지도 화면도 마지막 격자 요약 캐시를 먼저 그린 뒤 Supabase 최신 집계를 받아 덮어씁니다.
+
+2. **새 카드·이미지의 페이드 인과 재진입 애니메이션 방지**
+   - **원래 위치**: `freetv/www/app/styles.css:35-37` (커밋 `422c0c5`)
+   - **왜 그렇게 했는지**: 목록에 카드가 추가될 때 화면 전체 진입 애니메이션이 다시 돌거나 흰 바탕 이미지가 한 번에 뜨면 화면이 번쩍이는 깜빡임이 생깁니다. 추가되는 항목은 즉시 배치하고 이미지만 짧게 페이드 인하도록 고쳤습니다.
+   - **우리 앱에서 쓸 곳**: 달력 월 전환이나 3단계 지도 타일·캐릭터 에셋 로드 시 전체 화면 전환 애니메이션이 재실행되지 않게 고정하고, 타일·이미지 등장만 부드럽게 페이드 인합니다.
+
+3. **프레임당 빌드·렌더링 예산 제한 (중복 재계산 방지)**
+   - **원래 위치**: `oc-cookingfoil-client/source/ui/Application.cpp`·`UpdatesScreen.cpp` (커밋 `d11a3d2`), `oc-cookingfoil-client/source/ui/Images.cpp:18-80`
+   - **왜 그렇게 했는지**: 한 프레임 안에서 목록 배지·행 계산을 여러 번 반복하거나 4K 이미지를 원본 해상도 그대로 디코딩하면 프레임 드롭이 납니다(`d11a3d2` 로 프레임당 목록 재구성을 1회로 줄이고 텍스처 업로드를 프레임당 4ms 이내로 제한, `Images.cpp:22-79` 로 화면 크기 이상 디코딩 차단).
+   - **우리 앱에서 쓸 곳**: 120Hz 기기 연타 중(`두드리기` 화면)에는 입자·채움 애니메이션만 다시 그리고 달력·통계 계산을 매 프레임 돌리지 않습니다. 추후 캐릭터·배경 이미지를 넣을 때도 화면 해상도에 맞춰 디코딩 크기(`cacheWidth`/`cacheHeight`)를 제한합니다.
+
+### 10.2 저장소 쓰기 및 배터리
+
+4. **내용이 같으면 디스크·DB 쓰기 생략 (No-Op Write Skip)**
+   - **원래 위치**: `oc-cookingfoil-client/source/core/DownloadStore.cpp:285-289, 387, 425` (커밋 `5c696e0`)
+   - **왜 그렇게 했는지**: 매번 전체 파일을 덮어쓰거나 변경 없는 행을 지우고 다시 넣으면 플래시 저장소 마모와 배터리·I/O 낭비가 커집니다. 이전 저장본과 바이트(또는 SHA-256/dirty 플래그)가 같으면 쓰기 트랜잭션 자체를 건너뛰도록 했습니다.
+   - **우리 앱에서 쓸 곳**: `docs/SPEC.md` 의 `두드리기` 화면은 2초마다, 화면 이탈 시, 백그라운드 전환 시 SQLite 에 씁니다. 두드림이 없었거나 직전 저장 이후 `count` 가 변하지 않았으면 2초 타이머가 돌아도 SQLite 쓰기를 아예 생략합니다.
+
+### 10.3 네트워크 요청 (3단계 Supabase·지도 타일용)
+
+5. **동일 키 동시 요청 합치기 (In-Flight Single-Flight)**
+   - **원래 위치**: `freetv/www/shared/flights.js:7-38` (커밋 `7e4f09c`), `oc-cookingfoil/src/meta/library-cache.js:23-25` (커밋 `eb679209`)
+   - **왜 그렇게 했는지**: 같은 키에 대해 캐시 미스가 동시에 여러 번 일어나면 같은 데이터를 중복 요청·중복 압축하게 됩니다. 진행 중인 Promise(Future)를 맵에 걸어 두고 동시 호출자가 하나를 공유하게 했습니다.
+   - **우리 앱에서 쓸 곳**: 3단계 지도 이동 시 같은 격자 범위나 타일 요청이 겹칠 때 중복 Supabase RPC 호출을 1회로 합칩니다.
+
+6. **화면 이탈 시 요청 취소 및 250ms 디바운스**
+   - **원래 위치**: `freetv/www/app/screen-load.js:6-28` (커밋 `7e4f09c`)
+   - **왜 그렇게 했는지**: 메뉴를 스쳐 지나갈 때마다 네트워크 요청을 보내면 트래픽과 배터리가 낭비됩니다. 화면 전환 뒤 `250ms` 기다렸다가 요청을 시작하고, 그사이 다른 화면으로 넘어가면 이전 `AbortController` 를 취소합니다.
+   - **우리 앱에서 쓸 곳**: 3단계 지도에서 사용자가 지도를 빠르게 드래그·줌할 때 `250ms` 디바운스 후 Supabase 격자 집계를 요청하고, 이전 영역의 미완료 요청은 취소(`CancelToken` 등)합니다.
+
+7. **원점별 레이트리밋·거부 홀드 (Origin Hold)**
+   - **원래 위치**: `freetv/www/shared/origin-hold.js:6-70` (커밋 `eb8c6d0`)
+   - **왜 그렇게 했는지**: `429`(또는 `503 Retry-After`)·`403`·`451` 이 뜬 서버에 재시도를 퍼부으면 차단이 길어지고 배터리만 닳습니다. 원점별로 `Retry-After`(최대 10분) 또는 기본 홀드 시간 동안 요청을 기기 안에서 즉시 차단하고, 거부 상태는 재시작 후에도 유지합니다.
+   - **우리 앱에서 쓸 곳**: 3단계에서 OpenFreeMap·Stadia Maps·Supabase 가 `429` 나 `503 Retry-After` 를 주면, 지도 타일과 API 모두 일정 시간 재요청을 멈추고 사용자에게 안내합니다.
+
+8. **폴링 지수 백오프 및 상한 정지 / 첫 DNS 지연 1회 재시도**
+   - **원래 위치**: `oc-cookingfoil-client/source/ui/Pairing.cpp:33-38` (커밋 `0379025`, 5초 시작 -> 2배씩 증가해 최대 1분 -> 10분 후 정지), `oc-cookingfoil-client/source/ui/Application.cpp:1097` (커밋 `2f636d2`)
+   - **왜 그렇게 했는지**: 고정 간격 폴링은 배터리를 소모하고, 첫 연결에서 DNS 해석만 느려 타임아웃이 났을 때 바로 실패 처리하면 첫인상이 나빠집니다.
+   - **우리 앱에서 쓸 곳**: 3단계 지도 주기적 새로고침이나 기분 업로드 재시도에 지수 백오프(예: 5초 -> 10초 -> 20초, 상한)와 백그라운드 일시정지를 적용하고, 첫 네트워크 연결 타임아웃 시 1회 재시도합니다.
+
+---
+
+## 11. 디자이너의 Figma 토큰 편집 및 무터미널 빌드 확인 흐름
+
+확인일: 2026-11-18
+
+### 11.1 Tokens Studio 무료판의 GitHub 동기화와 필요 설정
+
+- **단일 파일 vs 다중 파일(폴더) 동기화**:
+  - Tokens Studio **무료판**에서도 GitHub **단일 파일 동기화(Single-file sync)**(예: `design/tokens.json` 하나에 `core`, `light`, `dark`, `pink` 세트를 모두 담는 방식)는 push/pull 이 가능합니다.
+  - 반면 **`design/tokens/*.json` 처럼 세트별 여러 파일로 나누어 push 하는 다중 파일 동기화(Multi-file sync)**, 플러그인 내 브랜치 전환, **Themes 기능**은 **유료(Team) 플랜** 기능입니다. 무료판은 팀원이 유료 플랜으로 만들어 둔 다중 파일 폴더를 **읽기 전용(pull)** 으로 불러오는 것까지만 지원합니다.
+- **GitHub 동기화 설정 항목**:
+  - **Repository**: `소유자/저장소이름`
+  - **Branch**: 디자이너용 작업 브랜치(예: `design/tokens`)
+  - **File Path**: 단일 파일 경로(예: `design/tokens.json`) 또는 유료 플랜 시 폴더 경로(`design/tokens`)
+  - **Personal Access Token (PAT)**: GitHub 에서 `contents: read and write` 권한이 있는 토큰 발급
+  - **Token Format 설정**: 플러그인 `Settings` 에서 반드시 **W3C DTCG** 형식으로 선택해야 `$type`, `$value` 를 읽고 씁니다.
+- **실무 대안**: 무료판을 유지하면서 `design/tokens/*.json` 다중 파일 구조를 쓰려면, 디자이너가 Tokens Studio 에서 로컬 Export 한 JSON 을 GitHub 웹 UI 에서 직접 커밋하거나, 단일 파일(`design/tokens.json`)로 동기화한 뒤 `tool/gen_tokens.py` 가 이를 읽도록 맞추는 편이 간단합니다.
+
+출처 및 확인일 (2026-11-18):
+- Tokens Studio GitHub 동기화 및 다중 파일(Multi-file) 플랜 안내: https://docs.tokens.studio/manage-tokens/sync/github , https://docs.tokens.studio/manage-tokens/sync/multi-file-sync
+- Tokens Studio W3C DTCG 포맷 설정: https://docs.tokens.studio/manage-tokens/token-format/w3c-dtcg
+
+### 11.2 우리 형식과 Tokens Studio 내보내기가 어긋나는 지점
+
+1. **`$extensions.app.brightness` 보존 여부**:
+   - W3C DTCG 표준의 `$extensions` 는 Tokens Studio DTCG 직렬화에서 통과될 수 있으나, 플러그인 UI 에서 새 세트를 만들거나 편집할 때 비표준 확장 필드가 누락·초기화될 위험이 있습니다. `tool/gen_tokens.py` 에서 `$extensions.app.brightness` 가 빠졌을 때를 대비한 기본값(`dark` 세트는 dark, 그 외는 light)을 두는 편이 안전합니다.
+2. **제어 파일(`$metadata.json`, `$themes.json`) 생성**:
+   - 다중 파일 동기화를 쓰면 폴더(`design/tokens/`) 안에 세트 순서 파일(`$metadata.json`)과 테마 매핑 파일(`$themes.json`)이 함께 생깁니다. `gen_tokens.py` 가 폴더를 훑을 때 `$` 로 시작하는 제어 파일은 건너뛰어야 합니다.
+3. **`dimension` 과 `typography` 표기 차이**:
+   - Tokens Studio 는 `dimension` 을 `"4px"` 처럼 단위 포함 문자열로 내보내고, `typography` 는 `fontFamily`, `fontWeight`(`"700"` 또는 `"Bold"`), `fontSize`(`"34px"`), `lineHeight`(`"120%"` 또는 `"1.2"`)를 포함한 9개 속성 객체를 기본으로 합니다. `gen_tokens.py` 가 `"4px"` 와 숫자 `4` 를 모두 파싱할 수 있게 두면 충돌이 없습니다.
+
+### 11.3 Figma Variables 기본 내보내기(플러그인 없이) 가능 여부
+
+- **가능합니다(부분 지원).** Figma 의 **Local Variables** 패널에서 Collection 또는 Mode 를 우클릭해 **Export modes** 를 누르면 플러그인 없이도 **W3C DTCG 1.0 JSON**(다중 모드는 모드별 JSON 이 담긴 `.zip`)을 바로 내보내고, 다시 드래그 앤 드롭으로 가져올 수 있습니다.
+- **한계**: Figma Variables 는 Color, Number(간격·둥글기), String, Boolean 중심이므로 **색상(`light`·`dark`·`pink` 모드), 간격, 둥글기**는 플러그인 없이도 충분하지만, **`typography` 복합 토큰과 `motion`(`duration`)** 까지 한 파일로 묶어 관리하려면 Tokens Studio 가 필요합니다.
+
+출처 및 확인일 (2026-11-18):
+- Figma Variables W3C DTCG 내보내기·가져오기 안내: https://help.figma.com/hc/en-us/articles/15339657135383-Guide-to-variables-in-Figma
+
+### 11.4 디자이너가 터미널 없이 폰에서 결과 보는 방법
+
+- **Android (.apk)**:
+  1. **GitHub Actions Artifacts / Releases**: GitHub 웹의 `Actions` 탭에서 최신 실행의 `Artifacts`(`.zip` 압축 해제 후 `.apk` 탭해 설치, "출처를 알 수 없는 앱 허용" 1회) 또는 태그/브랜치 Release 에 붙은 `.apk` 를 폰 브라우저로 바로 내려받아 설치합니다.
+  2. **Firebase App Distribution (권장)**: Actions 마지막에 Firebase App Distribution 을 붙이면 빌드 완료 시 디자이너 이메일·링크(또는 QR)로 알림이 와서 GitHub 로그인 없이 한 번에 설치할 수 있습니다.
+- **iOS (TestFlight)**:
+  - 디자이너의 Apple ID 를 App Store Connect **내부 테스터**로 등록해 두면, GitHub Actions 가 `.ipa` 를 TestFlight 에 올릴 때마다 아이폰 TestFlight 앱에 알림이 뜨고 "업데이트" 버튼 한 번으로 바로 설치됩니다.
+
+출처 및 확인일 (2026-11-18):
+- GitHub Actions Artifact 내려받기: https://docs.github.com/en/actions/managing-workflow-runs-and-deployments/managing-workflow-runs/downloading-workflow-artifacts
+- Firebase App Distribution: https://firebase.google.com/docs/app-distribution
+
+---
+
+## 12. 개인정보 처리방침 초안 및 스토어 신고표
+
+확인일: 2026-11-18
+
+3단계 지도 기능 및 스토어 제출을 위한 한국어 개인정보 처리방침 초안과 Apple App Privacy / Google Play Data Safety 체크표는 [docs/PRIVACY.md](PRIVACY.md) 에 별도 문서로 작성했습니다.
+
+- **핵심 구분**: 1단계(내 기록)는 기기 내 SQLite 에만 저장하고, 3단계(내 주변 지도)는 사용자가 직접 켠 경우에만 `H3 해상도 7`(약 `5.16km²`) 격자 번호·기분·횟수·날짜·익명 계정 ID 를 전송합니다. 원본 GPS 좌표·실명·연락처·광고 식별자는 수집하지 않습니다.
+- **법률 기준**: 대한민국 「개인정보 보호법」 제30조 제1항 필수 기재사항(국가법령정보센터 https://www.law.go.kr , 개인정보보호위원회 https://www.privacy.go.kr )을 반영했으며, 상단에 법률 자문이 아님을 명시했습니다.
+
+---
+
+## 13. 출시 준비물 규격 및 토큰-스플래시/아이콘 연동
+
+확인일: 2026-11-18
+
+### 13.1 앱 아이콘 규격
+
+| 플랫폼 | 규격 | 세부 조건 |
+|---|---|---|
+| **iOS** | **`1024x1024` px 단일 아이콘** (Xcode 14+ Single Size) | 투명도(알파 채널) 없는 정사각형 PNG/JPEG. 모서리 둥글기는 iOS 가 자동 적용하므로 직각으로 냅니다. |
+| **Android 스토어** | **`512x512` px** | 32비트 PNG(알파 가능), 최대 `1,024KB`, 정사각형(스토어가 둥글기·그림자 적용). |
+| **Android 적응형 아이콘** | 전경(`foreground`) + 배경(`background`), **`108x108dp`** 캔버스 | 핵심 그림은 중앙 **`66x66dp` 안전 영역(Safe Zone)** 안에 둡니다(바깥 `21dp` 는 잘릴 수 있음). |
+| **Android 단색 테마 아이콘 (13+)** | `<monochrome>` 레이어 (`adaptive_icon_monochrome`) | 단색 실루엣으로 제작하며 `108dp` 안에서 **`44x44dp`~`72x72dp`** 내 배치를 권장합니다. |
+
+### 13.2 스토어 스크린샷, 기능 그래픽, 글자 수 제한
+
+| 항목 | Apple App Store | Google Play |
+|---|---|---|
+| **스크린샷 필수 크기** | **iPhone 6.9"** (`1320x2868`, `1290x2796`, `1260x2736` 중 하나) 또는 **6.5"** (`1284x2778`, `1242x2688`). 6.9" 를 올리면 하위 크기로 자동 축소 적용됩니다. | 폰 기준 최소 `320px` ~ 최대 `3,840px`(최대 변 <= 최소 변 x 2, 예: `1080x1920` 또는 `1170x2532`). JPEG 또는 24비트 PNG(알파 없음). |
+| **스크린샷 개수** | **1~10장** | **최소 2장 ~ 최대 8장** (기기 유형별) |
+| **기능 그래픽 (Feature Graphic)** | 없음 | **필수 `1024x500` px** (JPEG 또는 24비트 PNG, 알파 없음) |
+| **앱 이름** | 최대 **30자** | 최대 **30자** ("무료", "최고" 등 홍보성 문구 금지) |
+| **부제 / 간단한 설명** | 부제(Subtitle) 최대 **30자** | 간단한 설명(Short description) 최대 **80자** |
+| **자세한 설명 / 키워드** | 설명 **4,000자**, 키워드 **100자** | 자세한 설명 **4,000자** |
+
+### 13.3 연령 등급 설문에서 이 앱이 걸릴 항목
+
+두 스토어 모두 연령을 직접 고르지 않고 사실 기반 설문(Apple Age Rating, Google Play IARC) 결과로 등급이 결정됩니다.
+
+1. **사용자 생성 콘텐츠(UGC) 및 자유 텍스트**:
+   - 1단계·3단계 모두 정해진 기분 배너만 고르고 자유 글·사진·채팅이 없다면 **UGC 없음**으로 답할 수 있습니다(보통 **4+ / 전체이용가** 수준).
+   - 만약 "그날 한 줄 메모" 를 **남에게 공개**하거나 지도 위에 자유 텍스트를 띄우면 UGC·비관리 상호작용에 걸려 **12+ / 17+** 로 올라갈 수 있습니다(메모를 넣더라도 기기 내 개인 저장 전용으로 두어야 등급 상승을 피합니다).
+2. **위치 공유 및 타인과의 상호작용**:
+   - 3단계 지도는 개인을 특정하지 않는 동네 격자(`H3 7`) 통계 표시뿐이고 1:1 만남·채팅이 없으므로 "사용자 간 위치 공유·실시간 소통" 이 아님을 명확히 구분해 답합니다.
+3. **감정·멘탈 표현 ("화나요", "슬퍼요", "불안해요")**:
+   - 폭력·자해 조장이나 의료 진단이 아니므로 해당 항목은 "아니오" 이지만, 설명·스크린샷에 의학적 효능이나 자극적 문구를 넣지 않아야 합니다.
+
+### 13.4 `flutter_launcher_icons` · `flutter_native_splash` 와 토큰 파이프라인 연동
+
+`design/tokens.json`(또는 `design/tokens/*.json`) 의 배경색(`light.ground`, `dark.ground`)을 `tool/gen_tokens.py` 가 읽어 설정 파일을 함께 생성하면, 디자이너가 토큰 색을 바꿀 때 앱 아이콘 배경과 네이티브 스플래시 색이 자동으로 따라갑니다.
+
+1. **`flutter_launcher_icons` (`^0.14.4`)**:
+   - `tool/gen_tokens.py` 가 `flutter_launcher_icons.yaml` 의 `adaptive_icon_background` 값을 토큰의 `light.ground`(예: `"#F6F6F8"`)로 갱신하게 둡니다.
+   - `adaptive_icon_foreground` 와 Android 13+ 용 `adaptive_icon_monochrome` 경로를 지정하고 `dart run flutter_launcher_icons` 를 실행합니다.
+2. **`flutter_native_splash` (`^2.4.x`)**:
+   - 네이티브 스플래시는 Flutter 엔진이 뜨기 전 OS 테마를 따르므로, `flutter_native_splash.yaml` 의 `color` / `android_12.color` 에 `light.ground`(`"#F6F6F8"`), `color_dark` / `android_12.color_dark` 에 `dark.ground`(`"#121216"`) 를 `tool/gen_tokens.py` 가 써 주도록 잇습니다.
+   - 이후 `dart run flutter_native_splash:create` 를 실행하면 iOS LaunchScreen 과 Android 12+ Splash API 리소스가 토큰 색과 맞물려 생성됩니다.
+
+출처 및 확인일 (2026-11-18):
+- Apple App Store 스크린샷·아이콘·메타데이터 규격: https://developer.apple.com/help/app-store-connect/reference/screenshot-specifications , https://developer.apple.com/app-store/product-page/
+- Apple Age Rating 가이드: https://developer.apple.com/help/app-store-connect/reference/age-ratings
+- Google Play 스토어 등록정보 그래픽·텍스트·IARC 연령 등급: https://support.google.com/googleplay/android-developer/answer/9866151 , https://support.google.com/googleplay/android-developer/answer/9859655
+- Android 적응형 아이콘 및 단색 테마 아이콘: https://developer.android.com/develop/ui/views/launch/icon_design_adaptive
+- `flutter_launcher_icons` / `flutter_native_splash`: https://pub.dev/packages/flutter_launcher_icons , https://pub.dev/packages/flutter_native_splash
+
+---
+
+## 14. 앱 아이콘 시안 (`design/concepts/icon/`)
+
+확인일: 2026-11-18
+
+13절 규격에 맞춰 두 가지 방향(A: 둥근 도형 캐릭터 얼굴, B: Baloo 2 ExtraBold `M` + `#F2A900` 노란 점)의 아이콘 시안을 `design/concepts/icon/` 에 제작했습니다.
+
+- 구성: 방향별 `ios-1024.png`(`1024x1024` 알파 없음), `foreground.png`(`432x432` 투명 배경, `66dp` 안전 영역 준수), `monochrome.png`(`432x432` 단색), `preview-48.png`(`48x48` 미리보기) 및 `design/concepts/icon/README.md` (배경색 `#FFFFFF`, 도구·상업 이용 안내).
+
+---
+
+## 15. 도장 글꼴 조사 ("참 잘했어요" 궁서·붓글씨 후보 및 SVG 비교)
+
+확인일: 2026-11-18
+
+### 15.1 상업 이용 가능한 무료 한글 붓글씨·궁서 느낌 글꼴 후보 5종
+
+| 글꼴 | 라이선스 | 원본 파일 크기 | 2,350자(KS X 1001) 지원 | "참 잘했어요" 5글자 서브셋 크기 | 궁서와 닮은 정도 | 비고 |
+|---|---|---|---|---|---|---|
+| **조선궁서체 (`ChosunGs`)** | 자체 무료 라이선스 (상업 가능, **수정·재판매 금지**) | 약 `3.37MB` (압축 기준) | 지원 (2,350자) | **서브셋 권장 안 함** (파일 수정 금지 조항 충돌 소지) | **★★★★★** (정통 궁서체) | 서브셋 없이 통째로 넣으면 용량이 큽니다. |
+| **전주완판본체 (순체·각체)** | 공공누리 제1유형 (상업 가능, 출처 표시, **임의 변경 금지**) | 미확인 (**추측**: `1~4MB` 대) | **추측**: 2,350자 지원 | **서브셋 권장 안 함** (임의 변경 금지 조항 주의) | **★★★★☆** (목판·고전 붓글씨) | 고풍스러운 도장 느낌에 잘 어울립니다. |
+| **연성 (`Yeon Sung`)** | **SIL OFL 1.1** (상업·수정·서브셋 가능) | 약 `540~600KB` (TTF) | 지원 (2,350자+) | **추측**: 약 `2~8KB` (`pyftsubset` 기준) | **★★★☆☆** (고전 붓글씨·부드러운 결) | 원본도 가볍고 서브셋이 자유롭습니다. |
+| **나눔손글씨 붓 (`Nanum Brush Script`)** | **SIL OFL 1.1** (상업·수정·서브셋 가능) | 약 `1.4~1.5MB` (TTF) | 지원 (한글 11,172자 풀세트) | **추측**: 약 `3~10KB` (`pyftsubset` 기준) | **★★★☆☆** (캘리그래피 붓글씨) | 정통 궁서보다는 자유로운 붓글씨입니다. |
+| **동해독도 (`East Sea Dokdo`)** | **SIL OFL 1.1** (상업·수정·서브셋 가능) | 약 `900KB~1.2MB` (TTF) | 지원 (2,350자+) | **추측**: 약 `3~10KB` (`pyftsubset` 기준) | **★★☆☆☆** (거친 붓글씨) | 거친 획이라 작은 도장에는 뭉칠 수 있습니다. |
+
+참고: `pyftsubset`(fonttools) 으로 한글 5글자만 추출한 비압축 `.ttf` 크기는 일반적으로 `2~10KB` 수준입니다.
+
+### 15.2 도장을 글꼴로 그릴지 vs 디자이너 SVG 하나로 둘지 비교
+
+| 기준 | 글꼴로 그리기 (`Text` + 폰트 파일) | 디자이너 SVG 하나 (`flutter_svg` / Path) |
+|---|---|---|
+| **파일 크기** | OFL 서브셋 시 `2~10KB`, 수정 금지 폰트 통째 사용 시 `1.5~3.4MB` | 테두리+글자 합쳐 보통 **`2~15KB`** |
+| **모양 일관성** | 기기별 폰트 힌팅·시스템 글자 크기(`TextScaler`) 영향으로 테두리 대비 어긋날 수 있음 | 어떤 화면 배율에서도 테두리와 글자 비율이 **항상 동일**함 |
+| **라이선스 위험** | 궁서체 원형(`조선궁서체` 등)을 서브셋하면 수정 금지 조항과 부딪힐 수 있음 | 디자이너가 직접 그린 SVG 는 폰트 파일 재배포·수정 이슈가 **없음** |
+| **문구 변경 유연성** | 날짜·숫자 등 **바뀌는 글자**를 바로 찍을 수 있음 | 고정 문구("참 잘했어요") 전용 |
+
+**정리**:
+- 도장 문구가 `"참 잘했어요"` 로 고정이라면 **디자이너가 만든 SVG 하나**로 두는 편이 용량, 화면 일관성, 라이선스 안전성 모두에서 가장 좋습니다.
+- 도장 안에 날짜·횟수처럼 바뀌는 글자를 함께 넣어야 한다면 **SIL OFL 1.1** 인 **`연성`** 이나 **`나눔손글씨 붓`** 을 필요한 글자만 서브셋해 쓰는 것이 안전합니다.
+
+출처 및 확인일 (2026-11-18):
+- Google Fonts 한글 OFL 저장소(`Song Myung`, `Yeon Sung`, `Nanum Brush Script`, `East Sea Dokdo`): https://github.com/google/fonts/tree/main/ofl
+- 조선궁서체 라이선스·안내 (눈누 / 산돌구름): https://noonnu.cc/font_page/468
+- 전주완판본체 안내 (눈누): https://noonnu.cc/font_page/224
+- `fonttools` (`pyftsubset`): https://fonttools.readthedocs.io/en/latest/subset/

@@ -1,0 +1,105 @@
+name: ci
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+  push:
+    branches: [main]
+permissions:
+  contents: read
+# One run per PR or branch. A newer push cancels the older run, so macOS jobs do not pile up
+# in the queue and stale commits do not report failures. Editing the PR text runs in its own group.
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}-${{ github.event.action == 'edited' && 'text' || 'build' }}
+  cancel-in-progress: true
+jobs:
+  # Runs again when the title or body is edited. The builds below do not.
+  pr-text:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: privacy scan of the PR title and body
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          printf '%s\n\n%s\n' "$PR_TITLE" "$PR_BODY" > "$RUNNER_TEMP/pr-text.txt"
+          python3 tool/privacy_scan.py --message "$RUNNER_TEMP/pr-text.txt"
+  check:
+    if: github.event.action != 'edited'
+    runs-on: ubuntu-latest
+    container: ghcr.io/cirruslabs/flutter:3.44.0
+    env:
+      # Container jobs change HOME, so pin the cache paths.
+      PUB_CACHE: /tmp/pub-cache
+      GRADLE_USER_HOME: /tmp/gradle
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/cache@v4
+        with:
+          path: /tmp/pub-cache
+          key: pub-${{ runner.os }}-${{ hashFiles('pubspec.lock') }}
+          restore-keys: pub-${{ runner.os }}-
+      - uses: actions/cache@v4
+        with:
+          path: |
+            /tmp/gradle/caches
+            /tmp/gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('android/**/*.gradle*', 'android/gradle/wrapper/gradle-wrapper.properties', 'pubspec.lock') }}
+          restore-keys: gradle-${{ runner.os }}-
+      - name: privacy and slop scan
+        if: github.event_name == 'pull_request'
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          # HEAD is the merge commit GitHub made, so scan the PR commits instead of its message.
+          python3 tool/privacy_scan.py --range "origin/${{ github.base_ref }}..${{ github.event.pull_request.head.sha }}"
+          python3 tool/slop_scan.py --range "origin/${{ github.base_ref }}..${{ github.event.pull_request.head.sha }}"
+      - run: python3 -m unittest discover -s tool -p 'test_*.py'
+      - run: flutter pub get
+      - run: flutter gen-l10n
+      - name: l10n sources check
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git diff --exit-code -- lib/l10n
+          python3 tool/l10n_check.py
+      - run: python3 tool/cheers_check.py
+      - run: python3 tool/gen_tokens.py --check
+      - run: dart format --output=none --set-exit-if-changed $(find lib test -name '*.dart' ! -name '*.g.dart')
+      - run: flutter analyze
+      - run: flutter test --exclude-tags golden
+      # Compares screen pictures with the committed goldens. Same as tool/shots.sh --check locally.
+      - name: Compare screen pictures
+        run: flutter test --tags golden test/goldens
+      - name: Upload diff pictures
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: golden-diffs
+          path: test/goldens/failures/
+          if-no-files-found: ignore
+      - run: flutter build apk --debug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mood-clicker-debug-apk
+          path: build/app/outputs/flutter-apk/app-debug.apk
+          retention-days: 14
+          if-no-files-found: error
+  apple:
+    needs: check
+    runs-on: macos-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: ~/.pub-cache
+          key: pub-${{ runner.os }}-${{ hashFiles('pubspec.lock') }}
+          restore-keys: pub-${{ runner.os }}-
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.44.0
+      - run: flutter pub get
+      - run: flutter build ios --debug --no-codesign
+      - run: flutter build macos --debug

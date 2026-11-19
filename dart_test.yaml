@@ -1,0 +1,3 @@
+tags:
+  golden:
+    # Golden picture comparison. Only matches in linux docker (tool/shots.sh) and CI.

@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# Run Flutter. The flutter on PATH is used when it is the pinned version (see tool/flutter_env.sh);
+# otherwise it runs in a docker image, so nothing has to be installed on the host.
+# FL_DOCKER=1 forces docker. Each working tree uses its own Gradle volume so parallel builds do not
+# wait on one lock; FL_GRADLE_VOLUME=<name> picks the volume by hand. The Android NDK is one shared
+# volume (mood-clicker-android-sdk, FL_ANDROID_SDK_VOLUME to rename) so it is downloaded once.
+# CMake gets the same treatment in the volume named like it with -cmake added.
+# Examples: tool/fl test, tool/fl analyze, tool/fl build apk --debug
+set -euo pipefail
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+. "$ROOT/tool/flutter_env.sh"
+
+if use_local_flutter; then
+  cd "$ROOT"
+  exec flutter "$@"
+fi
+
+# An empty array under set -u fails on bash 3.2, hence the ${TTY[@]+...} form.
+TTY=()
+[ -t 1 ] && TTY=(-t)
+# Tests and analysis run inside a memory cap (4g, no extra swap) so a runaway test cannot take the
+# machine down. FL_TEST_MEMORY changes it, in docker sizes such as 6g. Builds are not capped:
+# Gradle asks for 8G (android/gradle.properties). The local flutter path above has no cap.
+LIMIT=()
+case "${1:-}" in
+  test | analyze) LIMIT=(--memory "${FL_TEST_MEMORY:-4g}" --memory-swap "${FL_TEST_MEMORY:-4g}") ;;
+esac
+exec docker run --rm ${TTY[@]+"${TTY[@]}"} ${LIMIT[@]+"${LIMIT[@]}"} \
+  -v "$ROOT":/app \
+  -v mood-clicker-pub-cache:/root/.pub-cache \
+  -v "$(gradle_volume "$ROOT")":/root/.gradle \
+  -w /app \
+  -v "$(android_sdk_volume)":/opt/android-sdk-linux/ndk \
+  -v "$(android_cmake_volume)":/opt/android-sdk-linux/cmake \
+  -e OWNER="$(id -u):$(id -g)" \
+  "$FLUTTER_IMAGE" \
+  bash /app/tool/fl_container.sh "$@"

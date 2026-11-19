@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>그날 상세</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:Pretendard;src:url(/_blob/eac3a98fdd643af8c80b7f3daead90fa);font-weight:400}
+@font-face{font-family:Pretendard;src:url(/_blob/6dd9f1d0495ff325d173b1d71cb974c9);font-weight:700}
+body{margin:0}
+a,button{-webkit-tap-highlight-color:transparent;outline:none}
+a:focus-visible,button:focus-visible{outline:2px solid #16161A;outline-offset:2px}
+.press{transition:transform 90ms ease-out,filter 90ms ease-out}.press:active{transform:scale(0.98);filter:brightness(0.94)}.tap{transition:transform 90ms ease-out,filter 90ms ease-out}.tap:active{transform:scale(0.92);filter:brightness(0.9)}
+
+a{color:inherit;text-decoration:none}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; padding: 56px 16px 32px; background: {{p.ground}}; color: {{p.ink}}; font-family: Pretendard, system-ui, sans-serif; display: flex; flex-direction: column; gap: 24px">
+<div style="display: flex; align-items: center; gap: 8px">
+<a class="tap" href="Calendar.dc.html" aria-label="뒤로" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: {{p.surface}}">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="{{p.ink}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg>
+</a>
+<div style="font-size: 22px; font-weight: 700">11월 13일 금요일</div>
+</div>
+<div style="padding: 24px; border-radius: 24px; background: {{p.surface}}; display: flex; flex-direction: column; gap: 4px">
+<div style="font-size: 13px; color: {{p.inkMuted}}">이날의 기분</div>
+<div style="font-size: 34px; font-weight: 700; line-height: 1.2">행복해요</div>
+<div style="font-size: 13px; color: {{p.ink2}}">가장 많이 두드린 기분입니다</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 12px; padding: 0 8px">
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="5">
+<div style="display: flex; align-items: center; gap: 12px">
+<div style="width: 72px; font-size: 16px">{{r.label}}</div>
+<div style="flex-grow: 1; height: 12px; border-radius: 999px; background: {{p.surface}}; overflow: hidden">
+<div style="height: 100%; width: {{r.pct}}; background: {{r.color}}; border-radius: 999px"></div>
+</div>
+<div style="width: 40px; text-align: right; font-size: 13px; color: {{p.ink2}}">{{r.count}}</div>
+</div>
+</sc-for>
+</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+<div style="padding: 20px; border-radius: 24px; background: {{p.surface}}; display: flex; flex-direction: column; gap: 4px">
+<div style="font-size: 13px; color: {{p.inkMuted}}">행복 쪽</div>
+<div style="font-size: 34px; font-weight: 700; color: {{p.ink}}">214</div>
+</div>
+<div style="padding: 20px; border-radius: 24px; background: {{p.surface}}; display: flex; flex-direction: column; gap: 4px">
+<div style="font-size: 13px; color: {{p.inkMuted}}">슬픔 쪽</div>
+<div style="font-size: 34px; font-weight: 700; color: {{p.ink}}">58</div>
+</div>
+</div>
+<div style="margin-top: auto; display: flex; flex-direction: column; gap: 12px">
+<div style="font-size: 16px; font-weight: 700">이번 주 돌아보기</div>
+<div style="display: flex; align-items: flex-end; gap: 8px; height: 96px">
+<sc-for list="{{week}}" as="w" hint-placeholder-count="7">
+<div style="flex: 1 1 0; display: flex; flex-direction: column; align-items: center; gap: 6px">
+<div style="width: 100%; display: flex; flex-direction: column; justify-content: flex-end; height: 72px; gap: 2px">
+<div style="height: {{w.sad}}; background: {{p.mapLine}}; border-radius: 6px"></div>
+<div style="height: {{w.happy}}; background: {{p.ink}}; border-radius: 6px"></div>
+</div>
+<div style="font-size: 13px; color: {{p.inkMuted}}">{{w.d}}</div>
+</div>
+</sc-for>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+// Theme colors. Same values as design/tokens.json. The theme picked in settings is remembered in this browser and changes every screen together
+const PALETTES = {
+  light: { id: 'light', ground: '#FFFFFF', surface: '#F5F5F7', line: '#E8E8EC', ink: '#16161A', ink2: '#3A3A42', inkMuted: '#62626C', muted: '#62626C', faint: '#A0A0AA', fill: '#EDEDF0', fillEdge: '#C8C8D0', mapLine: '#D4D4DC', happy: '#B07A00', sad: '#4C6FE0', error: '#C93A2F', inkRgb: '22,22,26' },
+  dark: { id: 'dark', ground: '#121216', surface: '#222228', line: '#383840', ink: '#ECECF0', ink2: '#C8C8D0', inkMuted: '#A0A0AA', muted: '#A0A0AA', faint: '#6E6E78', fill: '#2A2A30', fillEdge: '#4A4A52', mapLine: '#383840', happy: '#FFC23D', sad: '#7A9CFF', error: '#F0685C', inkRgb: '236,236,240' },
+  pink: { id: 'pink', ground: '#FFF1F5', surface: '#FFFFFF', line: '#F6D3DF', ink: '#3A1E2B', ink2: '#5A3445', inkMuted: '#80505F', muted: '#80505F', faint: '#B08392', fill: '#FF8FB8', fillEdge: '#FF5C9A', mapLine: '#F2C2D3', happy: '#D9407A', sad: '#7B68E8', error: '#C93A2F', inkRgb: '58,30,43' }
+};
+function themeChoice() {
+  try { return localStorage.getItem('mc-theme') || 'light'; } catch (e) { return 'light'; }
+}
+function themePalette(forced) {
+  let id = forced || themeChoice();
+  if (id === 'system') id = typeof matchMedia !== 'undefined' && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  return PALETTES[id] || PALETTES.light;
+}
+function appSettings() {
+  try { return JSON.parse(localStorage.getItem('mc-settings') || '{}'); } catch (e) { return {}; }
+}
+let P = themePalette();
+
+class Component extends DCLogic {
+renderVals() {
+    P = themePalette(this.props && this.props.theme);
+    return Object.assign({ p: P }, this.renderVals0());
+  }
+  renderVals0() {
+const happy = P.ink;
+const sad = '#B8B8C0';
+const data = [['행복해요', 174, happy], ['설레요', 40, happy], ['화나요', 6, sad], ['슬퍼요', 52, sad], ['불안해요', 0, sad]];
+const max = 174;
+const rows = data.map(([label, count, color]) => ({ label, count, color, pct: Math.round(count / max * 100) + '%' }));
+const week = [['일', 30, 10], ['월', 50, 20], ['화', 20, 40], ['수', 60, 5], ['목', 45, 15], ['금', 70, 18], ['토', 0, 0]]
+.map(([d, h, s]) => ({ d, happy: h + 'px', sad: s + 'px' }));
+return { rows, week };
+}
+}
+</script>
+</body>
+</html>

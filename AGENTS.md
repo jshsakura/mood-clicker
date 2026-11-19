@@ -1,0 +1,80 @@
+# AGENTS.md
+
+코딩 에이전트를 위한 안내다. 사람은 README.md 부터 본다. 여러 에이전트가 팀으로 일하는 방법은 `docs/HARNESS.md` 에 있다.
+
+기분을 고르고 연타한 횟수로 그날 기분의 크기를 남기는 앱의 파일럿이다. Flutter 하나로 안드로이드,
+아이폰, 맥을 낸다. 계획은 `docs/PLAN.md` 에 있다.
+
+## 지금 할 일과 하지 않을 일
+
+- 파일럿과 개발 환경에 집중한다. 화면은 꾸미지 않는다. 디자인은 디자이너가 맡는다.
+- 색, 간격, 둥글기, 글자, 움직임 값은 `design/tokens.json` 에만 둔다. 화면 코드는 `context.palette`,
+  `Space`, `Radii`, `TypeScale`, `Motion` 만 쓴다. `Color(0x…)` 나 숫자 간격을 위젯에 직접 쓰지 않는다.
+- `lib/design/tokens.g.dart` 는 생성 파일이다. 손대지 말고 `python3 tool/gen_tokens.py` 로 만든다.
+- 화면 부품은 `lib/design/parts/` 에 둔다. 디자이너가 고치는 곳이 이 두 군데여야 한다. 자세한 것은 `docs/DESIGN.md`.
+- 지도와 서버는 3단계다. 그 전에는 기기 밖으로 데이터를 보내지 않는다.
+- 누구나 있으리라 여기는 기능은 누구나 찾는 자리에 둔다. 뒤로 가기는 왼쪽 위, 달 넘기기는 달 이름 양옆 화살표와 좌우 밀기, 닫기는 시트 위나 아래로 내리기, 설정은 첫 화면 머리글이다. 시안에 없어도 흔한 앱의 자리를 따른다. 모양이 비슷한 두 단추가 다른 일을 하게 두지 않는다(뒤로와 지난달 화살표처럼). 화면을 만들면 "이 화면에서 사람이 찾을 기능이 전부 그 자리에 있는가" 를 확인하고 보고에 적는다.
+
+## 확인
+
+호스트에 Flutter 를 깔지 않는다. 도커로 돌린다.
+
+```bash
+tool/setup.sh                                   # 클론 뒤 한 번. git 훅을 켠다
+tool/test.sh                                    # 테스트 전부. push 전에 이것을 먼저 돌린다
+tool/fl test                                    # 위젯, 단위 테스트
+tool/fl analyze
+tool/format.sh                                  # 포맷. 생성 파일 *.g.dart 는 건드리지 않는다
+python3 -m unittest discover -s tool -p 'test_*.py'
+tool/fl build apk --debug
+```
+
+아이폰과 맥 빌드는 맥이나 CI 의 macOS 러너에서 한다(`.github/workflows/ci.yml`).
+진동과 애니메이션의 손맛은 실기기에서만 판정한다. 에뮬레이터 결과로 통과라고 하지 않는다.
+
+## git
+
+- `main` 에 바로 push 하지 않는다. 브랜치를 올리고 PR 로 합친다.
+- 커밋 메시지는 `<type>: <설명>`. type 은 feat fix refactor docs test chore perf ci.
+- 훅(`.githooks/`)을 `--no-verify` 로 건너뛰지 않는다.
+
+## 개인정보와 서버 정보
+
+코드, 테스트, 픽스처, 주석, 문서, 커밋 메시지, PR 본문 어디에도 넣지 않는다.
+`tool/privacy_scan.py` 가 커밋, 커밋 메시지, push, PR 에서 막는다.
+
+코드와 주석은 영어로만 쓴다. 한글은 문서(.md), 번역(lib/l10n/*.arb), 토큰 데이터(design/tokens.json)에만 둔다. 화면 문구는 코드에 적지 않고 ARB 키로 쓴다. `tool/slop_scan.py` 가 새로 추가한 코드 줄의 한글을 막는다. 예전 코드의 한글은 한 번에 영어로 옮길 예정이다.
+
+`tool/slop_scan.py` 는 같은 자리에서 AI 티를 막는다. 엠대시와 엔대시, 둥근 따옴표, 정해 둔 AI 말투, 제목과 목록의 꾸밈 이모지, `lib/` 의 `print`·`debugPrint`·`as dynamic` 이다. 다트 코드에서는 그라데이션, `BoxShadow`·`Shadow`, 블러, 0 이 아닌 `elevation` 도 막는다(평면 스타일, `docs/DESIGN.md`). 기계로 못 가리는 것(수동태, 군더더기, 과한 방어 코드)은 리뷰 때 pstack 의 `unslop`(글), `deslop`(코드) 스킬로 본다. 정말 필요한 줄에만 `slop-ok` 를 적는다.
+
+- 실제 IP, 호스트명, 도메인, 이메일, 사람 이름, 운영 경로, 홈 경로, 키, 토큰.
+- 실제 좌표. 위치 기반 앱이라 특히 조심한다. 테스트 좌표는 소수 둘째 자리까지만 쓰거나 바다 한가운데 같은 가짜 값을 쓴다.
+- 서명 키, `key.properties`, `google-services.json`, `GoogleService-Info.plist`, `.env`.
+
+대신 `192.0.2.0/24`, `example.com`, `"a" * 64` 같은 문서용 값을 쓴다.
+정말 괜찮은 줄만 그 줄에 `privacy-ok` 를 적는다.
+
+## 글쓰기
+
+UI 문구와 문서는 합니다체로 쓴다. 엠대시로 문장을 잇지 않는다.
+
+## 스킬
+
+`.claude/skills/` 아래 세 스킬을 쓴다.
+
+- `cheers-write`: 기분별 응원 문구를 쓰거나 고칠 때 (`docs/PRINCIPLES.md`, `docs/EVIDENCE.md`, `tool/cheers_rules.json`, `tool/cheers_check.py`)
+- `principles-check`: 새 기능이나 화면을 여섯 가지 핵심 가치와 안전·민감정보 기준에 대어 볼 때 (`docs/PRINCIPLES.md`, `docs/PRIVACY.md`)
+- `l10n-add`: 화면 문구 키를 추가하고 번역을 맞출 때 (`docs/I18N.md`, `tool/l10n_check.py`)
+
+## 팀으로 일할 때
+
+자세한 것은 `docs/HARNESS.md`. 에이전트 종류와 상관없이 지킨다. Claude 훅이 없는 에이전트도 같은 규칙이다.
+
+일을 시작하기 전에 `docs/LESSONS.md` 에서 자기 일과 닿는 절을 읽는다. 이 팀이 실제로 한 실수와 그것을 막는 검사가 있다. 소리, 음악, 글꼴을 넣을 때는 출처를 `THIRD_PARTY_NOTICES.md` 에 먼저 적는다(`tool/test_asset_licenses.py` 가 본다). 수노 녹음본은 넣지 않는다.
+
+- 일을 받으면 자기 git worktree 에서 맡은 범위만 고치고 커밋까지만 한다. push, PR, 합치기는 팀장이 한다.
+- 끝나면 `tool/team/itl send <팀장 팬> '…'` 로 브랜치, 커밋, 세 줄 요약, 명세와 다르게 판단한 점, 실제로 돌린 검사 결과를 보낸다. 실패와 건너뛴 것도 적는다.
+- 오래 걸리는 명령은 백그라운드로 띄우고 끝날 때까지 기다린다. `sleep` 뒤 확인, 출력 파일 반복 확인을 하지 않는다.
+- 파일 조각을 하나씩 들여다보는 호출을 이어 붙이지 않는다. 볼 파일과 범위를 정해 한 번에 뽑는다.
+- `git stash` 는 모든 worktree 가 같이 쓴다. 맨 `git stash`, `git stash pop` 을 쓰지 않는다. 임시 커밋으로 비켜 둔다.
+- 사람이 정할 일은 상수 하나로 감추고 진행한다. 공개, 삭제, 배포처럼 되돌리기 어려운 일은 먼저 묻는다.

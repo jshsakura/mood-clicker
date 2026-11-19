@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Default (English) app name; values-ko and values-ja override it. -->
+<resources>
+    <string name="app_name">Unknown</string>
+    <string name="widget_description">Today\'s mood and tap count</string>
+</resources>

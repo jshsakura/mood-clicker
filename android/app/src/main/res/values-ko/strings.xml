@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Unknown</string>
+    <string name="widget_description">오늘의 기분과 두드린 횟수</string>
+</resources>

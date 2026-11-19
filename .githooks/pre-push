@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# Never push straight to main. Re-scan every outgoing commit and run the tests.
+set -euo pipefail
+ROOT="$(git rev-parse --show-toplevel)"
+cd "$ROOT"
+ZERO=0000000000000000000000000000000000000000
+while read -r _local_ref local_sha remote_ref remote_sha; do
+  [ "$local_sha" = "$ZERO" ] && continue
+  case "$remote_ref" in
+    refs/heads/main|refs/heads/master)
+      echo "Do not push to main directly. Push a branch and merge it through a PR." >&2
+      exit 1 ;;
+  esac
+  if [ "$remote_sha" = "$ZERO" ]; then
+    BASE=$(git merge-base "$local_sha" origin/main 2>/dev/null || git rev-list --max-parents=0 "$local_sha" | tail -1)
+  else
+    BASE=$remote_sha
+  fi
+  # Tests run on the working folder, so pushing another branch would test the wrong code.
+  if [ "$local_sha" != "$(git rev-parse HEAD)" ]; then
+    echo "The pushed commit is not the checked-out HEAD. Switch to that branch, then push." >&2
+    exit 1
+  fi
+  if [ -n "$(git status --porcelain)" ]; then
+    echo "Uncommitted or untracked files would change what the tests see. Commit or remove them, then push." >&2
+    exit 1
+  fi
+  echo "> privacy and slop scan of outgoing commits"
+  python3 tool/privacy_scan.py --range "$BASE..$local_sha"
+  python3 tool/slop_scan.py --range "$BASE..$local_sha"
+  echo "> tokens and generated files of the outgoing commit"
+  tool/check_snapshot.sh "$local_sha"
+done
+echo "> tests"
+tool/test.sh
+echo "ok: pre-push"

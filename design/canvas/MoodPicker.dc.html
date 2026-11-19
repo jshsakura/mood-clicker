@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>기분 고르기</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:Pretendard;src:url(/_blob/eac3a98fdd643af8c80b7f3daead90fa);font-weight:400}
+@font-face{font-family:Pretendard;src:url(/_blob/6dd9f1d0495ff325d173b1d71cb974c9);font-weight:700}
+body{margin:0}
+a,button{-webkit-tap-highlight-color:transparent;outline:none}
+a:focus-visible,button:focus-visible{outline:2px solid #16161A;outline-offset:2px}
+.press{transition:transform 90ms ease-out,filter 90ms ease-out}.press:active{transform:scale(0.98);filter:brightness(0.94)}.tap{transition:transform 90ms ease-out,filter 90ms ease-out}.tap:active{transform:scale(0.92);filter:brightness(0.9)}
+
+a{color:inherit;text-decoration:none}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; padding: 64px 24px 32px; background: {{p.ground}}; color: {{p.ink}}; font-family: Pretendard, system-ui, sans-serif; display: flex; flex-direction: column; gap: 24px">
+<div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 12px">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<div style="font-size: 13px; color: {{p.muted}}">11월 18일 수요일</div>
+<h1 style="margin: 0; font-size: 34px; font-weight: 700; line-height: 1.2">오늘 기분은</h1>
+</div>
+<div style="display: flex; gap: 4px">
+<a class="tap" href="Map.dc.html" aria-label="내 주변 지도" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: {{p.surface}}">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="{{p.ink}}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"></path><path d="M9 4v14M15 6v14"></path></svg>
+</a>
+<a class="tap" href="Calendar.dc.html" aria-label="달력" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: {{p.surface}}">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="{{p.ink}}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="3"></rect><path d="M3.5 10h17M8 3v4M16 3v4"></path></svg>
+</a>
+<a class="tap" href="Settings.dc.html" aria-label="설정" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: {{p.surface}}">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="{{p.ink}}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M12 2.5v3M12 18.5v3M4.2 6.5l2.6 1.5M17.2 16l2.6 1.5M4.2 17.5 6.8 16M17.2 8l2.6-1.5"></path></svg>
+</a>
+</div>
+</div>
+<div style="flex-grow: 1; display: flex; flex-direction: column; gap: 12px">
+<sc-for list="{{moods}}" as="m" hint-placeholder-count="5">
+<a href="Tap.dc.html" class="press" style="flex: 1 1 0; display: flex; align-items: center; gap: 16px; padding: 0 24px; border-radius: 24px; background: {{p.surface}}">
+<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="{{m.color}}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M9 10h.01M15 10h.01" stroke-width="2.4"></path><path d="{{m.brow}}"></path><path d="{{m.mouth}}"></path></svg>
+<div style="flex-grow: 1; font-size: 22px; font-weight: 700">{{m.label}}</div>
+<div style="font-size: 13px; color: {{p.muted}}">{{m.count}}</div>
+</a>
+</sc-for>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light","pink"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+// Theme colors. Same values as design/tokens.json. The theme picked in settings is remembered in this browser and changes every screen together
+const PALETTES = {
+  light: { id: 'light', ground: '#FFFFFF', surface: '#F5F5F7', line: '#E8E8EC', ink: '#16161A', ink2: '#3A3A42', inkMuted: '#62626C', muted: '#62626C', faint: '#A0A0AA', fill: '#EDEDF0', fillEdge: '#C8C8D0', mapLine: '#D4D4DC', happy: '#B07A00', sad: '#4C6FE0', error: '#C93A2F', inkRgb: '22,22,26' },
+  dark: { id: 'dark', ground: '#121216', surface: '#222228', line: '#383840', ink: '#ECECF0', ink2: '#C8C8D0', inkMuted: '#A0A0AA', muted: '#A0A0AA', faint: '#6E6E78', fill: '#2A2A30', fillEdge: '#4A4A52', mapLine: '#383840', happy: '#FFC23D', sad: '#7A9CFF', error: '#F0685C', inkRgb: '236,236,240' },
+  pink: { id: 'pink', ground: '#FFF1F5', surface: '#FFFFFF', line: '#F6D3DF', ink: '#3A1E2B', ink2: '#5A3445', inkMuted: '#80505F', muted: '#80505F', faint: '#B08392', fill: '#FF8FB8', fillEdge: '#FF5C9A', mapLine: '#F2C2D3', happy: '#D9407A', sad: '#7B68E8', error: '#C93A2F', inkRgb: '58,30,43' }
+};
+function themeChoice() {
+  try { return localStorage.getItem('mc-theme') || 'light'; } catch (e) { return 'light'; }
+}
+function themePalette(forced) {
+  let id = forced || themeChoice();
+  if (id === 'system') id = typeof matchMedia !== 'undefined' && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  return PALETTES[id] || PALETTES.light;
+}
+function appSettings() {
+  try { return JSON.parse(localStorage.getItem('mc-settings') || '{}'); } catch (e) { return {}; }
+}
+let P = themePalette();
+
+class Component extends DCLogic {
+renderVals() {
+    P = themePalette(this.props && this.props.theme);
+    return Object.assign({ p: P }, this.renderVals0());
+  }
+  renderVals0() {
+const p = P;
+const smile = 'M8 14c1.2 1.6 2.6 2.4 4 2.4s2.8-.8 4-2.4';
+const frown = 'M8.5 16.5c1-1.2 2.2-1.8 3.5-1.8s2.5.6 3.5 1.8';
+const moods = [
+{ label: '행복해요', count: '오늘 128', color: p.happy, brow: '', mouth: smile },
+{ label: '설레요', count: '오늘 40', color: p.happy, brow: 'M7.5 7.5l2-1M16.5 7.5l-2-1', mouth: 'M8 13.5h8c0 2.4-1.8 4-4 4s-4-1.6-4-4z' },
+{ label: '화나요', count: '오늘 0', color: p.sad, brow: 'M7.5 7.5l3 1.5M16.5 7.5l-3 1.5', mouth: frown },
+{ label: '슬퍼요', count: '오늘 12', color: p.sad, brow: 'M8 9l2.5-1.2M16 9l-2.5-1.2', mouth: frown },
+{ label: '불안해요', count: '오늘 0', color: p.sad, brow: '', mouth: 'M8 15.5c.7-.7 1.3-.7 2 0s1.3.7 2 0 1.3-.7 2 0 1.3.7 2 0' }
+];
+return { p, moods };
+}
+}
+</script>
+</body>
+</html>

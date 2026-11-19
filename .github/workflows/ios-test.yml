@@ -1,0 +1,35 @@
+name: ios-test
+# Builds an unsigned iOS app for test installs (signed on the tester's side with a personal
+# Apple ID, for example with Sideloadly). Store builds need a paid developer account instead.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: ios-test-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  ipa:
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.44.0
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter build ios --release --no-codesign
+      - name: package ipa
+        run: |
+          mkdir -p dist/Payload
+          cp -R build/ios/iphoneos/Runner.app dist/Payload/
+          cd dist && zip -qry "unknown-test-${GITHUB_SHA::7}.ipa" Payload
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ios-unsigned
+          path: dist/*.ipa
+          retention-days: 14

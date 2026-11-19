@@ -1,0 +1,11 @@
+# Flutter localization generation settings.
+# Korean (app_ko.arb) is the template; en and ja follow it key for key.
+# Since Flutter 3.44 the synthetic package is gone, so gen-l10n writes real
+# dart files next to the ARB sources under lib/l10n. They are generated
+# artifacts, so they use the repo's *.g.dart convention and land in git like
+# lib/design/tokens.g.dart. Regenerate with `tool/fl gen-l10n` after editing
+# an ARB file (tool/l10n_check.py keeps them fresh in CI).
+arb-dir: lib/l10n
+template-arb-file: app_ko.arb
+output-localization-file: app_localizations.g.dart
+nullable-getter: false

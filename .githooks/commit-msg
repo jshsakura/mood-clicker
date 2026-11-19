@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# Check the commit message format (feat: ...), personal data and AI tells.
+set -euo pipefail
+ROOT="$(git rev-parse --show-toplevel)"
+FIRST=$(grep -v '^#' "$1" | head -1)
+if ! printf '%s' "$FIRST" | grep -qE '^(feat|fix|refactor|docs|test|chore|perf|ci)(\([a-z0-9-]+\))?!?: .+'; then
+  echo "The first line must be '<type>: <summary>'. Types: feat fix refactor docs test chore perf ci" >&2
+  exit 1
+fi
+python3 "$ROOT/tool/privacy_scan.py" --message "$1"
+python3 "$ROOT/tool/slop_scan.py" --message "$1"

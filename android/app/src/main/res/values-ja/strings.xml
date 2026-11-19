@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Unknown</string>
+    <string name="widget_description">今日の気分とタップ回数</string>
+</resources>

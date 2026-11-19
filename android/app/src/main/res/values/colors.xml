@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Generated file. Do not edit. tool/gen_tokens.py writes it from light.color.ground and light.color.ink in design/tokens.json. -->
+    <color name="splash_background">#FFFFFF</color>
+    <color name="widget_ground">#FFFFFF</color>
+    <color name="widget_ink">#16161A</color>
+    <color name="widget_line">#E8E8EC</color>
+</resources>
