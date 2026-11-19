@@ -34,7 +34,7 @@ void main() {
           ..level = 0.5
           ..tiltRadians = tilt(rightDown);
         expect(sim.surfaceYAt(380), lessThan(sim.surfaceYAt(10)));
-        expect(sim.spillSide, 1);
+        expect(Spill.lowSide(sim.tiltRadians), 1);
       });
 
       test('tilting left sends the water to the left', () {
@@ -43,7 +43,7 @@ void main() {
           ..level = 0.5
           ..tiltRadians = tilt(leftDown);
         expect(sim.surfaceYAt(10), lessThan(sim.surfaceYAt(380)));
-        expect(sim.spillSide, -1);
+        expect(Spill.lowSide(sim.tiltRadians), -1);
       });
     });
   }

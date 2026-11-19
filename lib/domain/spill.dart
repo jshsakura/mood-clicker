@@ -20,7 +20,16 @@ abstract final class Spill {
   }
 
   /// The edge the water runs to: 1 for the right edge, -1 for the left, 0 when the phone is level.
-  static int lowSide(double tiltRadians) => tiltRadians.sign.toInt();
+  /// [current] is the side chosen before. A side is taken past [FillTuning.sideOnDegrees] and kept
+  /// until the tilt is inside [FillTuning.sideOffDegrees] or past the on margin the other way.
+  static int lowSide(double tiltRadians, {int current = 0}) {
+    const on = FillTuning.sideOnDegrees * pi / 180;
+    const off = FillTuning.sideOffDegrees * pi / 180;
+    if (tiltRadians > on) return 1;
+    if (tiltRadians < -on) return -1;
+    if (tiltRadians.abs() < off) return 0;
+    return current;
+  }
 
   /// The share of the screen that is water when the surface, `centerY` px down from the top at
   /// the middle, has the [slope] (px of height per px across). Measured at
