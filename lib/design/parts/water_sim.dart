@@ -35,6 +35,25 @@ class WaterSim extends ChangeNotifier {
   final List<double> heights = List<double>.filled(columns, 0);
   final List<double> _velocity = List<double>.filled(columns, 0);
   final List<Droplet> droplets = [];
+
+  /// Drops running over the low edge while the water spills. They fall past the edge and go.
+  final List<Droplet> runoff = [];
+  double _spillStrength = 0;
+  double _spillTarget = 0;
+  int _spillSide = 0;
+  double _runoffCarry = 0;
+
+  /// How strong the spilling looks, 0 (none) to 1. It eases toward what [spillAt] last said.
+  double get spillStrength => _spillStrength;
+
+  /// The edge it runs over: 1 right, -1 left, 0 while the tilt is too small to choose one.
+  int get spillSide => _spillSide;
+
+  /// Tells the sim that [levelPerSecond] of the level is running out this moment (0 when none).
+  void spillAt(double levelPerSecond) {
+    _spillTarget = (levelPerSecond / FillTuning.runoffFullRate).clamp(0.0, 1.0);
+  }
+
   final Queue<({double time, List<double> heights})> _history = Queue();
 
   /// The width and height of the drawing area in pixels.
@@ -189,6 +208,7 @@ class WaterSim extends ChangeNotifier {
       _springs(dt);
       _moveDroplets(dt);
     }
+    _runOff(seconds);
     _wobbleWhenIdle(seconds);
     _clock += seconds;
     _history.addLast((time: _clock, heights: List<double>.of(heights)));
@@ -239,6 +259,54 @@ class WaterSim extends ChangeNotifier {
         return true;
       }
       return false;
+    });
+  }
+
+  /// Throws drops over the low edge while spilling, and moves the ones in the air.
+  void _runOff(double seconds) {
+    _spillSide = Spill.lowSide(tiltRadians, current: _spillSide);
+    final rising = _spillTarget > _spillStrength;
+    final tau = rising ? FillTuning.spillAttack : FillTuning.spillRelease;
+    _spillStrength +=
+        (_spillTarget - _spillStrength) * (1 - exp(-seconds / tau));
+    if (_spillStrength < FillTuning.spillFloor && _spillTarget == 0) {
+      _spillStrength = 0;
+    }
+    final side = _spillSide;
+    if (_spillStrength > 0 && side != 0 && !size.isEmpty) {
+      _runoffCarry += seconds * FillTuning.runoffPerSecond * _spillStrength;
+      final edge = side > 0 ? size.width : 0.0;
+      while (_runoffCarry >= 1) {
+        _runoffCarry -= 1;
+        if (runoff.length >= FillTuning.runoffLimit) continue;
+        // Half arc over the edge, half run down along it, so the stream reads as water leaving.
+        final arcs = _random.nextBool();
+        runoff.add(
+          Droplet(
+            edge - side * (FillTuning.runoffInset * _random.nextDouble()),
+            max(0.0, surfaceYAt(edge - side * 2)) +
+                _random.nextDouble() * size.height * 0.1,
+            side *
+                (arcs
+                    ? FillTuning.runoffOut * (0.4 + 0.6 * _random.nextDouble())
+                    : 20 * _random.nextDouble()),
+            arcs ? -(60 + 140 * _random.nextDouble()) : 0,
+            FillTuning.runoffRadiusMin +
+                _random.nextDouble() *
+                    (FillTuning.runoffRadiusMax - FillTuning.runoffRadiusMin),
+          ),
+        );
+      }
+    } else {
+      _runoffCarry = 0;
+    }
+    runoff.removeWhere((d) {
+      d.vy += FillTuning.dropletGravity * seconds;
+      d.x += d.vx * seconds;
+      d.y += d.vy * seconds;
+      return d.y > size.height + d.radius ||
+          d.x < -FillTuning.runoffInset * 3 ||
+          d.x > size.width + FillTuning.runoffInset * 3;
     });
   }
 

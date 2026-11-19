@@ -217,6 +217,54 @@ void main() {
     expect(find.byType(TapScreen), findsNothing);
   });
 
+  Future<TestApp> fillGauge(WidgetTester tester) async {
+    final app = await openTapOnHome(tester);
+    for (var i = 0; i < 60; i++) {
+      await tapOnce(tester, app, const Offset(200, 500), gapMs: 100);
+    }
+    return app;
+  }
+
+  testWidgets('skipping the note from the back button does not ask again', (
+    tester,
+  ) async {
+    await fillGauge(tester);
+    await tester.tap(find.bySemanticsLabel(ko.common_back));
+    await settle(tester);
+    expect(find.text(ko.note_title), findsOneWidget);
+    await tester.tap(find.text(ko.note_skip));
+    await settle(tester);
+    expect(find.byType(TapScreen), findsNothing);
+    expect(find.text(ko.note_title), findsNothing);
+  });
+
+  testWidgets('skipping the note after a system back does not ask again', (
+    tester,
+  ) async {
+    await fillGauge(tester);
+    await tester.binding.handlePopRoute();
+    await settle(tester);
+    expect(find.text(ko.note_title), findsOneWidget);
+    await tester.tap(find.text(ko.note_skip));
+    await settle(tester);
+    expect(find.byType(TapScreen), findsNothing);
+    expect(find.text(ko.note_title), findsNothing);
+  });
+
+  testWidgets('saving the note from the back button does not ask again', (
+    tester,
+  ) async {
+    await fillGauge(tester);
+    await tester.tap(find.bySemanticsLabel(ko.common_back));
+    await settle(tester);
+    await tester.enterText(find.byType(TextField), 'good one');
+    await tester.pump();
+    await tester.tap(find.text(ko.note_save));
+    await settle(tester);
+    expect(find.byType(TapScreen), findsNothing);
+    expect(find.text(ko.note_title), findsNothing);
+  });
+
   testWidgets('the complete shake stays inside a clipped frame', (
     tester,
   ) async {

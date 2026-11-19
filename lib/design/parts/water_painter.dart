@@ -20,7 +20,7 @@ class WaterPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     sim.size = size;
-    if (sim.level <= 0 && sim.droplets.isEmpty) return;
+    if (sim.level <= 0 && sim.droplets.isEmpty && sim.runoff.isEmpty) return;
     final back = sim.backHeights();
     final front = sim.heights;
     if (sim.level > 0) {
@@ -42,12 +42,13 @@ class WaterPainter extends CustomPainter {
           ..strokeWidth = 2,
       );
     }
+    _paintSpill(canvas, size);
     final dropPaint = Paint()..color = palette.fill;
     final edgePaint = Paint()
       ..color = palette.fillEdge
       ..style = PaintingStyle.stroke
       ..strokeWidth = FillTuning.dropletBorder;
-    for (final d in sim.droplets) {
+    for (final d in [...sim.droplets, ...sim.runoff]) {
       canvas.drawCircle(Offset(d.x, d.y), d.radius, dropPaint);
       canvas.drawCircle(
         Offset(d.x, d.y),
@@ -55,6 +56,25 @@ class WaterPainter extends CustomPainter {
         edgePaint,
       );
     }
+  }
+
+  /// The stream over the low edge: a flat band of the edge-line color along that edge, from where
+  /// the water meets it down to the bottom. It widens with the
+  /// spill and is gone when the spill stops.
+  void _paintSpill(Canvas canvas, Size size) {
+    final strength = sim.spillStrength;
+    final side = sim.spillSide;
+    if (strength <= 0 || side == 0 || sim.level <= 0) return;
+    final width =
+        FillTuning.runoffStreamMin +
+        (FillTuning.runoffStreamMax - FillTuning.runoffStreamMin) * strength;
+    final edge = side > 0 ? size.width : 0.0;
+    final top = sim.surfaceYAt(edge - side * 2).clamp(0.0, size.height);
+    final inner = edge - side * width;
+    canvas.drawRect(
+      Rect.fromPoints(Offset(inner, top), Offset(edge, size.height)),
+      Paint()..color = palette.fillEdge,
+    );
   }
 
   Path _fillPath(Size size, List<double> heights, {required double lift}) {

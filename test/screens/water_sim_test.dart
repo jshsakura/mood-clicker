@@ -65,7 +65,11 @@ void main() {
     final s = sim();
     expect(s.surfaceYAt(100), closeTo(400, 1e-3));
     s.tiltRadians = 0.3;
+    // Right edge down: the water runs right, so the surface is higher on the right.
+    expect(s.surfaceYAt(390), lessThan(s.surfaceYAt(0)));
+    s.tiltRadians = -0.3;
     expect(s.surfaceYAt(390), greaterThan(s.surfaceYAt(0)));
+    s.tiltRadians = 0.3;
     expect(s.surfaceYAt(195), closeTo(400, 1e-3));
   });
 
@@ -175,5 +179,123 @@ void main() {
       final left = s.heights.sublist(0, 20).reduce((a, b) => a + b);
       expect(right, greaterThan(left));
     });
+  });
+
+  group('spilling over the low edge', () {
+    WaterSim spilling(double tilt) => sim()
+      ..level = 0.8
+      ..tiltRadians = tilt
+      ..spillAt(0.2);
+
+    test('drops leave over the right edge when the right edge is low', () {
+      final s = spilling(0.9);
+      for (var i = 0; i < 30; i++) {
+        s.step(1 / 60);
+      }
+      expect(s.spillSide, 1);
+      expect(s.runoff, isNotEmpty);
+      expect(s.runoff.every((d) => d.x > s.size.width / 2), isTrue);
+    });
+
+    test('drops leave over the left edge when the left edge is low', () {
+      final s = spilling(-0.9);
+      for (var i = 0; i < 30; i++) {
+        s.step(1 / 60);
+      }
+      expect(s.spillSide, -1);
+      expect(s.runoff, isNotEmpty);
+      expect(s.runoff.every((d) => d.x < s.size.width / 2), isTrue);
+    });
+
+    test('no spill means no drops, and the ones in the air fall away', () {
+      final s = spilling(0.9);
+      for (var i = 0; i < 30; i++) {
+        s.step(1 / 60);
+      }
+      s.spillAt(0);
+      for (var i = 0; i < 240; i++) {
+        s.step(1 / 60);
+      }
+      expect(s.runoff, isEmpty);
+    });
+
+    test(
+      'the stream fades instead of blinking when the spill flickers at capacity',
+      () {
+        // At capacity the spill rate alternates between a little and none from frame to frame.
+        final s = spilling(0.9);
+        var previous = s.spillStrength;
+        var biggestJump = 0.0;
+        var weakest = 1.0;
+        for (var i = 0; i < 120; i++) {
+          s.spillAt(i.isEven ? 0.2 : 0);
+          s.step(1 / 60);
+          if (i >= 30) {
+            weakest = min(weakest, s.spillStrength);
+            biggestJump = max(biggestJump, (s.spillStrength - previous).abs());
+          }
+          previous = s.spillStrength;
+        }
+        expect(biggestJump, lessThan(0.15));
+        expect(weakest, greaterThan(0.3));
+      },
+    );
+
+    test('the stream builds up and dies away over time, not in one frame', () {
+      final s = spilling(0.9);
+      s.step(1 / 60);
+      expect(s.spillStrength, lessThan(0.5));
+      for (var i = 0; i < 120; i++) {
+        s.spillAt(0.2);
+        s.step(1 / 60);
+      }
+      expect(s.spillStrength, greaterThan(0.95));
+      s.spillAt(0);
+      s.step(1 / 60);
+      expect(s.spillStrength, greaterThan(0.9));
+      for (var i = 0; i < 240; i++) {
+        s.step(1 / 60);
+      }
+      expect(s.spillStrength, lessThan(0.02));
+    });
+
+    test('the side does not flip when the tilt jitters around level', () {
+      final s = sim()
+        ..level = 0.8
+        ..spillAt(0.2);
+      final sides = <int>{};
+      for (var i = 0; i < 120; i++) {
+        s.tiltRadians = i.isEven ? 0.02 : -0.02;
+        s.step(1 / 60);
+        sides.add(s.spillSide);
+      }
+      expect(sides, {0});
+      expect(s.runoff, isEmpty);
+    });
+
+    test('the side holds through jitter around a real lean', () {
+      final s = spilling(0.9);
+      final sides = <int>{};
+      for (var i = 0; i < 120; i++) {
+        s.tiltRadians = 0.15 + (i.isEven ? 0.02 : -0.02);
+        s.step(1 / 60);
+        sides.add(s.spillSide);
+      }
+      expect(sides, {1});
+    });
+
+    test(
+      'the side only changes after the tilt passes the margin the other way',
+      () {
+        final s = spilling(0.9)..step(1 / 60);
+        expect(s.spillSide, 1);
+        s.tiltRadians = -0.05; // just past level, inside the margin
+        s.step(1 / 60);
+        expect(s.spillSide, isNot(-1));
+        s.tiltRadians = -0.3;
+        s.step(1 / 60);
+        expect(s.spillSide, -1);
+      },
+    );
   });
 }

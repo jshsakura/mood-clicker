@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mood_clicker/design/app_theme.dart';
-import 'package:mood_clicker/design/parts/breathing_ring.dart';
 import 'package:mood_clicker/design/parts/dawn_wash.dart';
 import 'package:mood_clicker/design/parts/settle_line.dart';
 import 'package:mood_clicker/design/tokens.g.dart';
@@ -23,91 +22,7 @@ Widget host(Widget child, {bool reduce = false}) => MaterialApp(
   ),
 );
 
-Rect ringBox(WidgetTester tester) => tester.getRect(
-  find.descendant(
-    of: find.byType(BreathingRingView),
-    matching: find.byType(DecoratedBox),
-  ),
-);
-
-Color ringColor(WidgetTester tester) {
-  final box = tester.widget<DecoratedBox>(
-    find.descendant(
-      of: find.byType(BreathingRingView),
-      matching: find.byType(DecoratedBox),
-    ),
-  );
-  return ((box.decoration as ShapeDecoration).shape as CircleBorder).side.color;
-}
-
 void main() {
-  group('breath', () {
-    test(
-      'is empty at the start, full after the inhale, empty after the exhale',
-      () {
-        expect(breathAt(Duration.zero), 0);
-        expect(breathAt(ReleaseTuning.inhale), closeTo(1, 1e-9));
-        expect(
-          breathAt(ReleaseTuning.inhale + ReleaseTuning.exhale),
-          closeTo(0, 1e-9),
-        );
-      },
-    );
-
-    test(
-      'grows during the inhale, shrinks during the exhale, then repeats',
-      () {
-        double at(int ms) => breathAt(Duration(milliseconds: ms));
-        expect(at(1000), lessThan(at(2000)));
-        expect(at(2000), lessThan(at(3500)));
-        expect(at(5000), greaterThan(at(8000)));
-        expect(at(8000), greaterThan(at(9500)));
-        expect(at(12000), closeTo(at(2000), 1e-9));
-      },
-    );
-
-    test('the exhale is longer than the inhale', () {
-      expect(ReleaseTuning.exhale, greaterThan(ReleaseTuning.inhale));
-    });
-  });
-
-  group('breathing ring', () {
-    testWidgets('grows and shrinks on its own', (tester) async {
-      await tester.pumpWidget(host(const BreathingRing(diameter: 200)));
-      final start = ringBox(tester).width;
-      await tester.pump(ReleaseTuning.inhale);
-      final full = ringBox(tester).width;
-      await tester.pump(ReleaseTuning.exhale);
-      final end = ringBox(tester).width;
-      expect(full, greaterThan(start));
-      expect(full, closeTo(200, 1));
-      expect(end, closeTo(start, 1));
-    });
-
-    testWidgets('with reduced motion the size stays and the brightness moves', (
-      tester,
-    ) async {
-      await tester.pumpWidget(
-        host(const BreathingRing(diameter: 200), reduce: true),
-      );
-      final size = ringBox(tester).width;
-      final dim = ringColor(tester).a;
-      await tester.pump(ReleaseTuning.inhale);
-      expect(ringBox(tester).width, size);
-      expect(ringColor(tester).a, greaterThan(dim));
-    });
-
-    testWidgets('is described once for a screen reader', (tester) async {
-      final handle = tester.ensureSemantics();
-      await tester.pumpWidget(host(const BreathingRing(diameter: 200)));
-      expect(
-        find.bySemanticsLabel(AppLocalizationsKo().release_breathingRing),
-        findsOneWidget,
-      );
-      handle.dispose();
-    });
-  });
-
   group('dawn wash', () {
     DawnWashPainter painter(double progress) => DawnWashPainter(
       progress: progress,

@@ -7,7 +7,6 @@ import 'package:flutter/services.dart';
 
 import '../../app/app_services.dart';
 import '../../design/app_theme.dart';
-import '../../design/parts/breathing_ring.dart';
 import '../../design/parts/dawn_wash.dart';
 import '../../design/parts/hint_bubble.dart';
 import '../../design/parts/how_to_button.dart';
@@ -70,6 +69,9 @@ class _TapScreenState extends State<TapScreen>
   bool _filledThisVisit = false;
   bool _wasAboveZero = false;
   bool _leaving = false;
+
+  /// Set when the note sheet was shown on this visit, so skipping it counts as asked.
+  bool _noteAsked = false;
   bool _started = false;
 
   /// What one tap shows again when the reward fires: where the last finger landed.
@@ -233,7 +235,10 @@ class _TapScreenState extends State<TapScreen>
 
   /// Water running out of a tilted phone. Returns the level that was spilled this frame.
   double _spillFrame(DateTime now, double seconds, double level) {
-    if (!_feel.tiltSpill) return 0;
+    if (!_feel.tiltSpill) {
+      _sim.spillAt(0);
+      return 0;
+    }
     final spilled = Spill.spilledIn(
       Duration(
         microseconds: (seconds * Duration.microsecondsPerSecond).round(),
@@ -243,6 +248,7 @@ class _TapScreenState extends State<TapScreen>
       screenWidth: _size.width,
       screenHeight: _size.height,
     );
+    _sim.spillAt(seconds > 0 ? spilled / seconds : 0);
     if (spilled <= 0) return 0;
     _gauge = _gauge.spilled(spilled);
     final (ledger, lost) = _ledger.add(spilled);
@@ -307,8 +313,6 @@ class _TapScreenState extends State<TapScreen>
   void _registerTap(Offset at) {
     if (_size.isEmpty || _leaving) return;
     final now = _services.now();
-    // The cleanse locks the touch, so the next gauge cannot start by mistake.
-    if (_hasRelease && _flow.frameAt(now).touchLocked) return;
     _lastTapAt = at;
     final wasFull = _gauge.isFullAt(now);
     _gauge = _gauge.tap(now);
@@ -399,6 +403,7 @@ class _TapScreenState extends State<TapScreen>
   /// has no note yet.
   bool get _noteDue =>
       _filledThisVisit &&
+      !_noteAsked &&
       _services.journal.journal
           .dayOf(DayKey.of(_services.now()))
           .shouldAskNote(filledThisVisit: true);
@@ -410,6 +415,7 @@ class _TapScreenState extends State<TapScreen>
     final services = _services;
     final today = DayKey.of(services.now());
     final owed = _noteDue;
+    if (owed) _noteAsked = true;
     final filled = _filledThisVisit;
     await services.journal.save(SaveTrigger.leaveScreen);
     await services.cheerPicker.persist(services.deckStore);
@@ -432,7 +438,10 @@ class _TapScreenState extends State<TapScreen>
     await _services.journal.save(SaveTrigger.leaveScreen);
     await _services.cheerPicker.persist(_services.deckStore);
     final record = _services.journal.journal.dayOf(today);
-    if (record.shouldAskNote(filledThisVisit: _filledThisVisit) && mounted) {
+    if (!_noteAsked &&
+        record.shouldAskNote(filledThisVisit: _filledThisVisit) &&
+        mounted) {
+      _noteAsked = true;
       await showNoteSheet(context, today, afterComplete: _filledThisVisit);
     }
     if (navigator.mounted && (route?.isCurrent ?? false)) navigator.pop();
@@ -473,18 +482,13 @@ class _TapScreenState extends State<TapScreen>
     };
   }
 
-  /// The breathing ring and the one line, once the quiet beat of the settle is over.
+  /// The one line, once the dawn wash is over.
   List<Widget> _settleLayers(AppLocalizations l10n) {
     if (!_hasRelease) return const [];
     final frame = _flow.frameAt(_services.now());
-    if (frame.phase != ReleasePhase.settle || frame.quiet) return const [];
+    if (frame.phase != ReleasePhase.settle) return const [];
     final line = settleLineFor(l10n, widget.mood);
     return [
-      Center(
-        child: BreathingRing(
-          diameter: _size.shortestSide * ReleaseTuning.ringShare,
-        ),
-      ),
       if (line != null)
         Align(
           alignment: const Alignment(0, 0.6),
@@ -505,7 +509,9 @@ class _TapScreenState extends State<TapScreen>
       // one. A system exit writes what is waiting and asks for the note after the screen is gone.
       canPop: !_leaving,
       onPopInvokedWithResult: (didPop, _) {
-        if (didPop) unawaited(_afterSystemExit());
+        // The back button pops this route itself after its own sheet, so only a system exit
+        // that did not start from _leave asks here.
+        if (didPop && !_leaving) unawaited(_afterSystemExit());
       },
       child: Scaffold(
         body: LayoutBuilder(

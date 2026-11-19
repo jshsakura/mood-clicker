@@ -39,7 +39,7 @@ tool/test.sh               # 전부 통과해야 시작한 것입니다
 tool/team/start.sh         # 팀장 1, 작업자 N 팬을 띄웁니다. 사용법은 tool/team/README.md
 ```
 
-자세한 설치와 첫 빌드 시간은 [DEV-ENV.md](DEV-ENV.md) 에 있습니다.
+자세한 설치와 첫 빌드 시간은 [DEV-ENV.md](DEV-ENV.md) 에 있습니다. 이 준비를 에이전트에게 맡기려면 [AI_SETUP.md](AI_SETUP.md) 를 주면 됩니다.
 
 ## 역할
 
