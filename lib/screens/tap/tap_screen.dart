@@ -70,6 +70,9 @@ class _TapScreenState extends State<TapScreen>
   bool _filledThisVisit = false;
   bool _wasAboveZero = false;
   bool _leaving = false;
+
+  /// Set when the note sheet was shown on this visit, so skipping it counts as asked.
+  bool _noteAsked = false;
   bool _started = false;
 
   /// What one tap shows again when the reward fires: where the last finger landed.
@@ -399,6 +402,7 @@ class _TapScreenState extends State<TapScreen>
   /// has no note yet.
   bool get _noteDue =>
       _filledThisVisit &&
+      !_noteAsked &&
       _services.journal.journal
           .dayOf(DayKey.of(_services.now()))
           .shouldAskNote(filledThisVisit: true);
@@ -410,6 +414,7 @@ class _TapScreenState extends State<TapScreen>
     final services = _services;
     final today = DayKey.of(services.now());
     final owed = _noteDue;
+    if (owed) _noteAsked = true;
     final filled = _filledThisVisit;
     await services.journal.save(SaveTrigger.leaveScreen);
     await services.cheerPicker.persist(services.deckStore);
@@ -432,7 +437,10 @@ class _TapScreenState extends State<TapScreen>
     await _services.journal.save(SaveTrigger.leaveScreen);
     await _services.cheerPicker.persist(_services.deckStore);
     final record = _services.journal.journal.dayOf(today);
-    if (record.shouldAskNote(filledThisVisit: _filledThisVisit) && mounted) {
+    if (!_noteAsked &&
+        record.shouldAskNote(filledThisVisit: _filledThisVisit) &&
+        mounted) {
+      _noteAsked = true;
       await showNoteSheet(context, today, afterComplete: _filledThisVisit);
     }
     if (navigator.mounted && (route?.isCurrent ?? false)) navigator.pop();
@@ -505,7 +513,9 @@ class _TapScreenState extends State<TapScreen>
       // one. A system exit writes what is waiting and asks for the note after the screen is gone.
       canPop: !_leaving,
       onPopInvokedWithResult: (didPop, _) {
-        if (didPop) unawaited(_afterSystemExit());
+        // The back button pops this route itself after its own sheet, so only a system exit
+        // that did not start from _leave asks here.
+        if (didPop && !_leaving) unawaited(_afterSystemExit());
       },
       child: Scaffold(
         body: LayoutBuilder(
