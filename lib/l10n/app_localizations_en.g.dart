@@ -645,4 +645,33 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get howTo_bubble => 'How to play';
+
+  @override
+  String get settings_weatherView => 'Show weather';
+
+  @override
+  String get settings_weatherViewDesc =>
+      'Uses a location rounded to one decimal place to fetch local weather only. When off, location is never requested.';
+
+  @override
+  String get settings_weatherSource => 'Weather data';
+
+  @override
+  String get weather_clear => 'Clear';
+
+  @override
+  String get weather_partlyCloudy => 'Partly cloudy';
+
+  @override
+  String get weather_cloudy => 'Cloudy';
+
+  @override
+  String get weather_rain => 'Rain';
+
+  @override
+  String get weather_snow => 'Snow';
+
+  @override
+  String get permission_locationWhenInUse =>
+      'Used only while the app is open, with coordinates rounded to one decimal place, to fetch local weather.';
 }

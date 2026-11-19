@@ -35,6 +35,7 @@ class SettingsScreen extends StatefulWidget {
     required this.theme,
     required this.language,
     required this.mapView,
+    this.weatherView,
     required this.reminder,
     required this.records,
     required this.appVersion,
@@ -47,6 +48,7 @@ class SettingsScreen extends StatefulWidget {
   final ValueNotifier<ThemeChoice> theme;
   final ValueNotifier<LocaleChoice> language;
   final ValueNotifier<bool> mapView;
+  final ValueNotifier<bool>? weatherView;
   final ReminderController reminder;
   final RecordsPort records;
   final String appVersion;
@@ -85,6 +87,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     widget.theme.value = next.themeChoice;
     widget.language.value = next.language;
     widget.mapView.value = next.mapView;
+    widget.weatherView?.value = next.weatherView;
     widget.onApplied?.call(next);
   }
 
@@ -220,6 +223,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         onChanged: (on) =>
                             _save(_settings.copyWith(tiltToPour: on)),
                       ),
+                      _ToggleBlock(
+                        label: l10n.settings_weatherView,
+                        description: l10n.settings_weatherViewDesc,
+                        value: _settings.weatherView,
+                        onChanged: (on) =>
+                            _save(_settings.copyWith(weatherView: on)),
+                      ),
                     ],
                   ),
                   _Section(
@@ -298,6 +308,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       _LinkRow(
                         label: l10n.settings_version,
                         value: widget.appVersion,
+                      ),
+                      _LinkRow(
+                        label: l10n.settings_weatherSource,
+                        value: 'MET Norway (CC BY 4.0)',
                       ),
                       _LinkRow(
                         label: l10n.settings_licenses,

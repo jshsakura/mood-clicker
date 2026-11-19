@@ -194,5 +194,14 @@
   "howTo_spark": "ときどき、きらきら光る特別な言葉が出ます。",
   "howTo_hold": "95パーセントから100パーセントの間を数秒保つと、特別なごほうびがあります。",
   "howTo_finish": "いっぱいにすると、気分に合った締めくくりが始まります。",
-  "howTo_bubble": "遊び方"
+  "howTo_bubble": "遊び方",
+  "settings_weatherView": "天気を表示",
+  "settings_weatherViewDesc": "小数第1位に丸めた位置だけで天気を取得します。オフにすると位置も求めません。",
+  "settings_weatherSource": "天気データの提供元",
+  "weather_clear": "晴れ",
+  "weather_partlyCloudy": "晴れ時々くもり",
+  "weather_cloudy": "くもり",
+  "weather_rain": "雨",
+  "weather_snow": "雪",
+  "permission_locationWhenInUse": "アプリ使用中に小数第1位に丸めた位置だけを使って天気を取得します。"
 }

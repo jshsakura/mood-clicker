@@ -194,5 +194,14 @@
   "howTo_spark": "Now and then a sparkling special phrase appears.",
   "howTo_hold": "Stay between 95 and 100 percent for a few seconds for a special reward.",
   "howTo_finish": "Fill it up and a finish that fits your mood plays.",
-  "howTo_bubble": "How to play"
+  "howTo_bubble": "How to play",
+  "settings_weatherView": "Show weather",
+  "settings_weatherViewDesc": "Uses a location rounded to one decimal place to fetch local weather only. When off, location is never requested.",
+  "settings_weatherSource": "Weather data",
+  "weather_clear": "Clear",
+  "weather_partlyCloudy": "Partly cloudy",
+  "weather_cloudy": "Cloudy",
+  "weather_rain": "Rain",
+  "weather_snow": "Snow",
+  "permission_locationWhenInUse": "Used only while the app is open, with coordinates rounded to one decimal place, to fetch local weather."
 }

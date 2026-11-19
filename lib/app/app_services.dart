@@ -10,12 +10,14 @@ import '../domain/feel_settings.dart';
 import '../domain/mood.dart';
 import '../feedback/feedback_controller.dart';
 import '../l10n/locale_choice.dart';
+import '../location/coarse_location.dart';
 import '../map/map_source.dart';
 import '../reminder/reminder_controller.dart';
 import '../settings/records_port.dart';
 import '../settings/settings.dart';
 import '../settings/settings_store.dart';
 import '../surfaces/native_surfaces.dart';
+import '../weather/weather_source.dart';
 import 'journal_store.dart';
 import 'seen_hints.dart';
 
@@ -35,7 +37,10 @@ class AppServices {
     required this.theme,
     this.language,
     ValueNotifier<bool>? mapView,
+    ValueNotifier<bool>? weatherView,
     this.mapSource = const SampleMapSource(),
+    this.location,
+    this.weatherSource,
     this.settingsStore,
     SeenHints? hints,
     this.reminder,
@@ -46,6 +51,7 @@ class AppServices {
     DateTime Function()? now,
   }) : hints = hints ?? MemorySeenHints(),
        mapView = mapView ?? ValueNotifier(Settings.mapViewDefault),
+       weatherView = weatherView ?? ValueNotifier(Settings.weatherViewDefault),
        now = now ?? DateTime.now;
 
   final JournalStore journal;
@@ -73,8 +79,17 @@ class AppServices {
   /// Whether the map entry shows. The settings screen changes it.
   final ValueNotifier<bool> mapView;
 
+  /// Whether the weather chip shows and requests coarse location.
+  final ValueNotifier<bool> weatherView;
+
   /// Where the map data comes from. Made-up data on the device until a server exists.
   final MapSource mapSource;
+
+  /// Coarse location port for weather (and later map). Null in tests that do not need it.
+  final CoarseLocation? location;
+
+  /// Weather port for the top chip. Null in tests that do not need it.
+  final WeatherSource? weatherSource;
 
   /// The one settings store behind the settings screen. Null in tests.
   final SettingsStore? settingsStore;
