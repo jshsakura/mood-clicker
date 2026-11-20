@@ -63,6 +63,15 @@ class IpaOnThePage(unittest.TestCase):
         self.assertIn("gh workflow run deploy.yml", wf)
         self.assertIn("github.ref == 'refs/heads/main'", wf)
 
+    def test_deploy_waits_until_the_site_artifact_is_listed(self):
+        # deploy-pages looks the artifact up once; the list can lag the upload (run of 2026-11-20).
+        wf = read(".github/workflows/deploy.yml")
+        upload = wf.index("actions/upload-pages-artifact@")
+        wait = wf.index("actions/runs/$GITHUB_RUN_ID/artifacts?name=github-pages")
+        deploy = wf.index("actions/deploy-pages@")
+        self.assertLess(upload, wait)
+        self.assertLess(wait, deploy)
+
     def test_deploy_offers_the_ipa_only_when_the_release_has_it(self):
         wf = read(".github/workflows/deploy.yml")
         self.assertIn("mood-clicker.ipa", wf)
