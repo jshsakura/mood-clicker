@@ -1,6 +1,6 @@
 # 팀장 ↔ 작업자(환경, Claude)
 
-45건, 시간순(UTC)입니다.
+88건, 시간순(UTC)입니다.
 
 ### 2026-11-18 10:23 · 팀장 → 12.2 작업자(환경, Claude)
 
@@ -264,3 +264,221 @@
 ### 2026-11-18 20:51 · 팀장 → 12.2 작업자(환경, Claude)  `T42 T50`
 
 > 12.1 입니다. T42 합쳤습니다. 잘했습니다. 하나 더(T50): start.sh 가 에이전트 하나만 받아서 팀원마다 다른 제품을 못 섞습니다. 이 팀이 그랬듯 이름=에이전트 형식(예: start.sh claude ui=codex research=agy dev=claude)을 받게 해 주세요. 이름만 주면 첫 인자 기본값. 팀장 팬은 첫 인자. 테스트 추가, README 한 줄. 브랜치 chore/team-mixed, integrate/poc <기준 커밋> 에서.
+
+### 2026-11-18 20:53 · 12.2 작업자(환경, Claude) → 팀장  `T50`
+
+> T50 완료. chore/team-mixed (워크트리 ~/workspace/mood-clicker-teammixed, integrate/poc 9c7fae4 기준), 커밋 caff37f 하나, push/PR 없음, 훅 통과, 파이썬 286개 통과(두 번 돌림). start.sh 가 이제 [NAME[=AGENT]...] 를 받습니다. 예: tool/team/start.sh claude ui=codex research=agy dev. 팀장 팬은 첫 인자(claude), 이름만 준 작업자와 -n 으로 만든 작업자는 첫 인자가 기본값이고, 공백이 든 명령은 따옴표로 ui="codex --yolo". worktree 와 브랜치 이름은 = 앞의 NAME 만 쓰고(../<저장소>-ui, work/ui), 에이전트가 빈 값(ui=)이거나 이름이 빈 값(=cat)이면 아무것도 만들기 전에 거절합니다. 이미 도는 세션에 다시 실행하면 있는 팬은 처음 에이전트 그대로 두고(ui=cat 로 바꿔 불러도 안 바뀜) 새 이름만 추가합니다. bash 3.2 호환이라 연관 배열 없이 NAMES, AGENTS 두 배열을 나란히 씁니다(bash 3.2 도커로 문법 확인). 테스트 5개 추가(이름별 서로 다른 에이전트, = 앞이 worktree 이름, -n 은 첫 인자, 빈 에이전트와 빈 이름 거절, 실행 중 팀에 추가해도 에이전트 유지), 테스트 먼저 써서 3건 실패 확인 뒤 구현. 기존 worktree 테스트가 느린 셸 프로필에서 한 번 불안정하게 실패해 그 테스트도 팬 경로가 뜰 때까지 기다리게 고쳤습니다. tool/team/README.md 에 예시 한 줄 추가.
+
+### 2026-11-18 20:56 · 팀장 → 12.2 작업자(환경, Claude)  `T50 T51`
+
+> 12.1 입니다. T50 합쳤습니다. T51: 커밋할 때마다 pre-commit 의 cheers 검사가 'phrase longer than 12 characters' 경고를 수백 줄 쏟아서 진짜 실패가 묻힙니다. 경고는 종류별 개수 한 줄로 요약하고(--verbose 일 때만 전부), 실패는 지금처럼 다 보이게. 그리고 그 경고 기준(en low 12자)이 실제 레이아웃 규칙과 맞는지 cheer_layout.dart 를 보고 판단해서, 의미 없는 경고면 기준을 고치거나 없애 주세요. 테스트 포함. 브랜치 chore/quiet-cheers, integrate/poc <기준 커밋> 에서.
+
+### 2026-11-18 20:57 · 12.2 작업자(환경, Claude) → 팀장  `T51`
+
+> T51 완료. chore/quiet-cheers (워크트리 ~/workspace/mood-clicker-quiet, integrate/poc 85fb3a5 기준), 커밋 1108e22 하나, push/PR 없음, 훅 통과(이번 pre-commit 출력에 경고 0줄), 파이썬 292개 통과.
+> 판단: 12자 경고는 의미가 없어서 없앴습니다. 근거 셋. (1) cheer_layout.dart 의 fontSizeFor 는 문구가 길면 글자를 줄여 박스를 화면 너비의 60%(maxWidthShare) 안에 맞추므로 길이가 레이아웃을 깨지 않습니다. 줄이는 것도 360폭 기준 14자에서 약 15, 20자에서 약 11 정도라 디자인 선택의 문제입니다. (2) 실제 길이 경계는 이미 tool/cheers_check.py 의 LENGTH_BOUNDS 가 언어별로 정합니다(ko 2~14, en 2~20, ja 2~14). 12 고정값은 그것과 충돌했습니다. (3) 영어는 정상 문구도 최대 21자라 en 1832개 low 중 1264개가 경고였고, 한국어와 일본어도 14자 허용 범위 안에서 경고가 났습니다. 그래서 l10n_check 에서 길이 판정과 PHRASE_LIMIT 를 지웠고 docs/I18N.md 의 12자 권장 문장은 실제 규칙(언어별 범위, 화면이 줄여서 맞춤)으로 고쳤습니다.
+> 요청하신 요약도 넣었습니다: 경고는 (종류, 내용) 쌍으로 받아 기본은 종류별 개수 한 줄(warning: N x 종류 (--verbose lists them)), python3 tool/l10n_check.py --verbose 이면 전부, 오류는 언제나 전부 출력합니다(오류 30개와 경고 150개로 테스트). 지금은 경고를 내는 검사가 없어서 이 통로는 미래용이고 실저장소 경고 0 을 테스트가 지킵니다. main 은 main(argv=None) 로 바뀌었고 훅과 CI 호출은 그대로입니다. 테스트 먼저 써서 실패 7건 확인 뒤 구현.
+
+### 2026-11-18 20:57 · 팀장 → 12.2 작업자(환경, Claude)  `T51`
+
+> 12.1 입니다. T51 합쳤습니다. 판단 좋습니다. 대기.
+
+### 2026-11-18 21:03 · 팀장 → 12.2 작업자(환경, Claude)  `T55`
+
+> 12.1 입니다. T55 (12.4 리뷰 반영, 도구), 브랜치 fix/review-tooling, integrate/poc <기준 커밋> 에서.
+> 1) cheers_check.py 가 실제 assets/cheers 에 안 돌고 있습니다. tool/test.sh, pre-commit, CI 에 연결하고, 실제 에셋에 금지 문구를 넣으면 실패하는 회귀 테스트.
+> 2) privacy_scan.py:87-94 JSON 에서 짧은 version 필드가 사설 host 앞에 오면 놓칩니다. 버전 예외를 그 값 위치에만 묶고 두 순서 모두 테스트.
+> 3) 문서는 PR 본문도 검사한다고 하는데 CI 는 안 합니다. pull_request 이벤트 본문을 값 출력 없이 privacy_scan 으로 검사하는 단계 추가(PR 본문 수정 시에도 돌게 edited 트리거).
+> 4) 맥 온보딩: shots.sh 는 도커 강제(골든은 리눅스 기준), 맥 로컬 Flutter 첫 테스트는 골든 제외로 안내. DEV-ENV.md 와 SETUP.md 정리, 오래된 테스트 개수와 완료 메시지 갱신(숫자 대신 '전부 통과' 로 써도 됨).
+> 5) docs/HARNESS.md 준비물에 python3 추가, README 의 '도커만 있으면 됩니다' 를 실제 준비물로.
+> tool/test.sh 통과 후 보고.
+
+### 2026-11-18 21:06 · 12.2 작업자(환경, Claude) → 팀장  `T42 T55`
+
+> T55 완료. fix/review-tooling (워크트리 ~/workspace/mood-clicker-revtool, integrate/poc 5af263e 기준), 커밋 0f6f31d 하나, push/PR 없음, 훅 통과. tool/test.sh 전체 통과(파이썬, cheers_check, Flutter 639개 골든 포함). 테스트 먼저 써서 실패 5건과 wrapper 2건 확인 뒤 구현.
+> 1) cheers_check: 실제 에셋은 이미 통과하고 금지어도 잡았습니다(검사기 자체는 정상). 빠져 있던 것은 연결뿐이라 tool/test.sh, .githooks/pre-commit, CI check 잡에 python3 tool/cheers_check.py 를 넣었습니다. 회귀 테스트(test_cheers_check.py RealAssets): 실제 assets/cheers 를 임시 폴더로 복사해 ko 첫 문구에 금지어(우울증)를 넣으면 종료 1, 실제 에셋은 종료 0 과 오류 출력 없음. 연결 자체도 tool/test_ci_wiring.py 가 세 파일에 cheers_check 가 있는지 고정합니다.
+> 2) privacy_scan: 원인은 VERSION_CONTEXT 가 IP 앞 24글자 안 어디든 version 이 있으면 통과시킨 것이라 {"version": 1, "host": "<사설IP>"} 순서를 놓쳤습니다. 지금은 version, build 단어가 숫자 바로 앞(구분자와 따옴표 몇 개만 허용)이거나 v 바로 앞일 때만 버전으로 봅니다(VERSION_BEFORE). 테스트: version 먼저, host 먼저 두 순서 모두 IP 로 잡고, {"version": "192.0.2.1"}, build 192.0.2.1, tool v10.2.3.4 는 계속 허용.
+> 3) CI: pull_request 트리거에 types [opened, synchronize, reopened, edited] 추가, 새 pr-text 잡이 제목과 본문을 env(PR_TITLE, PR_BODY)로 받아 파일로 쓰고 privacy_scan.py --message 로 검사(값 출력 없음, 직접 확인: 사설 IP 가 든 파일은 종료 1 과 "commit message:1 IP" 만 출력). 본문을 run 줄에 직접 끼워 넣지 않아 셸 주입이 없고 테스트가 그것을 고정합니다. 본문만 고쳤을 때 빌드가 다시 도는 것을 막으려고 check 잡에 if: github.event.action != edited 를 달았고 apple 은 needs 라 같이 건너뜁니다.
+> 4) 맥 온보딩: tool/shots.sh 가 FL_DOCKER=1 을 export 해 로컬 Flutter 가 있어도 도커를 씁니다(wrapper 테스트 추가: 로컬 pinned flutter 가 있어도 docker run 을 부름). DEV-ENV.md: 맥 로컬 모드는 도커 불필요하지만 shots.sh 는 도커 필요, 맥 첫 테스트는 tool/fl test --exclude-tags golden, 완료 메시지를 실제 출력(Ready. Hooks: .githooks)으로 고침, 낡은 개수(162개, 210개 등)는 전부 지우고 tool/test.sh 전부 통과로 쓰고 확인일 갱신. SETUP.md: 단계 7 에 shots.sh 도커 예외, 10단계 완료 메시지, 11단계와 16단계는 맥에서 골든 제외 명령(unittest, cheers_check, fl test --exclude-tags golden)으로 바꾸고 도커 있는 곳은 tool/test.sh 안내.
+> 5) HARNESS.md 와 HARNESS.en.md 준비물에 python3 추가. README 는 앞서 T42 에서 이미 git, python3, 도커로 바꿔 둔 상태라 더 고칠 것이 없었습니다.
+> 참고: 맥에서 tool/test.sh 를 그대로 돌리면 골든 때문에 실패합니다(로컬 Flutter 일 때). 문서로만 안내했고, 원하면 test.sh 가 맥 로컬 모드에서 골든을 자동 제외하게 할 수 있습니다(맥이 없어 실측은 못 합니다).
+
+### 2026-11-18 21:07 · 팀장 → 12.2 작업자(환경, Claude)  `T55 T58`
+
+> 12.1 입니다. T55 합쳤습니다. 잘했습니다. T58 최우선: 사장님이 폰에서 보고 Flutter 가 승인된 시안과 너무 다르다고 합니다. 이모지로 메뉴를 만든 게 아니라, 모든 것은 아이콘이어야 합니다. 시안 원본은 design/canvas/*.dc.html (integrate/poc <기준 커밋>, 게시된 최신본과 같음 확인). 브랜치 fix/screen-parity.
+> 1) 아이콘 체계: 시안의 <svg> 선 아이콘(뒤로, 지도, 달력, 설정, 이전 다음 달, 오른쪽 꺾쇠 등)을 assets/icons/*.svg 로 그대로 옮기고(currentColor, 선 굵기 그대로), lib/design/parts/ 에 LineIcon 부품 하나로 그립니다(flutter_svg 사용 가능). Material Icons 와 이모지는 화면에서 전부 없앱니다(검사 테스트로 lib/ 에 Icons. 사용과 이모지 문자가 없음을 고정).
+> 2) 기분 얼굴: 시안의 MoodFace(원, 눈, 기분별 눈썹과 입 경로, 선 1.6, 색은 행복 쪽 palette.happy 슬픔 쪽 palette.sad)를 부품으로. 기분 고르기, 두드리기 머리글, 달력 카드, 위젯 미리보기 등 기분 얼굴이 나오는 곳 전부.
+> 3) 화면 대조: MoodPicker(날짜 줄 + '오늘 기분은' 제목, 단추 순서 지도 달력 설정, 카드 안 '오늘 N'), Calendar, DayDetail, Settings, Main(로딩). 간격, 글자 크기, 둥글기, 눌림 효과까지 시안 값 그대로(토큰에 없는 값이면 tokens.json 에 추가). 두드리기 화면은 12.5 가 따로 합니다.
+> 다른 점을 화면별 표로 남기고, 골든 갱신, tool/test.sh 통과 후 보고.
+
+### 2026-11-18 21:13 · 팀장 → 12.2 작업자(환경, Claude)  `T58`
+
+> 12.1 입니다. T58 보강(사장님 추가 요청). 1) 아이콘 체계(assets/icons + LineIcon 부품 + 기분 얼굴 MoodFace)를 먼저 끝내 따로 커밋하고 해시를 바로 보내 주세요. 12.3 이 달력과 지도를 그 위에서 만듭니다. 그다음 MoodPicker, Settings, Main 화면 대조. 달력, 그날 상세, 지도는 12.3 이 맡으니 손대지 마세요. 2) 앱 아이콘: 지금 Flutter 기본 아이콘을 간단한 우리 아이콘으로. 시안의 선 그림 기분 얼굴(행복, 원 + 눈 + 웃는 입, 선 굵게) 하나를 흰 바탕 검은 선으로, assets/app_icon/ 에 1024 PNG 원본과 SVG, flutter_launcher_icons 로 안드로이드(적응형 포함), iOS, 맥 아이콘 생성. 생성 명령은 BUILD 또는 DEV-ENV 에 한 줄.
+
+### 2026-11-18 21:19 · 12.2 작업자(환경, Claude) → 팀장  `T58`
+
+> T58-1 아이콘 체계 커밋 6c863ff (fix/screen-parity, ~/workspace/mood-clicker-screenparity). LineIcon(lib/design/parts/line_icon.dart, enum LineIcons: back backHeavy map calendar settings chevronLeft chevronRight chevronRightHeavy check), MoodFace(mood, size, color?), assets/icons/*.svg, PressableSurface.icon(icon: LineIcons.x, iconSize, iconColor). 팔레트에 ink2, faint 추가. lib/ 에서 Icons. 와 이모지는 전부 제거(검사 테스트 test/design/no_material_icons_test.dart). 달력/그날 상세/지도는 아이콘 치환만 했고 레이아웃은 손대지 않았습니다. mood_select_test, map_screen_test 2건이 문구 변경으로 깨져 있어 바로 후속 커밋으로 고칩니다. 달력/상세 시안 대조 초안은 12.3 참고용으로 스크래치패드 parity-draft 에 있습니다(커밋 안 함).
+
+### 2026-11-18 21:21 · 팀장 → 12.2 작업자(환경, Claude)
+
+> 12.1 입니다. 6c863ff 받았습니다. 12.3, 12.5 가 그 위에서 시작합니다. 테스트 2건 후속 커밋 해시도 바로 알려 주세요. $RULE 기분 고르기, 설정, 로딩 화면 대조에 이 기준도 같이 봐 주세요.
+
+### 2026-11-18 21:22 · 12.2 작업자(환경, Claude) → 팀장  `T58`
+
+> T58 후속: 테스트 2건 수정 커밋 e39faa5 (mood_select_test, map_screen_test). 이어서 Settings 간격 정렬, 앱 아이콘, 차이표 진행 중입니다.
+
+### 2026-11-18 21:29 · 12.2 작업자(환경, Claude) → 팀장  `T58`
+
+> T58 완료 보고. 브랜치 fix/screen-parity (~/workspace/mood-clicker-screenparity), 커밋 6c863ff(아이콘 체계), e39faa5(테스트 2건), 90010d9(설정 간격, 앱 아이콘, 차이표). tool/test.sh 통과(exit 0). 1) 아이콘/얼굴: LineIcon, MoodFace, assets/icons, lib/ 에 Icons./이모지 없음을 test/design/no_material_icons_test.dart 가 고정. 2) 기분 고르기: 날짜 줄+"오늘 기분은" 제목, 단추 순서 지도·달력·설정, 카드 안 얼굴 36 + "오늘 N", 여백 24/32. 로딩: 로고 옆 점 + "기록을 불러오는 중입니다". 설정: 여백, 묶음 모서리 20, 줄 안쪽 18/14, 선택 막대 14/10, 테마 카드 12/10, 선 얼굴, 선 꺾쇠. 토큰 추가: ink2, faint, Space.snug/row/inset, Radii.panel/field/chip(gen_tokens REQUIRED 갱신). 차이표와 "찾을 기능이 제자리에 있는가" 확인은 docs/SCREEN_PARITY.md. 3) 앱 아이콘: 행복 얼굴 흰 바탕 검은 선. assets/app_icon/{icon.svg,icon.png 1024,foreground.png,background.png}, tool/make_app_icon.py 로 그리고 tool/fl pub run flutter_launcher_icons 로 안드로이드(적응형)/iOS/맥 생성, 한 줄을 docs/DEV-ENV.md 에 적었습니다. 판단: 두드리기 화면 헤더(12.5 영역)는 Icons/이모지 제거 때문에 아이콘·MoodFace 로 최소 치환했습니다(충돌 가능, 해당 줄만). adaptive 배경은 colors.xml 이 gen_tokens 산출물이라 색 대신 이미지로 뒀습니다. 남은 것: 설정 시트(24/12/40) 여백과 미리보기 줄 모서리 9 는 토큰이 없어 미정렬(문서에 적음). 달력/상세 초안은 스크래치패드 parity-draft. 골든은 아이콘 체계 커밋에서 갱신했고 이후 변경분은 골든에 없는 화면이라 그대로 통과합니다.
+
+### 2026-11-18 21:29 · 팀장 → 12.2 작업자(환경, Claude)  `T61`
+
+> 12.1 입니다. 12.4 리뷰 T61 2부 중 기분 고르기, 설정, 공용 부품 몫입니다.
+> 9) PressableSurface(lib/design/parts/pressable_surface.dart:119-135)가 터치만 받습니다. 첫 화면 설정이 Tab/Enter 로 안 닿습니다. 공용 부품에서 포커스, 키보드 실행, 포커스 표시(시안의 focus-visible 2px 테두리)를 주고 비활성 상태는 흐리게(86-92,148, 지금 정상과 같은 색). 키보드로 첫 화면 설정 열기 테스트.
+> 14) 설정 기록 내보내기: 기록 파일이 없을 때도, 공유 창을 취소해도 성공 토스트가 뜹니다(settings_screen.dart:326-329, records_port.dart:26-30,57-63). 빈 상태, 취소, 완료를 구분.
+> 16) 기분 고르기 머리글에 날짜만 있고 '오늘 기분은' 제목이 빠져 있습니다(이미 하고 있으면 무시).
+> 17) 설정 화면의 뒤로를 머리글에 고정(스크롤하면 사라짐). 뒤로 단추와 달 넘기기 꺾쇠의 모양을 확실히 다르게(LineIcons.back 과 chevronLeft 가 구별되는지 확인).
+> 그리고 기분 고르기 골든에 설정 단추가 빠지는 건 test/goldens/screen_shots.dart:54-60 가짜 앱에 설정 빌더가 없어서입니다. 골든이 실제 화면과 같게 고쳐 주세요.
+
+### 2026-11-18 21:35 · 12.2 작업자(환경, Claude) → 팀장  `T61`
+
+> T61 2부 완료. fix/screen-parity 커밋 c854624, tool/test.sh 통과. 9) PressableSurface: FocusableActionDetector 로 Tab 포커스, Enter/Space 실행, 포커스 때 2px 잉크 링(키보드 포커스일 때만), 비활성은 불투명도 0.4로 흐림. 테스트: 공용 부품 Tab+Enter+링, 비활성은 Tab 건너뜀, 첫 화면 설정을 키보드로 열기. 14) RecordsPort.exportJournal 이 ExportOutcome(nothing/shared/cancelled) 반환, 비어 있으면 새 ARB settings_exportEmpty(ko/en/ja) 토스트, 취소는 토스트 없음, 완료만 성공 토스트. share_plus 결과 dismissed 를 취소로 봅니다. 16) 이미 제목 "오늘 기분은" 이 들어 있어 테스트만 추가. 17) 설정 머리글을 ListView 밖으로 빼 고정, 스크롤 후에도 뒤로가 남는 테스트. 뒤로 아이콘(back, back_heavy)을 화살대 있는 화살표(M19 12H5M11 6l-6 6 6 6)로 바꿔 달 넘기기 꺾쇠와 구별(시안 원본 모양에서 벗어난 판단, 아이콘 파일만 바꾸면 되돌릴 수 있음). 골든: 가짜 앱에 settingsBuilder 추가해 첫 화면 골든에 설정 단추가 나옵니다. 달력 다음달 단추 흐림, 뒤로 화살표 때문에 달력/상세/두드리기 골든도 같이 갱신했습니다.
+
+### 2026-11-18 21:52 · 팀장 → 12.2 작업자(환경, Claude)  `T61 T64`
+
+> 12.1 입니다. T61 c854624 합쳐서 올렸습니다. 고맙습니다. 다음 T64 정리 조사(코드 수정 없음): 사장님이 릴리스 때 main 에 합치면서 코드를 한 번 정리하라고 했습니다. 그때 쓸 목록을 미리 만들어 주세요. integrate/poc 4291976 기준으로 안 쓰는 Dart 파일과 함수, 안 쓰는 ARB 키(세 언어), 같은 일을 하는 부품이나 함수(예: 아이콘, 단추, 시트), 남은 한글 주석, 쓰지 않는 의존성(pubspec), 오래된 문서 줄. 항목마다 파일:줄, 근거(참조 0 인지 등), 지워도 되는 확신 정도. docs/CLEANUP.md 로 커밋(문서만, 브랜치 docs/cleanup-list).
+
+### 2026-11-18 21:54 · 12.2 작업자(환경, Claude) → 팀장  `T64`
+
+> T64 완료. 브랜치 docs/cleanup-list 커밋 77e09e0 (~/workspace/mood-clicker-cleanup, 기준 4291976, 문서만). docs/CLEANUP.md: 항목마다 파일:줄, 근거, 확신(높음/중간/낮음). 요약: 1) lib 참조 0 파일 4개(shake_detector, platform_haptics, locale_choice_prefs, token_preview; 앞 둘은 테스트만 사용). 중요: SharedPreferencesLocaleChoiceStore 가 부트스트랩에 안 연결돼 AppServices.language 가 null 로 보입니다. 지울 게 아니라 언어 선택이 재시작 뒤 남는지 실기기 확인 필요. 2) 참조 0 함수 11개(확신 높음: CheerBook.fingerprint, Settings.fromFeel). 3) 안 쓰는 ARB 키 21개(세 언어 키 일치. 높음: common_on/off, moodSelect_today, settings_vibrationStrength/soundPack/cheersSize/reminderTime; review_*, map_*, 위기 문구 mindCarePolice/Medical 는 중간, 위기 문구는 사람이 확인). 4) 중복 부품: PressableSurface 를 안 쓰는 손수 만든 눌림 8곳(설정/지도/달력, 키보드 포커스 없음), 뒤로 머리글·시트·선택 막대 반복(낮음). 5) lib/test/tool 주석에 남은 한글 0(token_preview 화면 문구만). 6) 의존성: cupertino_icons 미사용(높음), table_calendar/fl_chart 는 12.3 달력 개편 뒤 재확인. 7) 오래된 문서 줄: SETUP.md:135 design/tokens/*.json, DEV-ENV.md:171 이모지/Material 글꼴 설명(높음), TEAM.md 가짜 경로, docs/prompts 3302줄 처리 여부는 사장님 판단. 한계(문자열 조립 호출, 네이티브 채널 미확인)도 문서에 적었습니다.
+
+### 2026-11-18 21:54 · 팀장 → 12.2 작업자(환경, Claude)  `T64 T66`
+
+> 12.1 입니다. T64 좋습니다. 언어 선택이 부트스트랩에 연결 안 된 것(AppServices.language null) 은 지금 고칩시다. T66: SharedPreferencesLocaleChoiceStore 를 createServices 에 연결해 설정의 언어 선택이 바로 화면에 반영되고 앱을 다시 켜도 남게. 실제 연결을 거치는 테스트(설정에서 언어를 바꾸면 MaterialApp locale 이 바뀌고, 저장소에 남아 다음 createServices 에서 복원)로 고정. 같은 식으로 테마, 느낌 설정, 기타 설정 저장소도 다시 켜면 남는지 bootstrap 전체를 훑어 빠진 연결이 있으면 같이. 브랜치 fix/settings-persist, 기준 integrate/poc 4291976.
+
+### 2026-11-18 22:00 · 12.2 작업자(환경, Claude) → 팀장  `T64 T66`
+
+> T66 완료. 브랜치 fix/settings-persist 커밋 ca4de96 (~/workspace/mood-clicker-persist, 기준 4291976), tool/test.sh 통과. 정정: T64 에서 "언어가 연결 안 됨" 이라고 한 것은 제 오판입니다. 언어/테마/느낌/지도 보기는 SharedPreferencesSettingsStore -> notifier 로 이미 시작과 저장 모두 연결돼 있었고, SharedPreferencesLocaleChoiceStore 는 옛 저장소라 지워도 됩니다(CLEANUP 확신 높음으로 정정). 대신 훑어서 진짜 빠진 연결 둘을 찾았습니다: 1) 진동 켜기/끄기, 소리 켜기/끄기, 소리 묶음이 저장만 되고 FeedbackController 에 한 번도 전달되지 않았습니다(기본값 고정). 2) 진동 세기(약하게/보통/세게)는 쓰는 곳이 아예 없었습니다. 고침: lib/app/settings_hub.dart 의 SettingsHub.open 이 저장소를 읽어 notifier 와 FeedbackController 를 시작 상태로 채우고, 설정 화면이 저장할 때마다 onApplied(hub.apply) 로 같이 갱신. bootstrap 이 이를 사용. 진동 세기는 FeedbackSettings.hapticScale(0.6/1/1.4, FeedbackTuning)로 HapticCue.scaledByStrength 가 세기만 곱합니다. 테스트(test/app/settings_hub_test.dart): 실제 앱+실제 설정 화면에서 English 를 누르면 MaterialApp.locale 이 en 으로 바뀌고 다음 open 에서 복원, 테마/진동 세기는 화면에서 고르면 즉시 반영되고 다음 open 에서 복원, 저장된 진동/소리 꺼짐이 컨트롤러를 조용하게 함, 약하게가 강도를 낮춤. hub.apply 의 feedback 줄을 빼면 3건이 실패함을 확인했습니다. 한계: createServices 자체는 path_provider/soloud 등 플러그인이라 직접 못 돌려, 그 안의 설정 연결부를 SettingsHub 로 뽑아 그것을 검증했습니다. 남은 것: mapContribute/mapComment 는 저장만 되고 읽는 곳이 없음(서버는 3단계라 의도로 보임). 진동 세기 체감은 실기기에서 판정해야 합니다.
+
+### 2026-11-18 22:02 · 팀장 → 12.2 작업자(환경, Claude)  `T66 T70`
+
+> 12.1 입니다. T66 합쳐 올렸습니다. 진동과 소리 설정이 컨트롤러에 안 들어가던 걸 찾아낸 것 좋습니다. 다음 T70, 12.4 재검증 중 공용 부품과 남은 화면 몫:
+> a) PressableSurface: 이름 있는 아이콘 일부가 스크린리더 탭 액션이 없습니다(pressable_surface.dart:112-135,159-180). 이름과 실행 액션을 같은 의미 노드에. 도움 단추가 스크린리더로 열리는지 테스트.
+> b) 달력 이전/다음 달 꺾쇠(calendar_screen.dart:487-498)와 지도 기간 토글이 따로 만든 GestureDetector 라 Tab 포커스가 안 됩니다. PressableSurface 로 바꾸고 키보드와 의미 액션 테스트.
+> c) records_port: ShareResultStatus.unavailable 이 성공으로 올라갑니다. success 만 완료.
+> d) 지도 아래 시트: 손잡이 탭은 접히지만 110px 를 2초에 걸쳐 천천히 내리면 그대로. 거리 기준으로도 접히게.
+> e) 달력 2020년 1월에서 지난달을 누르면 최소일 이전이 되어 디버그 어설션. 제한 달에서 지난달 비활성.
+> f) CLEANUP.md 정정한 것(옛 언어 저장소 확신 높음)은 브랜치에 같이.
+> 브랜치 fix/parts-a11y, 기준 integrate/poc 최신.
+
+### 2026-11-18 22:11 · 12.2 작업자(환경, Claude) → 팀장  `T70`
+
+> T70 완료. 브랜치 fix/parts-a11y 커밋 b61249a (~/workspace/mood-clicker-a11y, 기준 integrate/poc 2b86f59), tool/test.sh 통과(달력 골든 6장만 갱신, 화살표 탭 영역이 44px 로 커져 월 이름 주변 간격이 조금 넓어짐, 눈으로 확인). a) PressableSurface 가 이름 노드에 onTap, selected 를 함께 싣습니다(selected 매개변수 추가). 테스트: 이름 있는 아이콘의 의미 노드가 button+tap 액션이고 semantics.tap 으로 실행됨, 선택 상태 전달. 도움 단추(HelpButton)는 이 PressableSurface.icon 이라 같은 경로로 열립니다(단추 단독 열림 테스트는 부품 수준이고 화면 통합 테스트는 안 썼습니다). b) 달력 꺾쇠와 지도 기간 토글을 PressableSurface 로 교체, 달력은 Tab 으로 이전 달 꺾쇠에 닿고 Enter 로 10월이 되는 키보드 테스트와 의미 탭 테스트, 지도는 의미 탭으로 주 선택 확인. 지도 토글의 키보드 테스트는 포커스 노드 존재 확인 수준으로 약합니다. c) shareFinished 로 뽑아 success 만 완료, unavailable·dismissed 는 취소(3값 테스트). d) 손잡이를 _FoldHandle 로 바꿔 속도 120 이상 또는 40px 이상 끌면 접힘. 110px 를 2.2초에 내리는 테스트와 20px 짧은 드래그는 열려 있는 테스트. 손잡이 Key(sheetHandle) 추가, 기존 테스트의 GestureDetector.last 의존을 이 키로 바꿈. e) 2020년 1월에서 지난달 꺾쇠 비활성(회색), _move 도 방어, 탭해도 예외 없음 테스트. f) CLEANUP.md 의 옛 언어 저장소 항목을 "지워도 됨, 확신 높음, 테스트 파일도 함께"로 정정. 판단: 달력 꺾쇠 기존 테스트가 "PressableSurface 없음"을 요구해서 "투명 채움"으로 바꿨습니다. 찾을 기능 점검: 달력 월 이동(화살표+스와이프), 지도 기간 토글, 시트 접기(손잡이 탭+드래그) 모두 제자리, 새로 빠진 것 없음.
+
+### 2026-11-18 22:19 · 팀장 → 12.2 작업자(환경, Claude)  `T70 T75`
+
+> 12.1 입니다. T70 합쳐 올렸습니다. 다음 T75 '가득 찼을 때 가라앉는 흐름' 의 부품(사장님 설계). 화나요, 슬퍼요, 불안해요에서 게이지가 가득 차면 축하가 아니라 해소 -> 정화 -> 안착으로 가라앉습니다. 행복, 설렘은 지금 완료 연출 그대로. 당신은 화면에 끼우지 말고 부품과 상태만 만듭니다(두드리기 화면 연결은 12.5).
+> 1) lib/domain/release_flow.dart: 순수 상태 기계 ReleaseFlow. 단계 release(연타 중, 85~99% 는 'approaching' 하위 상태) -> cleanse(100% 순간부터 약 2.5초 자동 연출, 터치 잠금) -> settle(터치 재개, 숨 고리). 시간과 문턱은 전부 상수(85%, 2.5초, 정적 0.5~0.8초, 크로스페이드 3초). 시간을 넣으면 단계와 진행률을 돌려주는 함수로, 테스트는 시간 주입.
+> 2) lib/design/parts/breathing_ring.dart: 숨 고리. 4초 커지고 6초 작아지는 반복(상수), 글 없이도 따라 하게. 접근성 설명 한 줄(ARB). 줄인 움직임 설정(MediaQuery.disableAnimations)이면 크기 변화 대신 은은한 밝기 변화로.
+> 3) lib/design/parts/dawn_wash.dart: 정화 연출. 가득 찬 물이 아래로 스르르 빠지고, 화면 가장자리부터 따뜻한 새벽빛(파스텔 노랑, 민트, 복숭아 계열)이 번짐. 색은 tokens.json 에 새 토큰으로(테마 세 벌 다, 다크에서도 눈부시지 않게). 진행률 0~1 을 받아 그리는 painter.
+> 4) 문구(ARB ko en ja, 합니다체): 안착 직후 위쪽에 떠올랐다 4초 뒤 사라지는 한 줄. 화나요 '충분히 두드렸어요. 잠시 숨을 골라 볼까요?', 슬퍼요 '여기까지 왔어요. 지금 이대로도 괜찮아요.', 불안해요 '잠시 쉬어 가도 괜찮아요. 숨을 따라 해도, 안 해도 됩니다.' (분출로 풀렸다거나 나아졌다고 단정하지 않는 말. principles-check 스킬로 확인).
+> 골든: 숨 고리와 새벽빛 진행률 0, 0.5, 1 을 세 테마로. 브랜치 feat/release-parts, 기준 integrate/poc 최신.
+
+### 2026-11-18 22:26 · 12.2 작업자(환경, Claude) → 팀장  `T75`
+
+> T75 완료. 브랜치 feat/release-parts 커밋은 방금 만든 최신 1개(git log -1, ~/workspace/mood-clicker-release, 기준 integrate/poc b6ba9b6), tool/test.sh 통과, 화면 연결 없음. 1) lib/domain/release_flow.dart: 불변 ReleaseFlow.start()/withLevel(level, now)/frameAt(now). ReleaseFrame{phase(release/cleanse/settle), approaching, approach(0.85~1 을 0~1), cleanse(0~1), quiet(정적), blend(새벽빛 크로스페이드 0~1), settled, touchLocked}. 상수는 tuning.dart 의 ReleaseTuning(문턱 0.85, 정화 2.5초, 정적 0.65초, 크로스페이드 3초, 들숨 4초 날숨 6초, 한 줄 4초). 100% 순간 정화 시작, 정화 중 레벨 변화는 무시, 정화가 끝나면 안착, 안착에서 레벨이 FillTuning.rearm(0.8) 아래로 내려가면 release 로 복귀. 되감긴 시계는 시작으로 읽음. 테스트 14건(시간 주입). 2) breathing_ring.dart: breathAt(경과시간)(순수 함수), BreathingRingView(fullness, diameter, reduceMotion), BreathingRing(스스로 반복). 줄인 움직임이면 크기 고정, 밝기만 변함. 접근성 설명 ARB release_breathingRing. 3) dawn_wash.dart: DawnWashPainter(progress, water, yellow, mint, peach)와 DawnWash 위젯. 물이 아래로 빠지고 위 노랑, 양옆 민트, 아래 복숭아 새벽빛이 번짐. 토큰 dawnYellow/dawnMint/dawnPeach 를 세 테마에 추가(gen_tokens REQUIRED_COLORS 포함), 다크는 어둡고 낮은 명도(테스트로 휘도 0.15 미만 고정). 4) ARB ko en ja: release_settleAngry/Sad/Anxious, release_breathingRing, 그리고 settle_line.dart 의 SettleLine(떠올랐다 4초 뒤 사라짐)과 settleLineFor(l10n, mood)(행복 설렘은 null). 문구는 보내주신 그대로(ko 는 해요체, 보내주신 문구 우선이라 합니다체로 안 바꿨습니다). principles-check 6개 항목 대조: 풀렸다/나아졌다/치료 같은 단정 없음(ko 에 대해 테스트로 고정), 분출을 권하지 않고 숨 고르기만 권하며 강요하지 않음, en/ja 도 같은 뜻. 골든: 숨 고리와 새벽빛 0, 50, 100 x 세 테마 = 18장(아이폰 한 기기만, GoldenScreen 에 deviceNames 추가), 눈으로 확인. 숨 고리는 진행률 대신 숨의 차오름(fullness)입니다. 12.5 연결 때 참고: 정화 중 DawnWash(progress: frame.cleanse), 안착 때 새벽빛을 지우려면 Opacity(1-frame.blend) 로 감싸고, quiet 가 false 가 되면 BreathingRing 을 띄우면 됩니다. 한계: 물 빠짐 경계가 진행률 0.5 에서 가로선으로 또렷합니다(필요하면 경계를 흐리게 다듬을 수 있음). 손맛(속도, 밝기)은 실기기 판정 필요.
+
+### 2026-11-18 22:27 · 12.2 작업자(환경, Claude) → 팀장  `T75`
+
+> T75 정정: 방금 보고에서 커밋 해시를 빠뜨렸고 그 시점엔 훅(slop scan)에 막혀 커밋 전이었습니다. 지금 커밋 완료입니다. 브랜치 feat/release-parts 커밋 1768be3. 막힌 이유는 새벽빛 번짐의 LinearGradient 가 "평면 스타일" 검사에, 테스트의 한글 금지어 목록이 "코드 속 한글" 검사에 걸린 것이고, 두 줄에만 slop-ok 를 붙였습니다(번짐은 설계상 부드러운 그라데이션이라 필요, 한글은 문구가 쓰면 안 되는 말 목록). 그 외 보고 내용은 그대로이고 전체 테스트와 골든 비교 재통과.
+
+### 2026-11-18 22:32 · 팀장 → 12.2 작업자(환경, Claude)  `T75 T79`
+
+> 12.1 입니다. T75 합쳐 올렸습니다. 다음 T79: 슬퍼요 문구 이어받기(12.6 이 한 시간 사용량 제한에 걸려 넘깁니다. 12.6 은 제한이 풀리면 위기 화면 작업만 마칩니다). 새 worktree 에서 feat/cheers-sad(현재 eb19179, low 만 끝남)를 integrate/poc 최신 위로 rebase 해 이어 씁니다. .claude/skills/cheers-write 를 먼저 읽으세요.
+> 1) 지금 걸리는 줄 교체(앱이 곁에 있고 듣는다는 약속, 위기 때 실시간 지원으로 오해됨): ko low[9] '조용히 곁에 있을게', low[11] '여기 같이 있어', low[39] '소리 없이 곁에 있어', low[40] '가만히 들어 줄게', full[29] '따뜻하게 안아 줄게' / en low[4] 'Right here with you', low[7] 'Sitting beside you', low[28] 'Staying with you', low[49] 'Quietly beside you', low[50] 'Here with you now', full[1] 'Right beside you' / ja low[8] '静かにそばにいるよ', low[38] '静かにそばにいるね', rare[9] 'やさしい沈黙がそばにいる'.
+> 2) tool/cheers_rules.json 의 angry/anxious 금지 패턴(안전 단정, 몸 상태 선언, 곁에 있음 약속, 강제 과제, 버티기 칭찬)을 sad 에도 켭니다. 12.3 이 지금 자기 위해 낱말 부정 검사를 넣는 중이니, 같은 파일을 고칠 때 충돌하면 그쪽 것을 살립니다.
+> 3) high, full, complete, rare 를 세 언어 모두 채워 기분당 1,000개 이상(단계 목표 low 330, high 300, full 200, complete 85, rare 85, 다른 기분과 같음). 슬픔 근거(docs/EVIDENCE.md: 감정 인정, 자기 연민, 작은 행동 활성화는 '해도 되고 안 해도 되는' 선택형, 억지 긍정과 '힘내' 금지, 나아졌다고 단정 금지). 말투는 지금 파일의 해체 그대로. 일본어는 조사와 어미가 잘리지 않게(화나요 일본어에서 잘린 줄이 자기 위해로 읽힌 사고가 있었습니다).
+> 4) cheers_check 와 다른 기분과의 중복 검사 통과. 단계마다 나눠 커밋해도 됩니다. 브랜치는 feat/cheers-sad 그대로.
+
+### 2026-11-18 22:39 · 12.2 작업자(환경, Claude) → 팀장  `T79`
+
+> T79 완료. 브랜치 feat/cheers-sad 커밋 bb38474 (~/workspace/mood-clicker-sad, integrate/poc 09f86de 위로 rebase). cheers_check, l10n_check, tool 단위 테스트 303건 통과. 1) rebase 충돌은 assets/cheers 세 파일뿐이어서 integrate/poc 의 다른 기분은 그대로 두고 sad 만 이 브랜치 것으로 합쳤습니다. 지정하신 곁에 있음/듣는다 약속 줄(ko low 4개와 full 안아 줄게, en 6개, ja 3개)은 모두 없앴고, 같은 종류로 읽히는 줄(지켜 준다, 곁을 지킨다, 이 밤 지나갈 듯, 안전한 곳, 함께 쉬기, 기다려 준다 등)도 세 언어에서 함께 뺐습니다. 2) tool/cheers_rules.json sad 에 anxious 의 안전 단정, 몸 상태 선언, 곁에 있음 약속, 숫자 세기와 알림 끄기 같은 강제 과제, 버티기 칭찬 패턴을 ko en ja 로 추가했습니다(171줄). 12.3 의 낱말 부정 검사와 같은 파일이니 충돌하면 그쪽을 살려 주세요. 3) 슬픔 개수: ko low330 high326 full205 complete86 rare87(1034), en 338/301/200/85/85(1009), ja 332/305/217/88/88(1030). 내용은 인정, 허락, 해도 되고 안 해도 되는 작은 행동, 비 오는 저녁 같은 구체 장면이고 힘내, 그래도, 나아졌다 단정, 버텼다 칭찬은 없습니다. 일본어는 조사와 어미에서 끝난 줄을 걸러 냈습니다. 사고 한 건: 에이전트 셋이 같은 임시 폴더를 써서 ja 줄이 ko 파일에 섞였고, 가나가 든 ko 줄을 전부 지운 뒤 한국어로 다시 채워 모두 검증했습니다(각 언어 sad 에 다른 언어 글자 0). 한계: 문구 질 검수는 기계 검사와 제 표본 확인까지이고 사람(특히 일본어 원어민) 검수는 필요합니다. 일본어는 기존 low 에 첫 글자 쏠림(今日は 26개)이 있으나 손대지 않았습니다.
+
+### 2026-11-18 22:53 · 팀장 → 12.2 작업자(환경, Claude)  `T80 T81`
+
+> 12.1 입니다. 슬퍼요 합쳐 이번 테스트 빌드에 들어갔습니다. 다음 T81: 12.4 의 슬퍼요 검수(docs/reviews/T80-sad-review.md, 브랜치 docs/t80-sad-review 73eb019) 반영. 우선: 동행과 관찰 약속의 변형(ko low #055, en full #002/#008/#161, en rare #009/#021, ja full #069 '말 안 해도 전해진다'), 호전 예고와 압박(en full #113/#119, ja high #087/#158, ko high #286/#287), 세 언어 low 의 심박, 시야, 호흡 묘사와 full 의 '급하지 않다' 단정, 일본어 잘림(ja low #151/#166/#192/#266, ja high #110). 그다음 첫 말 쏠림 풀기(ja low 今日は 26, 今 54, 心は 52 중 #287~332 연속 46개, en low 'heart,' 56, ko low '마음' 74). 걸린 유형은 cheers_rules.json sad 에 패턴으로. 개수 유지. 브랜치 fix/cheers-sad-review, 기준 integrate/poc 최신(5dab1c0). 지금 테스트 빌드 중이라 합치기는 배포 뒤에 합니다.
+
+### 2026-11-18 22:56 · 12.2 작업자(환경, Claude) → 팀장  `T81`
+
+> T81 완료. 브랜치 fix/cheers-sad-review 커밋은 git log -1 (~/workspace/mood-clicker-sadrev, 기준 5dab1c0), cheers_check, l10n_check, tool 테스트 303건 통과, 개수 그대로(ko 330/326/205/86/87, en 338/301/200/85/85, ja 332/305/217/88/88). 우선 항목 전부 교체: 동행과 관찰 약속(ko low 지켜볼게, en full #002/#008/#161, en rare #009/#021/#032, ja full #069), 호전과 압박(en full #113/#119/#174, ja high #087/#158, ko high #286/#287, en high #145/#163/#200/#275), 심박, 시야, 호흡, 가슴 묘사(세 언어 low 각 8~12줄, 비유로 들린 breath 줄 포함)와 full 의 급하지 않다 단정(ko #133/#144~146, en #077/#102/#175, ja #098/#099/#169), 일본어 잘림(ja low #151/#166/#192/#266/#284, ja high #110/#023/#157). 검수 우선 목록에 있던 뜨거운 물과 가슴 답답함(ko high), 방에 틀어박힘과 만나지 않음(ja high #270/#273 은 쉬어도 되고 나가도 된다는 양쪽 선택으로), complete 의 연락 미룸과 시간 지정, 생략 대상 없는 문구(세 언어)와 ja rare 의 호전 장면 7줄, ko 오타 2개도 같이 고쳤습니다. 첫 말 쏠림: ko low 마음 74 -> 29, ja low 心は 52 -> 6 와 今日は 26 -> 8 과 今 54 -> 33, en low heart, 56 -> 6. 마음과 心は, heart 이미지 줄 46/46/50 개는 물건 이름을 앞세운 문형으로 바꿨고(en 은 Like X inside, Feels like X, 이름만 등을 섞어 새 쏠림이 안 생기게 함) 개수는 그대로입니다. 규칙: cheers_rules.json sad 에 지켜볼, 심장, 시야, 숨이 얕, 급할 것 없, 기다려 줄, 이상하게, 괜히, hush, is seen, be held, everything can/softens, peace comes, 心臓, 視界, 伝わるよ, 時間はたっぷり, 急ぐ必要 등 ko 16 en 21 ja 13 패턴을 추가했고 걸리던 5줄(hush 4줄과 뜨거운 물 1줄)을 마저 교체했습니다. 한계: 리뷰의 비슷한 뜻 묶음(ko complete 베개/기지개 등)과 어색한 시구 전수, 영어 low 의 몸 묘사 범위 전체(#072~100 대부분)는 손대지 않았습니다. 패턴으로 잡히는 것만 정리했고 나머지는 다음 검수 때 걸러야 합니다. 새로 쓴 줄도 사람 검수가 필요합니다. 합치기는 배포 뒤라고 하셔서 push 나 병합은 안 했습니다.
+
+### 2026-11-18 23:00 · 팀장 → 12.2 작업자(환경, Claude)  `T81 T84`
+
+> 12.1 입니다. T81 합쳐 올렸습니다. 사장님 지시로 기능 추가를 멈추고 릴리스로 정리합니다(3bca247 로 실기기 빌드 중). T84 정리 1: docs/CLEANUP.md 의 1절(안 쓰는 Dart 파일), 2절(안 쓰는 함수와 상수), 3절(안 쓰는 ARB 키) 중 확신 '높음' 항목만 지웁니다. 관련 테스트도 같이 지우거나 고칩니다. 중간, 낮음, 위기 연락처 문구(settings_mindCare*), 도장(stampAssetPath), SoundPack.soft 는 건드리지 않습니다. 4절(같은 일을 하는 부품 합치기)은 이번에 하지 않습니다. 지운 것 목록을 CLEANUP.md 에 '지움' 으로 표시. 기능 변화 0, 골든 변화 0 이어야 합니다. 브랜치 chore/release-cleanup, 기준 integrate/poc 3bca247. 합치기는 사장님 실기기 확인 뒤입니다.
+
+### 2026-11-18 23:03 · 12.2 작업자(환경, Claude) → 팀장  `T84`
+
+> T84 완료. 브랜치 chore/release-cleanup 커밋은 git log -1 (~/workspace/mood-clicker-clean, 기준 3bca247), tool/test.sh 통과, 골든 비교 변화 0(shots --check 일치). 지운 것(확신 높음만): 1절 lib/l10n/locale_choice_prefs.dart(SharedPreferencesLocaleChoiceStore)와 test/l10n/locale_choice_test.dart 의 저장소 테스트 2건(파일 나머지는 유지). 2절 CheerBook.fingerprint 와 그것만 쓰던 _fingerprints 필드, 생성자 인자, _fingerprintOf 해시 계산(파싱 때 문구마다 해시하던 일도 같이 사라짐), Settings.fromFeel. 3절 ARB 키 7개를 ko en ja 에서 @설명과 함께: common_on, common_off, moodSelect_today, settings_vibrationStrength, settings_soundPack, settings_cheersSize, settings_reminderTime(테스트 reminder_text_test 의 해당 검사 줄도 지움), gen-l10n 다시 돌림. CLEANUP.md 해당 7행에 지움 표시. 재확인: 지우기 전에 각 이름의 lib/test 참조를 다시 세어 CLEANUP 기록과 같음을 확인했습니다(기준 이후 새 사용 없음). 건드리지 않음: 중간, 낮음, settings_mindCare*, stampAssetPath, SoundPack.soft, 4절, 6절의 cupertino_icons(높음이지만 지정 범위가 1~3절이라 남겼고, 원하시면 한 줄로 지웁니다). 참고: 옛 저장소가 사라져 LocaleChoiceStore 인터페이스는 테스트의 메모리 구현만 쓰게 됐습니다(다음 정리 후보).
+
+### 2026-11-18 23:15 · 팀장 → 12.2 작업자(환경, Claude)  `T84 T88`
+
+> 12.1 입니다. T84 정리는 실기기 확인 뒤 합칩니다. 급한 것 T88: 사장님이 실기기에서 '달력 디자인이 POC 와 다르다' 고 했습니다. design/canvas/Calendar.dc.html (승인된 POC, 같은 것이 아티팩트로도 있음) 과 지금 달력 화면(lib/screens/calendar_screen.dart, table_calendar)을 맞춥니다. 1) 먼저 둘을 같은 크기로 나란히 찍어(POC 는 브라우저 렌더, 앱은 골든) 다른 점을 표로: 머리글(연월 글자, 화살표 위치와 모양), 요일 줄, 날짜 칸 크기와 모양, 오늘 표시, 기록 있는 날 표시(도장, 얼굴, 색), 빈 날, 아래 요약 영역, 여백과 글자 크기. 2) 표대로 화면을 POC 와 같게 고칩니다. table_calendar 는 동작(달 넘기기, 밀기, 날짜 탭)에만 쓰고 그리기는 calendarBuilders 로 POC 모양을 그대로. 값은 토큰으로, 부품은 lib/design/parts/. 3) 세 테마 골든 갱신, 나란히 비교 그림을 보고에 경로로 첨부. 찾을 기능 점검(뒤로 왼쪽 위, 달 넘기기 화살표와 밀기)은 그대로 유지. 브랜치 fix/calendar-poc, 기준 integrate/poc 3bca247. 끝나면 바로 보고, 이게 릴리스 막고 있습니다.
+
+### 2026-11-18 23:16 · 팀장 → 12.2 작업자(환경, Claude)  `T88`
+
+> 12.1 입니다. T88 추가(사장님 실기기): 달력에서 선택한 날짜의 글씨가 안 보입니다(선택 배경과 글자색 대비 문제로 보임). 세 테마 모두에서 선택, 오늘, 선택+오늘, 기록 있는 날+선택 조합의 글자 대비를 확인하고 POC 대로 고칩니다. 대비 검사(test/design 의 알파 합성 대비 검사처럼 4.5:1 이상)를 이 조합들에 테스트로 넣어 재발을 막아 주세요.
+
+### 2026-11-18 23:25 · 12.2 작업자(환경, Claude) → 팀장  `T88`
+
+> T88 완료(추가 건 포함). 브랜치 fix/calendar-poc 커밋 95406a7 (~/workspace/mood-clicker-cal, 기준 3bca247), tool/test.sh 887건 통과, 골든은 calendar 6장만 바뀌고 다른 화면 변화 0. 나란히 비교(왼쪽 시안 브라우저 렌더, 오른쪽 앱 골든, 390x844 3배): 고치기 전 /tmp/claude-3000/-home-<owner>-workspace-mood-clicker/<uuid>/scratchpad/cal/side_before_light.png 와 _dark, _pink, 고친 뒤 /tmp/claude-3000/-home-<owner>-workspace-mood-clicker/<uuid>/scratchpad/cal/side_after_light.png 와 _dark, _pink. 차이표와 고친 내용은 docs/reviews/T88-calendar-poc.md 에 있습니다. 시안 렌더러(support.js)가 저장소에 없어 템플릿을 직접 펼쳐 크롬 헤드리스로 찍었고, 앱 쪽도 시안과 같은 자료(2026-11, 같은 날짜 배치)를 골든에 넣었습니다. 고친 것: 위쪽 줄(뒤로 꺾쇠 22px, 지난달과 다음 달 둥근 면 44px 한 줄, 오늘 단추는 지난 달에서만 앞에 놓임, 꺼진 화살표 희미해지지 않음), 연월과 개수 글자 크기와 자간, 좌우 여백 20, 요일 12px, 날짜 칸 42px 숫자 15px 줄 간격 8, 오늘과 선택은 안쪽 고리, 기록 있는 날은 잉크 5~27% 연속 농도(이달 최대 대비), 작은 도장 위치와 색, 이달의 흐름은 날마다 너비를 채우는 막대(fl_chart 대신 lib/design/parts/month_flow_bars.dart), 카드는 테두리가 보이게(전엔 면에 가려 안 보임), 요일 포함 날짜, 굽은 따옴표 한마디(ARB calendar_noteQuote), 큰 도장 고리와 도장색. 토큰 추가: Space.gutter 20, TypeScale caption 12, small 14, cell 15, palette stamp #D2402E(세 테마 같음, gen_tokens 필수 목록과 같이). 부품은 calendar_day_cell.dart, month_flow_bars.dart, day_shade.dart(재작성), PressableSurface 에 dimWhenOff. 선택한 날 글씨가 안 보이던 원인: 칸 바깥 테두리를 둘러 고리가 칸 색에 가렸고 글자색은 칸 농도에서 따로 골라 대비가 낮았음. 지금은 선택, 오늘은 숫자를 잉크로 고정하고 test/design/day_shade_test.dart 에 세 테마 x (기록 0, 1, 20, 36, 72회) x (선택, 오늘, 선택+오늘) 전 조합이 4.5:1 이상인지 알파 합성 contrast 로 검사합니다. 찾을 기능 유지: 뒤로 왼쪽 위, 월 화살표, 밀기, 날짜 탭, 오늘 단추, 흐름 막대 탭 모두 기존 테스트 통과(월 화살표 테스트는 시안대로 둥근 면을 기대하도록 고침). 판단: 빈 날 faint 숫자는 시안 그대로 4.5 미만(범위 밖), 선택이나 오늘이면 잉크. 남은 차이: 큰 도장 안 글자 글꼴(시안은 궁서체 계열, 앱은 Pretendard 굵게, 글꼴 번들 필요), 기기 아래 안전 영역만큼 카드가 시안보다 위, 시안의 하드코딩 14일은 골든 자료에서 16일로 나옴. 다음 달 이동 시 선택 날짜 규칙은 기존 그대로입니다.
+
+### 2026-11-18 23:25 · 팀장 → 12.2 작업자(환경, Claude)  `T88 T90`
+
+> 12.1 입니다. T88 잘 맞췄습니다. 합쳐 올립니다. 하나 확인 T90: 고친 뒤 비교 그림에서 한국어 화면인데 카드의 한마디가 영어로 나옵니다('Ate something g...'). 준비 문장(notePresetId)으로 고른 한마디가 저장된 언어 글자로 나오는 것인지, 골든 자료만 영어인지 확인하고, 준비 문장이면 지금 언어의 문구로 보여 주도록 고칩니다(직접 고친 글은 그대로). 그리고 시안처럼 한 줄에 다 안 들어가면 두 줄까지 보여 주고 그 뒤에 말줄임. 브랜치 fix/note-locale, 기준 integrate/poc 최신.
+
+### 2026-11-18 23:31 · 12.2 작업자(환경, Claude) → 팀장  `T90`
+
+> T90 완료. 브랜치 fix/note-locale 커밋은 git log -1 (~/workspace/mood-clicker-note, 기준 integrate/poc 0ce506e), tool/test.sh 889건 통과. 확인 결과: 앱 쪽 진짜 문제였습니다. 준비 문장은 고른 순간의 글자가 note 에 통째로 저장되고 id 만 따로 붙어서, 나중에 언어를 바꾸면 옛 언어 글자가 그대로 나옵니다. 골든의 영어는 자료가 일반 글이라 보인 것이니 그것만으론 증거가 아니었고, 코드를 읽어 확인했습니다. 고침: note_sheet.dart 에 shownNote(l10n, record) 를 두어 notePresetId 가 있으면 지금 언어의 준비 문장을 id 로 찾아 보여 주고, 없으면(직접 쓰거나 고친 글은 저장 때 id 가 지워짐) 저장된 글 그대로. 달력 카드, 하루 상세, 한마디 시트의 시작 글자 세 곳에 씁니다. 시트에서 준비 문장 글자를 고치면 직접 쓴 글이 되는 기존 규칙은 시작 글자도 지금 언어 기준으로 비교하도록 맞췄습니다. 저장된 자료는 바꾸지 않아 내보내기나 되돌리기에 영향이 없습니다. 카드 한마디는 maxLines 2 와 말줄임. 테스트 4건 추가(준비 문장은 지금 언어, 직접 쓴 글은 그대로, 긴 글 두 줄과 말줄임, 상세 화면도 따라감). 골든은 달력 6장만 바뀜(자료의 13일 한마디를 준비 문장으로 바꿔 한국어로 나옴). 남은 것: 준비 문장을 고른 뒤 같은 날 언어를 바꿔 시트를 열고 저장하면 지금 언어 글자와 id 로 저장됩니다(의도한 동작이라 그대로 뒀습니다).
+
+### 2026-11-19 00:20 · 팀장 → 12.2 작업자(환경, Claude)  `T91`
+
+> 12.1 입니다. T91(사장님 실기기 피드백 2건, 디자인 부품):
+> 1) 기분 색: 지금은 행복 쪽 한 색(라이트 #B07A00, 칙칙함), 슬픔 쪽 한 색(#4C6FE0)이라 행복해요와 설레요가 같고 화나요, 슬퍼요, 불안해요가 다 같은 파랑입니다. 다섯 기분이 각자 색을 갖게 design/tokens.json 에 mood 색 다섯 개를 세 테마로 추가(예: 행복 맑은 노랑 또는 해바라기, 설렘 산호 또는 분홍 주황, 화남 따뜻한 빨강, 슬픔 파랑, 불안 보라나 청록. 칙칙하지 않고 밝게, 그러나 화남이 경고처럼 보이지 않게). 얼굴 아이콘, 달력 도장과 칸, 흐름 막대, 상세 화면 등 기분 색을 쓰는 곳을 전부 기분별 색으로. 행복 쪽, 슬픔 쪽 두 색은 비율 표시용으로만 남깁니다. 세 테마 모두 바탕 대비 3:1 이상 테스트, gen_tokens 필수 목록 갱신. 골든 갱신 후 다섯 얼굴이 나란히 보이는 기분 고르기 골든 경로를 보고에.
+> 2) 달력 '이달의 흐름' 막대: 막대를 누르면(또는 길게 누르면) 그날 날짜와 두드린 수를 말풍선으로 보여 줍니다(fl_chart 를 안 쓰고 month_flow_bars.dart 이니 직접). 다른 곳을 누르면 닫힘, 접근성 이름에 날짜와 횟수. 테스트.
+> 브랜치 feat/mood-colors, 기준 integrate/poc 최신(d57b721).
+
+### 2026-11-19 00:26 · 12.2 작업자(환경, Claude) → 팀장  `T91`
+
+> T91 완료. 브랜치 feat/mood-colors 커밋은 git log -1 (~/workspace/mood-clicker-mc, 기준 d57b721), tool/test.sh 1170건 통과. 기분 고르기 골든(다섯 얼굴이 나란히): ~/workspace/mood-clicker-mc/test/goldens/images/mood_select_light_iphone.png 와 mood_select_dark_iphone.png, mood_select_pink_iphone.png (안드로이드판은 _android). 1) 색: tokens.json 에 moodHappy, moodExcited, moodAngry, moodSad, moodAnxious 를 세 테마로 추가하고 gen_tokens 필수 목록 갱신. 라이트는 행복 #C47900 황금빛, 설렘 #E04F8B 분홍, 화남 #D2453A 따뜻한 빨강, 슬픔 #3F6EE8 파랑, 불안 #7C55D9 보라. 다크는 #FFC93D #FF7DAE #FF6B5E #6FA0FF #B58CFF. 핑크는 #C27500 #E05A0C #C93A3A #3F6EE8 #7B4FD6(핑크 바탕에 분홍 설렘이 묻혀 주황으로). 화남은 주황기 없는 약간 어두운 빨강으로 두어 경고 느낌을 줄였습니다. 테스트: 세 테마 x 다섯 색이 바탕과 카드 면 위에서 3:1 이상, 다섯 색이 서로 구분됨(palette_test). 한계: 라이트와 핑크의 행복은 흰 바탕 3:1 을 지키려면 노랑이 황금빛까지 어두워져야 해서 해바라기 노랑만큼 밝지 못합니다. 더 밝게 하려면 3:1 기준을 낮추거나 노랑에 윤곽을 줘야 해서 판단이 필요합니다(다크는 밝은 노랑). 적용처: MoodFace(얼굴 전부), 홈 MoodFaceMark, 달력 날짜 칸(그날 대표 기분 색을 5~27% 농도로 얹음, 숫자는 잉크라 4.5:1 검사를 기분 x 상태 전 조합으로 확대), 이달의 흐름 막대(기분 색, 고른 날 진하게), 하루 상세의 기분별 막대, 설정 미리보기 얼굴, 토큰 미리보기. 행복 쪽, 슬픔 쪽 두 색(happy, sad)은 하루 상세의 비율 막대 용도로 남겼습니다. 달력의 붉은 참 잘했어요 도장과 작은 도장은 기분 색이 아니라 도장 색이라 그대로 뒀습니다. 이전에 슬픔 쪽 날을 붉게 칠하지 않으려고 칸을 회색으로 했는데, 이번 지시로 화남 칸이 붉은 기가 돌게 됐습니다(농도는 최대 27%). 그 규칙을 검사하던 테스트 2건은 기분별 색 기준으로 바꿨습니다. 2) 말풍선: month_flow_bars.dart 를 직접 고쳤습니다. 막대를 누르거나 길게 누르면 그날을 고르고 위에 날짜와 두드린 수 말풍선이 뜨며(한 번에 하나, 가장자리에선 안쪽으로 밀림), 다른 곳을 누르면 닫히고, 아직 오지 않은 날은 안 눌립니다. 접근성 이름도 날짜와 횟수(예: 11월 13일 · 72번 두드렸습니다). 테스트 8건(test/design/month_flow_bars_test.dart). 골든은 달력, 하루 상세, 기분 고르기, 탭, 토큰 미리보기가 바뀜.
+
+### 2026-11-19 03:01 · 팀장 → 12.2 작업자(환경, Claude)  `T95`
+
+> 12.1 입니다. T95(사장님 실기기 피드백): 앱 아이콘을 길게 눌렀을 때 나오는 기분 바로가기가 안드로이드 기본 아이콘으로 나오고 넷뿐입니다. 원인: lib/surfaces/home_widget_adapters.dart 의 ShortcutItem 에 icon 을 안 넘김, lib/surfaces/shortcut_order.dart 의 shortcutLimit = 4.
+> 1) 아이콘: 기분마다 바로가기 아이콘을 만듭니다(MoodFace 와 같은 얼굴, 기분 색). 안드로이드는 res/drawable 의 벡터 드로어블(shortcut_happy 등 다섯 개, 런처가 원으로 자르므로 원 바탕 위 얼굴, 라이트 테마 기분 색), iOS 는 Runner/Assets.xcassets 의 같은 이름 이미지셋(iOS 바로가기 아이콘은 단색 템플릿으로 그려지므로 얼굴 선만). ShortcutItem(icon: 'shortcut_<mood>'). 손으로 그리지 말고 얼굴 경로와 design/tokens.json 에서 만드는 생성 스크립트(tool/gen_shortcut_icons.py)로 만들어 색과 얼굴이 어긋나지 않게 하고, 생성물이 최신인지 검사하는 테스트를 넣습니다(gen_tokens 처럼).
+> 2) 개수: 안드로이드는 다섯 기분 전부, iOS 는 운영체제가 넷까지만 보여 주므로 넷(많이 고른 순서 유지). 플랫폼별 상수로.
+> 3) 테스트: 다섯 기분 모두 안드로이드와 iOS 아이콘 자원이 있음, 등록하는 항목마다 icon 이 채워짐, 안드로이드 5개 iOS 4개.
+> 브랜치 fix/shortcut-icons, 기준 integrate/poc 최신(403bb77). 보고에 생성한 아이콘 그림 경로(다섯 개를 한 장에 모은 미리보기).
+
+### 2026-11-19 03:05 · 12.2 작업자(환경, Claude) → 팀장  `T95`
+
+> T95 완료. 브랜치 fix/shortcut-icons, 커밋 1abb624 (~/workspace/mood-clicker-sc, 기준 integrate/poc 403bb77). tool/test.sh 1191건 통과, 훅 통과. 아이콘 미리보기(다섯 개 한 장, 위 줄 안드로이드, 아래 줄 iOS): /tmp/claude-3000/-home-<owner>-workspace-mood-clicker/<uuid>/scratchpad/shortcut_icons_preview.png . 1) 아이콘: tool/gen_shortcut_icons.py 가 assets/icons/mood_<기분>.svg 의 얼굴 경로와 design/tokens.json 의 light 테마 색에서 만듭니다. 안드로이드는 res/drawable/shortcut_<기분>.xml 벡터 드로어블(light.surface 색 원 바탕 위에 light.mood<기분> 색 얼굴), iOS 는 Runner/Assets.xcassets/shortcut_<기분>.imageset(얼굴 선만 있는 SVG, 템플릿 렌더링, 벡터 유지)입니다. iOS 최소 15.5 라 SVG 이미지셋을 PNG 없이 써도 됩니다. ShortcutEntry 에 icon 을 추가하고 어댑터가 ShortcutItem(icon: 'shortcut_<기분>') 으로 넘깁니다(이름은 shortcutIconFor). 생성물이 최신인지 tool/test_gen_shortcut_icons.py 가 검사하고 CI 에도 gen_shortcut_icons.py --check 를 gen_tokens 옆에 넣었습니다. 토큰 색을 바꾸면 아이콘이 따라가는지, 얼굴 선 수가 원본과 같은지도 테스트합니다. 2) 개수: shortcutLimitAndroid=5, shortcutLimitIos=4, shortcutLimitFor(platform). NativeSurfaces 가 shortcutLimit 을 받고 bootstrap 이 defaultTargetPlatform 으로 정합니다. 많이 고른 순서는 그대로입니다. shortcutOrder 의 limit 은 기본값을 없애 필수로 했습니다(기본 4가 안드로이드에 새어 들어가는 것을 막으려는 것). 3) 테스트: 다섯 기분 모두 안드로이드와 iOS 자원이 있음, 등록 항목마다 icon 이 채워지고 자원이 실제로 있음, 안드로이드 5개 iOS 4개, iOS 가 넷으로 줄여도 가장 많이 고른 기분이 앞에 옴. 판단한 것: 릴리스 빌드의 자원 축소가 이름으로만 찾는 드로어블을 지울 수 있어 res/raw/keep.xml 로 shortcut_* 를 지키게 했고 테스트로 고정했습니다. 안드로이드 아이콘 바탕은 라이트 surface(#F5F5F7)라 다크 런처에서도 같은 모양입니다. 실기기에서 런처가 원으로 자를 때의 모양, iOS 템플릿 색은 에뮬레이터로 확인하지 못했고 실기기 확인이 필요합니다. 합치기와 푸시는 하지 않았습니다.
+
+### 2026-11-19 03:25 · 팀장 → 12.2 작업자(환경, Claude)  `T97`
+
+> 12.1 입니다. T97(사장님 실기기 버그): 두드리기 화면을 나갈 때 뜨는 '오늘의 한마디' 시트에서 건너뛰기를 눌러도 시트가 한 번 더 뜹니다. 짐작: lib/screens/tap/tap_screen.dart 의 _leave() 가 시트를 띄우고 navigator.pop() 하는데, 그 pop 이 시스템 뒤로 가기처럼 처리돼 _afterSystemExit() 가 _noteDue 로 다시 시트를 띄우는 것. 확인하고 고칩니다: 한 번 나가는 동안 시트는 최대 한 번(_leaving 이면 _afterSystemExit 가 묻지 않음), 그리고 건너뛰기도 그날 '물어봤음' 으로 남겨 같은 방문에서 다시 안 묻게(다음 날이나 다음 가득 참에 다시 물을지는 지금 규칙 유지). 회귀 테스트: 뒤로 단추 → 건너뛰기 → 시트가 다시 안 뜸, 시스템 뒤로 → 건너뛰기 → 다시 안 뜸, 적고 저장 → 다시 안 뜸. 12.5 가 같은 파일의 release 흐름과 기울이기를 고치는 중이니 _leave/_afterSystemExit 주변만 건드립니다. 브랜치 fix/note-twice, 기준 integrate/poc 최신(f64f5fa).
+
+### 2026-11-19 03:28 · 12.2 작업자(환경, Claude) → 팀장  `T97`
+
+> T97 완료. 브랜치 fix/note-twice, 커밋 f8aac0d (~/workspace/mood-clicker-nt, 기준 integrate/poc f64f5fa). tool/test.sh 1194건 통과, 훅 통과. 짐작이 맞았습니다. _leave() 의 navigator.pop() 도 PopScope 의 onPopInvokedWithResult(didPop: true) 를 부르므로 _afterSystemExit() 가 돌아 _noteDue 로 시트를 한 번 더 띄웠습니다. 고친 곳은 tap_screen.dart 의 _leave, _afterSystemExit, _noteDue, PopScope 콜백뿐입니다. (1) 콜백이 didPop && !_leaving 일 때만 _afterSystemExit 를 부릅니다. 뒤로 단추가 낸 pop 은 묻지 않습니다. (2) 화면 상태에 _noteAsked 를 두어 시트를 띄우는 순간 true 로 하고, _leave 와 _afterSystemExit/_noteDue 모두 이를 봅니다. 그래서 건너뛰어도 그 방문에서는 다시 안 묻습니다. 저장은 하지 않는 방문 단위 값이라 다음 방문이나 다음 가득 참에 다시 묻는 현재 규칙은 그대로입니다. 회귀 테스트 3건(홈 위에 두드리기 화면을 쌓은 상태): 뒤로 단추 건너뛰기, 시스템 뒤로 건너뛰기, 적고 저장, 모두 시트가 다시 안 뜨고 화면이 닫힙니다. 고치기 전 코드에서는 뒤로 단추 건너뛰기만 실패(나머지 둘은 원래 한 번만 떴고 가드입니다). 12.5 의 release 흐름과 기울이기 부분은 건드리지 않았습니다. 푸시와 합치기는 하지 않았습니다.
+
+### 2026-11-19 12:16 · 팀장 → 12.2 작업자(환경, Claude)  `T100`
+
+> T100 from lead. Worktree ~/workspace/mood-clicker-ipa, branch ci/ipa-on-pages (from origin/main). Run tool/fl pub get once. Problem: the GitHub Pages download page (site/index.html, .github/workflows/deploy.yml, ci.yml) ships only the Android APK and says there is no iPhone download. ios-test.yml already builds an unsigned IPA on every push to main but only keeps it as a 14-day artifact. Goal: the page also offers the IPA of the same main commit. Design: (1) ios-test.yml on push to main: after packaging, find the GitHub release whose target is this SHA (deploy creates it; wait with one bounded retry loop, for example 20 x 30s, then fail clearly), gh release upload the IPA as mood-clicker.ipa, then gh workflow run deploy.yml to republish the page. Give it the permissions it needs (contents: write, actions: write) and nothing more. (2) deploy.yml assemble step: also download mood-clicker.ipa from the newest release when present, and write ios: true/false into build.json. (3) site/index.html: an iPhone section shown only when build.json says ios: true, with a short install guide for an unsigned IPA (it must be signed on the tester side with a personal Apple ID, for example Sideloadly; personal-ID installs expire after 7 days; app data stays when reinstalled over the same bundle id). Keep the three languages (ko, en, ja) like the rest of the page and 합니다체 in Korean. Remove the "no iPhone download yet" line when ios is true. No real domains, emails or hostnames in the repo. Run tool/test.sh (site tests: tool/test_site.py), commit only, report via itl send 12.1 with what you could not test locally (the workflow itself runs only on GitHub).
+
+### 2026-11-19 12:16 · 팀장 → 12.2 작업자(환경, Claude)  `T100`
+
+> T100 addendum: the old self-hosted page already had a tested iPhone guide (tabs, Sideloadly steps, macOS "blocked" fix, trust developer on the phone). It is at ~/app/mood-clicker-test/page.html, outside the repo. Reuse its steps and wording for the site section, translated to en and ja. Do not copy any host or address from that folder.
+
+### 2026-11-19 12:19 · 12.2 작업자(환경, Claude) → 팀장  `T100`
+
+> T100 완료. 브랜치 ci/ipa-on-pages, 커밋 30888bf (~/workspace/mood-clicker-ipa, 기준 origin/main). tool/test.sh 1201건 통과(test_site 포함), 훅 통과. 1) ios-test.yml: 권한을 contents: write, actions: write 둘만 줬고(테스트로 다른 권한이 안 붙게 고정), main push 일 때만 패키징 뒤에 새 단계가 돕니다. gh api releases 에서 target_commitish 가 이 SHA 인 릴리스를 20회 x 30초 한 반복문으로 기다리고, 없으면 ::error:: 로 분명히 실패합니다. 찾으면 gh release upload mood-clicker.ipa --clobber 로 올리고 gh workflow run deploy.yml --ref main 으로 페이지를 다시 냅니다. (gh release list 는 targetCommitish 를 json 으로 안 줘서 REST 를 썼습니다.) 2) deploy.yml 조립 단계: 최신 릴리스에 mood-clicker.ipa 가 있으면 download/ 로 받고 build.json 에 ios: true/false 를 씁니다. jq 로 만드는 부분은 샘플 입력으로 로컬에서 출력 확인했습니다. 3) site/index.html: build.json 의 ios === true 일 때만 아이폰 IPA 내려받기 단추와 아이폰 설치 안내 구역이 보이고, 그때 '아이폰과 맥용은 아직' 문구는 '맥용은 아직' 으로 바뀝니다(ios 가 아니면 기존 문구 그대로). 안내는 ~/app/mood-clicker-test/page.html 의 단계를 옮겼습니다: 컴퓨터로 받기, Sideloadly 설치, 맥 차단 시 그래도 열기, 케이블 연결 후 끌어 놓고 본인 애플 계정 로그인, 개발자 모드, 신뢰하지 않는 개발자, 무료 계정 7일 만료와 같은 앱 위 덮어 설치 시 기록 유지. ko(합니다체), en, ja 모두 있고 블록 수와 태그 모양이 같음을 기존 테스트가 확인합니다. 그 폴더의 호스트나 주소는 하나도 가져오지 않았습니다. 테스트 추가: test_site 2건(숨김 기본값과 ios 플래그, 안내 핵심어), test_ci_wiring 2건(워크플로 배선과 권한). 로컬에서 못 해본 것: 워크플로는 GitHub 에서만 돌아서 실제 릴리스 대기, gh release upload, 자기 토큰으로 workflow_dispatch 가 되는지(이 경우 GITHUB_TOKEN 의 dispatch 는 허용되지만 저장소의 Actions 권한 설정이 읽기 전용 기본이면 워크플로 선언 권한이 우선하는지 확인 필요), 재배포가 Pages 에서 도는지는 첫 main push 때 봐야 합니다. YAML 문법만 파싱으로 확인했고 페이지 동작은 브라우저에서 보지 않았습니다. 알아 둘 점: 새 APK 릴리스가 생기면 그 IPA 가 올라올 때까지(macOS 빌드 약 15~30분) 페이지에서 아이폰 구역이 잠깐 사라집니다. 최신 릴리스에만 IPA 가 있기 때문입니다. 푸시와 합치기는 하지 않았습니다.

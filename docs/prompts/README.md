@@ -6,13 +6,14 @@
 
 | 파일 | 내용 | 건수 |
 |---|---|---|
-| [person-to-lead.md](person-to-lead.md) | 사람 → 팀장. 무엇을 원하는지, 무엇이 마음에 안 드는지 | 69 |
-| [env-worker.md](env-worker.md) | 팀장 ↔ 작업자(환경, Claude). 도커, 훅, 빌드, 팀 도구 | 45 |
-| [dev-worker-claude.md](dev-worker-claude.md) | 팀장 ↔ 작업자(개발, Claude). 진동과 소리, 화면, 지도 | 49 |
-| [dev-worker-opencode.md](dev-worker-opencode.md) | 팀장 ↔ 작업자(개발, opencode). 다국어, 설정 화면 | 14 |
-| [research.md](research.md) | 팀장 ↔ 조사(Antigravity). 논문 근거, 응원 문구 | 62 |
-| [review.md](review.md) | 팀장 ↔ 적대 리뷰(Codex). 검사기와 브랜치 깨 보기 | 13 |
-| [log.md](log.md) | 위 전부를 시간순으로 | 252 |
+| [person-to-lead.md](person-to-lead.md) | 사람 → 팀장. 무엇을 원하는지, 무엇이 마음에 안 드는지 | 145 |
+| [env-worker.md](env-worker.md) | 팀장 ↔ 작업자(환경, Claude). 도커, 훅, 빌드, 팀 도구 | 88 |
+| [dev-worker-claude.md](dev-worker-claude.md) | 팀장 ↔ 작업자(개발, Claude). 진동과 소리, 화면, 지도 | 102 |
+| [dev-worker-opencode.md](dev-worker-opencode.md) | 팀장 ↔ 작업자(개발·보드). 처음엔 opencode 로 다국어와 설정 화면, 나중엔 Claude 로 ESP32 보드 이식 | 49 |
+| [research.md](research.md) | 팀장 ↔ 조사(Antigravity). 논문 근거, 응원 문구 | 104 |
+| [review.md](review.md) | 팀장 ↔ 적대 리뷰(Codex). 검사기와 브랜치 깨 보기 | 37 |
+| [log.md](log.md) | 위 전부를 시간순으로 | 525 |
+| [next-session.md](next-session.md) | 다음 작업을 이어받는 팀장에게 줄 인계 글 | |
 
 기록 속 `12.1`~`12.6` 은 그때 쓴 tmux 탭 번호입니다. `12.1` 이 팀장이고 나머지는 위 표의 역할입니다.
 지금 도구(`tool/team`)에서는 번호 대신 `leader`, `ui` 같은 이름으로 부릅니다.
