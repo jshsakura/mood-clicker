@@ -80,8 +80,9 @@ class SitePages(unittest.TestCase):
     def test_iphone_section_is_hidden_until_build_json_says_ios(self):
         page = read("index.html")
         self.assertIn('href="download/mood-clicker.ipa"', page)
-        self.assertRegex(page, r'<div class="ios" data-ios hidden>')
-        self.assertRegex(page, r'<section id="install-ios" data-ios hidden')
+        self.assertRegex(page, r'<button role="tab" id="tab-ios"[^>]* data-ios hidden>')
+        self.assertRegex(page, r'<section class="deck" id="install-ios" data-ios hidden')
+        self.assertIn("[hidden] { display: none !important; }", page)
         self.assertIn("data.ios === true", page)
         self.assertIn('each("[data-ios-off]"', page)
         for lang in LANGS:
