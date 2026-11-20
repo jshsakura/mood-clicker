@@ -86,5 +86,16 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
+      # deploy-pages looks the artifact up once and gives up, but the run's artifact list can
+      # lag the upload by a moment ("No artifacts named github-pages", 2026-11-20).
+      - name: wait until the site artifact is listed
+        run: |
+          for i in $(seq 1 30); do
+            n=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts?name=github-pages" --jq '.total_count')
+            if [ "$n" -gt 0 ]; then echo "listed after $i check(s)"; exit 0; fi
+            sleep 2
+          done
+          echo "::error::the github-pages artifact was not listed after 60 seconds"
+          exit 1
       - id: pages
         uses: actions/deploy-pages@v4
