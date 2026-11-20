@@ -138,16 +138,33 @@
   .arrows button:disabled { opacity: .35; cursor: default; }
   .hint { margin: 12px var(--gutter) 0; color: var(--faint); font-size: 13px; text-align: center; }
 
-  .more { margin: 36px var(--gutter) 0; }
-  .more details { border-top: 1px solid var(--line); }
-  .more details:last-child { border-bottom: 1px solid var(--line); }
-  .more summary { cursor: pointer; padding: 14px 0; font-weight: 700; font-size: 15px; list-style: none; display: flex; justify-content: space-between; gap: 12px; }
+  .more { margin: 36px var(--gutter) 0; display: grid; gap: 10px; }
+  .more details { border-radius: 20px; background: var(--surface); }
+  .more summary {
+    cursor: pointer; list-style: none; display: flex; align-items: center; gap: 12px;
+    padding: 14px 16px; font-weight: 700; font-size: 15px;
+  }
   .more summary::-webkit-details-marker { display: none; }
-  .more summary::after { content: "+"; color: var(--faint); font-weight: 400; }
-  .more details[open] summary::after { content: "\2212"; }
-  .more ul, .more p { margin: 0 0 14px; color: var(--ink-muted); font-size: 14px; }
-  .more ul { padding-left: 20px; }
-  .more li + li { margin-top: 4px; }
+  .more summary .label { flex: 1; }
+  .more .ico {
+    width: 36px; height: 36px; border-radius: 12px; flex: none; display: grid; place-items: center;
+    color: var(--tint); background: color-mix(in srgb, var(--tint) 14%, transparent);
+  }
+  .more .ico svg { width: 20px; height: 20px; }
+  .more .chev { width: 18px; height: 18px; flex: none; color: var(--faint); transition: transform .2s; }
+  .more details[open] .chev { transform: rotate(180deg); }
+  .more .does { --tint: var(--mood-sad); }
+  .more .doesnt { --tint: var(--mood-anxious); }
+  .more .online { --tint: var(--mood-happy); }
+  .more ul, .more p { margin: 0; padding: 0 16px 16px; color: var(--ink-muted); font-size: 14px; }
+  .more ul { list-style: none; display: grid; gap: 8px; }
+  .more li { display: flex; gap: 10px; }
+  .more li::before {
+    content: ""; width: 16px; height: 16px; margin-top: 3px; flex: none; background: var(--tint);
+    -webkit-mask: var(--mark) center / contain no-repeat; mask: var(--mark) center / contain no-repeat;
+  }
+  .more .does li { --mark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3 8.5l3 3 7-7' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
+  .more .doesnt li { --mark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 4l8 8M12 4l-8 8' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E"); }
 
   .foot { margin: 28px var(--gutter) 0; color: var(--faint); font-size: 12px; line-height: 1.6; }
   .foot p { margin: 0 0 8px; }
@@ -314,8 +331,8 @@
     <p class="hint" lang="ja">カードを横にめくると次の手順が出ます。</p>
 
     <div class="more">
-      <details>
-        <summary><span lang="ko">하는 일</span><span lang="en">What it does</span><span lang="ja">できること</span></summary>
+      <details class="does">
+        <summary><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-4.4-9-9.2C1.7 8.6 3.8 5 7.3 5c2 0 3.5 1.1 4.7 2.7C13.2 6.1 14.7 5 16.7 5c3.5 0 5.6 3.6 4.3 6.8C19 16.6 12 21 12 21z"/></svg></span><span class="label"><span lang="ko">하는 일</span><span lang="en">What it does</span><span lang="ja">できること</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
         <ul lang="ko">
           <li>다섯 가지 기분 가운데 하나를 고릅니다.</li>
           <li>두드릴 때마다 물이 차오르고, 두드린 횟수가 그날 그 기분의 크기로 남습니다. 같은 날 다시 두드리면 더해집니다.</li>
@@ -341,8 +358,8 @@
           <li>記録を一つのファイルに書き出せます。</li>
         </ul>
       </details>
-      <details>
-        <summary><span lang="ko">하지 않는 일</span><span lang="en">What it does not do</span><span lang="ja">しないこと</span></summary>
+      <details class="doesnt">
+        <summary><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7.5 3v5.5c0 4.6-3.1 8.2-7.5 9.5-4.4-1.3-7.5-4.9-7.5-9.5V6z"/><path d="M9 12l2.2 2.2L15.5 10"/></svg></span><span class="label"><span lang="ko">하지 않는 일</span><span lang="en">What it does not do</span><span lang="ja">しないこと</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
         <ul lang="ko">
           <li>기분 기록을 기기 밖으로 보내지 않습니다. 기록은 기기 안의 파일에만 저장됩니다.</li>
           <li>계정, 회원가입, 로그인이 없습니다.</li>
@@ -365,8 +382,8 @@
           <li>医療機器ではなく、診療の代わりにはなりません。</li>
         </ul>
       </details>
-      <details>
-        <summary><span lang="ko">기기 밖으로 나가는 것</span><span lang="en">What goes online</span><span lang="ja">端末の外へ出るもの</span></summary>
+      <details class="online">
+        <summary><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.4 2.5 3.6 5.5 3.6 9s-1.2 6.5-3.6 9c-2.4-2.5-3.6-5.5-3.6-9S9.6 5.5 12 3z"/></svg></span><span class="label"><span lang="ko">기기 밖으로 나가는 것</span><span lang="en">What goes online</span><span lang="ja">端末の外へ出るもの</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
         <p lang="ko">두 가지입니다. "날씨 보기" 가 켜져 있으면(처음엔 켜져 있습니다) 소수 첫째 자리로 뭉갠 위치를 MET Norway 로 보내 현재 날씨를 받습니다. 지도 화면을 열면 지도 바탕을 OpenFreeMap 에서 받아 옵니다. 지도의 동네 기분은 아직 예시 자료이고, 내 기분은 보내지 않습니다. 둘 다 설정에서 끌 수 있습니다.</p>
         <p lang="en">Two things. With "Show weather" on (it starts on), a location rounded to one decimal place goes to MET Norway to fetch the current weather. Opening the map screen loads the map background from OpenFreeMap. The neighbourhood moods on the map are sample data for now, and your mood is not sent. Both can be turned off in Settings.</p>
         <p lang="ja">二つです。「天気を表示」がオンのとき(最初はオンです)、小数第1位に丸めた位置を MET Norway に送って今の天気を取得します。地図の画面を開くと、地図の背景を OpenFreeMap から読み込みます。地図に出る近所の気分はまだサンプルで、あなたの気分は送りません。どちらも設定でオフにできます。</p>
