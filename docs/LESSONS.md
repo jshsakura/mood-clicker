@@ -66,6 +66,7 @@
 |---|---|---|
 | 테스트가 메모리를 다 써서 서버가 느려질 수 있었습니다 | 테스트와 분석은 4GB 안에서 돕니다 | `tool/fl` 의 메모리 상한, `tool/test_fl_wrapper.sh` |
 | macOS 러너를 못 받은 CI 가 실패로 쌓여 알림이 계속 왔습니다 | 새 push 가 옛 실행을 취소하고, 애플 빌드에는 시간 제한이 있습니다 | `.github/workflows/ci.yml`, `tool/test_ci_wiring.py` |
+| Pages 배포가 "No artifacts named github-pages" 로 실패했습니다. 사이트 파일은 올라갔는데 0.2초 뒤 배포 단계가 목록에서 못 찾았습니다 | 올린 뒤 목록에 뜰 때까지 기다리고 배포합니다 | `.github/workflows/deploy.yml`, `tool/test_ci_wiring.py` |
 | 테스트 배포에 빌드한 커밋과 다른 커밋이 적힐 뻔했습니다 | 빌드 중에는 합치지 않습니다. 배포할 때 HEAD 가 빌드한 커밋과 같아야 합니다 | 배포 스크립트가 HEAD 보다 오래된 APK 를 거절합니다 |
 | 날짜가 바뀌자 달력 골든이 깨졌습니다(table_calendar 가 진짜 시계로 오늘을 그림) | 화면은 오늘을 앱 시계(`services.now()`)에서만 얻습니다 | 달력 골든 |
 | 테스트 빌드를 깔 때마다 '기존 패키지와 충돌' 로 지우고 다시 깔아야 했습니다. 릴리스 빌드가 도커 안에서 매번 새로 생기는 디버그 키로 서명됐습니다 | 릴리스 빌드는 고정 키로 서명합니다. 키(`android/app/release.jks`)와 `android/key.properties` 는 저장소 밖에 보관하고 빌드하는 작업 트리에만 복사합니다(커밋 금지, `.gitignore`). 키를 잃으면 스토어 업데이트를 못 하니 따로 백업합니다 | `android/app/build.gradle.kts` |
