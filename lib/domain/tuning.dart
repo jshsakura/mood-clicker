@@ -368,6 +368,11 @@ abstract final class SpillTuning {
   /// Whether spilled water also takes taps off the saved record of the day. False keeps the
   /// record whole: the number on the tap screen goes down, the saved count does not.
   static const bool takesFromRecord = false;
+
+  /// While the finger is busy the water only looks like it spills: the stream runs over the
+  /// edge, but the level and the number stay. The real spill starts this long after the last
+  /// tap, so mashing a full phone in the hand never eats taps.
+  static const Duration tapGrace = Duration(milliseconds: 600);
 }
 
 /// Numbers for the one-time hint beside the how-to button.
