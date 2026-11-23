@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mood_clicker/design/tokens.g.dart';
 import 'package:mood_clicker/map/map_rules.dart';
 import 'package:mood_clicker/design/parts/how_to_button.dart';
 import 'package:mood_clicker/domain/mood.dart';
@@ -111,6 +112,28 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
     expect(find.text('settings page'), findsOneWidget);
   });
+
+  testWidgets(
+    'the help button sits on the date line, apart from the right buttons',
+    (tester) async {
+      tester.view.physicalSize = const Size(390, 844) * 3;
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+      final app = TestApp(
+        settingsBuilder: (_) => const Scaffold(body: Text('settings page')),
+      );
+      await tester.pumpWidget(app.wrap(const MoodSelectScreen()));
+      final help = tester.getRect(find.byType(HowToButton));
+      final title = tester.getRect(find.text(ko.moodSelect_title));
+      final calendar = tester.getRect(
+        find.bySemanticsLabel(ko.moodSelect_openCalendar),
+      );
+      final settings = tester.getRect(find.bySemanticsLabel(ko.settings_title));
+      expect(help.bottom, lessThanOrEqualTo(title.top));
+      expect(calendar.left, greaterThan(title.right));
+      expect(settings.left - calendar.right, greaterThanOrEqualTo(Space.sm));
+    },
+  );
 
   testWidgets('the title sits under the date line', (tester) async {
     final app = TestApp();

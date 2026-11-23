@@ -31,9 +31,10 @@ class PressableSurface extends StatefulWidget {
     this.radius,
     this.selected,
     this.dimWhenOff = true,
+    this.box = iconSize,
   });
 
-  /// A 44 px circular icon button.
+  /// A circular icon button, [iconSize] across unless [box] says otherwise.
   PressableSurface.icon({
     Key? key,
     required LineIcons icon,
@@ -43,6 +44,7 @@ class PressableSurface extends StatefulWidget {
     Color? iconColor,
     Color? color,
     bool dimWhenOff = true,
+    double box = PressableSurface.iconSize,
   }) : this(
          key: key,
          kind: PressableKind.icon,
@@ -50,6 +52,7 @@ class PressableSurface extends StatefulWidget {
          semanticLabel: semanticLabel,
          color: color,
          dimWhenOff: dimWhenOff,
+         box: box,
          child: Center(
            child: Builder(
              builder: (context) =>
@@ -60,6 +63,9 @@ class PressableSurface extends StatefulWidget {
 
   /// The size of an icon button.
   static const double iconSize = 44;
+
+  /// How wide an icon button is. Only icon buttons use it.
+  final double box;
 
   /// How much the surface is darkened while pressed (the share of the ink color laid on top).
   static const double pressedDarken = 0.08;
@@ -167,7 +173,7 @@ class _PressableSurfaceState extends State<PressableSurface> {
       ),
     );
     if (isIcon) {
-      face = SizedBox.square(dimension: PressableSurface.iconSize, child: face);
+      face = SizedBox.square(dimension: widget.box, child: face);
     }
     return Semantics(
       button: true,
