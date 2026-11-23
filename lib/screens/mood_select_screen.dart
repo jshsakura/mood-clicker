@@ -26,6 +26,11 @@ import 'tap/tap_screen.dart';
 class MoodSelectScreen extends StatelessWidget {
   const MoodSelectScreen({super.key});
 
+  /// The header buttons are a little smaller than the standard 44 so three of them and the
+  /// title fit a 390 px wide phone with room between them.
+  static const double _headerBox = 40;
+  static const double _headerIcon = 20;
+
   void _open(BuildContext context, Mood mood) {
     final services = AppScope.of(context);
     services.feedback.trigger(FeedbackKind.select, mood.id);
@@ -76,6 +81,11 @@ class MoodSelectScreen extends StatelessWidget {
                                     ),
                                   ),
                                 ),
+                                // Help first: a hidden weather chip still takes a gap.
+                                HowToButton(
+                                  compact: true,
+                                  onTap: () => showHowToPlaySheet(context),
+                                ),
                                 _WeatherChip(
                                   weatherView: services.weatherView,
                                   location: services.location,
@@ -91,9 +101,10 @@ class MoodSelectScreen extends StatelessWidget {
                           ],
                         ),
                       ),
-                      HowToButton(onTap: () => showHowToPlaySheet(context)),
                       if (MapRules.available && services.mapView.value) ...[
                         PressableSurface.icon(
+                          box: _headerBox,
+                          iconSize: _headerIcon,
                           icon: LineIcons.map,
                           semanticLabel: l10n.map_openLabel,
                           onTap: () => Navigator.of(context).push(
@@ -104,9 +115,11 @@ class MoodSelectScreen extends StatelessWidget {
                             ),
                           ),
                         ),
-                        const SizedBox(width: Space.xs),
+                        const SizedBox(width: Space.sm),
                       ],
                       PressableSurface.icon(
+                        box: _headerBox,
+                        iconSize: _headerIcon,
                         icon: LineIcons.calendar,
                         semanticLabel: l10n.moodSelect_openCalendar,
                         onTap: () => Navigator.of(context).push(
@@ -116,8 +129,10 @@ class MoodSelectScreen extends StatelessWidget {
                         ),
                       ),
                       if (services.settingsBuilder != null) ...[
-                        const SizedBox(width: Space.xs),
+                        const SizedBox(width: Space.sm),
                         PressableSurface.icon(
+                          box: _headerBox,
+                          iconSize: _headerIcon,
                           icon: LineIcons.settings,
                           semanticLabel: l10n.settings_title,
                           onTap: () => Navigator.of(context).push(
