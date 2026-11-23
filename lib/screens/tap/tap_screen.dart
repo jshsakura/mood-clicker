@@ -80,6 +80,9 @@ class _TapScreenState extends State<TapScreen>
 
   /// Water spilled this visit, in taps. The number on screen drops by it.
   int _spilledTaps = 0;
+
+  /// When the last tap landed, by the app clock. Null before the first tap.
+  DateTime? _lastTapTime;
   bool _showBubble = false;
   Timer? _bubbleTimer;
 
@@ -233,7 +236,13 @@ class _TapScreenState extends State<TapScreen>
     setState(() {});
   }
 
-  /// Water running out of a tilted phone. Returns the level that was spilled this frame.
+  bool _fingerBusy(DateTime now) {
+    final last = _lastTapTime;
+    return last != null && now.difference(last) < SpillTuning.tapGrace;
+  }
+
+  /// Water running out of a tilted phone. Returns the level that was spilled this frame. While
+  /// the finger is busy the stream shows but nothing is taken (see [SpillTuning.tapGrace]).
   double _spillFrame(DateTime now, double seconds, double level) {
     if (!_feel.tiltSpill) {
       _sim.spillAt(0);
@@ -249,7 +258,7 @@ class _TapScreenState extends State<TapScreen>
       screenHeight: _size.height,
     );
     _sim.spillAt(seconds > 0 ? spilled / seconds : 0);
-    if (spilled <= 0) return 0;
+    if (spilled <= 0 || _fingerBusy(now)) return 0;
     _gauge = _gauge.spilled(spilled);
     final (ledger, lost) = _ledger.add(spilled);
     _ledger = ledger;
@@ -314,6 +323,7 @@ class _TapScreenState extends State<TapScreen>
     if (_size.isEmpty || _leaving) return;
     final now = _services.now();
     _lastTapAt = at;
+    _lastTapTime = now;
     final wasFull = _gauge.isFullAt(now);
     _gauge = _gauge.tap(now);
     _services.journal.recordTap(widget.mood, now);

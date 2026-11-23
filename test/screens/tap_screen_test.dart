@@ -354,6 +354,28 @@ void main() {
     expect(shownCount(tester), lessThan(before));
   });
 
+  testWidgets(
+    'mashing a tilted full phone loses no taps until the finger rests',
+    (tester) async {
+      final app = await openTap(tester);
+      for (var i = 0; i < 60; i++) {
+        await tapOnce(tester, app, const Offset(200, 500), gapMs: 30);
+      }
+      app.tiltEvents.add(1.3);
+      // Keep mashing, tilted, for two seconds: the number keeps every tap.
+      for (var i = 0; i < 20; i++) {
+        await tapOnce(tester, app, const Offset(200, 500), gapMs: 100);
+      }
+      expect(shownCount(tester), todayCount(app));
+      // Rest the finger: past the grace the tilted water spills and the number drops.
+      for (var i = 0; i < 90; i++) {
+        app.advance(const Duration(milliseconds: 16));
+        await tester.pump(const Duration(milliseconds: 16));
+      }
+      expect(shownCount(tester), lessThan(todayCount(app)));
+    },
+  );
+
   testWidgets('no spill when tilt spill is off', (tester) async {
     final app = await openTap(
       tester,
@@ -394,7 +416,8 @@ void main() {
     }
     final before = todayCount(app);
     app.tiltEvents.add(1.48);
-    for (var i = 0; i < 100; i++) {
+    // 100 frames of spilling after the tap grace (SpillTuning.tapGrace, about 40 frames).
+    for (var i = 0; i < 140; i++) {
       app.advance(const Duration(milliseconds: 16));
       await tester.pump(const Duration(milliseconds: 16));
     }
