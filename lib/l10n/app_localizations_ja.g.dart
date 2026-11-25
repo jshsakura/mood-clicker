@@ -600,6 +600,11 @@ class AppLocalizationsJa extends AppLocalizations {
   String get howTo_label => '遊び方';
 
   @override
+  String moodSelect_themeLabel(String current) {
+    return 'テーマを変える、いまは$current';
+  }
+
+  @override
   String get howTo_title => '遊び方';
 
   @override

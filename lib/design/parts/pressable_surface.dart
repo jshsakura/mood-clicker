@@ -32,6 +32,7 @@ class PressableSurface extends StatefulWidget {
     this.selected,
     this.dimWhenOff = true,
     this.box = iconSize,
+    this.outline,
   });
 
   /// A circular icon button, [iconSize] across unless [box] says otherwise.
@@ -45,6 +46,7 @@ class PressableSurface extends StatefulWidget {
     Color? color,
     bool dimWhenOff = true,
     double box = PressableSurface.iconSize,
+    Color? outline,
   }) : this(
          key: key,
          kind: PressableKind.icon,
@@ -53,6 +55,7 @@ class PressableSurface extends StatefulWidget {
          color: color,
          dimWhenOff: dimWhenOff,
          box: box,
+         outline: outline,
          child: Center(
            child: Builder(
              builder: (context) =>
@@ -66,6 +69,9 @@ class PressableSurface extends StatefulWidget {
 
   /// How wide an icon button is. Only icon buttons use it.
   final double box;
+
+  /// A thin ring around an icon button, so it matches the outlined header chips. Null for none.
+  final Color? outline;
 
   /// How much the surface is darkened while pressed (the share of the ink color laid on top).
   static const double pressedDarken = 0.08;
@@ -112,8 +118,13 @@ class _PressableSurfaceState extends State<PressableSurface> {
   Widget build(BuildContext context) {
     final p = context.palette;
     final isIcon = widget.kind == PressableKind.icon;
+    final outline = widget.outline;
     final shape = isIcon
-        ? const CircleBorder()
+        ? CircleBorder(
+            side: outline == null
+                ? BorderSide.none
+                : BorderSide(color: outline),
+          )
         : RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(widget.radius ?? Radii.card),
           );

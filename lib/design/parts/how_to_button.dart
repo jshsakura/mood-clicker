@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../l10n/app_localizations.g.dart';
+import '../app_theme.dart';
+import '../tokens.g.dart';
 import 'line_icon.dart';
 import 'pressable_surface.dart';
 
@@ -12,12 +14,13 @@ class HowToButton extends StatelessWidget {
   /// Null turns the button off, like the other header buttons.
   final VoidCallback? onTap;
 
-  /// The small size that sits in the chip row beside the date.
+  /// The small outlined form that sits in the chip row beside the date.
   final bool compact;
 
-  /// Width and icon size of the compact button, about the height of a header chip.
-  static const double compactBox = 32;
-  static const double compactIcon = 18;
+  /// The height of a header chip: one label line and its padding (the border paints inside).
+  static final double compactBox =
+      TypeScale.label.fontSize! * TypeScale.label.height! + Space.xs * 2;
+  static const double compactIcon = 16;
 
   @override
   Widget build(BuildContext context) {
@@ -27,6 +30,8 @@ class HowToButton extends StatelessWidget {
       onTap: onTap,
       box: compact ? compactBox : PressableSurface.iconSize,
       iconSize: compact ? compactIcon : 22,
+      iconColor: compact ? context.palette.inkMuted : null,
+      outline: compact ? context.palette.line : null,
     );
   }
 }

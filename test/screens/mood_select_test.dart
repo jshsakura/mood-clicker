@@ -7,6 +7,7 @@ import 'package:mood_clicker/design/parts/how_to_button.dart';
 import 'package:mood_clicker/domain/mood.dart';
 import 'package:mood_clicker/domain/mood_journal.dart';
 import 'package:mood_clicker/domain/mood_repository.dart';
+import 'package:mood_clicker/l10n/date_labels.dart';
 import 'package:mood_clicker/screens/loading_screen.dart';
 import 'package:mood_clicker/screens/mood_select_screen.dart';
 import 'package:mood_clicker/screens/tap/tap_screen.dart';
@@ -102,8 +103,8 @@ void main() {
       settingsBuilder: (_) => const Scaffold(body: Text('settings page')),
     );
     await tester.pumpWidget(app.wrap(const MoodSelectScreen()));
-    // The header order is help, map (when available), calendar, settings.
-    for (var i = 0; i < (MapRules.available ? 4 : 3); i++) {
+    // The header order is help, theme, map (when available), calendar, settings.
+    for (var i = 0; i < (MapRules.available ? 5 : 4); i++) {
       await tester.sendKeyEvent(LogicalKeyboardKey.tab);
     }
     await tester.pump();
@@ -134,6 +135,50 @@ void main() {
       expect(settings.left - calendar.right, greaterThanOrEqualTo(Space.sm));
     },
   );
+
+  testWidgets('help and theme sit on the date line at the height of the date', (
+    tester,
+  ) async {
+    final app = TestApp();
+    await tester.pumpWidget(app.wrap(const MoodSelectScreen()));
+    final date = tester.getRect(
+      find
+          .ancestor(
+            of: find.text(dayWithWeekday(const Locale('ko'), app.clock)),
+            matching: find.byType(DecoratedBox),
+          )
+          .first,
+    );
+    final help = tester.getRect(find.byType(HowToButton));
+    final theme = tester.getRect(
+      find.bySemanticsLabel(RegExp('^${ko.settings_theme}')),
+    );
+    for (final r in [help, theme]) {
+      expect(r.height, moreOrLessEquals(date.height, epsilon: 0.5));
+      expect(r.center.dy, moreOrLessEquals(date.center.dy, epsilon: 0.5));
+    }
+    expect(theme.left, greaterThan(help.right));
+  });
+
+  testWidgets('the theme button steps light, dark, pink, system and saves', (
+    tester,
+  ) async {
+    final store = FakeSettingsStore();
+    final app = TestApp(settingsStore: store);
+    await tester.pumpWidget(app.wrap(const MoodSelectScreen()));
+    final seen = <String>[];
+    for (var i = 0; i < 4; i++) {
+      await tester.tap(find.bySemanticsLabel(RegExp('^${ko.settings_theme}')));
+      await tester.pump();
+      seen.add(app.services.theme.value.name);
+      expect(store.settings.theme, app.services.theme.value.name);
+    }
+    expect(seen, ['dark', 'pink', 'system', 'light']);
+    expect(
+      find.bySemanticsLabel(ko.moodSelect_themeLabel(ko.settings_themeLight)),
+      findsOneWidget,
+    );
+  });
 
   testWidgets('the title sits under the date line', (tester) async {
     final app = TestApp();

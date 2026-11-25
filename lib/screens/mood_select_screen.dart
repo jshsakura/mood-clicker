@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../app/app_services.dart';
 import '../design/app_theme.dart';
+import '../design/theme_choice.dart';
 import '../design/parts/how_to_button.dart';
 import '../design/parts/line_icon.dart';
 import '../design/parts/mood_banner.dart';
@@ -81,11 +82,12 @@ class MoodSelectScreen extends StatelessWidget {
                                     ),
                                   ),
                                 ),
-                                // Help first: a hidden weather chip still takes a gap.
+                                // Help and theme first: a hidden weather chip still takes a gap.
                                 HowToButton(
                                   compact: true,
                                   onTap: () => showHowToPlaySheet(context),
                                 ),
+                                const _ThemeButton(),
                                 _WeatherChip(
                                   weatherView: services.weatherView,
                                   location: services.location,
@@ -162,6 +164,60 @@ class MoodSelectScreen extends StatelessWidget {
             );
           },
         ),
+      ),
+    );
+  }
+}
+
+/// Steps the theme in the settings order (light, dark, pink, follow system) and saves it, so the
+/// header needs no trip to settings for it. Sized like the help button beside it.
+class _ThemeButton extends StatelessWidget {
+  const _ThemeButton();
+
+  static const List<ThemeChoice> order = [
+    ThemeChoice.named('light'),
+    ThemeChoice.named('dark'),
+    ThemeChoice.named('pink'),
+    ThemeChoice.system,
+  ];
+
+  static ThemeChoice nextAfter(ThemeChoice current) {
+    final at = order.indexOf(current);
+    return order[(at + 1) % order.length];
+  }
+
+  static String nameOf(AppLocalizations l10n, ThemeChoice choice) =>
+      switch (choice.name) {
+        'light' => l10n.settings_themeLight,
+        'dark' => l10n.settings_themeDark,
+        'pink' => l10n.settings_themePink,
+        _ => l10n.settings_themeSystem,
+      };
+
+  Future<void> _step(AppServices services) async {
+    final next = nextAfter(services.theme.value);
+    services.theme.value = next;
+    final store = services.settingsStore;
+    if (store == null) return;
+    final stored = await store.read();
+    await store.write(stored.copyWith(theme: next.name));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final services = AppScope.of(context);
+    final l10n = AppLocalizations.of(context);
+    final p = context.palette;
+    return ValueListenableBuilder<ThemeChoice>(
+      valueListenable: services.theme,
+      builder: (context, current, _) => PressableSurface.icon(
+        box: HowToButton.compactBox,
+        iconSize: HowToButton.compactIcon,
+        icon: LineIcons.theme,
+        iconColor: p.inkMuted,
+        outline: p.line,
+        semanticLabel: l10n.moodSelect_themeLabel(nameOf(l10n, current)),
+        onTap: () => _step(services),
       ),
     );
   }

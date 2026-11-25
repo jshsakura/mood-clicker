@@ -57,6 +57,9 @@ class SettingsScreen extends StatefulWidget {
   /// Called after each save, so consumers that are not notifiers (haptics, sound) follow.
   final ValueChanged<Settings>? onApplied;
 
+  /// The line under the header that shows while the list is scrolled.
+  static const headerLineKey = ValueKey('settings-header-line');
+
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
 }
@@ -97,6 +100,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  bool _scrolled = false;
+
+  bool _onScroll(ScrollUpdateNotification note) {
+    final scrolled = note.metrics.pixels > 0;
+    if (scrolled != _scrolled) setState(() => _scrolled = scrolled);
+    return false;
+  }
+
   void _toast(String message) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
@@ -115,223 +126,241 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 Space.lg,
                 Space.sm,
                 Space.lg,
-                0,
+                Space.sm,
               ),
               child: _Header(title: l10n.settings_title),
             ),
+            // A line under the header once the list slides beneath it.
+            AnimatedOpacity(
+              key: SettingsScreen.headerLineKey,
+              duration: Motion.tap,
+              opacity: _scrolled ? 1 : 0,
+              child: const _RowSeparator(),
+            ),
             Expanded(
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(
-                  Space.lg,
-                  0,
-                  Space.lg,
-                  Space.xxxl,
-                ),
-                children: [
-                  _Section(
-                    label: l10n.settings_theme,
-                    card: [
-                      _ThemeGrid(
-                        selected: _settings.theme,
-                        onPick: (name) =>
-                            _save(_settings.copyWith(theme: name)),
-                      ),
-                      _CardNote(l10n.settings_themeNote),
-                    ],
+              child: NotificationListener<ScrollUpdateNotification>(
+                onNotification: _onScroll,
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(
+                    Space.lg,
+                    0,
+                    Space.lg,
+                    Space.xxxl,
                   ),
-                  _Section(
-                    label: l10n.settings_language,
-                    card: [
-                      _SegmentBar(
-                        options: [
-                          (LocaleChoice.system, l10n.settings_languageSystem),
-                          (LocaleChoice.ko, l10n.settings_languageKo),
-                          (LocaleChoice.en, l10n.settings_languageEn),
-                          (LocaleChoice.ja, l10n.settings_languageJa),
-                        ],
-                        selected: _settings.language,
-                        onPick: (choice) =>
-                            _save(_settings.copyWith(language: choice)),
-                      ),
-                    ],
-                  ),
-                  _Section(
-                    label: l10n.settings_tapping,
-                    card: [
-                      _ToggleBlock(
-                        label: l10n.settings_vibration,
-                        description: l10n.settings_vibrationDesc,
-                        value: _settings.hapticsOn,
-                        onChanged: (on) =>
-                            _save(_settings.copyWith(hapticsOn: on)),
-                        details: [
-                          (HapticStrength.weak, l10n.settings_strengthWeak),
-                          (HapticStrength.normal, l10n.settings_strengthNormal),
-                          (HapticStrength.strong, l10n.settings_strengthStrong),
-                        ],
-                        selectedDetail: _settings.hapticStrength,
-                        onPickDetail: (strength) =>
-                            _save(_settings.copyWith(hapticStrength: strength)),
-                      ),
-                      _ToggleBlock(
-                        label: l10n.settings_sound,
-                        description: l10n.settings_soundDesc,
-                        value: _settings.soundOn,
-                        onChanged: (on) =>
-                            _save(_settings.copyWith(soundOn: on)),
-                        details: [
-                          for (final pack in SoundPack.available)
-                            (
-                              pack,
-                              switch (pack) {
-                                SoundPack.basic => l10n.settings_soundPackBasic,
-                                SoundPack.pentatonic =>
-                                  l10n.settings_soundPackPentatonic,
-                                SoundPack.soft => pack.name,
-                              },
-                            ),
-                        ],
-                        selectedDetail: _settings.soundPack,
-                        onPickDetail: (pack) =>
-                            _save(_settings.copyWith(soundPack: pack)),
-                      ),
-                      _ToggleBlock(
-                        label: l10n.settings_cheers,
-                        description: l10n.settings_cheersDesc,
-                        value: _settings.cheersOn,
-                        onChanged: (on) =>
-                            _save(_settings.copyWith(cheersOn: on)),
-                        details: [
-                          (CheerSize.normal, l10n.settings_cheersNormal),
-                          (CheerSize.large, l10n.settings_cheersLarge),
-                        ],
-                        selectedDetail: _settings.cheerSize,
-                        onPickDetail: (size) =>
-                            _save(_settings.copyWith(cheerSize: size)),
-                      ),
-                      _ToggleBlock(
-                        label: l10n.settings_shakeOnFull,
-                        description: l10n.settings_shakeDesc,
-                        value: _settings.shakeOnFull,
-                        onChanged: (on) =>
-                            _save(_settings.copyWith(shakeOnFull: on)),
-                      ),
-                      _ToggleBlock(
-                        label: l10n.settings_tiltToPour,
-                        description: l10n.settings_pourDesc,
-                        value: _settings.tiltToPour,
-                        onChanged: (on) =>
-                            _save(_settings.copyWith(tiltToPour: on)),
-                      ),
-                      _ToggleBlock(
-                        label: l10n.settings_weatherView,
-                        description: l10n.settings_weatherViewDesc,
-                        value: _settings.weatherView,
-                        onChanged: (on) =>
-                            _save(_settings.copyWith(weatherView: on)),
-                      ),
-                    ],
-                  ),
-                  _Section(
-                    label: l10n.settings_notifications,
-                    card: [
-                      _ToggleBlock(
-                        label: l10n.settings_reminder,
-                        description: l10n.settings_reminderDesc,
-                        value: _settings.reminder.enabled,
-                        onChanged: _toggleReminder,
-                        details: [
-                          (20, l10n.settings_time20),
-                          (21, l10n.settings_time21),
-                          (22, l10n.settings_time22),
-                        ],
-                        selectedDetail: _settings.reminder.hour,
-                        onPickDetail: _pickReminderTime,
-                      ),
-                    ],
-                  ),
-                  if (MapRules.available)
+                  children: [
                     _Section(
-                      label: l10n.settings_map,
+                      label: l10n.settings_theme,
                       card: [
-                        _ToggleBlock(
-                          label: l10n.settings_mapView,
-                          description: l10n.settings_mapViewDesc,
-                          value: _settings.mapView,
-                          onChanged: (on) =>
-                              _save(_settings.copyWith(mapView: on)),
+                        _ThemeGrid(
+                          selected: _settings.theme,
+                          onPick: (name) =>
+                              _save(_settings.copyWith(theme: name)),
                         ),
-                        _ToggleBlock(
-                          label: l10n.settings_mapContribute,
-                          description: l10n.settings_mapContributeDesc,
-                          value: _settings.mapContribute,
-                          onChanged: (on) =>
-                              _save(_settings.copyWith(mapContribute: on)),
-                        ),
-                        _ToggleBlock(
-                          label: l10n.settings_mapComment,
-                          description: l10n.settings_mapCommentDesc,
-                          value: _settings.mapComment,
-                          onChanged: (on) =>
-                              _save(_settings.copyWith(mapComment: on)),
+                        _CardNote(l10n.settings_themeNote),
+                      ],
+                    ),
+                    _Section(
+                      label: l10n.settings_language,
+                      card: [
+                        _SegmentBar(
+                          options: [
+                            (LocaleChoice.system, l10n.settings_languageSystem),
+                            (LocaleChoice.ko, l10n.settings_languageKo),
+                            (LocaleChoice.en, l10n.settings_languageEn),
+                            (LocaleChoice.ja, l10n.settings_languageJa),
+                          ],
+                          selected: _settings.language,
+                          onPick: (choice) =>
+                              _save(_settings.copyWith(language: choice)),
                         ),
                       ],
                     ),
-                  _Section(
-                    label: l10n.settings_records,
-                    card: [
-                      _LinkRow(
-                        label: l10n.settings_export,
-                        description: l10n.settings_exportDesc,
-                        onTap: _exportRecords,
-                      ),
-                      _LinkRow(
-                        label: l10n.settings_deleteAll,
-                        onTap: _confirmDeleteAll,
-                        destructive: true,
-                      ),
-                    ],
-                  ),
-                  _Section(
-                    label: l10n.settings_mindCare,
-                    card: [
-                      _LinkRow(
-                        label: l10n.settings_mindCareHelp,
-                        description: l10n.settings_mindCareRowDesc,
-                        onTap: () => _openCrisisSheet(),
-                      ),
-                    ],
-                  ),
-                  _Section(
-                    label: l10n.settings_about,
-                    card: [
-                      _LinkRow(
-                        label: l10n.settings_version,
-                        value: widget.appVersion,
-                      ),
-                      _LinkRow(
-                        label: l10n.settings_weatherSource,
-                        value: 'MET Norway (CC BY 4.0)',
-                      ),
-                      _LinkRow(
-                        label: l10n.settings_licenses,
-                        onTap: () => showLicensePage(
-                          context: context,
-                          applicationName: l10n.appName,
-                          applicationVersion: widget.appVersion,
-                        ),
-                      ),
-                      _LinkRow(
-                        label: l10n.settings_privacy,
-                        onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            builder: (_) => const PrivacyScreen(),
+                    _Section(
+                      label: l10n.settings_tapping,
+                      card: [
+                        _ToggleBlock(
+                          label: l10n.settings_vibration,
+                          description: l10n.settings_vibrationDesc,
+                          value: _settings.hapticsOn,
+                          onChanged: (on) =>
+                              _save(_settings.copyWith(hapticsOn: on)),
+                          details: [
+                            (HapticStrength.weak, l10n.settings_strengthWeak),
+                            (
+                              HapticStrength.normal,
+                              l10n.settings_strengthNormal,
+                            ),
+                            (
+                              HapticStrength.strong,
+                              l10n.settings_strengthStrong,
+                            ),
+                          ],
+                          selectedDetail: _settings.hapticStrength,
+                          onPickDetail: (strength) => _save(
+                            _settings.copyWith(hapticStrength: strength),
                           ),
                         ),
+                        _ToggleBlock(
+                          label: l10n.settings_sound,
+                          description: l10n.settings_soundDesc,
+                          value: _settings.soundOn,
+                          onChanged: (on) =>
+                              _save(_settings.copyWith(soundOn: on)),
+                          details: [
+                            for (final pack in SoundPack.available)
+                              (
+                                pack,
+                                switch (pack) {
+                                  SoundPack.basic =>
+                                    l10n.settings_soundPackBasic,
+                                  SoundPack.pentatonic =>
+                                    l10n.settings_soundPackPentatonic,
+                                  SoundPack.soft => pack.name,
+                                },
+                              ),
+                          ],
+                          selectedDetail: _settings.soundPack,
+                          onPickDetail: (pack) =>
+                              _save(_settings.copyWith(soundPack: pack)),
+                        ),
+                        _ToggleBlock(
+                          label: l10n.settings_cheers,
+                          description: l10n.settings_cheersDesc,
+                          value: _settings.cheersOn,
+                          onChanged: (on) =>
+                              _save(_settings.copyWith(cheersOn: on)),
+                          details: [
+                            (CheerSize.normal, l10n.settings_cheersNormal),
+                            (CheerSize.large, l10n.settings_cheersLarge),
+                          ],
+                          selectedDetail: _settings.cheerSize,
+                          onPickDetail: (size) =>
+                              _save(_settings.copyWith(cheerSize: size)),
+                        ),
+                        _ToggleBlock(
+                          label: l10n.settings_shakeOnFull,
+                          description: l10n.settings_shakeDesc,
+                          value: _settings.shakeOnFull,
+                          onChanged: (on) =>
+                              _save(_settings.copyWith(shakeOnFull: on)),
+                        ),
+                        _ToggleBlock(
+                          label: l10n.settings_tiltToPour,
+                          description: l10n.settings_pourDesc,
+                          value: _settings.tiltToPour,
+                          onChanged: (on) =>
+                              _save(_settings.copyWith(tiltToPour: on)),
+                        ),
+                        _ToggleBlock(
+                          label: l10n.settings_weatherView,
+                          description: l10n.settings_weatherViewDesc,
+                          value: _settings.weatherView,
+                          onChanged: (on) =>
+                              _save(_settings.copyWith(weatherView: on)),
+                        ),
+                      ],
+                    ),
+                    _Section(
+                      label: l10n.settings_notifications,
+                      card: [
+                        _ToggleBlock(
+                          label: l10n.settings_reminder,
+                          description: l10n.settings_reminderDesc,
+                          value: _settings.reminder.enabled,
+                          onChanged: _toggleReminder,
+                          details: [
+                            (20, l10n.settings_time20),
+                            (21, l10n.settings_time21),
+                            (22, l10n.settings_time22),
+                          ],
+                          selectedDetail: _settings.reminder.hour,
+                          onPickDetail: _pickReminderTime,
+                        ),
+                      ],
+                    ),
+                    if (MapRules.available)
+                      _Section(
+                        label: l10n.settings_map,
+                        card: [
+                          _ToggleBlock(
+                            label: l10n.settings_mapView,
+                            description: l10n.settings_mapViewDesc,
+                            value: _settings.mapView,
+                            onChanged: (on) =>
+                                _save(_settings.copyWith(mapView: on)),
+                          ),
+                          _ToggleBlock(
+                            label: l10n.settings_mapContribute,
+                            description: l10n.settings_mapContributeDesc,
+                            value: _settings.mapContribute,
+                            onChanged: (on) =>
+                                _save(_settings.copyWith(mapContribute: on)),
+                          ),
+                          _ToggleBlock(
+                            label: l10n.settings_mapComment,
+                            description: l10n.settings_mapCommentDesc,
+                            value: _settings.mapComment,
+                            onChanged: (on) =>
+                                _save(_settings.copyWith(mapComment: on)),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                ],
+                    _Section(
+                      label: l10n.settings_records,
+                      card: [
+                        _LinkRow(
+                          label: l10n.settings_export,
+                          description: l10n.settings_exportDesc,
+                          onTap: _exportRecords,
+                        ),
+                        _LinkRow(
+                          label: l10n.settings_deleteAll,
+                          onTap: _confirmDeleteAll,
+                          destructive: true,
+                        ),
+                      ],
+                    ),
+                    _Section(
+                      label: l10n.settings_mindCare,
+                      card: [
+                        _LinkRow(
+                          label: l10n.settings_mindCareHelp,
+                          description: l10n.settings_mindCareRowDesc,
+                          onTap: () => _openCrisisSheet(),
+                        ),
+                      ],
+                    ),
+                    _Section(
+                      label: l10n.settings_about,
+                      card: [
+                        _LinkRow(
+                          label: l10n.settings_version,
+                          value: widget.appVersion,
+                        ),
+                        _LinkRow(
+                          label: l10n.settings_weatherSource,
+                          value: 'MET Norway (CC BY 4.0)',
+                        ),
+                        _LinkRow(
+                          label: l10n.settings_licenses,
+                          onTap: () => showLicensePage(
+                            context: context,
+                            applicationName: l10n.appName,
+                            applicationVersion: widget.appVersion,
+                          ),
+                        ),
+                        _LinkRow(
+                          label: l10n.settings_privacy,
+                          onTap: () => Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) => const PrivacyScreen(),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
