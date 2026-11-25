@@ -166,6 +166,25 @@ void main() {
     expect(find.text(l10n.settings_about), findsOneWidget);
   });
 
+  testWidgets('a line parts the header from the list once it scrolls', (
+    tester,
+  ) async {
+    final harness = Harness();
+    await pumpScreen(tester, harness: harness);
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    await tester.pumpAndSettle();
+    double lineOpacity() => tester
+        .widget<AnimatedOpacity>(find.byKey(SettingsScreen.headerLineKey))
+        .opacity;
+    expect(lineOpacity(), 0);
+    await tester.drag(find.byType(ListView), const Offset(0, -200));
+    await tester.pumpAndSettle();
+    expect(lineOpacity(), 1);
+    await tester.drag(find.byType(ListView), const Offset(0, 400));
+    await tester.pumpAndSettle();
+    expect(lineOpacity(), 0);
+  });
+
   testWidgets('tapping a theme card persists it and moves the app notifier', (
     tester,
   ) async {

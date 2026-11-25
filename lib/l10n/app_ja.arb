@@ -186,6 +186,7 @@
   "release_settleSad": "ここまで来ました。今のままでも大丈夫です。",
   "release_settleAnxious": "少し休んでも大丈夫です。呼吸に合わせても、合わせなくてもかまいません。",
   "howTo_label": "遊び方",
+  "moodSelect_themeLabel": "テーマを変える、いまは{current}",
   "howTo_title": "遊び方",
   "howTo_fill": "タップすると水が増えていきます。",
   "howTo_rest": "少し休むと、水が少しずつ減っていきます。",

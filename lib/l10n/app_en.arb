@@ -186,6 +186,7 @@
   "release_settleSad": "You made it this far. It's okay as you are right now.",
   "release_settleAnxious": "It's okay to rest a little. You can follow the breath, or not.",
   "howTo_label": "How to play",
+  "moodSelect_themeLabel": "Change theme, now {current}",
   "howTo_title": "How to play",
   "howTo_fill": "Tap and the water rises.",
   "howTo_rest": "Rest a moment and it sinks little by little.",
