@@ -64,7 +64,9 @@ void main() {
         _svg('calendar'),
         contains('rect x="3.5" y="5" width="17" height="15" rx="3"'),
       );
-      expect(_svg('settings'), contains('M12 2.5v3M12 18.5v3'));
+      // A gear with eight teeth around a hub, so it never reads as a sun.
+      expect(_svg('settings'), contains('<path d="M10.24 5.43 L10.71 2.79'));
+      expect(_svg('settings'), contains('<circle cx="12" cy="12" r="2.8"/>'));
       expect(_svg('chevron_left'), contains('M15 6l-6 6 6 6'));
       expect(_svg('chevron_right'), contains('M9 6l6 6-6 6'));
     });
