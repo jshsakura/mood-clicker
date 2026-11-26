@@ -16,6 +16,8 @@ import 'package:mood_clicker/feedback/feedback_controller.dart';
 import 'package:mood_clicker/l10n/app_localizations.g.dart';
 import 'package:mood_clicker/l10n/locale_choice.dart';
 import 'package:mood_clicker/l10n/app_localizations_ko.g.dart';
+import 'package:mood_clicker/settings/settings.dart';
+import 'package:mood_clicker/settings/settings_store.dart';
 import 'package:mood_clicker/surfaces/shortcut_order.dart';
 
 import '../domain/cheer_fixtures.dart';
@@ -107,6 +109,7 @@ class TestApp {
     ValueNotifier<ThemeChoice>? theme,
     ValueNotifier<FeelSettings>? feelNotifier,
     ValueNotifier<bool>? mapView,
+    this.settingsStore,
   }) : repository = repository ?? MemoryRepository(),
        clock = start ?? DateTime(2026, 11, 18, 12),
        haptics = FakeHaptics(),
@@ -133,6 +136,7 @@ class TestApp {
       language: language,
       mapView: mapView,
       settingsBuilder: settingsBuilder,
+      settingsStore: settingsStore,
       surfaces: fakeSurfaces?.build(),
       now: () => clock,
     );
@@ -144,6 +148,7 @@ class TestApp {
   final ValueNotifier<FeelSettings> feel;
   final StreamController<double> tiltEvents;
   final WidgetBuilder? settingsBuilder;
+  final SettingsStore? settingsStore;
 
   /// Fakes for the home widget and shortcuts. Null leaves the surfaces out.
   final FakeSurfaces? fakeSurfaces;
@@ -168,4 +173,17 @@ class TestApp {
       home: home,
     ),
   );
+}
+
+/// Settings kept in memory, for screens that save a setting themselves.
+class FakeSettingsStore implements SettingsStore {
+  FakeSettingsStore([this.settings = const Settings()]);
+
+  Settings settings;
+
+  @override
+  Future<Settings> read() async => settings;
+
+  @override
+  Future<void> write(Settings value) async => settings = value;
 }

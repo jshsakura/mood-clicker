@@ -1174,6 +1174,12 @@ abstract class AppLocalizations {
   /// **'도움말'**
   String get howTo_label;
 
+  /// 기분 고르기 날짜줄의 테마 단추 이름입니다. 누를 때마다 라이트, 다크, 핑크, 시스템 따라가기 순서로 바뀝니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'테마 바꾸기, 지금은 {current}'**
+  String moodSelect_themeLabel(String current);
+
   /// 물음표 단추로 여는 사용법 시트의 제목입니다.
   ///
   /// In ko, this message translates to:
