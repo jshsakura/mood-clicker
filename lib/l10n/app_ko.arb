@@ -804,15 +804,6 @@
   "@howTo_label": {
     "description": "두드리기와 기분 고르기 머리글의 물음표 단추 이름입니다."
   },
-  "moodSelect_themeLabel": "테마 바꾸기, 지금은 {current}",
-  "@moodSelect_themeLabel": {
-    "description": "기분 고르기 날짜줄의 테마 단추 이름입니다. 누를 때마다 라이트, 다크, 핑크, 시스템 따라가기 순서로 바뀝니다.",
-    "placeholders": {
-      "current": {
-        "type": "String"
-      }
-    }
-  },
   "howTo_title": "이렇게 해 보세요",
   "@howTo_title": {
     "description": "물음표 단추로 여는 사용법 시트의 제목입니다."

@@ -602,11 +602,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get howTo_label => '도움말';
 
   @override
-  String moodSelect_themeLabel(String current) {
-    return '테마 바꾸기, 지금은 $current';
-  }
-
-  @override
   String get howTo_title => '이렇게 해 보세요';
 
   @override
