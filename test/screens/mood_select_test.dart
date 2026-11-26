@@ -103,8 +103,8 @@ void main() {
       settingsBuilder: (_) => const Scaffold(body: Text('settings page')),
     );
     await tester.pumpWidget(app.wrap(const MoodSelectScreen()));
-    // The header order is help, theme, map (when available), calendar, settings.
-    for (var i = 0; i < (MapRules.available ? 5 : 4); i++) {
+    // The header order is help, map (when available), calendar, settings.
+    for (var i = 0; i < (MapRules.available ? 4 : 3); i++) {
       await tester.sendKeyEvent(LogicalKeyboardKey.tab);
     }
     await tester.pump();
@@ -136,7 +136,7 @@ void main() {
     },
   );
 
-  testWidgets('help and theme sit on the date line at the height of the date', (
+  testWidgets('help sits on the date line at the height of the date', (
     tester,
   ) async {
     final app = TestApp();
@@ -150,34 +150,8 @@ void main() {
           .first,
     );
     final help = tester.getRect(find.byType(HowToButton));
-    final theme = tester.getRect(
-      find.bySemanticsLabel(RegExp('^${ko.settings_theme}')),
-    );
-    for (final r in [help, theme]) {
-      expect(r.height, moreOrLessEquals(date.height, epsilon: 0.5));
-      expect(r.center.dy, moreOrLessEquals(date.center.dy, epsilon: 0.5));
-    }
-    expect(theme.left, greaterThan(help.right));
-  });
-
-  testWidgets('the theme button steps light, dark, pink, system and saves', (
-    tester,
-  ) async {
-    final store = FakeSettingsStore();
-    final app = TestApp(settingsStore: store);
-    await tester.pumpWidget(app.wrap(const MoodSelectScreen()));
-    final seen = <String>[];
-    for (var i = 0; i < 4; i++) {
-      await tester.tap(find.bySemanticsLabel(RegExp('^${ko.settings_theme}')));
-      await tester.pump();
-      seen.add(app.services.theme.value.name);
-      expect(store.settings.theme, app.services.theme.value.name);
-    }
-    expect(seen, ['dark', 'pink', 'system', 'light']);
-    expect(
-      find.bySemanticsLabel(ko.moodSelect_themeLabel(ko.settings_themeLight)),
-      findsOneWidget,
-    );
+    expect(help.height, moreOrLessEquals(date.height, epsilon: 0.5));
+    expect(help.center.dy, moreOrLessEquals(date.center.dy, epsilon: 0.5));
   });
 
   testWidgets('the title sits under the date line', (tester) async {

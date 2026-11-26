@@ -616,11 +616,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get howTo_label => 'How to play';
 
   @override
-  String moodSelect_themeLabel(String current) {
-    return 'Change theme, now $current';
-  }
-
-  @override
   String get howTo_title => 'How to play';
 
   @override

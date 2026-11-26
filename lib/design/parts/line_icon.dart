@@ -12,7 +12,6 @@ enum LineIcons {
   calendar('calendar'),
   settings('settings'),
   help('help'),
-  theme('theme'),
   chevronLeft('chevron_left'),
   chevronRight('chevron_right'),
   chevronRightHeavy('chevron_right_heavy'),
