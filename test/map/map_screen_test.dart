@@ -74,6 +74,9 @@ class _FakeGrid implements HexGrid {
   }
 
   @override
+  H3CellId cellAt(GeoPoint point) => _id(0);
+
+  @override
   List<GeoPoint> boundary(H3CellId id) {
     final n = int.parse(id.value.substring(2), radix: 16);
     final lng = 126.1 + 0.1 * n;

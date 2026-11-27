@@ -36,6 +36,7 @@ class SettingsScreen extends StatefulWidget {
     required this.language,
     required this.mapView,
     this.weatherView,
+    this.mapLive = false,
     required this.reminder,
     required this.records,
     required this.appVersion,
@@ -49,6 +50,10 @@ class SettingsScreen extends StatefulWidget {
   final ValueNotifier<LocaleChoice> language;
   final ValueNotifier<bool> mapView;
   final ValueNotifier<bool>? weatherView;
+
+  /// Whether the shared map server is set up. Words are not collected there, so the word switch
+  /// hides while it is.
+  final bool mapLive;
   final ReminderController reminder;
   final RecordsPort records;
   final String appVersion;
@@ -296,13 +301,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             onChanged: (on) =>
                                 _save(_settings.copyWith(mapContribute: on)),
                           ),
-                          _ToggleBlock(
-                            label: l10n.settings_mapComment,
-                            description: l10n.settings_mapCommentDesc,
-                            value: _settings.mapComment,
-                            onChanged: (on) =>
-                                _save(_settings.copyWith(mapComment: on)),
-                          ),
+                          if (!widget.mapLive)
+                            _ToggleBlock(
+                              label: l10n.settings_mapComment,
+                              description: l10n.settings_mapCommentDesc,
+                              value: _settings.mapComment,
+                              onChanged: (on) =>
+                                  _save(_settings.copyWith(mapComment: on)),
+                            ),
                         ],
                       ),
                     _Section(

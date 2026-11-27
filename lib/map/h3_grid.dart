@@ -34,6 +34,16 @@ class H3Grid implements HexGrid {
   }
 
   @override
+  H3CellId cellAt(GeoPoint point) => H3CellId(
+    _h3
+        .geoToCell(
+          GeoCoord(lon: point.lng, lat: point.lat),
+          MapRules.h3Resolution,
+        )
+        .toRadixString(16),
+  );
+
+  @override
   List<GeoPoint> boundary(H3CellId id) => [
     for (final c in _h3.cellToBoundary(BigInt.parse(id.value, radix: 16)))
       GeoPoint(c.lat, c.lon),
