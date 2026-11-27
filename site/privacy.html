@@ -83,8 +83,8 @@
         <li>기분, 두드린 수, 그날 남긴 한마디는 기기 안의 파일 하나(<code>journal.json</code>)에만 저장합니다.</li>
         <li>이미 보여 준 응원 문구 위치도 기기 안의 파일(<code>cheer_decks.json</code>)에만 남습니다. 문구 내용이 아니라 몇 번째까지 냈는지입니다.</li>
         <li>테마, 언어, 진동, 소리, 응원 문구, 화면 흔들기, 기울여 쏟기, 저녁 알림, 날씨 보기, 지도 선택 같은 설정은 시스템 설정 저장소에 저장합니다.</li>
-        <li>어떤 기분 기록도 서버로 보내지 않습니다. 기분 기록을 보낼 서버가 없습니다.</li>
-        <li>계정 만들기, 로그인, 회원가입이 없습니다.</li>
+        <li>기분 기록 파일은 서버로 보내지 않습니다. "지도에 내 기분 보태기" 를 켠 경우에만 아래 "지도 화면과 지도 참여" 에 적은 값을 보냅니다.</li>
+        <li>계정 만들기, 로그인, 회원가입이 없습니다. 지도 참여에 쓰는 익명 계정은 가입 없이 기기에서 만들어집니다.</li>
         <li>기기를 바꾸거나 앱을 지우면 기록은 새 기기로 옮겨지지 않습니다.</li>
       </ul>
 
@@ -123,10 +123,14 @@
 
       <h2>지도 화면과 지도 참여</h2>
       <ul class="points">
-        <li>지금의 지도 화면은 미리보기입니다. 동네 칸의 기분은 예시 자료이고, 내 기분은 어디로도 보내지 않습니다. 지도 화면은 위치 권한을 쓰지 않습니다.</li>
+        <li>설정에서 "지도에 내 기분 보태기" 를 직접 켠 사람만 기분을 보냅니다. 처음에는 꺼져 있습니다.</li>
+        <li>보내는 것은 날짜, 기분 종류, 그날 두드린 횟수, 동네 칸 번호(H3 해상도 7, 약 5km²)뿐입니다. 위치는 기기 안에서 칸 번호로 바꾼 뒤 바로 버리고, 좌표, 메모, 한마디, 달력 기록은 보내지 않습니다.</li>
+        <li>함께 쓰는 것은 가입 없이 만들어지는 익명 계정 식별자입니다. 이름, 이메일, 전화번호는 받지 않습니다.</li>
+        <li>서버는 Supabase 에 맡겨 운영하며 싱가포르 지역에 있습니다. 보낸 값은 싱가포르로 옮겨져 보관됩니다.</li>
+        <li>보낸 값은 30일이 지나면 매일 지웁니다. 지도에는 칸별 합계만 나오고, 참여한 사람이 5명 미만인 칸은 보이지 않습니다.</li>
+        <li>"지도에 내 기분 보태기" 를 끄면 서버에 있는 내 값과 익명 계정을 함께 지웁니다.</li>
+        <li>기분을 보낼 때 위치 권한을 씁니다. 지도를 볼 때는 화면에 보이는 칸 번호를 보내 합계를 받아 오며, 이때 내 기분은 보내지 않습니다.</li>
         <li>지도 화면을 열면 지도 바탕(타일과 스타일)을 OpenFreeMap(<code>tiles.openfreemap.org</code>)에서 받아 옵니다. 이 요청에는 보고 있는 지도 범위가 담기며, 기분 기록은 담기지 않습니다. 설정에서 "지도 보기" 를 끄면 지도 화면이 사라집니다.</li>
-        <li>기분을 지도에 보태는 기능은 3단계에서 계정과 함께 생깁니다. 도입할 때는 미리 이 방침을 고치고 다시 알려 드립니다.</li>
-        <li>도입 시 위치는 기기에서 약 5km² 넓이의 동네 칸으로 바꾼 뒤 칸 번호만 보내고, 참여자가 5명 미만인 칸은 지도에 보이지 않습니다. 기분 보내기는 직접 켠 사람만 사용합니다.</li>
       </ul>
 
       <h2>이 앱에 대하여</h2>
@@ -153,8 +157,8 @@
         <li>Moods, tap counts and the short note of a day are stored in one file on the device (<code>journal.json</code>) and nowhere else.</li>
         <li>How far the cheer phrases have been shown also stays in a file on the device (<code>cheer_decks.json</code>): only a position, never the words.</li>
         <li>Settings such as the theme, language, vibration, sound, cheer phrases, screen shake, tilt to pour, the evening reminder, weather display and the map choices live in the system settings store.</li>
-        <li>No mood record is sent to a server. There is no server for mood records.</li>
-        <li>There is no account, sign-up or login.</li>
+        <li>The mood record file is never sent to a server. Only when "Share my mood on the map" is on are the values listed under "The map screen and joining the map" sent.</li>
+        <li>There is no account, sign-up or login. The anonymous account used for the map is made on the device without signing up.</li>
         <li>Changing devices or deleting the app does not carry the records over to a new device.</li>
       </ul>
 
@@ -193,10 +197,14 @@
 
       <h2>The map screen and joining the map</h2>
       <ul class="points">
-        <li>The map screen today is a preview. The moods in the neighbourhood cells are sample data, and your mood is not sent anywhere. The map screen does not use location permission.</li>
+        <li>Only people who turn on "Share my mood on the map" in Settings send their mood. It starts off.</li>
+        <li>What is sent is the date, the kind of mood, the day's tap count and a neighbourhood cell number (H3 resolution 7, about 5 km²). The location is turned into the cell number on the device and dropped at once. Coordinates, notes, the short word and calendar records are not sent.</li>
+        <li>With it goes an anonymous account identifier made without signing up. No name, email or phone number is taken.</li>
+        <li>The server is run for us by Supabase in the Singapore region. Sent values are transferred to and kept in Singapore.</li>
+        <li>Sent values are deleted each day once they are 30 days old. The map shows only sums per cell, and cells with fewer than five participants stay hidden.</li>
+        <li>Turning off "Share my mood on the map" deletes your values on the server together with the anonymous account.</li>
+        <li>Sending a mood uses location permission. Viewing the map sends the cell numbers on screen to fetch their sums, and does not send your mood.</li>
         <li>Opening the map screen loads the map background (tiles and style) from OpenFreeMap (<code>tiles.openfreemap.org</code>). Those requests carry the area of the map you are looking at, and no mood records. Turning off "Show map" in Settings removes the map screen.</li>
-        <li>Adding your mood to the map arrives in stage three, together with an account. Before it is introduced, this policy will be updated and announced again.</li>
-        <li>When introduced, your location will be turned into a neighbourhood cell of about 5 km² on the device and only the cell number is sent. Cells with fewer than five participants stay hidden from the map. Sharing a mood is used only by people who turn it on themselves.</li>
       </ul>
 
       <h2>About this app</h2>
@@ -223,8 +231,8 @@
         <li>気分、たたいた回数、その日のひとことは、端末の中の一つのファイル(<code>journal.json</code>)にだけ保存します。</li>
         <li>すでに見せた応援メッセージの位置も、端末の中のファイル(<code>cheer_decks.json</code>)にだけ残ります。言葉の中身ではなく、何番目まで出したかだけです。</li>
         <li>テーマ、言語、振動、サウンド、応援メッセージ、画面の揺れ、傾けてこぼす、夜のリマインダー、天気の表示、地図の選択といった設定は、端末の設定保存領域に保存します。</li>
-        <li>どの気分の記録もサーバーには送りません。気分の記録を送るサーバーがありません。</li>
-        <li>アカウント作成、ログイン、会員登録はありません。</li>
+        <li>気分の記録のファイルはサーバーに送りません。「地図に自分の気分を足す」をオンにした場合だけ、下の「地図の画面と地図への参加」に書いた値を送ります。</li>
+        <li>アカウント作成、ログイン、会員登録はありません。地図への参加に使う匿名アカウントは、登録なしで端末の中で作られます。</li>
         <li>端末を変えたりアプリを削除したりしても、記録は新しい端末には移りません。</li>
       </ul>
 
@@ -263,10 +271,14 @@
 
       <h2>地図の画面と地図への参加</h2>
       <ul class="points">
-        <li>今の地図の画面はプレビューです。近所のマスの気分はサンプルで、あなたの気分はどこにも送りません。地図の画面は位置情報の許可を使いません。</li>
+        <li>設定で「地図に自分の気分を足す」を自分でオンにした人だけが気分を送ります。最初はオフです。</li>
+        <li>送るのは日付、気分の種類、その日にたたいた回数、近所のマス番号(H3 解像度7、約5km²)だけです。位置は端末の中でマス番号に変えてすぐに捨て、座標、メモ、ひとこと、カレンダーの記録は送りません。</li>
+        <li>一緒に使うのは、登録なしで作られる匿名アカウントの識別子です。名前、メールアドレス、電話番号は受け取りません。</li>
+        <li>サーバーは Supabase に運営を委託しており、シンガポールの地域にあります。送った値はシンガポールに移されて保管されます。</li>
+        <li>送った値は30日を過ぎると毎日消去します。地図にはマスごとの合計だけが出て、参加者が5人に満たないマスは表示しません。</li>
+        <li>「地図に自分の気分を足す」をオフにすると、サーバーにある自分の値と匿名アカウントを一緒に消去します。</li>
+        <li>気分を送るときは位置情報の許可を使います。地図を見るときは画面に見えるマス番号を送って合計を受け取り、このとき自分の気分は送りません。</li>
         <li>地図の画面を開くと、地図の背景(タイルとスタイル)を OpenFreeMap(<code>tiles.openfreemap.org</code>)から読み込みます。この通信には見ている地図の範囲が含まれますが、気分の記録は含まれません。設定で「地図を見る」をオフにすると、地図の画面はなくなります。</li>
-        <li>気分を地図に加える機能は、第3段階でアカウントと一緒に加わります。導入する前に、この方針を改めてお知らせします。</li>
-        <li>導入時、位置情報は端末の中で約5km²の広さの近所のマスに変換し、そのマス番号だけを送ります。参加者が5人に満たないマスは地図に表示しません。気分を送る機能は、自分でオンにした人だけが使います。</li>
       </ul>
 
       <h2>このアプリについて</h2>

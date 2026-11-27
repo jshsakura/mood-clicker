@@ -10,6 +10,9 @@ abstract interface class HexGrid {
 
   /// The corners of a block, in order around it.
   List<GeoPoint> boundary(H3CellId id);
+
+  /// The block a point lies in.
+  H3CellId cellAt(GeoPoint point);
 }
 
 /// The middle of a block, from its corners.

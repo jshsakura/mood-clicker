@@ -85,7 +85,8 @@ jobs:
           if [ -z "$DEBUG_KEYSTORE_B64" ]; then echo 'no DEBUG_KEYSTORE_B64 secret: using a throwaway key'; exit 0; fi
           mkdir -p "$HOME/.android"
           printf '%s' "$DEBUG_KEYSTORE_B64" | base64 -d > "$HOME/.android/debug.keystore"
-      - run: flutter build apk --debug
+      # The shared map server; without these repository variables the app keeps sample data.
+      - run: flutter build apk --debug --dart-define=MAP_URL=${{ vars.MAP_URL }} --dart-define=MAP_KEY=${{ vars.MAP_KEY }}
       - uses: actions/upload-artifact@v4
         with:
           name: mood-clicker-debug-apk
