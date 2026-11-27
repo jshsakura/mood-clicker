@@ -15,6 +15,7 @@ class SettingsHub {
       theme = ValueNotifier(settings.themeChoice),
       language = ValueNotifier(settings.language),
       mapView = ValueNotifier(settings.mapView),
+      mapContribute = ValueNotifier(settings.mapContribute),
       weatherView = ValueNotifier(settings.weatherView);
 
   final FeedbackController feedback;
@@ -22,6 +23,9 @@ class SettingsHub {
   final ValueNotifier<ThemeChoice> theme;
   final ValueNotifier<LocaleChoice> language;
   final ValueNotifier<bool> mapView;
+
+  /// Whether today's counts go to the shared map. The map sharer listens to it.
+  final ValueNotifier<bool> mapContribute;
   final ValueNotifier<bool> weatherView;
 
   /// Reads the store and starts every consumer from what it holds.
@@ -41,6 +45,7 @@ class SettingsHub {
     theme.value = settings.themeChoice;
     language.value = settings.language;
     mapView.value = settings.mapView;
+    mapContribute.value = settings.mapContribute;
     weatherView.value = settings.weatherView;
     feedback.settings = settings.feedbackSettings;
   }

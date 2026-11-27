@@ -9,6 +9,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
 
 import '../domain/cheer.dart';
 import '../domain/cheer_picker.dart';
@@ -21,6 +22,12 @@ import '../l10n/app_localizations.g.dart';
 import '../l10n/asset_paths.dart';
 import '../l10n/locale_resolution.dart';
 import '../location/coarse_location.dart';
+import '../map/geo.dart';
+import '../map/h3_grid.dart';
+import '../map/map_server.dart';
+import '../map/map_sharer.dart';
+import '../map/map_source.dart';
+import '../map/server_map_source.dart';
 import '../reminder/flutter_local_notifications_port.dart';
 import '../reminder/reminder_controller.dart';
 import '../reminder/reminder_port.dart';
@@ -83,6 +90,32 @@ Future<AppServices> createServices({WidgetBuilder? settingsBuilder}) async {
     recordedToday: await records.hasRecordToday(),
   );
 
+  // The shared map: only when the build was given a server. Otherwise the map shows sample data
+  // and nothing is sent.
+  const mapConfig = MapServerConfig.fromEnvironment;
+  MapServer? mapServer;
+  if (mapConfig.isSet) {
+    final server = SupabaseMapServer(
+      config: mapConfig,
+      client: http.Client(),
+      sessions: PrefsMapSessionStore(prefs),
+    );
+    mapServer = server;
+    H3Grid? grid;
+    MapSharer(
+      journal: journal,
+      contribute: hub.mapContribute,
+      server: server,
+      currentCell: () async {
+        final pos = await readDevicePosition();
+        if (pos == null) return null;
+        grid ??= H3Grid();
+        final id = grid!.cellAt(GeoPoint(pos.lat, pos.lon));
+        return int.parse(id.value, radix: 16);
+      },
+    ).start();
+  }
+
   final info = await PackageInfo.fromPlatform();
   WidgetBuilder screen =
       settingsBuilder ??
@@ -93,6 +126,7 @@ Future<AppServices> createServices({WidgetBuilder? settingsBuilder}) async {
         language: hub.language,
         mapView: hub.mapView,
         weatherView: hub.weatherView,
+        mapLive: mapServer != null,
         onApplied: hub.apply,
         reminder: reminder,
         records: records,
@@ -115,6 +149,9 @@ Future<AppServices> createServices({WidgetBuilder? settingsBuilder}) async {
     language: hub.language,
     mapView: hub.mapView,
     weatherView: hub.weatherView,
+    mapSource: mapServer == null
+        ? const SampleMapSource()
+        : ServerMapSource(mapServer),
     location: const GeolocatorCoarseLocation(),
     weatherSource: MetNorwayWeatherSource(),
     settingsStore: settingsStore,

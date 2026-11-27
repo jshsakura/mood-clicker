@@ -28,7 +28,8 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
-      - run: flutter build ios --release --no-codesign
+      # The shared map server; without these repository variables the app keeps sample data.
+      - run: flutter build ios --release --no-codesign --dart-define=MAP_URL=${{ vars.MAP_URL }} --dart-define=MAP_KEY=${{ vars.MAP_KEY }}
       - name: package ipa
         run: |
           mkdir -p dist/Payload

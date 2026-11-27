@@ -127,7 +127,7 @@ class MapCell {
     required this.people,
     required this.taps,
     required this.happyShare,
-    required this.word,
+    this.word,
   });
 
   final H3CellId id;
@@ -139,7 +139,9 @@ class MapCell {
 
   /// 0 to 1, the share of people on the happy side.
   final double happyShare;
-  final MapWord word;
+
+  /// A prepared sentence for the block. Null when the source holds no words, like the server.
+  final MapWord? word;
 }
 
 /// What the screen draws. The constructor drops every block under the minimum, so a snapshot

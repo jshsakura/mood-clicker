@@ -185,6 +185,35 @@ void main() {
     expect(lineOpacity(), 0);
   });
 
+  testWidgets(
+    'the word switch hides while the shared map server is live',
+    (tester) async {
+      final harness = Harness();
+      final l10n = lookupAppLocalizations(const Locale('ko'));
+      await pumpScreen(tester, harness: harness);
+      expect(find.text(l10n.settings_mapComment), findsOneWidget);
+      await pumpScreen(
+        tester,
+        harness: harness,
+        customize: (s) => SettingsScreen(
+          store: s.store,
+          feel: s.feel,
+          theme: s.theme,
+          language: s.language,
+          mapView: s.mapView,
+          reminder: s.reminder,
+          records: s.records,
+          appVersion: s.appVersion,
+          launchPhone: s.launchPhone,
+          mapLive: true,
+        ),
+      );
+      expect(find.text(l10n.settings_mapContribute), findsOneWidget);
+      expect(find.text(l10n.settings_mapComment), findsNothing);
+    },
+    skip: !MapRules.available,
+  );
+
   testWidgets('tapping a theme card persists it and moves the app notifier', (
     tester,
   ) async {

@@ -38,28 +38,35 @@ class GeolocatorCoarseLocation implements CoarseLocation {
 
   @override
   Future<CoarseCoord?> current() async {
-    try {
-      final enabled = await Geolocator.isLocationServiceEnabled();
-      if (!enabled) return null;
+    final pos = await readDevicePosition();
+    return pos == null ? null : CoarseCoord(lat: pos.lat, lon: pos.lon);
+  }
+}
 
-      var permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-      }
-      if (permission != LocationPermission.whileInUse &&
-          permission != LocationPermission.always) {
-        return null;
-      }
+/// The device position, asking for when-in-use permission first. Null when location is off,
+/// permission is denied, or reading fails. Callers coarsen it at once and drop it.
+Future<({double lat, double lon})?> readDevicePosition() async {
+  try {
+    final enabled = await Geolocator.isLocationServiceEnabled();
+    if (!enabled) return null;
 
-      final pos = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.low,
-          timeLimit: Duration(seconds: 10),
-        ),
-      );
-      return CoarseCoord(lat: pos.latitude, lon: pos.longitude);
-    } catch (_) {
+    var permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
+    if (permission != LocationPermission.whileInUse &&
+        permission != LocationPermission.always) {
       return null;
     }
+
+    final pos = await Geolocator.getCurrentPosition(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.low,
+        timeLimit: Duration(seconds: 10),
+      ),
+    );
+    return (lat: pos.latitude, lon: pos.longitude);
+  } catch (_) {
+    return null;
   }
 }

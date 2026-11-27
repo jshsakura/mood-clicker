@@ -13,6 +13,7 @@ import 'h3_grid.dart';
 import 'hex_grid.dart';
 import 'map_backdrop.dart';
 import 'map_defaults.dart';
+import '../screens/mood_labels.dart';
 import 'map_rules.dart';
 import 'map_source.dart';
 import 'maplibre_backdrop.dart';
@@ -228,7 +229,7 @@ class _MapScreenState extends State<MapScreen> {
     final p = context.palette;
     final l10n = AppLocalizations.of(context);
     final on = _picked == c.id;
-    final text = wordText(l10n, c.word);
+    final text = blockText(context, c);
     return Positioned(
       left: spot.dx - _markerWidth / 2,
       top: spot.dy - _markerHeight / 2,
@@ -260,6 +261,14 @@ class _MapScreenState extends State<MapScreen> {
   static const double _markerWidth = 44;
   static const double _markerHeight = 52;
   static const double _faceSize = 28;
+}
+
+/// What a block says: its word, or the name of its mood when it has none.
+String blockText(BuildContext context, MapCell cell) {
+  final word = cell.word;
+  return word == null
+      ? moodName(context, cell.mood)
+      : wordText(AppLocalizations.of(context), word);
 }
 
 /// The prepared sentence behind a word id.
@@ -372,7 +381,10 @@ class _Sheet extends StatelessWidget {
       line = null;
     } else if (cell != null) {
       where = l10n.map_pickedPlace;
-      headline = '"${wordText(l10n, cell.word)}"';
+      final word = cell.word;
+      headline = word == null
+          ? blockText(context, cell)
+          : '"${wordText(l10n, word)}"';
       line = l10n.map_tapsLine(cell.taps);
     } else if (showRatio && share != null) {
       final happy = (share * 100).round();
